@@ -274,7 +274,11 @@
 
 <div id="t6" class="view">
 
-  <div class="card"><div class="card-title">Violators</div><div id="violatorList" class="empty">—</div></div>
+  <div class="card"><div class="card-title">Violators</div>
+
+    <input type="text" id="violSearch" placeholder="Search DA name to remove..." oninput="renderViolators()" style="margin-bottom:10px;">
+
+    <div id="violatorList" class="empty">—</div></div>
 
 </div>
 
@@ -792,9 +796,55 @@ function renderBreaks(){
 
 }
 
+async function removeViolator(id){
+
+  const cid=cleanId(id);
+
+  // delete ALL violator entries for this DA from Firestore
+
+  try{
+
+    const snap=await getDocs(collection(db,"violators"));
+
+    const b=writeBatch(db); let n=0;
+
+    snap.forEach(d=>{ const v=d.data(); if(cleanId(v.daId)===cid){ b.delete(d.ref); n++; } });
+
+    if(n>0) await b.commit();
+
+  }catch(e){}
+
+  // tell the sheet to mark this DA removed on the Violators tab (background)
+
+  try{ sheetApi("removeViolator",{ id:cid }).catch(()=>{}); }catch(e){}
+
+}
+
+window.removeViolator=removeViolator;
+
+ 
+
+window.removeViolatorConfirm=async(id,name)=>{
+
+  if(!confirm("Remove "+(name||"this DA")+" from the violator list? They will be able to scan again."))return;
+
+  await removeViolator(id);
+
+  notify("Removed from violators","green"); feedback("green");
+
+};
+
+ 
+
 function renderViolators(){
 
-  $("violatorList").innerHTML=VIOLATORS.slice(0,200).map(x=>`<div class="item"><div><div class="da-name">${esc(x.name)}</div><div class="da-meta">${esc(x.daId)} | ${esc(x.dsp)} | ${esc(x.timeStr||"")}</div><div><span class="vio-reason">${esc(x.reason)}</span></div>${x.comment?`<div class="da-meta">${esc(x.comment)}</div>`:""}</div></div>`).join("")||'<div class="empty">No violators</div>';
+  const q=($("violSearch")?$("violSearch").value:"").toLowerCase().trim();
+
+  const words=q.split(/\s+/).filter(Boolean);
+
+  const list=(VIOLATORS||[]).filter(x=>{ if(!words.length)return true; const n=String(x.name||"").toLowerCase(); return words.every(w=>n.includes(w)); }).slice(0,200);
+
+  $("violatorList").innerHTML=list.map(x=>`<div class="item"><div><div class="da-name">${esc(x.name)}</div><div class="da-meta">${esc(x.daId)} | ${esc(x.dsp)} | ${esc(x.timeStr||"")}</div><div><span class="vio-reason">${esc(x.reason)}</span></div>${x.comment?`<div class="da-meta">${esc(x.comment)}</div>`:""}</div><button class="rm-btn" onclick="removeViolatorConfirm('${escA(x.daId)}','${escA(x.name)}')">✕</button></div>`).join("")||'<div class="empty">No violators</div>';
 
 }
 
@@ -1388,7 +1438,73 @@ async function processQueue(){
 
 }
 
+// Track violator-scan attempts (per DA) so the 2nd attempt offers Force Remove.
+
+let violatorAttempts = {};
+
+ 
+
+function isViolator(id){
+
+  const cid=cleanId(id);
+
+  return (VIOLATORS||[]).some(v=>cleanId(v.daId)===cid);
+
+}
+
+ 
+
 async function handleScan(type,qr){
+
+  const cid=cleanId(qr);
+
+ 
+
+  // ---- VIOLATOR BLOCK (applies to ALL scan types) ----
+
+  if(cid && isViolator(cid)){
+
+    const r=ROSTER[cid]||{};
+
+    const nm=r.name||cid;
+
+    violatorAttempts[cid]=(violatorAttempts[cid]||0)+1;
+
+ 
+
+    if(violatorAttempts[cid] < 2){
+
+      // 1st attempt — warn only
+
+      notify(`${nm} is a VIOLATOR — scan blocked. Scan again to force-remove.`,"red");
+
+      feedback("red");
+
+      return;
+
+    }
+
+ 
+
+    // 2nd attempt — offer Force Remove
+
+    const ok = confirm(nm+" is on the VIOLATOR list.\n\nForce remove from violators and allow scan?");
+
+    if(!ok){ notify(`${nm} still blocked (violator)`, "orange"); feedback("orange"); return; }
+
+ 
+
+    await removeViolator(cid);              // clear from Firestore + sheet
+
+    violatorAttempts[cid]=0;
+
+    notify(`${nm} removed from violators — proceeding`,"green"); feedback("green");
+
+    // fall through to the normal scan below
+
+  }
+
+ 
 
   let res;
 
@@ -1470,7 +1586,19 @@ async function maintenance(){
 
     if(st.status==="PENDING_ENTRY" && st.timeMs){ const mins=Math.floor((Date.now()-st.timeMs)/60000);
 
-      if(mins>to){ await updateDoc(doc(db,"state",id),{status:"TIMEOUT"}); await addDoc(collection(db,"violators"),{daId:id,name:st.name,dsp:st.dsp,reason:"ENTRY_REFUSED",timeMs:Date.now(),timeStr:timeStr(),comment:"Entry refused by DA — "+mins+" min late from off yard"}); }
+      if(mins>to){
+
+        await updateDoc(doc(db,"state",id),{status:"TIMEOUT"});
+
+        const vcomment="Entry refused by DA — "+mins+" min late from off yard";
+
+        await addDoc(collection(db,"violators"),{daId:id,name:st.name,dsp:st.dsp,reason:"ENTRY_REFUSED",timeMs:Date.now(),timeStr:timeStr(),comment:vcomment});
+
+        // Also write to the Violators tab in the Google Sheet (background)
+
+        try{ sheetApi("addViolator",{id, name:st.name, dsp:st.dsp, reason:"ENTRY_REFUSED", comment:vcomment}).catch(()=>{}); }catch(e){}
+
+      }
 
     }
 
@@ -1556,7 +1684,7 @@ function renderBreakOverrides(){
 
  
 
-window.openTab=(n,el)=>{ stopAllScanners(); document.querySelectorAll(".view").forEach(v=>v.classList.remove("active")); $("t"+n).classList.add("active"); document.querySelectorAll(".tab").forEach(t=>t.classList.remove("act")); el.classList.add("act"); if(n===4)renderBreaks(); if(n===5){ checkMonthlySheet(); refreshSheetTabs(); } };
+window.openTab=(n,el)=>{ stopAllScanners(); document.querySelectorAll(".view").forEach(v=>v.classList.remove("active")); $("t"+n).classList.add("active"); document.querySelectorAll(".tab").forEach(t=>t.classList.remove("act")); el.classList.add("act"); if(n===4)renderBreaks(); if(n===5){ checkMonthlySheet(); refreshSheetTabs(); renderBreakOverrides(); } if(n===6)renderViolators(); };
 
  
 
