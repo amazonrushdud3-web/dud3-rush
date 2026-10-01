@@ -6,7 +6,17 @@
 
 <meta charset="UTF-8">
 
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+
+<meta name="mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<meta name="apple-mobile-web-app-title" content="DUD3 Rush">
+
+<meta name="theme-color" content="#0A1622">
 
 <title>⚡ DUD3 Rush PRO</title>
 
@@ -24,7 +34,7 @@
 
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 
-  body{margin:0;padding-bottom:96px;font-family:'Segoe UI',system-ui,Arial,sans-serif;color:var(--txt);
+  body{margin:0;padding-bottom:calc(96px + env(safe-area-inset-bottom));font-family:'Segoe UI',system-ui,Arial,sans-serif;color:var(--txt);
 
     background:radial-gradient(1200px 600px at 50% -10%,rgba(0,168,225,.18),transparent 60%),linear-gradient(180deg,#0A1622,#071019);
 
@@ -126,7 +136,7 @@
 
   .orange{background:linear-gradient(135deg,#ff9f1c,#ff8400);color:#201400;}.blue{background:linear-gradient(135deg,#00A8E1,#38C6FF);color:#01151d;}
 
-  .nav{position:fixed;bottom:0;left:0;width:100%;height:74px;z-index:100;display:flex;background:rgba(10,22,34,.85);backdrop-filter:blur(16px);border-top:1px solid var(--brd);padding:6px 6px 10px;}
+  .nav{position:fixed;bottom:0;left:0;width:100%;height:calc(74px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);z-index:100;display:flex;background:rgba(10,22,34,.85);backdrop-filter:blur(16px);border-top:1px solid var(--brd);padding:6px 6px 10px;}
 
   .tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--muted);font-size:10px;font-weight:600;border-radius:14px;}
 
@@ -334,9 +344,13 @@
 
     <select id="sheetPick"><option value="">— auto-detect today —</option></select>
 
-    <button class="btn" onclick="loadRosterFromSheet()">⬇ LOAD SELECTED / TODAY ROSTER</button>
+    <button class="btn" onclick="loadRosterFromSheet()">⬇ LOAD / RELOAD ROSTER (new day)</button>
+
+    <button class="btn btn-w" onclick="syncAttendanceFromSheet()">🔄 SYNC ATTENDANCE FROM SHEET (safe)</button>
 
     <button class="btn btn-w" onclick="refreshSheetTabs()">↻ Refresh tab list</button>
+
+    <div class="da-meta" style="margin-top:6px;">Sheet is master for attendance. Use "Sync" anytime to pull manual Present/Late/Absent updates without clearing the waiting list.</div>
 
     <div class="da-meta" style="margin:10px 0 4px;">— or upload a CSV manually —</div>
 
@@ -347,6 +361,24 @@
     <div id="rosterNote" class="da-meta" style="margin-top:8px;"></div>
 
   </div>
+
+  <div class="card">
+
+    <div class="card-title">Break Override (allow scan during break)</div>
+
+    <div class="da-meta" style="margin-bottom:8px;">Search a DA and allow them to scan even while their break window is active. This does NOT change the sheet — it only lets this DA scan now. Auto-clears when you reload the roster.</div>
+
+    <input type="text" id="brkSearch" placeholder="Search DA name..." oninput="renderBreakOverrides()">
+
+    <div id="brkSearchRes" class="s-res" style="position:relative;max-height:220px;"></div>
+
+    <div class="da-meta" style="margin:12px 0 4px;text-transform:uppercase;letter-spacing:.5px;">Current overrides</div>
+
+    <div id="brkOverrideList"></div>
+
+  </div>
+
+ 
 
   <div class="card">
 
@@ -443,6 +475,8 @@ let QUEUE = [];       // queue docs
 let VIOLATORS = [];   // violator docs
 
 let selectedWaiting = {};
+
+let BREAK_OVERRIDES = {};   // {daId:true} — manual allow-to-scan-during-break (synced via Firestore)
 
 let activeScanners = {};
 
@@ -573,6 +607,10 @@ function attachListeners(){
   // Settings
 
   onSnapshot(doc(db,"settings","app"), snap=>{ if(snap.exists()){ SETTINGS=Object.assign(SETTINGS,snap.data()); applySettingsUI(); } });
+
+  // Break overrides (manual allow-to-scan)
+
+  onSnapshot(doc(db,"meta","breakOverrides"), snap=>{ BREAK_OVERRIDES = (snap.exists()&&snap.data().ids)?snap.data().ids:{}; if($("t5").classList.contains("active")) renderBreakOverrides(); });
 
   // Roster (today)
 
@@ -738,7 +776,7 @@ function renderBreaks(){
 
       else if(nm < w.s){ state="upcoming"; chip='<span class="pill dash">⏳ '+fmtMins(w.s)+'–'+fmtMins(w.e)+'</span>'; order=1; }
 
-      else { state="done"; chip='<span class="pill dash" style="opacity:.6;">✔ done</span>'; order=2; }
+      else { state="done"; chip='<span class="pill dash" style="opacity:.75;color:#7cffc4;">✔ Break Completed</span>'; order=2; }
 
       rows.push({order, id, name:r.name, dsp:r.dsp, lbl, chip, rng:fmtMins(w.s)+"–"+fmtMins(w.e)});
 
@@ -928,6 +966,46 @@ window.refreshSheetTabs=async()=>{
 
  
 
+window.syncAttendanceFromSheet=async()=>{
+
+  const picked=$("sheetPick")?$("sheetPick").value:"";
+
+  notify("Syncing attendance from Sheet…","blue");
+
+  try{
+
+    const res=await sheetApi("rosterFull", picked?{sheet:picked}:{});
+
+    if(!res||!res.rows){ notify("Could not read sheet","red"); feedback("red"); return; }
+
+    // Update ONLY status + checkInTime on existing roster docs. No deletes, no
+
+    // waiting/queue changes. Adds any new DAs found on the sheet.
+
+    let b=writeBatch(db), c=0, upd=0;
+
+    for(const r of res.rows){
+
+      const id=cleanId(r.daId); if(!id)continue;
+
+      b.set(doc(db,"roster",id),{ daId:id, name:r.name||"", dsp:r.dsp||"", waveTime:r.waveTime||"", shiftEnd:r.shiftEnd||"", break1:r.break1||"", break2:r.break2||"", status:(r.status||""), checkInTime:(r.checkInTime||"") }, {merge:true});
+
+      c++; upd++;
+
+      if(c>=400){ await b.commit(); b=writeBatch(db); c=0; }
+
+    }
+
+    if(c>0) await b.commit();
+
+    notify("Attendance synced from Sheet ("+upd+" DAs)","green"); feedback("green");
+
+  }catch(e){ notify("Sync failed — check Apps Script connection","red"); feedback("red"); }
+
+};
+
+ 
+
 window.loadRosterFromSheet=async()=>{
 
   const picked=$("sheetPick") ? $("sheetPick").value : "";
@@ -966,7 +1044,7 @@ window.loadRosterFromSheet=async()=>{
 
       const id=cleanId(r.daId); if(!id)continue;
 
-      batch.set(doc(db,"roster",id),{ daId:id, name:r.name||"", dsp:r.dsp||"", waveTime:r.waveTime||"", shiftEnd:r.shiftEnd||"", break1:r.break1||"", break2:r.break2||"", status:"", checkInTime:"" });
+      batch.set(doc(db,"roster",id),{ daId:id, name:r.name||"", dsp:r.dsp||"", waveTime:r.waveTime||"", shiftEnd:r.shiftEnd||"", break1:r.break1||"", break2:r.break2||"", status:(r.status||""), checkInTime:(r.checkInTime||"") });
 
       count++; total++;
 
@@ -1104,11 +1182,15 @@ async function attendanceScan(id){
 
   const cur=String(r.status||"").trim();
 
-  // break block
+  // break block (skipped if this DA has a manual override allowing them to scan)
 
   const nm=nowMins();
 
-  for(const rg of [r.break1,r.break2]){ const w=parseRange(rg); if(w&&nm>=w.s&&nm<=w.e) return {msg:`${r.name} on break (${w.e-nm}m left). Blocked.`,type:"orange"}; }
+  if(!BREAK_OVERRIDES[cid]){
+
+    for(const rg of [r.break1,r.break2]){ const w=parseRange(rg); if(w&&nm>=w.s&&nm<=w.e) return {msg:`${r.name} on break (${w.e-nm}m left). Blocked.`,type:"orange"}; }
+
+  }
 
   if(cur && cur!=="Absent"){
 
@@ -1136,11 +1218,11 @@ async function attendanceScan(id){
 
   logHistory(cid,r.name,r.dsp,"CHECK-IN",status);
 
-  // Live-write attendance to the DSP's Google Sheet (background, non-blocking).
+  // NOTE: Sheet is master for attendance — the app does NOT write status back to
 
-  // Only Status + check-in time change — sheet format is untouched.
+  // the sheet (prevents overwriting manual DSP updates). The DSP team manages the
 
-  sheetApi("markAttendance",{ id:cid, status }).catch(()=>{});
+  // sheet; the app reflects it via roster refresh.
 
   return {msg:`${r.name} marked ${status} & added to Waiting`,type};
 
@@ -1372,19 +1454,13 @@ async function maintenance(){
 
   const nm=nowMins();
 
-  // Auto-absent + break state handled at read time; here we mark absents
+  // AUTO-ABSENT DISABLED: the sheet is managed manually by the DSP team, so the
 
-  const b=writeBatch(db); let changed=false; const absentIds=[];
+  // app must NOT auto-mark Absent (it was overwriting manual Present with stale
 
-  Object.entries(ROSTER).forEach(([id,r])=>{ if(String(r.status||"").trim())return; const wave=parseTime(r.waveTime); if(wave!==-1 && nm-wave>(SETTINGS.lateAfter||10)){ b.update(doc(db,"roster",id),{status:"Absent"}); changed=true; absentIds.push(id); } });
+  // data) and must NOT write attendance back to the sheet. Attendance now flows
 
-  if(changed){ await b.commit();
-
-    // Reflect Absent on the DSP's Google Sheet too (background, format untouched)
-
-    absentIds.forEach(id=>{ sheetApi("markAttendance",{id, status:"Absent"}).catch(()=>{}); });
-
-  }
+  // ONE WAY: Sheet -> app (via roster refresh). The app never writes to the sheet.
 
   // Pending-entry timeout -> violators
 
@@ -1408,6 +1484,78 @@ setInterval(()=>{ if(auth.currentUser) maintenance().catch(()=>{}); }, 60000);
 
 /* ================= NAV ================= */
 
+async function addBreakOverride(id){
+
+  const cid=cleanId(id); if(!cid) return;
+
+  const next=Object.assign({},BREAK_OVERRIDES); next[cid]=true;
+
+  await setDoc(doc(db,"meta","breakOverrides"),{ids:next},{merge:true});
+
+  notify("Override added — DA can scan now","green"); feedback("green");
+
+}
+
+async function removeBreakOverride(id){
+
+  const cid=cleanId(id);
+
+  const next=Object.assign({},BREAK_OVERRIDES); delete next[cid];
+
+  await setDoc(doc(db,"meta","breakOverrides"),{ids:next},{merge:true});
+
+  notify("Override removed — break block restored","green"); feedback("green");
+
+}
+
+window.addBreakOverride=addBreakOverride;
+
+window.removeBreakOverride=removeBreakOverride;
+
+ 
+
+function renderBreakOverrides(){
+
+  // search results (DAs that have a break set, matching the query)
+
+  const q=($("brkSearch")?$("brkSearch").value:"").toLowerCase().trim();
+
+  const box=$("brkSearchRes");
+
+  if(box){
+
+    if(!q){ box.style.display="none"; box.innerHTML=""; }
+
+    else{
+
+      const words=q.split(/\s+/).filter(Boolean);
+
+      const list=Object.entries(ROSTER)
+
+        .filter(([id,r])=>{ const n=String(r.name||"").toLowerCase(); const hasBreak=parseRange(r.break1)||parseRange(r.break2); return hasBreak && words.every(w=>n.includes(w)); })
+
+        .slice(0,20);
+
+      box.innerHTML=list.map(([id,r])=>`<div class="s-row" onclick="addBreakOverride('${escA(id)}')"><b>${esc(r.name)}</b> <small style="color:var(--muted);">${esc(r.dsp)} · ${esc(r.break1||"")}${r.break2?(" / "+esc(r.break2)):""}</small> <span style="float:right;color:var(--blue2);font-weight:800;">+ Allow</span></div>`).join("") || '<div class="s-row da-meta">No matching DA with a break</div>';
+
+      box.style.display="block";
+
+    }
+
+  }
+
+  // current overrides list
+
+  const ids=Object.keys(BREAK_OVERRIDES||{});
+
+  const el=$("brkOverrideList"); if(!el) return;
+
+  el.innerHTML = ids.length ? ids.map(id=>{ const r=ROSTER[id]||{}; return `<div class="item"><div><div class="da-name">${esc(r.name||id)}</div><div class="da-meta">${esc(id)} | ${esc(r.dsp||"")}</div></div><button class="rm-btn" onclick="removeBreakOverride('${escA(id)}')">✕</button></div>`; }).join("") : '<div class="empty">No active overrides</div>';
+
+}
+
+ 
+
 window.openTab=(n,el)=>{ stopAllScanners(); document.querySelectorAll(".view").forEach(v=>v.classList.remove("active")); $("t"+n).classList.add("active"); document.querySelectorAll(".tab").forEach(t=>t.classList.remove("act")); el.classList.add("act"); if(n===4)renderBreaks(); if(n===5){ checkMonthlySheet(); refreshSheetTabs(); } };
 
  
@@ -1421,6 +1569,3 @@ setInterval(()=>{ if($("t4").classList.contains("active")) renderBreaks(); }, 30
 </body>
 
 </html>
-
- 
-
