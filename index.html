@@ -76,7 +76,10 @@
 
 <div class="head">
   <div class="logo">⚡ DUD3 <b>Rush PRO</b></div>
-  <div class="conn" id="conn">Connecting…</div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <button onclick="refreshNow()" style="background:rgba(0,168,225,.14);color:var(--blue2);border:1px solid rgba(0,168,225,.3);border-radius:10px;padding:7px 12px;font-size:13px;font-weight:700;cursor:pointer;">↻ Refresh</button>
+    <div class="conn" id="conn">Connecting…</div>
+  </div>
 </div>
 
 <div id="notify"></div>
@@ -165,21 +168,18 @@
     <input type="text" id="monthUrl" placeholder="Paste this month's Google Sheet URL">
     <button class="btn" onclick="linkMonthlySheet()">🔗 LINK MONTHLY SHEET</button>
     <button class="btn btn-w" onclick="checkMonthlySheet()">↻ Refresh / Check Connection</button>
+    <button class="btn btn-del" onclick="removeMonthlySheet()" style="background:rgba(255,77,94,.12);color:#ffb0b8;border:1px solid rgba(255,77,94,.5);">🗑 REMOVE SHEET</button>
     <div id="monthNote" class="da-meta" style="margin-top:8px;"></div>
   </div>
 
   <div class="card">
-    <div class="card-title">Daily Roster (CSV)</div>
-    <div class="da-meta" style="margin-bottom:8px;">Upload columns: DA ID, Name, DSP, Wave (HH:mm), Shift End, Break1 (HH:mm-HH:mm), Break2</div>
-    <div style="margin:8px 0 4px;font-size:11px;color:var(--muted);text-transform:uppercase;">Select day tab</div>
+    <div class="card-title">Daily Roster (from Google Sheet)</div>
+    <div style="margin:4px 0 4px;font-size:11px;color:var(--muted);text-transform:uppercase;">Select day tab</div>
     <select id="sheetPick"><option value="">— auto-detect today —</option></select>
     <button class="btn" onclick="loadRosterFromSheet()">⬇ LOAD / RELOAD ROSTER (new day)</button>
-    <button class="btn btn-w" onclick="syncAttendanceFromSheet()">🔄 SYNC ATTENDANCE FROM SHEET (safe)</button>
+    <button class="btn btn-w" onclick="syncAttendanceFromSheet()">🔄 SYNC ATTENDANCE FROM SHEET</button>
     <button class="btn btn-w" onclick="refreshSheetTabs()">↻ Refresh tab list</button>
     <div class="da-meta" style="margin-top:6px;">Sheet is master for attendance. Use "Sync" anytime to pull manual Present/Late/Absent updates without clearing the waiting list.</div>
-    <div class="da-meta" style="margin:10px 0 4px;">— or upload a CSV manually —</div>
-    <input type="file" id="rosterFile" accept=".csv">
-    <button class="btn btn-w" onclick="uploadRoster()">UPLOAD CSV</button>
     <div id="rosterNote" class="da-meta" style="margin-top:8px;"></div>
   </div>
   <div class="card">
@@ -485,6 +485,15 @@ window.linkMonthlySheet=async()=>{
   }catch(e){ notify("Link failed — check Apps Script URL/deployment","red"); feedback("red"); }
 };
 
+window.removeMonthlySheet=async()=>{
+  if(!confirm("Remove the connected Google Sheet? The app will stop reading/writing it until you link a sheet again."))return;
+  try{
+    const res=await sheetApi("clearSheetUrl");
+    notify(res.msg||"Sheet removed", res.type||"orange"); feedback(res.type||"orange");
+    await checkMonthlySheet();
+  }catch(e){ notify("Remove failed — check Apps Script connection","red"); feedback("red"); }
+};
+
 window.checkMonthlySheet=async()=>{
   try{
     const res=await sheetApi("sheetUrl");
@@ -530,6 +539,14 @@ window.refreshSheetTabs=async()=>{
     if(cur) sel.value=cur;
     notify("Loaded "+((names||[]).length)+" day tabs","green");
   }catch(e){ notify("Couldn't list tabs — check Apps Script","red"); }
+};
+
+window.refreshNow=async()=>{
+  notify("Refreshing from Google Sheet…","blue");
+  try{
+    await syncAttendanceFromSheet();   // pull latest attendance (fill-blanks safe), preserves connection
+    // Firestore listeners already keep waiting/queue/violators/breaks live.
+  }catch(e){ notify("Refresh failed — check connection","red"); feedback("red"); }
 };
 
 window.syncAttendanceFromSheet=async()=>{
@@ -596,24 +613,6 @@ async function pushReport(){
 }
 setInterval(()=>{ if(auth.currentUser) pushReport(); }, 120000);   // every 2 min
 
-window.uploadRoster=async()=>{
-  const f=$("rosterFile").files[0]; if(!f){notify("Choose a CSV first","orange");return;}
-  const text=await f.text();
-  const rows=text.split(/\r?\n/).filter(r=>r.trim());
-  rows.shift(); // header
-  let batch=writeBatch(db), count=0, total=0;
-  for(const line of rows){
-    const c=line.split(",");
-    const id=cleanId(c[0]); if(!id)continue;
-    batch.set(doc(db,"roster",id),{ daId:id, name:(c[1]||"").trim(), dsp:(c[2]||"").trim(), waveTime:(c[3]||"").trim(), shiftEnd:(c[4]||"").trim(), break1:(c[5]||"").trim(), break2:(c[6]||"").trim(), status:"", checkInTime:"" });
-    count++; total++;
-    if(count>=400){ await batch.commit(); batch=writeBatch(db); count=0; }
-  }
-  if(count>0) await batch.commit();
-  notify("Roster uploaded: "+total+" DAs","green"); feedback("green");
-  $("rosterNote").innerText=total+" DAs loaded at "+timeStr();
-};
-
 /* ================= COUNTER (per-day, permanent batch) ================= */
 async function nextSeq(){
   const ref=doc(db,"meta","counters"); const dk=todayKey();
@@ -655,7 +654,7 @@ async function attendanceScan(id){
     if(diff > (SETTINGS.lateAfter||10)){ status="Late arrived"; type="orange"; }
   }
   if(cur==="Absent"){ status="Late arrived"; type="orange"; }
-  await updateDoc(doc(db,"roster",cid),{ status, checkInTime:timeStr() });
+  await setDoc(doc(db,"roster",cid),{ daId:cid, name:r.name, dsp:r.dsp, waveTime:r.waveTime||"", status, checkInTime:timeStr() },{merge:true});
   const w=await addToWaiting(cid,r.name,r.dsp);
   logHistory(cid,r.name,r.dsp,"CHECK-IN",status);
   // Write status + check-in TIME to the sheet via the background queue.
@@ -686,7 +685,7 @@ async function entryScan(id){
   const cid=cleanId(id); const st=STATE[cid];
   if(!st||st.status!=="PENDING_ENTRY") return {msg:"DA not pending entry",type:"orange"};
   const turn=(Number(st.turn)||0)+1;
-  await updateDoc(doc(db,"state",cid),{ status:"ADDED TO QUE", time:serverTimestamp(), timeMs:Date.now(), turn });
+  await setDoc(doc(db,"state",cid),{ daId:cid, status:"ADDED TO QUE", time:serverTimestamp(), timeMs:Date.now(), turn },{merge:true});
   await setDoc(doc(db,"queue",cid),{ daId:cid, name:st.name, dsp:st.dsp, turn, timeMs:Date.now() });
   logHistory(cid,st.name,st.dsp,"ENTRY","Turn "+turn);
   return {msg:`${st.name} received. Turn ${turn}`,type:"green"};
@@ -738,10 +737,16 @@ function enqueueScan(type,qr){
 }
 async function processQueue(){
   if(queueProcessing)return; queueProcessing=true;
-  while(scanQueue.length){ const it=scanQueue.shift();
-    try{ await handleScan(it.type,it.qr); }catch(e){ notify("Scan failed","red"); playError(); }
+  let lastType=null, ok=false;
+  while(scanQueue.length){ const it=scanQueue.shift(); lastType=it.type;
+    try{ await handleScan(it.type,it.qr); ok=true; }catch(e){ notify("Scan failed: "+(e&&e.message?e.message:e),"red"); playError(); console.error("scan error",e); }
   }
   queueProcessing=false;
+  // REQ 7: stop the camera after a successful scan so a second QR can't be
+  // auto-scanned in the same session. Operator taps SCAN again for the next DA.
+  if(ok && lastType && activeScanners[lastType]){
+    stopScanner(lastType);
+  }
 }
 // Track violator-scan attempts (per DA) so the 2nd attempt offers Force Remove.
 let violatorAttempts = {};
