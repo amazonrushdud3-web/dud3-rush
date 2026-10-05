@@ -1,3 +1,4 @@
+```xml
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -140,7 +141,11 @@
 <!-- VIOLATORS -->
 <div id="t6" class="view">
   <div class="card"><div class="card-title">Violators</div>
-    <input type="text" id="violSearch" placeholder="Search DA name to remove..." oninput="renderViolators()" style="margin-bottom:10px;">
+    <input type="text" id="violSearch" placeholder="Search DA name..." oninput="renderViolators()" style="margin-bottom:10px;">
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);"><input type="checkbox" id="violSelectAll" onchange="violToggleAll(this)" style="width:18px;height:18px;"> Select all</label>
+      <button class="btn btn-del" style="margin:0;width:auto;padding:8px 14px;font-size:13px;" onclick="clearSelectedViolators()">🗑 CLEAR SELECTED</button>
+    </div>
     <div id="violatorList" class="empty">—</div></div>
 </div>
 
@@ -468,11 +473,32 @@ window.removeViolatorConfirm=async(id,name)=>{
   notify("Removed from violators","green"); feedback("green");
 };
 
+let violSelected = {};
+window.violToggle=(cb)=>{ const id=cleanId(cb.getAttribute("data-id")); if(cb.checked) violSelected[id]=true; else delete violSelected[id]; };
+window.violToggleAll=(cb)=>{
+  violSelected={};
+  if(cb.checked){ (VIOLATORS||[]).forEach(x=>{ violSelected[cleanId(x.daId)]=true; }); }
+  renderViolators();
+};
+window.clearSelectedViolators=async()=>{
+  const ids=Object.keys(violSelected);
+  if(!ids.length){ notify("Select DAs first","orange"); feedback("orange"); return; }
+  if(!confirm("Clear "+ids.length+" selected DA(s) from the violator list? They will be able to scan attendance again."))return;
+  notify("Clearing "+ids.length+" violators…","blue");
+  for(const id of ids){ await removeViolator(id); }   // removes from Firestore + sheet
+  violSelected={};
+  const sa=$("violSelectAll"); if(sa) sa.checked=false;
+  notify(ids.length+" DA(s) cleared from violators","green"); feedback("green");
+};
+
 function renderViolators(){
   const q=($("violSearch")?$("violSearch").value:"").toLowerCase().trim();
   const words=q.split(/\s+/).filter(Boolean);
   const list=(VIOLATORS||[]).filter(x=>{ if(!words.length)return true; const n=String(x.name||"").toLowerCase(); return words.every(w=>n.includes(w)); }).slice(0,200);
-  $("violatorList").innerHTML=list.map(x=>`<div class="item"><div><div class="da-name">${esc(x.name)}</div><div class="da-meta">${esc(x.daId)} | ${esc(x.dsp)} | ${esc(x.timeStr||"")}</div><div><span class="vio-reason">${esc(x.reason)}</span></div>${x.comment?`<div class="da-meta">${esc(x.comment)}</div>`:""}</div><button class="rm-btn" onclick="removeViolatorConfirm('${escA(x.daId)}','${escA(x.name)}')">✕</button></div>`).join("")||'<div class="empty">No violators</div>';
+  $("violatorList").innerHTML=list.map(x=>`<div class="item"><div style="display:flex;align-items:center;gap:10px;">
+      <input type="checkbox" class="violChk" data-id="${escA(x.daId)}" ${violSelected[cleanId(x.daId)]?"checked":""} onchange="violToggle(this)" style="width:20px;height:20px;flex:0 0 auto;">
+      <div><div class="da-name">${esc(x.name)}</div><div class="da-meta">${esc(x.daId)} | ${esc(x.dsp)} | ${esc(x.timeStr||"")}</div><div><span class="vio-reason">${esc(x.reason)}</span></div>${x.comment?`<div class="da-meta">${esc(x.comment)}</div>`:""}</div>
+    </div><button class="rm-btn" onclick="removeViolatorConfirm('${escA(x.daId)}','${escA(x.name)}')">✕</button></div>`).join("")||'<div class="empty">No violators</div>';
 }
 
 /* ================= SETTINGS ================= */
@@ -838,10 +864,19 @@ window.manualAtt=async(id)=>{ $("sres").style.display="none"; $("sch").value="";
 
 /* ================= DAILY / MAINTENANCE ================= */
 window.startNewDay=async()=>{
-  if(!confirm("Start a NEW DAY? Clears the waiting list and resets Batch 1."))return;
-  const snap=await getDocs(collection(db,"waiting")); const b=writeBatch(db); snap.forEach(d=>b.delete(d.ref)); await b.commit();
+  if(!confirm("Start a NEW DAY?\n\nThis clears Waiting, Pending/Queue, and Violators, and resets Batch 1. Roster/attendance stay (managed in the sheet)."))return;
+  notify("Starting new day…","blue");
+  // Clear waiting, state, queue, AND violators (full operational reset)
+  for(const col of ["waiting","state","queue","violators"]){
+    const snap=await getDocs(collection(db,col));
+    if(snap.empty) continue;
+    let b=writeBatch(db), c=0;
+    for(const d of snap.docs){ b.delete(d.ref); c++; if(c>=400){ await b.commit(); b=writeBatch(db); c=0; } }
+    if(c>0) await b.commit();
+  }
   await setDoc(doc(db,"meta","counters"),{daySeq:0,dayKey:todayKey()},{merge:true});
-  notify("New day started — Batch 1 reset","green"); feedback("green");
+  violatorAttempts={};
+  notify("New day started — Batch 1 reset, violators cleared","green"); feedback("green");
 };
 window.runMaintenanceNow=async()=>{ await maintenance(); notify("Cleanup done","green"); feedback("green"); };
 
@@ -920,3 +955,4 @@ setInterval(()=>{ if($("t4").classList.contains("active")) renderBreaks(); }, 30
 </script>
 </body>
 </html>
+```
