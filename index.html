@@ -1,4 +1,3 @@
-```xml
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -882,10 +881,28 @@ window.runMaintenanceNow=async()=>{ await maintenance(); notify("Cleanup done","
 
 async function maintenance(){
   const nm=nowMins();
-  // AUTO-ABSENT DISABLED: the sheet is managed manually by the DSP team, so the
-  // app must NOT auto-mark Absent (it was overwriting manual Present with stale
-  // data) and must NOT write attendance back to the sheet. Attendance now flows
-  // ONE WAY: Sheet -> app (via roster refresh). The app never writes to the sheet.
+
+  // SAFE AUTO-ABSENT: mark Absent ONLY if the DA has no check-in AND a blank
+  // status (never overwrites a manual Present/Late/Absent). Triggers once the
+  // current time passes wave + lateAfter (grace) minutes. Writes to the sheet
+  // fill-blanks-only via the queue, and reflects in the app immediately.
+  const grace=SETTINGS.lateAfter||10;
+  const absentBatch=writeBatch(db); let absN=0;
+  for(const [id,r] of Object.entries(ROSTER)){
+    const st=String(r.status||"").trim();
+    if(st) continue;                              // already has a status — skip
+    if(String(r.checkInTime||"").trim()) continue; // already checked in — skip
+    const wave=parseTime(r.waveTime); if(wave===-1) continue;
+    if(nm - wave > grace){
+      absentBatch.set(doc(db,"roster",id),{status:"Absent"},{merge:true});
+      absN++;
+      queueSheetWrite("markAttendance",{ id, status:"Absent" });  // fill-blanks on backend
+      logHistory(id, r.name, r.dsp, "AUTO ABSENT", "No scan by wave+"+grace);
+      if(absN>=400){ await absentBatch.commit(); }
+    }
+  }
+  if(absN>0){ try{ await absentBatch.commit(); }catch(e){} }
+
   // Pending-entry timeout -> violators
   const to=SETTINGS.pendingTimeout||15;
   const outAfter=SETTINGS.outOnRoadAfter||15;   // min after ENTRY -> OUT ON ROAD
@@ -910,6 +927,24 @@ async function maintenance(){
   }
 }
 setInterval(()=>{ if(auth.currentUser) maintenance().catch(()=>{}); }, 60000);
+
+// Periodic SILENT roster sync — pulls latest attendance statuses from the sheet
+// so the app never shows stale data ("attendance not updating in app" fix).
+// Merge-only, never clears waiting/queue. Runs every 90s.
+async function silentRosterSync(){
+  try{
+    const res=await sheetApi("rosterFull");
+    if(!res||!res.rows) return;
+    let b=writeBatch(db), c=0;
+    for(const r of res.rows){
+      const id=cleanId(r.daId); if(!id) continue;
+      b.set(doc(db,"roster",id),{ daId:id, name:r.name||"", dsp:r.dsp||"", waveTime:r.waveTime||"", shiftEnd:r.shiftEnd||"", break1:r.break1||"", break2:r.break2||"", status:(r.status||""), checkInTime:(r.checkInTime||"") },{merge:true});
+      c++; if(c>=400){ await b.commit(); b=writeBatch(db); c=0; }
+    }
+    if(c>0) await b.commit();
+  }catch(e){}
+}
+setInterval(()=>{ if(auth.currentUser) silentRosterSync(); }, 90000);
 
 /* ================= NAV ================= */
 async function addBreakOverride(id){
@@ -955,4 +990,3 @@ setInterval(()=>{ if($("t4").classList.contains("active")) renderBreaks(); }, 30
 </script>
 </body>
 </html>
-```
