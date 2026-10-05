@@ -232,7 +232,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 /* ---------- Local state (kept live by onSnapshot listeners) ---------- */
-let SETTINGS = { sound:true, vibrate:true, batchSize:25, earlyLimit:30, lateAfter:10, pendingTimeout:15, rescanAllow:45, rescanForce:30 };
+let SETTINGS = { sound:true, vibrate:true, batchSize:25, earlyLimit:30, lateAfter:10, pendingTimeout:15, outOnRoadAfter:15, rescanAllow:45, rescanForce:30 };
 let ROSTER = {};      // daId -> roster doc
 let WAITING = [];     // waiting docs
 let STATE = {};       // daId -> state doc
@@ -333,15 +333,41 @@ function attachListeners(){
   // Break overrides (manual allow-to-scan)
   onSnapshot(doc(db,"meta","breakOverrides"), snap=>{ BREAK_OVERRIDES = (snap.exists()&&snap.data().ids)?snap.data().ids:{}; if($("t5").classList.contains("active")) renderBreakOverrides(); });
   // Roster (today)
-  onSnapshot(collection(db,"roster"), snap=>{ ROSTER={}; snap.forEach(d=>ROSTER[cleanId(d.id)]=d.data()); renderStats(); });
+  onSnapshot(collection(db,"roster"), snap=>{ ROSTER={}; snap.forEach(d=>ROSTER[cleanId(d.id)]=d.data()); renderStats(); schedulePublish(); });
   // Waiting
-  onSnapshot(collection(db,"waiting"), snap=>{ WAITING=[]; snap.forEach(d=>WAITING.push(Object.assign({_id:d.id},d.data()))); WAITING.sort((a,b)=>(a.seq||0)-(b.seq||0)); renderWaiting(); renderChips(); });
+  onSnapshot(collection(db,"waiting"), snap=>{ const arr=[]; snap.forEach(d=>arr.push(Object.assign({_id:d.id},d.data()))); WAITING=arr.sort((a,b)=>(a.seq||0)-(b.seq||0)); renderWaiting(); renderChips(); schedulePublish(); }, err=>{ console.warn("waiting listener error (keeping current list)",err); });
   // State
-  onSnapshot(collection(db,"state"), snap=>{ STATE={}; snap.forEach(d=>STATE[cleanId(d.id)]=Object.assign({_id:d.id},d.data())); renderPending(); });
+  onSnapshot(collection(db,"state"), snap=>{ const m={}; snap.forEach(d=>m[cleanId(d.id)]=Object.assign({_id:d.id},d.data())); STATE=m; renderPending(); schedulePublish(); }, err=>{ console.warn("state listener error (keeping current)",err); });
   // Queue
-  onSnapshot(collection(db,"queue"), snap=>{ QUEUE=[]; snap.forEach(d=>QUEUE.push(Object.assign({_id:d.id},d.data()))); renderQueue(); });
+  onSnapshot(collection(db,"queue"), snap=>{ QUEUE=[]; snap.forEach(d=>QUEUE.push(Object.assign({_id:d.id},d.data()))); renderQueue(); schedulePublish(); });
   // Violators
-  onSnapshot(collection(db,"violators"), snap=>{ VIOLATORS=[]; snap.forEach(d=>VIOLATORS.push(Object.assign({_id:d.id},d.data()))); VIOLATORS.sort((a,b)=>(b.timeMs||0)-(a.timeMs||0)); renderViolators(); });
+  onSnapshot(collection(db,"violators"), snap=>{ VIOLATORS=[]; snap.forEach(d=>VIOLATORS.push(Object.assign({_id:d.id},d.data()))); VIOLATORS.sort((a,b)=>(b.timeMs||0)-(a.timeMs||0)); renderViolators(); schedulePublish(); });
+}
+
+/* ===== DASHBOARD SNAPSHOT PUBLISHER (free-tier read saver) =====
+   Instead of 400 viewers each reading hundreds of docs, the scanner publishes
+   ONE aggregated document (dashboard/live). Viewers read only that 1 doc.
+   Debounced so a burst of scans produces at most 1 write per ~3s. */
+let _pubTimer=null;
+function schedulePublish(){
+  if(_pubTimer) clearTimeout(_pubTimer);
+  _pubTimer=setTimeout(publishSnapshot, 3000);
+}
+async function publishSnapshot(){
+  try{
+    const nm=nowMins();
+    // Build compact arrays (only fields the dashboard needs)
+    const roster=Object.entries(ROSTER).map(([id,r])=>({id, n:r.name, d:r.dsp, s:r.status||"", w:r.waveTime||"", b1:r.break1||"", b2:r.break2||"", ci:r.checkInTime||""}));
+    const waiting=WAITING.map(x=>({id:x.daId, n:x.name, d:x.dsp, b:x.batch, q:x.seq}));
+    const state=Object.values(STATE).map(x=>({id:x.daId, n:x.name, d:x.dsp, s:x.status, t:x.turn||0}));
+    const queue=QUEUE.map(x=>({id:x.daId, n:x.name, d:x.dsp, t:x.turn}));
+    const violators=VIOLATORS.slice(0,200).map(x=>({id:x.daId, n:x.name, d:x.dsp, r:x.reason, tm:x.timeStr||"", c:x.comment||""}));
+    const recent=(RECENT||[]).slice(0,15).map(h=>({id:h.daId,n:h.name,d:h.dsp,ty:h.scanType,s:h.status,tm:h.timeMs}));
+    await setDoc(doc(db,"dashboard","live"),{
+      roster, waiting, state, queue, violators, recent,
+      updatedAt: Date.now()
+    });
+  }catch(e){ /* ignore transient */ }
 }
 
 /* ================= RENDERERS ================= */
@@ -691,7 +717,14 @@ async function entryScan(id){
   return {msg:`${st.name} received. Turn ${turn}`,type:"green"};
 }
 
-function logHistory(daId,name,dsp,scanType,status){ try{ addDoc(collection(db,"scanHistory"),{time:serverTimestamp(),timeMs:Date.now(),daId,name,dsp,scanType,status}); }catch(e){} }
+let RECENT=[];
+function logHistory(daId,name,dsp,scanType,status){
+  RECENT.unshift({daId,name,dsp,scanType,status,timeMs:Date.now()});
+  if(RECENT.length>15) RECENT.length=15;
+  schedulePublish();
+  // NOTE: no longer writing every scan to a scanHistory collection (saves Firebase
+  // writes). Recent scans live in the snapshot doc; full audit is in the Google Sheet.
+}
 
 /* ================= SEND / REMOVE ================= */
 window.toggleWait=(cb,id)=>{ const cid=cleanId(id); if(cb.checked){const w=WAITING.find(x=>cleanId(x.daId)===cid); if(w)selectedWaiting[cid]=w;} else delete selectedWaiting[cid]; };
@@ -820,14 +853,23 @@ async function maintenance(){
   // ONE WAY: Sheet -> app (via roster refresh). The app never writes to the sheet.
   // Pending-entry timeout -> violators
   const to=SETTINGS.pendingTimeout||15;
+  const outAfter=SETTINGS.outOnRoadAfter||15;   // min after ENTRY -> OUT ON ROAD
   for(const [id,st] of Object.entries(STATE)){
     if(st.status==="PENDING_ENTRY" && st.timeMs){ const mins=Math.floor((Date.now()-st.timeMs)/60000);
       if(mins>to){
-        await updateDoc(doc(db,"state",id),{status:"TIMEOUT"});
+        await setDoc(doc(db,"state",id),{status:"TIMEOUT"},{merge:true});
         const vcomment="Entry refused by DA — "+mins+" min late from off yard";
         await addDoc(collection(db,"violators"),{daId:id,name:st.name,dsp:st.dsp,reason:"ENTRY_REFUSED",timeMs:Date.now(),timeStr:timeStr(),comment:vcomment});
-        // Also write to the Violators tab in the Google Sheet (background)
         queueSheetWrite("addViolator",{id, name:st.name, dsp:st.dsp, reason:"ENTRY_REFUSED", comment:vcomment});
+      }
+    }
+    // After entry (ADDED TO QUE) for > outAfter min -> OUT ON ROAD.
+    // Stamp a fresh timeMs so the re-scan cooldown counts from THIS moment.
+    else if(st.status==="ADDED TO QUE" && st.timeMs){
+      const mins=Math.floor((Date.now()-st.timeMs)/60000);
+      if(mins>outAfter){
+        await setDoc(doc(db,"state",id),{status:"OUT ON ROAD",timeMs:Date.now(),time:serverTimestamp()},{merge:true});
+        logHistory(id, st.name, st.dsp, "OUT ON ROAD", "Auto after "+mins+" min");
       }
     }
   }
