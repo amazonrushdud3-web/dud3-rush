@@ -194,31 +194,37 @@
 
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+const SUPABASE_URL = "https://othlmijaffqmkufblzvu.supabase.co";
 
-import { getFirestore, collection, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+const SUPABASE_KEY = "sb_publishable_cmkties9zH5fp731YbIg0A_RR-seEe_";
+
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY, { realtime:{ params:{ eventsPerSecond: 5 } } });
 
  
 
-const firebaseConfig = {
+/* Minimal shim: dashboard only needs to read/subscribe the single dashboard_live row */
 
-  apiKey: "AIzaSyB52tGFqPXGjYUYgEZ3z8XxNWNC1llxhVM",
+async function readLive(){ const { data } = await sb.from("dashboard_live").select("data").eq("id","live").maybeSingle(); return data? data.data : null; }
 
-  authDomain: "dud3-rush.firebaseapp.com",
+function subscribeLive(cb){
 
-  projectId: "dud3-rush",
+  const emit=async()=>{ try{ cb(await readLive()); }catch(e){} };
 
-  storageBucket: "dud3-rush.firebasestorage.app",
+  emit();
 
-  messagingSenderId: "1035473993147",
+  sb.channel("dash_live").on("postgres_changes",{event:"*",schema:"public",table:"dashboard_live",filter:"id=eq.live"}, emit).subscribe();
 
-  appId: "1:1035473993147:web:2bb9273ac84c70abb7d89e"
+  // safety poll every 20s in case a realtime event is missed
 
-};
+  setInterval(emit, 20000);
 
-const app=initializeApp(firebaseConfig); const auth=getAuth(app); const db=getFirestore(app);
+}
+
+const auth={currentUser:{uid:"anon"}};
+
+  
 
  
 
@@ -242,23 +248,19 @@ function statusPill(s){const l=String(s||"").toLowerCase();if(l.includes("presen
 
  
 
-signInAnonymously(auth).catch(e=>setT("updated","Auth error: "+e.message));
+ 
 
 onAuthStateChanged(auth,u=>{ if(!u)return; attach(); });
 
  
 
-function attach(){
+function applyLive(d){
 
-  // SINGLE-DOC READ (free-tier friendly): read only dashboard/live, published by
+ 
 
-  // the scanner. 400 viewers = ~1 read each per update, instead of hundreds.
+    if(!d){ setT("updated","Waiting for scanner to publish data…"); return; }
 
-  onSnapshot(doc(db,"dashboard","live"), snap=>{
-
-    if(!snap.exists()){ setT("updated","Waiting for scanner to publish data…"); return; }
-
-    const d=snap.data()||{};
+    
 
     // Rebuild globals from the compact snapshot
 
@@ -282,9 +284,13 @@ function attach(){
 
     renderWaiting(); render();
 
-  });
+  
 
 }
+
+function attach(){ subscribeLive(applyLive); }
+
+ 
 
  
 
@@ -604,8 +610,12 @@ window.downloadAllCSV=()=>{
 
 setInterval(()=>{ if(auth.currentUser) render(); }, 30000);
 
+ 
+
 </script>
 
 </body>
 
 </html>
+
+ 
