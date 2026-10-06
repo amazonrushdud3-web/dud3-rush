@@ -455,7 +455,7 @@ async function publishSnapshot(){
     const queue=QUEUE.map(x=>({id:x.daId, n:x.name, d:x.dsp, t:x.turn}));
     const violators=VIOLATORS.slice(0,200).map(x=>({id:x.daId, n:x.name, d:x.dsp, r:x.reason, tm:x.timeStr||"", c:x.comment||""}));
     const recent=(RECENT||[]).slice(0,15).map(h=>({id:h.daId,n:h.name,d:h.dsp,ty:h.scanType,s:h.status,tm:h.timeMs}));
-    await setDoc(doc(db,"dashboard","live"),{
+    await setDoc(doc(db,"dashboard_live","live"),{
       roster, waiting, state, queue, violators, recent,
       updatedAt: Date.now()
     });
