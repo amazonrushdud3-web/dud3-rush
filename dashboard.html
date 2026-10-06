@@ -1,619 +1,310 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
-
 <meta charset="UTF-8">
-
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-
 <meta name="mobile-web-app-capable" content="yes">
-
 <meta name="apple-mobile-web-app-capable" content="yes">
-
 <meta name="apple-mobile-web-app-title" content="DUD3 Live">
-
 <meta name="theme-color" content="#0A1622">
-
 <title>DUD3 Rush — Live DA Dashboard</title>
-
 <style>
-
   :root{--blue:#00A8E1;--blue2:#38C6FF;--glass:rgba(255,255,255,.06);--brd:rgba(255,255,255,.12);--txt:#eaf2f9;--muted:#8aa3ba;--green:#00d47e;--orange:#ff9f1c;--red:#ff4d5e;}
-
   *{box-sizing:border-box;}
-
   body{margin:0;font-family:'Segoe UI',system-ui,Arial,sans-serif;color:var(--txt);background:radial-gradient(1200px 600px at 50% -10%,rgba(0,168,225,.18),transparent 60%),linear-gradient(180deg,#0A1622,#071019);background-attachment:fixed;min-height:100vh;padding-bottom:calc(40px + env(safe-area-inset-bottom));}
-
   .head{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:rgba(10,22,34,.8);backdrop-filter:blur(14px);border-bottom:1px solid var(--brd);}
-
   .title{font-size:18px;font-weight:800;}.title b{color:var(--blue);}
-
   .live{font-size:12px;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:7px;}
-
   .live::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 1.6s infinite;}
-
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-
   .wrap{max-width:1200px;margin:0 auto;padding:0 12px;}
-
   .filters{display:flex;gap:10px;flex-wrap:wrap;padding:14px 0 4px;}
-
   .fld{flex:1;min-width:150px;}.fld label{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;margin:0 0 5px 2px;}
-
   select,input{width:100%;padding:12px;border-radius:12px;font-size:15px;background:rgba(0,0,0,.35);color:#fff;border:1px solid var(--brd);outline:none;}
-
   .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0;}
-
   @media(max-width:640px){.kpis{grid-template-columns:repeat(2,1fr);}}
-
   .kpi{background:var(--glass);border:1px solid var(--brd);border-radius:16px;padding:14px;text-align:center;}
-
   .kpi .v{font-size:30px;font-weight:800;}.kpi .k{font-size:11px;color:var(--muted);text-transform:uppercase;margin-top:7px;}
-
   .kpi.total .v{color:var(--blue2);}.kpi.present .v{color:var(--green);}.kpi.late .v{color:var(--orange);}.kpi.absent .v{color:var(--red);}.kpi.turns .v{color:var(--blue2);}.kpi.break .v{color:#c99bff;}
-
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}@media(max-width:860px){.grid{grid-template-columns:1fr;}}
-
   .card{background:var(--glass);border:1px solid var(--brd);border-radius:18px;padding:16px;backdrop-filter:blur(12px);box-shadow:0 8px 30px rgba(0,0,0,.35);margin-bottom:12px;}
-
   .card h3{margin:0 0 12px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:flex;align-items:center;gap:8px;}
-
   .dlbtn{margin-left:auto;background:rgba(0,168,225,.14);color:var(--blue2);border:1px solid rgba(0,168,225,.3);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;text-transform:none;letter-spacing:0;}
-
   .dlbtn:active{background:rgba(0,168,225,.3);}
-
   .dlall{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#01151d;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:800;cursor:pointer;width:100%;margin:4px 0 10px;}
-
   .kpi.pct .v{color:#7cffc4;}
-
   table{width:100%;border-collapse:collapse;font-size:13px;}th,td{padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left;}th{color:var(--blue2);font-size:11px;text-transform:uppercase;position:sticky;top:0;background:#0c1a28;}
-
   .scroll{max-height:360px;overflow:auto;border-radius:10px;}
-
   .pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;}
-
   .pill.present{background:rgba(0,212,126,.15);color:#7cffc4;}.pill.late{background:rgba(255,159,28,.16);color:#ffd08a;}.pill.absent{background:rgba(255,77,94,.16);color:#ff9aa4;}.pill.brk{background:rgba(201,155,255,.16);color:#dcc2ff;}.pill.dash{background:var(--glass);color:var(--muted);}
-
   .empty{color:var(--muted);text-align:center;padding:16px;font-size:13px;}
-
   .updated{text-align:center;color:var(--muted);font-size:12px;margin:6px 0 2px;}
-
   .badge{display:inline-block;background:rgba(0,168,225,.14);color:var(--blue2);border:1px solid rgba(0,168,225,.3);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
-
   .batch-hd{display:flex;justify-content:space-between;align-items:center;padding:6px 2px;border-bottom:1px solid rgba(255,255,255,.1);}
-
   .batch-hd .bt{font-weight:800;color:var(--blue2);}
-
   .da-cards{display:none;}
-
   .da-card{background:rgba(0,0,0,.25);border:1px solid var(--brd);border-radius:14px;padding:12px;margin-bottom:10px;}
-
   .da-card .top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
-
   .da-card .nm{font-size:15px;font-weight:800;}.da-card .dsp{font-size:12px;color:var(--muted);margin-top:2px;}
-
   .da-card .turns{font-size:22px;font-weight:800;color:var(--blue2);text-align:right;}.da-card .turns small{display:block;font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:3px;}
-
   .da-card .row2{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
-
   @media(max-width:640px){.da-table-wrap{display:none;}.da-cards{display:block;}.kpi .v{font-size:26px;}}
-
 </style>
-
 </head>
-
 <body>
-
 <div class="head"><div class="title">⚡ DUD3 Rush <b>Live Dashboard</b></div><div class="live">LIVE</div></div>
-
 <div class="wrap">
-
   <div class="filters">
-
     <div class="fld"><label>DSP</label><select id="fDsp" onchange="applyFilters()"><option value="">All DSPs</option></select></div>
-
     <div class="fld"><label>Search DA name</label><input id="fName" placeholder="Type a name..." oninput="applyFilters()"></div>
-
   </div>
-
- 
 
   <div class="kpis">
-
     <div class="kpi total"><div class="v" id="kTotal">0</div><div class="k">Total DAs</div></div>
-
     <div class="kpi present"><div class="v" id="kPresent">0</div><div class="k">Present</div></div>
-
     <div class="kpi late"><div class="v" id="kLate">0</div><div class="k">Late</div></div>
-
     <div class="kpi absent"><div class="v" id="kAbsent">0</div><div class="k">Absent</div></div>
-
     <div class="kpi pct"><div class="v" id="kPct">0%</div><div class="k">Attendance %</div></div>
-
     <div class="kpi turns"><div class="v" id="kTurns">0</div><div class="k">Total Turns</div></div>
-
     <div class="kpi turns"><div class="v" id="kAvg">0</div><div class="k">Avg Turn</div></div>
-
     <div class="kpi break"><div class="v" id="kBreak">0</div><div class="k">On Break</div></div>
-
     <div class="kpi absent"><div class="v" id="kViol">0</div><div class="k">Violators</div></div>
-
   </div>
-
   <div class="updated" id="updated">Connecting…</div>
-
   <button class="dlall" onclick="downloadAllCSV()">⬇ DOWNLOAD FULL DAY DATA (All sections, CSV)</button>
 
- 
-
   <div class="card">
-
     <h3>Waiting List — by Batch <span class="badge" id="waitCount">0</span><button class="dlbtn" onclick="dlWaiting()">⬇ CSV</button></h3>
-
     <input id="fWait" placeholder="Find your name in waiting..." oninput="renderWaiting()" style="margin-bottom:10px;">
-
     <div class="scroll" id="waitBox"></div>
-
   </div>
-
- 
 
   <div class="card">
-
     <h3>DA Details <span class="badge" id="daCount">0</span><button class="dlbtn" onclick="dlDaDetails()">⬇ CSV</button></h3>
-
     <div class="da-table-wrap scroll"><table><thead><tr><th>Name</th><th>DSP</th><th>Attendance</th><th>Turns</th><th>Break</th></tr></thead><tbody id="daBody"></tbody></table></div>
-
     <div class="da-cards scroll" id="daCards"></div>
-
   </div>
-
- 
 
   <div class="grid">
-
     <div class="card"><h3>Average Turns by DSP<button class="dlbtn" onclick="dlTurnsByDsp()">⬇ CSV</button></h3><div class="scroll"><table><thead><tr><th>DSP</th><th>DAs</th><th>Avg</th><th>Max</th></tr></thead><tbody id="dspBody"></tbody></table></div></div>
-
     <div class="card"><h3>On Break<button class="dlbtn" onclick="dlBreaks()">⬇ CSV</button></h3><div class="scroll" id="breakBox"></div></div>
-
     <div class="card"><h3>Low-Turn DAs<button class="dlbtn" onclick="dlLowTurn()">⬇ CSV</button></h3><div class="scroll"><table><thead><tr><th>Name</th><th>DSP</th><th>Turns</th></tr></thead><tbody id="lowBody"></tbody></table></div></div>
-
     <div class="card"><h3>Violators<button class="dlbtn" onclick="dlViolators()">⬇ CSV</button></h3><div class="scroll"><table><thead><tr><th>Name</th><th>DSP</th><th>Reason</th></tr></thead><tbody id="violBody"></tbody></table></div></div>
-
     <div class="card"><h3>In Queue <span class="badge" id="queueCount">0</span><button class="dlbtn" onclick="dlQueue()">⬇ CSV</button></h3><div class="scroll"><table><thead><tr><th>Name</th><th>DSP</th><th>Turn</th></tr></thead><tbody id="queueBody"></tbody></table></div></div>
-
     <div class="card"><h3>Recent Scans<button class="dlbtn" onclick="dlHistory()">⬇ CSV</button></h3><div class="scroll" id="historyBox"></div></div>
-
   </div>
-
 </div>
 
- 
-
 <script type="module">
-
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
 const SUPABASE_URL = "https://othlmijaffqmkufblzvu.supabase.co";
-
 const SUPABASE_KEY = "sb_publishable_cmkties9zH5fp731YbIg0A_RR-seEe_";
-
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY, { realtime:{ params:{ eventsPerSecond: 5 } } });
 
- 
-
 /* Minimal shim: dashboard only needs to read/subscribe the single dashboard_live row */
-
 async function readLive(){ const { data } = await sb.from("dashboard_live").select("data").eq("id","live").maybeSingle(); return data? data.data : null; }
-
 function subscribeLive(cb){
-
   const emit=async()=>{ try{ cb(await readLive()); }catch(e){} };
-
   emit();
-
   sb.channel("dash_live").on("postgres_changes",{event:"*",schema:"public",table:"dashboard_live",filter:"id=eq.live"}, emit).subscribe();
-
   // safety poll every 20s in case a realtime event is missed
-
   setInterval(emit, 20000);
-
 }
-
 const auth={currentUser:{uid:"anon"}};
-
   
 
- 
-
 let ROSTER={}, WAITING=[], STATE={}, VIOLATORS=[], QUEUE=[], HISTORY=[];
-
 const $=id=>document.getElementById(id);
-
 const esc=t=>String(t==null?"":t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-
 const cleanId=s=>String(s||"").toUpperCase().replace(/[^A-Z0-9-]/g,"").trim();
-
 function nowMins(){const d=new Date();return d.getHours()*60+d.getMinutes();}
-
 function parseTime(raw){if(!raw)return -1;let s=String(raw).trim().toUpperCase();const pm=s.includes("PM"),am=s.includes("AM");s=s.replace("AM","").replace("PM","").trim();if(!s.includes(":"))return -1;const p=s.split(":");let h=parseInt(p[0],10),m=parseInt(p[1],10);if(isNaN(h)||isNaN(m))return -1;if(pm&&h<12)h+=12;if(am&&h===12)h=0;return h*60+m;}
-
 function parseRange(raw){if(!raw||String(raw).indexOf("-")<0)return null;const p=String(raw).split("-");const s=parseTime(p[0]),e=parseTime(p[1]);if(s<0||e<0)return null;return{s,e};}
-
 function setT(id,v){const e=$(id);if(e)e.innerText=v;}
-
 function statusPill(s){const l=String(s||"").toLowerCase();if(l.includes("present"))return '<span class="pill present">Present</span>';if(l.includes("late"))return '<span class="pill late">Late</span>';if(l.includes("absent"))return '<span class="pill absent">Absent</span>';return '<span class="pill dash">'+esc(s||"-")+'</span>';}
 
- 
 
- 
-
-onAuthStateChanged(auth,u=>{ if(!u)return; attach(); });
-
- 
+attach();  // Supabase: no auth gate needed — start directly
 
 function applyLive(d){
 
- 
-
     if(!d){ setT("updated","Waiting for scanner to publish data…"); return; }
-
     
-
     // Rebuild globals from the compact snapshot
-
     ROSTER={}; const set={};
-
     (d.roster||[]).forEach(r=>{ const id=cleanId(r.id); ROSTER[id]={daId:id,name:r.n,dsp:r.d,status:r.s||"",waveTime:r.w||"",break1:r.b1||"",break2:r.b2||"",checkInTime:r.ci||""}; const dsp=(r.d||"").trim(); if(dsp)set[dsp]=1; });
-
     WAITING=(d.waiting||[]).map(x=>({daId:x.id,name:x.n,dsp:x.d,batch:x.b,seq:x.q})).sort((a,b)=>(a.seq||0)-(b.seq||0));
-
     STATE={}; (d.state||[]).forEach(x=>{ STATE[cleanId(x.id)]={daId:x.id,name:x.n,dsp:x.d,status:x.s,turn:x.t||0}; });
-
     QUEUE=(d.queue||[]).map(x=>({daId:x.id,name:x.n,dsp:x.d,turn:x.t}));
-
     VIOLATORS=(d.violators||[]).map(x=>({daId:x.id,name:x.n,dsp:x.d,reason:x.r,timeStr:x.tm,comment:x.c}));
-
     HISTORY=(d.recent||[]).map(x=>({daId:x.id,name:x.n,dsp:x.d,scanType:x.ty,status:x.s,timeMs:x.tm}));
-
     // populate DSP filter
-
     const sel=$("fDsp"); if(sel){ const cur=sel.value; sel.innerHTML='<option value="">All DSPs</option>'+Object.keys(set).sort().map(x=>`<option>${esc(x)}</option>`).join(""); sel.value=cur; }
-
     renderWaiting(); render();
-
   
-
 }
-
 function attach(){ subscribeLive(applyLive); }
 
- 
-
- 
 
 function turnsFor(id){ const st=STATE[cleanId(id)]; return st?(Number(st.turn)||0):0; }
-
 function breakStatus(r){ const nm=nowMins(); for(const [lbl,rg] of [["Break 1",r.break1],["Break 2",r.break2]]){const w=parseRange(rg); if(w&&nm>=w.s&&nm<=w.e)return "On "+lbl+" ("+(w.e-nm)+"m)";} if(parseRange(r.break1)||parseRange(r.break2))return "Break set"; return "-"; }
 
- 
-
 window.applyFilters=render;
-
 function render(){
-
   const dsp=($("fDsp")?$("fDsp").value:"").toLowerCase();
-
   const rosterArr=Object.entries(ROSTER).map(([id,r])=>Object.assign({daId:id},r)).filter(r=>!dsp||String(r.dsp||"").toLowerCase().includes(dsp));
 
- 
-
   let P=0,L=0,A=0; rosterArr.forEach(r=>{const s=String(r.status||"").toLowerCase();if(s.includes("present"))P++;else if(s.includes("late"))L++;else if(s.includes("absent"))A++;});
-
   setT("kTotal",rosterArr.length); setT("kPresent",P); setT("kLate",L); setT("kAbsent",A);
-
   // Attendance % = (Present + Late) / Total  (DAs who showed up)
-
   const marked=P+L; const pct=rosterArr.length?Math.round((marked/rosterArr.length)*100):0;
-
   setT("kPct", pct+"%");
 
- 
-
   // turns
-
   let totalT=0, tCount=0; const byDsp={};
-
   rosterArr.forEach(r=>{ const t=turnsFor(r.daId); totalT+=t; tCount++; const d=r.dsp||"Unknown"; if(!byDsp[d])byDsp[d]={n:0,sum:0,max:0}; byDsp[d].n++; byDsp[d].sum+=t; byDsp[d].max=Math.max(byDsp[d].max,t); });
-
   const avg=tCount?(totalT/tCount):0;
-
   setT("kTurns",totalT); setT("kAvg",avg.toFixed(1));
 
- 
-
   // breaks — show Upcoming / On Break / Completed (time-based, from J/K)
-
   const nm=nowMins(); const brk=[]; let onBreakNow=0;
-
   function f2(m){const h=Math.floor(m/60),mm=m%60;return (h<10?"0"+h:h)+":"+(mm<10?"0"+mm:mm);}
-
   rosterArr.forEach(r=>{
-
     for(const [lbl,rg] of [["Break 1",r.break1],["Break 2",r.break2]]){
-
       const w=parseRange(rg); if(!w) continue;
-
       let chip, order;
-
       if(nm>=w.s && nm<=w.e){ chip='<span class="pill brk" style="background:rgba(0,212,126,.18);color:#7cffc4;">🟢 On break · '+(w.e-nm)+'m left</span>'; order=0; onBreakNow++; }
-
       else if(nm<w.s){ chip='<span class="pill dash">⏳ '+f2(w.s)+'–'+f2(w.e)+'</span>'; order=1; }
-
       else { chip='<span class="pill dash" style="color:#7cffc4;">✔ Break Completed</span>'; order=2; }
-
       brk.push({name:r.name,dsp:r.dsp,lbl,chip,order,rng:f2(w.s)+"–"+f2(w.e)});
-
     }
-
   });
-
   brk.sort((a,b)=>a.order-b.order || String(a.name).localeCompare(String(b.name)));
-
   setT("kBreak",onBreakNow);
-
   $("breakBox").innerHTML= (brk.length?('<div style="font-size:11px;color:var(--muted);margin-bottom:6px;">'+onBreakNow+' on break now · '+brk.length+' break slots</div>'):'') +
-
     (brk.map(x=>`<div style="padding:10px 4px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;align-items:center;"><div><div style="font-weight:700;">${esc(x.name)}</div><div style="font-size:12px;color:var(--muted);">${esc(x.dsp)} | ${esc(x.lbl)} · ${esc(x.rng)}</div></div><div>${x.chip}</div></div>`).join("")||'<div class="empty">No breaks scheduled</div>');
 
- 
-
   // violators
-
   const vlist=VIOLATORS.filter(v=>!dsp||String(v.dsp||"").toLowerCase().includes(dsp));
-
   setT("kViol",vlist.length);
-
   $("violBody").innerHTML=vlist.slice(0,100).map(v=>`<tr><td>${esc(v.name)}</td><td>${esc(v.dsp)}</td><td><span class="pill absent">${esc(v.reason)}</span></td></tr>`).join("")||'<tr><td colspan="3" class="empty">None</td></tr>';
 
- 
-
   // Queue (filtered by DSP)
-
   const qlist=(QUEUE||[]).filter(q=>!dsp||String(q.dsp||"").toLowerCase().includes(dsp)).sort((a,b)=>(a.turn||0)-(b.turn||0));
-
   setT("queueCount",qlist.length);
-
   $("queueBody").innerHTML=qlist.map(q=>`<tr><td>${esc(q.name)}</td><td>${esc(q.dsp)}</td><td style="font-weight:800;color:var(--blue2);">${esc(q.turn)}</td></tr>`).join("")||'<tr><td colspan="3" class="empty">No DAs in queue</td></tr>';
 
- 
-
   // Recent scans (last 15, filtered by DSP)
-
   const hlist=(HISTORY||[]).filter(h=>!dsp||String(h.dsp||"").toLowerCase().includes(dsp)).slice(0,15);
-
   $("historyBox").innerHTML=hlist.map(h=>`<div style="padding:9px 4px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;"><div><div style="font-weight:700;">${esc(h.name||h.daId)}</div><div style="font-size:12px;color:var(--muted);">${esc(h.dsp)} · ${esc(h.scanType)} · ${esc(h.status)}</div></div><div style="font-size:11px;color:var(--muted);">${h.timeMs?new Date(h.timeMs).toLocaleTimeString():""}</div></div>`).join("")||'<div class="empty">No recent scans</div>';
 
- 
-
   // by DSP
-
   $("dspBody").innerHTML=Object.keys(byDsp).sort().map(k=>{const b=byDsp[k];return `<tr><td>${esc(k)}</td><td>${b.n}</td><td>${(b.sum/b.n).toFixed(1)}</td><td>${b.max}</td></tr>`;}).join("")||'<tr><td colspan="4" class="empty">No data</td></tr>';
 
- 
-
   // low turns
-
   const low=rosterArr.map(r=>({name:r.name,dsp:r.dsp,turn:turnsFor(r.daId)})).filter(x=>x.turn<avg).sort((a,b)=>a.turn-b.turn).slice(0,100);
-
   $("lowBody").innerHTML=low.map(x=>`<tr><td>${esc(x.name)}</td><td>${esc(x.dsp)}</td><td>${x.turn}</td></tr>`).join("")||'<tr><td colspan="3" class="empty">None</td></tr>';
 
- 
-
   // DA details
-
   const q=($("fName")?$("fName").value:"").toLowerCase().trim(); const words=q.split(/\s+/).filter(Boolean);
-
   const details=rosterArr.filter(r=>{if(!words.length)return true;const n=String(r.name||"").toLowerCase();return words.every(w=>n.includes(w));});
-
   setT("daCount",details.length);
-
   $("daBody").innerHTML=details.map(r=>`<tr><td style="font-weight:700;">${esc(r.name)}</td><td>${esc(r.dsp)}</td><td>${statusPill(r.status)}</td><td style="font-weight:800;color:var(--blue2);">${turnsFor(r.daId)}</td><td>${esc(breakStatus(r))}</td></tr>`).join("")||'<tr><td colspan="5" class="empty">No DAs</td></tr>';
-
   $("daCards").innerHTML=details.map(r=>`<div class="da-card"><div class="top"><div><div class="nm">${esc(r.name)}</div><div class="dsp">${esc(r.dsp)}</div></div><div class="turns">${turnsFor(r.daId)}<small>Turns</small></div></div><div class="row2">${statusPill(r.status)} <span class="pill dash">${esc(breakStatus(r))}</span></div></div>`).join("")||'<div class="empty">No DAs</div>';
 
- 
-
   setT("updated","Live · updated "+new Date().toLocaleTimeString());
-
 }
-
- 
 
 window.renderWaiting=function(){
-
   const q=($("fWait")?$("fWait").value:"").toLowerCase().trim(); const words=q.split(/\s+/).filter(Boolean);
-
   const list=WAITING.filter(x=>{if(!words.length)return true;const n=String(x.name||"").toLowerCase();return words.every(w=>n.includes(w));});
-
   setT("waitCount",list.length);
-
   const batches={}; list.forEach(x=>{let b=Number(x.batch)||1;(batches[b]=batches[b]||[]).push(x);});
-
   const nums=Object.keys(batches).map(Number).sort((a,b)=>a-b);
-
   let html="";
-
   nums.forEach(bn=>{const m=batches[bn];
-
     html+=`<div style="margin-bottom:12px;"><div class="batch-hd"><span class="bt">BATCH ${bn}</span><span style="font-size:11px;color:var(--muted);">${m.length} DA${m.length===1?"":"s"}</span></div>`;
-
     m.forEach(x=>html+=`<div style="padding:9px 4px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;justify-content:space-between;"><div><div style="font-weight:700;">${esc(x.name)}</div><div style="font-size:12px;color:var(--muted);">${esc(x.daId)} | ${esc(x.dsp)}</div></div><div style="font-weight:800;color:var(--blue2);">#${esc(x.seq)}</div></div>`);
-
     html+=`</div>`;
-
   });
-
   $("waitBox").innerHTML=html||'<div class="empty">No DAs waiting</div>';
-
 };
-
- 
 
 /* ================= CSV EXPORT ================= */
-
 function csvCell(v){ v=String(v==null?"":v); if(/[",\n]/.test(v)){ v='"'+v.replace(/"/g,'""')+'"'; } return v; }
-
 function toCSV(headers, rows){
-
   const lines=[headers.map(csvCell).join(",")];
-
   rows.forEach(r=>lines.push(r.map(csvCell).join(",")));
-
   return lines.join("\n");
-
 }
-
 function downloadCSV(filename, csv){
-
   const stamp=new Date().toISOString().slice(0,10);
-
   const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"});
-
   const url=URL.createObjectURL(blob);
-
   const a=document.createElement("a");
-
   a.href=url; a.download=filename.replace("{date}",stamp); document.body.appendChild(a); a.click();
-
   setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 500);
-
 }
-
 function dspFiltered(arr, getDsp){ const dsp=($("fDsp")?$("fDsp").value:"").toLowerCase(); return arr.filter(x=>!dsp||String(getDsp(x)||"").toLowerCase().includes(dsp)); }
 
- 
-
 // Build row-arrays for each section (uses current filters)
-
 function rowsWaiting(){ const l=dspFiltered(WAITING,x=>x.dsp).slice().sort((a,b)=>(a.batch-b.batch)||(a.seq-b.seq)); return l.map(x=>[x.batch, x.seq, x.daId, x.name, x.dsp]); }
-
 function rowsDaDetails(){ const arr=Object.entries(ROSTER).map(([id,r])=>Object.assign({daId:id},r)); const l=dspFiltered(arr,x=>x.dsp); return l.map(r=>[r.daId, r.name, r.dsp, r.status||"", turnsFor(r.daId), (r.checkInTime||""), breakStatus(r)]); }
-
 function rowsTurnsByDsp(){ const arr=Object.entries(ROSTER).map(([id,r])=>Object.assign({daId:id},r)); const l=dspFiltered(arr,x=>x.dsp); const by={}; l.forEach(r=>{const d=r.dsp||"Unknown"; const t=turnsFor(r.daId); if(!by[d])by[d]={n:0,sum:0,max:0,min:999999}; by[d].n++; by[d].sum+=t; by[d].max=Math.max(by[d].max,t); by[d].min=Math.min(by[d].min,t);}); return Object.keys(by).sort().map(k=>[k, by[k].n, (by[k].sum/by[k].n).toFixed(2), by[k].min===999999?0:by[k].min, by[k].max]); }
-
 function rowsBreaks(){ const nm=nowMins(); const arr=Object.entries(ROSTER).map(([id,r])=>Object.assign({daId:id},r)); const l=dspFiltered(arr,x=>x.dsp); const out=[]; l.forEach(r=>{ for(const [lbl,rg] of [["Break 1",r.break1],["Break 2",r.break2]]){ const w=parseRange(rg); if(!w)continue; let st; if(nm>=w.s&&nm<=w.e)st="On break ("+(w.e-nm)+"m left)"; else if(nm<w.s)st="Upcoming"; else st="Completed"; out.push([r.daId, r.name, r.dsp, lbl, rg, st]); } }); return out; }
-
 function rowsLowTurn(){ const arr=Object.entries(ROSTER).map(([id,r])=>Object.assign({daId:id},r)); const l=dspFiltered(arr,x=>x.dsp); let tot=0,c=0; l.forEach(r=>{tot+=turnsFor(r.daId);c++;}); const avg=c?tot/c:0; return l.map(r=>({r,t:turnsFor(r.daId)})).filter(o=>o.t<avg).sort((a,b)=>a.t-b.t).map(o=>[o.r.daId,o.r.name,o.r.dsp,o.t]); }
-
 function rowsViolators(){ const l=dspFiltered(VIOLATORS,x=>x.dsp); return l.map(v=>[v.daId, v.name, v.dsp, v.reason, (v.timeStr||""), (v.comment||"")]); }
-
 function rowsQueue(){ const l=dspFiltered(QUEUE,x=>x.dsp).slice().sort((a,b)=>(a.turn||0)-(b.turn||0)); return l.map(q=>[q.daId, q.name, q.dsp, q.turn]); }
-
 function rowsHistory(){ const l=dspFiltered(HISTORY,x=>x.dsp); return l.map(h=>[(h.timeMs?new Date(h.timeMs).toLocaleString():""), h.daId, h.name, h.dsp, h.scanType, h.status]); }
 
- 
-
 window.dlWaiting=()=>downloadCSV("DUD3_Waiting_{date}.csv", toCSV(["Batch","Seq","DA ID","Name","DSP"], rowsWaiting()));
-
 window.dlDaDetails=()=>downloadCSV("DUD3_DA_Details_{date}.csv", toCSV(["DA ID","Name","DSP","Attendance","Turns","Check-in","Break Status"], rowsDaDetails()));
-
 window.dlTurnsByDsp=()=>downloadCSV("DUD3_Turns_by_DSP_{date}.csv", toCSV(["DSP","DAs","Avg Turn","Min","Max"], rowsTurnsByDsp()));
-
 window.dlBreaks=()=>downloadCSV("DUD3_Breaks_{date}.csv", toCSV(["DA ID","Name","DSP","Break","Window","Status"], rowsBreaks()));
-
 window.dlLowTurn=()=>downloadCSV("DUD3_Low_Turn_{date}.csv", toCSV(["DA ID","Name","DSP","Turns"], rowsLowTurn()));
-
 window.dlViolators=()=>downloadCSV("DUD3_Violators_{date}.csv", toCSV(["DA ID","Name","DSP","Reason","Time","Comment"], rowsViolators()));
-
 window.dlQueue=()=>downloadCSV("DUD3_Queue_{date}.csv", toCSV(["DA ID","Name","DSP","Turn"], rowsQueue()));
-
 window.dlHistory=()=>downloadCSV("DUD3_Recent_Scans_{date}.csv", toCSV(["Time","DA ID","Name","DSP","Scan Type","Status"], rowsHistory()));
 
- 
-
 // Full-day export: all sections in ONE CSV, separated by section headers
-
 window.downloadAllCSV=()=>{
-
   const stamp=new Date().toLocaleString();
-
   const parts=[];
-
   parts.push("DUD3 RUSH PRO — FULL DAY EXPORT,"+stamp);
-
   const P=document.getElementById("kPresent").innerText, L=document.getElementById("kLate").innerText, A=document.getElementById("kAbsent").innerText, T=document.getElementById("kTotal").innerText, PCT=document.getElementById("kPct").innerText;
-
   parts.push("");
-
   parts.push("SUMMARY");
-
   parts.push(toCSV(["Total","Present","Late","Absent","Attendance %"], [[T,P,L,A,PCT]]));
-
   parts.push("");
-
   parts.push("WAITING LIST (BY BATCH)");
-
   parts.push(toCSV(["Batch","Seq","DA ID","Name","DSP"], rowsWaiting()));
-
   parts.push("");
-
   parts.push("DA DETAILS");
-
   parts.push(toCSV(["DA ID","Name","DSP","Attendance","Turns","Check-in","Break Status"], rowsDaDetails()));
-
   parts.push("");
-
   parts.push("TURNS BY DSP");
-
   parts.push(toCSV(["DSP","DAs","Avg Turn","Min","Max"], rowsTurnsByDsp()));
-
   parts.push("");
-
   parts.push("BREAKS");
-
   parts.push(toCSV(["DA ID","Name","DSP","Break","Window","Status"], rowsBreaks()));
-
   parts.push("");
-
   parts.push("LOW-TURN DAs");
-
   parts.push(toCSV(["DA ID","Name","DSP","Turns"], rowsLowTurn()));
-
   parts.push("");
-
   parts.push("VIOLATORS");
-
   parts.push(toCSV(["DA ID","Name","DSP","Reason","Time","Comment"], rowsViolators()));
-
   parts.push("");
-
   parts.push("QUEUE");
-
   parts.push(toCSV(["DA ID","Name","DSP","Turn"], rowsQueue()));
-
   parts.push("");
-
   parts.push("RECENT SCANS");
-
   parts.push(toCSV(["Time","DA ID","Name","DSP","Scan Type","Status"], rowsHistory()));
-
   downloadCSV("DUD3_FULL_DAY_{date}.csv", parts.join("\n"));
-
 };
 
- 
-
 // refresh time-sensitive break math every 30s
-
 setInterval(()=>{ if(auth.currentUser) render(); }, 30000);
 
- 
-
 </script>
-
 </body>
-
 </html>
