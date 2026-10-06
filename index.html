@@ -2,991 +2,309 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="DUD3 Rush">
+<meta name="apple-mobile-web-app-title" content="DUD3 Live">
 <meta name="theme-color" content="#0A1622">
-<title>⚡ DUD3 Rush PRO</title>
-<script src="https://unpkg.com/html5-qrcode"></script>
+<title>DUD3 Rush — Live DA Dashboard</title>
 <style>
-  :root{
-    --blue:#00A8E1;--blue2:#38C6FF;--navy:#0A1622;--glass:rgba(255,255,255,.06);
-    --brd:rgba(255,255,255,.12);--txt:#eaf2f9;--muted:#8aa3ba;--green:#00d47e;--orange:#ff9f1c;--red:#ff4d5e;
-  }
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  body{margin:0;padding-bottom:calc(96px + env(safe-area-inset-bottom));font-family:'Segoe UI',system-ui,Arial,sans-serif;color:var(--txt);
-    background:radial-gradient(1200px 600px at 50% -10%,rgba(0,168,225,.18),transparent 60%),linear-gradient(180deg,#0A1622,#071019);
-    background-attachment:fixed;min-height:100vh;}
-  .head{position:sticky;top:0;z-index:50;display:flex;justify-content:space-between;align-items:center;padding:14px 18px;
-    background:rgba(10,22,34,.8);backdrop-filter:blur(14px);border-bottom:1px solid var(--brd);}
-  .logo{font-size:18px;font-weight:800;}.logo b{color:var(--blue);}
-  .conn{font-size:11px;font-weight:700;display:flex;align-items:center;gap:6px;color:var(--muted);}
-  .conn::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--red);}
-  .conn.ok::before{background:var(--green);box-shadow:0 0 8px var(--green);}
-  .chips{display:flex;gap:8px;padding:12px 14px 2px;flex-wrap:wrap;}
-  .chip{flex:1;min-width:70px;background:var(--glass);border:1px solid var(--brd);border-radius:14px;padding:10px 8px;text-align:center;}
-  .chip .v{font-size:20px;font-weight:800;}.chip .k{font-size:10px;color:var(--muted);text-transform:uppercase;margin-top:5px;}
-  .chip.p .v{color:var(--green);}.chip.l .v{color:var(--orange);}.chip.a .v{color:var(--red);}.chip.w .v{color:var(--blue2);}
-  .card{margin:12px 14px;padding:16px;border-radius:18px;background:var(--glass);border:1px solid var(--brd);backdrop-filter:blur(12px);box-shadow:0 8px 30px rgba(0,0,0,.35);}
-  .card-title{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;}
-  select,input{width:100%;padding:14px;border-radius:12px;font-size:16px;background:rgba(0,0,0,.35);color:#fff;border:1px solid var(--brd);outline:none;}
-  select:focus,input:focus{border-color:var(--blue);}
-  .btn{width:100%;border:none;padding:15px;border-radius:14px;margin-top:12px;font-size:15px;font-weight:800;cursor:pointer;
-    background:linear-gradient(135deg,var(--blue),var(--blue2));color:#01151d;box-shadow:0 6px 18px rgba(0,168,225,.35);transition:.15s;}
-  .btn:active{transform:translateY(1px) scale(.99);}
-  .btn-w{background:var(--glass);color:#fff;border:1px solid var(--brd);box-shadow:none;}
-  .btn-x{background:rgba(255,77,94,.12);color:#ffc2c8;border:1px solid rgba(255,77,94,.5);box-shadow:none;}
-  .btn-batch{background:linear-gradient(135deg,#0077A8,#00A8E1);color:#fff;}
-  .btn-del{background:rgba(255,77,94,.12);color:#ffb0b8;border:1px solid rgba(255,77,94,.5);box-shadow:none;}
-  .cam-wrap{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--brd);background:#000;min-height:210px;max-width:320px;margin:0 auto;}
-  .cam-v{width:100%;max-width:320px;margin:0 auto;}.cam-v video{border-radius:14px;}
-  .scanline{position:absolute;left:8%;right:8%;height:2px;top:12%;background:linear-gradient(90deg,transparent,var(--blue2),transparent);
-    box-shadow:0 0 12px 2px rgba(56,198,255,.7);animation:scan 2.1s ease-in-out infinite;display:none;}
-  .cam-wrap.live .scanline{display:block;}@keyframes scan{0%{top:12%}50%{top:80%}100%{top:12%}}
-  .item{padding:12px 4px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;justify-content:space-between;align-items:center;gap:10px;}
-  .da-name{font-size:15px;font-weight:700;}.da-meta{font-size:12px;color:var(--muted);margin-top:3px;}
-  .empty{color:var(--muted);text-align:center;padding:18px;font-size:14px;}
-  .s-res{max-height:200px;overflow-y:auto;margin-top:8px;border:1px solid var(--brd);border-radius:12px;display:none;background:rgba(0,0,0,.3);}
-  .s-row{padding:13px;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer;}
-  .queue-pill{display:inline-flex;align-items:center;gap:6px;margin-top:12px;padding:8px 14px;border-radius:30px;background:rgba(0,168,225,.12);color:var(--blue2);font-size:12px;font-weight:700;border:1px solid rgba(0,168,225,.3);}
-  .view{display:none;animation:fade .25s ease;}.view.active{display:block;}@keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
-  .batch-block{border:1px solid var(--brd);border-radius:16px;padding:12px;margin-top:14px;background:rgba(0,0,0,.22);}
-  .batch-head{display:flex;justify-content:space-between;align-items:center;padding-bottom:10px;margin-bottom:4px;border-bottom:1px solid rgba(255,255,255,.08);}
-  .batch-title{font-weight:800;font-size:15px;color:var(--blue2);}.batch-count{font-size:12px;font-weight:800;color:var(--muted);background:var(--glass);padding:5px 12px;border-radius:30px;}
-  .batch-count.full{color:#01201a;background:var(--green);}
-  .rm-btn{background:rgba(255,77,94,.12);color:#ff9aa4;border:1px solid rgba(255,77,94,.5);border-radius:10px;width:38px;height:38px;font-size:16px;font-weight:800;cursor:pointer;}
-  .vio-reason{display:inline-block;margin-top:5px;padding:3px 10px;border-radius:20px;background:rgba(255,77,94,.14);color:#ff9aa4;font-size:11px;font-weight:700;}
-  .setrow{display:flex;justify-content:space-between;align-items:center;padding:12px 2px;border-bottom:1px solid rgba(255,255,255,.07);}
-  .setrow .lbl{font-size:14px;font-weight:600;}.setrow .sub{font-size:11px;color:var(--muted);margin-top:2px;}
-  .toggle{width:50px;height:28px;border-radius:20px;background:#33465a;position:relative;cursor:pointer;transition:.2s;flex:0 0 auto;}
-  .toggle.on{background:var(--blue);}.toggle::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s;}.toggle.on::after{left:25px;}
-  .numfld{width:74px;padding:8px;text-align:center;border-radius:10px;background:rgba(0,0,0,.35);color:#fff;border:1px solid var(--brd);font-size:15px;font-weight:700;}
-  #notify{position:fixed;top:-140px;left:12px;right:12px;padding:16px;border-radius:14px;z-index:200;transition:top .32s cubic-bezier(.2,.8,.2,1);font-weight:800;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.4);}
-  #notify.show{top:14px;}#notify .nf-time{font-size:11px;opacity:.8;font-weight:600;margin-top:4px;}
-  .green{background:linear-gradient(135deg,#00d47e,#00b368);color:#012;}.red{background:linear-gradient(135deg,#ff4d5e,#e03146);color:#fff;}
-  .orange{background:linear-gradient(135deg,#ff9f1c,#ff8400);color:#201400;}.blue{background:linear-gradient(135deg,#00A8E1,#38C6FF);color:#01151d;}
-  .nav{position:fixed;bottom:0;left:0;width:100%;height:calc(74px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);z-index:100;display:flex;background:rgba(10,22,34,.85);backdrop-filter:blur(16px);border-top:1px solid var(--brd);padding:6px 6px 10px;}
-  .tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--muted);font-size:10px;font-weight:600;border-radius:14px;}
-  .tab .tab-ic{font-size:20px;}.tab.act{color:var(--blue);background:rgba(0,168,225,.10);}
+  :root{--blue:#00A8E1;--blue2:#38C6FF;--glass:rgba(255,255,255,.06);--brd:rgba(255,255,255,.12);--txt:#eaf2f9;--muted:#8aa3ba;--green:#00d47e;--orange:#ff9f1c;--red:#ff4d5e;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Segoe UI',system-ui,Arial,sans-serif;color:var(--txt);background:radial-gradient(1200px 600px at 50% -10%,rgba(0,168,225,.18),transparent 60%),linear-gradient(180deg,#0A1622,#071019);background-attachment:fixed;min-height:100vh;padding-bottom:calc(40px + env(safe-area-inset-bottom));}
+  .head{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:rgba(10,22,34,.8);backdrop-filter:blur(14px);border-bottom:1px solid var(--brd);}
+  .title{font-size:18px;font-weight:800;}.title b{color:var(--blue);}
+  .live{font-size:12px;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:7px;}
+  .live::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 1.6s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .wrap{max-width:1200px;margin:0 auto;padding:0 12px;}
+  .filters{display:flex;gap:10px;flex-wrap:wrap;padding:14px 0 4px;}
+  .fld{flex:1;min-width:150px;}.fld label{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;margin:0 0 5px 2px;}
+  select,input{width:100%;padding:12px;border-radius:12px;font-size:15px;background:rgba(0,0,0,.35);color:#fff;border:1px solid var(--brd);outline:none;}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0;}
+  @media(max-width:640px){.kpis{grid-template-columns:repeat(2,1fr);}}
+  .kpi{background:var(--glass);border:1px solid var(--brd);border-radius:16px;padding:14px;text-align:center;}
+  .kpi .v{font-size:30px;font-weight:800;}.kpi .k{font-size:11px;color:var(--muted);text-transform:uppercase;margin-top:7px;}
+  .kpi.total .v{color:var(--blue2);}.kpi.present .v{color:var(--green);}.kpi.late .v{color:var(--orange);}.kpi.absent .v{color:var(--red);}.kpi.turns .v{color:var(--blue2);}.kpi.break .v{color:#c99bff;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}@media(max-width:860px){.grid{grid-template-columns:1fr;}}
+  .card{background:var(--glass);border:1px solid var(--brd);border-radius:18px;padding:16px;backdrop-filter:blur(12px);box-shadow:0 8px 30px rgba(0,0,0,.35);margin-bottom:12px;}
+  .card h3{margin:0 0 12px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:flex;align-items:center;gap:8px;}
+  .dlbtn{margin-left:auto;background:rgba(0,168,225,.14);color:var(--blue2);border:1px solid rgba(0,168,225,.3);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;text-transform:none;letter-spacing:0;}
+  .dlbtn:active{background:rgba(0,168,225,.3);}
+  .dlall{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#01151d;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:800;cursor:pointer;width:100%;margin:4px 0 10px;}
+  .kpi.pct .v{color:#7cffc4;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}th,td{padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left;}th{color:var(--blue2);font-size:11px;text-transform:uppercase;position:sticky;top:0;background:#0c1a28;}
+  .scroll{max-height:360px;overflow:auto;border-radius:10px;}
+  .pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;}
+  .pill.present{background:rgba(0,212,126,.15);color:#7cffc4;}.pill.late{background:rgba(255,159,28,.16);color:#ffd08a;}.pill.absent{background:rgba(255,77,94,.16);color:#ff9aa4;}.pill.brk{background:rgba(201,155,255,.16);color:#dcc2ff;}.pill.dash{background:var(--glass);color:var(--muted);}
+  .empty{color:var(--muted);text-align:center;padding:16px;font-size:13px;}
+  .updated{text-align:center;color:var(--muted);font-size:12px;margin:6px 0 2px;}
+  .badge{display:inline-block;background:rgba(0,168,225,.14);color:var(--blue2);border:1px solid rgba(0,168,225,.3);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+  .batch-hd{display:flex;justify-content:space-between;align-items:center;padding:6px 2px;border-bottom:1px solid rgba(255,255,255,.1);}
+  .batch-hd .bt{font-weight:800;color:var(--blue2);}
+  .da-cards{display:none;}
+  .da-card{background:rgba(0,0,0,.25);border:1px solid var(--brd);border-radius:14px;padding:12px;margin-bottom:10px;}
+  .da-card .top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+  .da-card .nm{font-size:15px;font-weight:800;}.da-card .dsp{font-size:12px;color:var(--muted);margin-top:2px;}
+  .da-card .turns{font-size:22px;font-weight:800;color:var(--blue2);text-align:right;}.da-card .turns small{display:block;font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:3px;}
+  .da-card .row2{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  @media(max-width:640px){.da-table-wrap{display:none;}.da-cards{display:block;}.kpi .v{font-size:26px;}}
 </style>
 </head>
 <body>
-
-<div class="head">
-  <div class="logo">⚡ DUD3 <b>Rush PRO</b></div>
-  <div style="display:flex;align-items:center;gap:10px;">
-    <button onclick="refreshNow()" style="background:rgba(0,168,225,.14);color:var(--blue2);border:1px solid rgba(0,168,225,.3);border-radius:10px;padding:7px 12px;font-size:13px;font-weight:700;cursor:pointer;">↻ Refresh</button>
-    <div class="conn" id="conn">Connecting…</div>
+<div class="head"><div class="title">⚡ DUD3 Rush <b>Live Dashboard</b></div><div class="live">LIVE</div></div>
+<div class="wrap">
+  <div class="filters">
+    <div class="fld"><label>DSP</label><select id="fDsp" onchange="applyFilters()"><option value="">All DSPs</option></select></div>
+    <div class="fld"><label>Search DA name</label><input id="fName" placeholder="Type a name..." oninput="applyFilters()"></div>
   </div>
-</div>
 
-<div id="notify"></div>
-
-<div class="chips">
-  <div class="chip p"><div class="v" id="chipPresent">0</div><div class="k">Present</div></div>
-  <div class="chip l"><div class="v" id="chipLate">0</div><div class="k">Late</div></div>
-  <div class="chip a"><div class="v" id="chipAbsent">0</div><div class="k">Absent</div></div>
-  <div class="chip w"><div class="v" id="chipWaiting">0</div><div class="k">Waiting</div></div>
-</div>
-
-<!-- ATTENDANCE -->
-<div id="t1" class="view active">
-  <div class="card">
-    <div class="card-title">Attendance Scanner</div>
-    <div class="cam-wrap" id="wrap-att"><div id="c-att" class="cam-v"></div><div class="scanline"></div></div>
-    <button class="btn" id="b-att" onclick="startScanner('att')">📷 SCAN ATTENDANCE</button>
-    <button class="btn btn-x" id="x-att" onclick="stopScanner('att')" style="display:none;">■ STOP CAMERA</button>
-    <input type="text" id="sch" placeholder="Search DA name..." oninput="searchDA()" style="margin-top:12px;">
-    <div id="sres" class="s-res"></div>
-    <div class="queue-pill" id="scanStatus">Live · instant</div>
+  <div class="kpis">
+    <div class="kpi total"><div class="v" id="kTotal">0</div><div class="k">Total DAs</div></div>
+    <div class="kpi present"><div class="v" id="kPresent">0</div><div class="k">Present</div></div>
+    <div class="kpi late"><div class="v" id="kLate">0</div><div class="k">Late</div></div>
+    <div class="kpi absent"><div class="v" id="kAbsent">0</div><div class="k">Absent</div></div>
+    <div class="kpi pct"><div class="v" id="kPct">0%</div><div class="k">Attendance %</div></div>
+    <div class="kpi turns"><div class="v" id="kTurns">0</div><div class="k">Total Turns</div></div>
+    <div class="kpi turns"><div class="v" id="kAvg">0</div><div class="k">Avg Turn</div></div>
+    <div class="kpi break"><div class="v" id="kBreak">0</div><div class="k">On Break</div></div>
+    <div class="kpi absent"><div class="v" id="kViol">0</div><div class="k">Violators</div></div>
   </div>
-  <div class="card"><div class="card-title">DSP Stats</div><div id="dspStats" class="empty">Loading…</div></div>
-</div>
+  <div class="updated" id="updated">Connecting…</div>
+  <button class="dlall" onclick="downloadAllCSV()">⬇ DOWNLOAD FULL DAY DATA (All sections, CSV)</button>
 
-<!-- WAITING -->
-<div id="t2" class="view">
   <div class="card">
-    <div class="card-title">Waiting Scanner</div>
-    <div class="cam-wrap" id="wrap-wait"><div id="c-wait" class="cam-v"></div><div class="scanline"></div></div>
-    <button class="btn" id="b-wait" onclick="startScanner('wait')">📷 SCAN WAITING</button>
-    <button class="btn btn-x" id="x-wait" onclick="stopScanner('wait')" style="display:none;">■ STOP CAMERA</button>
-  </div>
-  <div class="card">
-    <div class="card-title">Waiting List — Batches of 25</div>
-    <button class="btn" onclick="sendSelected()">✈ SEND SELECTED</button>
-    <div id="waitingList" class="empty">Loading…</div>
-  </div>
-</div>
-
-<!-- ENTRY -->
-<div id="t3" class="view">
-  <div class="card">
-    <div class="card-title">Entry Scanner</div>
-    <div class="cam-wrap" id="wrap-entry"><div id="c-entry" class="cam-v"></div><div class="scanline"></div></div>
-    <button class="btn" id="b-entry" onclick="startScanner('entry')">📷 SCAN ENTRY</button>
-    <button class="btn btn-x" id="x-entry" onclick="stopScanner('entry')" style="display:none;">■ STOP CAMERA</button>
-  </div>
-  <div class="card"><div class="card-title">Pending Entry</div><div id="pendingList" class="empty">—</div></div>
-  <div class="card"><div class="card-title">Queue</div><div id="queueList" class="empty">—</div></div>
-</div>
-
-<!-- BREAK -->
-<div id="t4" class="view">
-  <div class="card"><div class="card-title">Active Breaks</div><div id="breakList" class="empty">—</div></div>
-</div>
-
-<!-- VIOLATORS -->
-<div id="t6" class="view">
-  <div class="card"><div class="card-title">Violators</div>
-    <input type="text" id="violSearch" placeholder="Search DA name..." oninput="renderViolators()" style="margin-bottom:10px;">
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
-      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);"><input type="checkbox" id="violSelectAll" onchange="violToggleAll(this)" style="width:18px;height:18px;"> Select all</label>
-      <button class="btn btn-del" style="margin:0;width:auto;padding:8px 14px;font-size:13px;" onclick="clearSelectedViolators()">🗑 CLEAR SELECTED</button>
-    </div>
-    <div id="violatorList" class="empty">—</div></div>
-</div>
-
-<!-- SETTINGS -->
-<div id="t5" class="view">
-  <div class="card">
-    <div class="card-title">App Preferences</div>
-    <div class="setrow"><div><div class="lbl">Scan sounds</div><div class="sub">Beep on scan result</div></div><div class="toggle" id="tgSound" onclick="toggleSet('sound',this)"></div></div>
-    <div class="setrow"><div><div class="lbl">Vibration</div><div class="sub">Haptic buzz on scan</div></div><div class="toggle" id="tgVibrate" onclick="toggleSet('vibrate',this)"></div></div>
-    <div class="setrow"><div><div class="lbl">Batch size</div><div class="sub">DAs per batch</div></div><input class="numfld" id="stBatch" type="number" min="1" max="100"></div>
-    <div class="setrow"><div><div class="lbl">Early scan block (min)</div></div><input class="numfld" id="stEarly" type="number" min="0" max="120"></div>
-    <div class="setrow"><div><div class="lbl">Late after (min)</div></div><input class="numfld" id="stLate" type="number" min="0" max="120"></div>
-    <div class="setrow"><div><div class="lbl">Pending timeout (min)</div></div><input class="numfld" id="stPending" type="number" min="1" max="120"></div>
-    <div class="setrow"><div><div class="lbl">Re-scan waiting after (min)</div></div><input class="numfld" id="stRescanAllow" type="number" min="1" max="240"></div>
-    <div class="setrow" style="border-bottom:0;"><div><div class="lbl">Force-add threshold (min)</div></div><input class="numfld" id="stRescanForce" type="number" min="1" max="240"></div>
-    <button class="btn" onclick="saveSettings()">SAVE PREFERENCES</button>
-  </div>
-  <div class="card">
-    <div class="card-title">Monthly Google Sheet</div>
-    <div class="sheet-name-box" style="margin-bottom:6px;padding:12px;border:1px solid var(--brd);border-radius:12px;background:rgba(0,0,0,.25);">
-      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;">Connected Sheet</div>
-      <div style="font-size:15px;font-weight:800;color:var(--blue2);margin-top:4px;word-break:break-word;" id="connSheet">Checking…</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:4px;" id="todayTab"></div>
-    </div>
-    <input type="text" id="monthUrl" placeholder="Paste this month's Google Sheet URL">
-    <button class="btn" onclick="linkMonthlySheet()">🔗 LINK MONTHLY SHEET</button>
-    <button class="btn btn-w" onclick="checkMonthlySheet()">↻ Refresh / Check Connection</button>
-    <button class="btn btn-del" onclick="removeMonthlySheet()" style="background:rgba(255,77,94,.12);color:#ffb0b8;border:1px solid rgba(255,77,94,.5);">🗑 REMOVE SHEET</button>
-    <div id="monthNote" class="da-meta" style="margin-top:8px;"></div>
+    <h3>Waiting List — by Batch <span class="badge" id="waitCount">0</span><button class="dlbtn" onclick="dlWaiting()">⬇ CSV</button></h3>
+    <input id="fWait" placeholder="Find your name in waiting..." oninput="renderWaiting()" style="margin-bottom:10px;">
+    <div class="scroll" id="waitBox"></div>
   </div>
 
   <div class="card">
-    <div class="card-title">Daily Roster (from Google Sheet)</div>
-    <div style="margin:4px 0 4px;font-size:11px;color:var(--muted);text-transform:uppercase;">Select day tab</div>
-    <select id="sheetPick"><option value="">— auto-detect today —</option></select>
-    <button class="btn" onclick="loadRosterFromSheet()">⬇ LOAD / RELOAD ROSTER (new day)</button>
-    <button class="btn btn-w" onclick="syncAttendanceFromSheet()">🔄 SYNC ATTENDANCE FROM SHEET</button>
-    <button class="btn btn-w" onclick="refreshSheetTabs()">↻ Refresh tab list</button>
-    <div class="da-meta" style="margin-top:6px;">Sheet is master for attendance. Use "Sync" anytime to pull manual Present/Late/Absent updates without clearing the waiting list.</div>
-    <div id="rosterNote" class="da-meta" style="margin-top:8px;"></div>
-  </div>
-  <div class="card">
-    <div class="card-title">Break Override (allow scan during break)</div>
-    <div class="da-meta" style="margin-bottom:8px;">Search a DA and allow them to scan even while their break window is active. This does NOT change the sheet — it only lets this DA scan now. Auto-clears when you reload the roster.</div>
-    <input type="text" id="brkSearch" placeholder="Search DA name..." oninput="renderBreakOverrides()">
-    <div id="brkSearchRes" class="s-res" style="position:relative;max-height:220px;"></div>
-    <div class="da-meta" style="margin:12px 0 4px;text-transform:uppercase;letter-spacing:.5px;">Current overrides</div>
-    <div id="brkOverrideList"></div>
+    <h3>DA Details <span class="badge" id="daCount">0</span><button class="dlbtn" onclick="dlDaDetails()">⬇ CSV</button></h3>
+    <div class="da-table-wrap scroll"><table><thead><tr><th>Name</th><th>DSP</th><th>Attendance</th><th>Turns</th><th>Break</th></tr></thead><tbody id="daBody"></tbody></table></div>
+    <div class="da-cards scroll" id="daCards"></div>
   </div>
 
-  <div class="card">
-    <div class="card-title">Daily Batch Control</div>
-    <button class="btn btn-w" onclick="startNewDay()">☀ START NEW DAY (RESET)</button>
-    <button class="btn btn-del" onclick="runMaintenanceNow()" style="margin-top:10px;">RUN CLEANUP NOW</button>
+  <div class="grid">
+    <div class="card"><h3>Average Turns by DSP<button class="dlbtn" onclick="dlTurnsByDsp()">⬇ CSV</button></h3><div class="scroll"><table><thead><tr><th>DSP</th><th>DAs</th><th>Avg</th><th>Max</th></tr></thead><tbody id="dspBody"></tbody></table></div></div>
+    <div class="card"><h3>On Break<button class="dlbtn" onclick="dlBreaks()">⬇ CSV</button></h3><div class="scroll" id="breakBox"></div></div>
+    <div class="card"><h3>Low-Turn DAs<button class="dlbtn" onclick="dlLowTurn()">⬇ CSV</button></h3><div class="scroll"><table><thead><tr><th>Name</th><th>DSP</th><th>Turns</th></tr></thead><tbody id="lowBody"></tbody></table></div></div>
+    <div class="card"><h3>Violators<button class="dlbtn" onclick="dlViolators()">⬇ CSV</button></h3><div class="scroll"><table><thead><tr><th>Name</th><th>DSP</th><th>Reason</th></tr></thead><tbody id="violBody"></tbody></table></div></div>
+    <div class="card"><h3>In Queue <span class="badge" id="queueCount">0</span><button class="dlbtn" onclick="dlQueue()">⬇ CSV</button></h3><div class="scroll"><table><thead><tr><th>Name</th><th>DSP</th><th>Turn</th></tr></thead><tbody id="queueBody"></tbody></table></div></div>
+    <div class="card"><h3>Recent Scans<button class="dlbtn" onclick="dlHistory()">⬇ CSV</button></h3><div class="scroll" id="historyBox"></div></div>
   </div>
-</div>
-
-<div class="nav">
-  <div class="tab act" onclick="openTab(1,this)"><div class="tab-ic">✅</div>Attend</div>
-  <div class="tab" onclick="openTab(2,this)"><div class="tab-ic">⏳</div>Waiting</div>
-  <div class="tab" onclick="openTab(3,this)"><div class="tab-ic">📥</div>Entry</div>
-  <div class="tab" onclick="openTab(4,this)"><div class="tab-ic">☕</div>Break</div>
-  <div class="tab" onclick="openTab(6,this)"><div class="tab-ic">⚠️</div>Violators</div>
-  <div class="tab" onclick="openTab(5,this)"><div class="tab-ic">⚙️</div>Settings</div>
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import {
-  getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc,
-  onSnapshot, query, where, runTransaction, writeBatch, serverTimestamp, addDoc, Timestamp
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+const SUPABASE_URL = "https://othlmijaffqmkufblzvu.supabase.co";
+const SUPABASE_KEY = "sb_publishable_cmkties9zH5fp731YbIg0A_RR-seEe_";
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY, { realtime:{ params:{ eventsPerSecond: 5 } } });
 
-const firebaseConfig = {
-  apiKey: "AIzaSyB52tGFqPXGjYUYgEZ3z8XxNWNC1llxhVM",
-  authDomain: "dud3-rush.firebaseapp.com",
-  projectId: "dud3-rush",
-  storageBucket: "dud3-rush.firebasestorage.app",
-  messagingSenderId: "1035473993147",
-  appId: "1:1035473993147:web:2bb9273ac84c70abb7d89e"
-};
-
-// Your existing Apps Script Web App URL (already connected to the monthly Google Sheet)
-const SHEET_API = "https://script.google.com/macros/s/AKfycbwnl4k_a8EpFDruq7OlnmwcSWc96Fmr-HTanuLoRGCcPlmPECIGCvnUmIzskJkHY1g/exec";
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-/* ---------- Local state (kept live by onSnapshot listeners) ---------- */
-let SETTINGS = { sound:true, vibrate:true, batchSize:25, earlyLimit:30, lateAfter:10, pendingTimeout:15, outOnRoadAfter:15, rescanAllow:45, rescanForce:30 };
-let ROSTER = {};      // daId -> roster doc
-let WAITING = [];     // waiting docs
-let STATE = {};       // daId -> state doc
-let QUEUE = [];       // queue docs
-let VIOLATORS = [];   // violator docs
-let selectedWaiting = {};
-let BREAK_OVERRIDES = {};   // {daId:true} — manual allow-to-scan-during-break (synced via Firestore)
-let activeScanners = {};
-let lastAnyScanAt = 0, lastScanMap = {};
-let scanQueue = [], queueProcessing = false;
-
-/* ---------- helpers ---------- */
-const $ = id => document.getElementById(id);
-const cleanId = s => String(s||"").toUpperCase().replace(/[^A-Z0-9-]/g,"").trim();
-const esc = t => String(t==null?"":t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-const escA = t => String(t==null?"":t).replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/"/g,'\\"');
-const todayKey = () => { const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); };
-function nowMins(){ const d=new Date(); return d.getHours()*60+d.getMinutes(); }
-function parseTime(raw){ if(!raw) return -1; let s=String(raw).trim().toUpperCase(); const pm=s.includes("PM"),am=s.includes("AM"); s=s.replace("AM","").replace("PM","").trim(); if(!s.includes(":"))return -1; const p=s.split(":"); let h=parseInt(p[0],10),m=parseInt(p[1],10); if(isNaN(h)||isNaN(m))return -1; if(pm&&h<12)h+=12; if(am&&h===12)h=0; return h*60+m; }
-function parseRange(raw){ if(!raw||String(raw).indexOf("-")<0)return null; const p=String(raw).split("-"); const s=parseTime(p[0]),e=parseTime(p[1]); if(s<0||e<0)return null; return {s,e}; }
-function timeStr(){ return new Date().toLocaleTimeString(); }
-
-/* ---------- Apps Script bridge (JSONP) ---------- */
-function sheetApi(action, params={}){
-  return new Promise((resolve,reject)=>{
-    const cb="scb_"+Date.now()+"_"+Math.floor(Math.random()*100000);
-    const p=Object.assign({},params); p.action=action; p.callback=cb; p._=Date.now();
-    const q=Object.keys(p).map(k=>encodeURIComponent(k)+"="+encodeURIComponent(p[k])).join("&");
-    const sc=document.createElement("script");
-    const timer=setTimeout(()=>{cleanup();reject(new Error("timeout"));},20000);
-    function cleanup(){clearTimeout(timer);try{delete window[cb];}catch(e){}if(sc.parentNode)sc.remove();}
-    window[cb]=d=>{cleanup();resolve(d);};
-    sc.onerror=()=>{cleanup();reject(new Error("neterr"));};
-    sc.src=SHEET_API+"?"+q;
-    document.body.appendChild(sc);
-  });
+/* Minimal shim: dashboard only needs to read/subscribe the single dashboard_live row */
+async function readLive(){ const { data } = await sb.from("dashboard_live").select("data").eq("id","live").maybeSingle(); return data? data.data : null; }
+function subscribeLive(cb){
+  const emit=async()=>{ try{ cb(await readLive()); }catch(e){} };
+  emit();
+  sb.channel("dash_live").on("postgres_changes",{event:"*",schema:"public",table:"dashboard_live",filter:"id=eq.live"}, emit).subscribe();
+  // safety poll every 20s in case a realtime event is missed
+  setInterval(emit, 20000);
 }
+const auth={currentUser:{uid:"anon"}};
+  
 
-/* ===== BACKGROUND SHEET-WRITE QUEUE =====
-   Scans write to Firestore instantly. Sheet writes (markAttendance, addViolator,
-   removeViolator) go through this queue — one at a time, spaced ~1.2s apart —
-   so a burst of 5-6 scans never floods Apps Script ("failed to load"). The scan
-   never waits on the sheet; the sheet catches up a few seconds behind. */
-let _sheetQ = [];
-let _sheetQBusy = false;
-function queueSheetWrite(action, params){
-  _sheetQ.push({action, params});
-  if(!_sheetQBusy) drainSheetQ();
+let ROSTER={}, WAITING=[], STATE={}, VIOLATORS=[], QUEUE=[], HISTORY=[];
+const $=id=>document.getElementById(id);
+const esc=t=>String(t==null?"":t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const cleanId=s=>String(s||"").toUpperCase().replace(/[^A-Z0-9-]/g,"").trim();
+function nowMins(){const d=new Date();return d.getHours()*60+d.getMinutes();}
+function parseTime(raw){if(!raw)return -1;let s=String(raw).trim().toUpperCase();const pm=s.includes("PM"),am=s.includes("AM");s=s.replace("AM","").replace("PM","").trim();if(!s.includes(":"))return -1;const p=s.split(":");let h=parseInt(p[0],10),m=parseInt(p[1],10);if(isNaN(h)||isNaN(m))return -1;if(pm&&h<12)h+=12;if(am&&h===12)h=0;return h*60+m;}
+function parseRange(raw){if(!raw||String(raw).indexOf("-")<0)return null;const p=String(raw).split("-");const s=parseTime(p[0]),e=parseTime(p[1]);if(s<0||e<0)return null;return{s,e};}
+function setT(id,v){const e=$(id);if(e)e.innerText=v;}
+function statusPill(s){const l=String(s||"").toLowerCase();if(l.includes("present"))return '<span class="pill present">Present</span>';if(l.includes("late"))return '<span class="pill late">Late</span>';if(l.includes("absent"))return '<span class="pill absent">Absent</span>';return '<span class="pill dash">'+esc(s||"-")+'</span>';}
+
+
+onAuthStateChanged(auth,u=>{ if(!u)return; attach(); });
+
+function applyLive(d){
+
+    if(!d){ setT("updated","Waiting for scanner to publish data…"); return; }
+    
+    // Rebuild globals from the compact snapshot
+    ROSTER={}; const set={};
+    (d.roster||[]).forEach(r=>{ const id=cleanId(r.id); ROSTER[id]={daId:id,name:r.n,dsp:r.d,status:r.s||"",waveTime:r.w||"",break1:r.b1||"",break2:r.b2||"",checkInTime:r.ci||""}; const dsp=(r.d||"").trim(); if(dsp)set[dsp]=1; });
+    WAITING=(d.waiting||[]).map(x=>({daId:x.id,name:x.n,dsp:x.d,batch:x.b,seq:x.q})).sort((a,b)=>(a.seq||0)-(b.seq||0));
+    STATE={}; (d.state||[]).forEach(x=>{ STATE[cleanId(x.id)]={daId:x.id,name:x.n,dsp:x.d,status:x.s,turn:x.t||0}; });
+    QUEUE=(d.queue||[]).map(x=>({daId:x.id,name:x.n,dsp:x.d,turn:x.t}));
+    VIOLATORS=(d.violators||[]).map(x=>({daId:x.id,name:x.n,dsp:x.d,reason:x.r,timeStr:x.tm,comment:x.c}));
+    HISTORY=(d.recent||[]).map(x=>({daId:x.id,name:x.n,dsp:x.d,scanType:x.ty,status:x.s,timeMs:x.tm}));
+    // populate DSP filter
+    const sel=$("fDsp"); if(sel){ const cur=sel.value; sel.innerHTML='<option value="">All DSPs</option>'+Object.keys(set).sort().map(x=>`<option>${esc(x)}</option>`).join(""); sel.value=cur; }
+    renderWaiting(); render();
+  
 }
-async function drainSheetQ(){
-  if(_sheetQBusy) return;
-  _sheetQBusy = true;
-  while(_sheetQ.length){
-    const job = _sheetQ.shift();
-    try{ await sheetApi(job.action, job.params); }
-    catch(e){ /* if it fails, re-queue once at the end, then move on */
-      if(!job._retried){ job._retried=true; _sheetQ.push(job); }
+function attach(){ subscribeLive(applyLive); }
+
+
+function turnsFor(id){ const st=STATE[cleanId(id)]; return st?(Number(st.turn)||0):0; }
+function breakStatus(r){ const nm=nowMins(); for(const [lbl,rg] of [["Break 1",r.break1],["Break 2",r.break2]]){const w=parseRange(rg); if(w&&nm>=w.s&&nm<=w.e)return "On "+lbl+" ("+(w.e-nm)+"m)";} if(parseRange(r.break1)||parseRange(r.break2))return "Break set"; return "-"; }
+
+window.applyFilters=render;
+function render(){
+  const dsp=($("fDsp")?$("fDsp").value:"").toLowerCase();
+  const rosterArr=Object.entries(ROSTER).map(([id,r])=>Object.assign({daId:id},r)).filter(r=>!dsp||String(r.dsp||"").toLowerCase().includes(dsp));
+
+  let P=0,L=0,A=0; rosterArr.forEach(r=>{const s=String(r.status||"").toLowerCase();if(s.includes("present"))P++;else if(s.includes("late"))L++;else if(s.includes("absent"))A++;});
+  setT("kTotal",rosterArr.length); setT("kPresent",P); setT("kLate",L); setT("kAbsent",A);
+  // Attendance % = (Present + Late) / Total  (DAs who showed up)
+  const marked=P+L; const pct=rosterArr.length?Math.round((marked/rosterArr.length)*100):0;
+  setT("kPct", pct+"%");
+
+  // turns
+  let totalT=0, tCount=0; const byDsp={};
+  rosterArr.forEach(r=>{ const t=turnsFor(r.daId); totalT+=t; tCount++; const d=r.dsp||"Unknown"; if(!byDsp[d])byDsp[d]={n:0,sum:0,max:0}; byDsp[d].n++; byDsp[d].sum+=t; byDsp[d].max=Math.max(byDsp[d].max,t); });
+  const avg=tCount?(totalT/tCount):0;
+  setT("kTurns",totalT); setT("kAvg",avg.toFixed(1));
+
+  // breaks — show Upcoming / On Break / Completed (time-based, from J/K)
+  const nm=nowMins(); const brk=[]; let onBreakNow=0;
+  function f2(m){const h=Math.floor(m/60),mm=m%60;return (h<10?"0"+h:h)+":"+(mm<10?"0"+mm:mm);}
+  rosterArr.forEach(r=>{
+    for(const [lbl,rg] of [["Break 1",r.break1],["Break 2",r.break2]]){
+      const w=parseRange(rg); if(!w) continue;
+      let chip, order;
+      if(nm>=w.s && nm<=w.e){ chip='<span class="pill brk" style="background:rgba(0,212,126,.18);color:#7cffc4;">🟢 On break · '+(w.e-nm)+'m left</span>'; order=0; onBreakNow++; }
+      else if(nm<w.s){ chip='<span class="pill dash">⏳ '+f2(w.s)+'–'+f2(w.e)+'</span>'; order=1; }
+      else { chip='<span class="pill dash" style="color:#7cffc4;">✔ Break Completed</span>'; order=2; }
+      brk.push({name:r.name,dsp:r.dsp,lbl,chip,order,rng:f2(w.s)+"–"+f2(w.e)});
     }
-    await new Promise(r=>setTimeout(r, 1200));   // space out writes (Apps Script friendly)
-  }
-  _sheetQBusy = false;
-}
-
-/* ---------- Web Audio + haptics ---------- */
-let audioCtx=null;
-function ensureAudio(){ if(!audioCtx){const AC=window.AudioContext||window.webkitAudioContext; if(AC)audioCtx=new AC();} if(audioCtx&&audioCtx.state==="suspended")audioCtx.resume(); }
-function tone(f,ms,ty){ try{ensureAudio(); if(!audioCtx)return; const o=audioCtx.createOscillator(),g=audioCtx.createGain(); o.type=ty||"sine"; o.frequency.value=f; g.gain.setValueAtTime(0.0001,audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.9,audioCtx.currentTime+0.01); g.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+ms/1000); o.connect(g);g.connect(audioCtx.destination); o.start();o.stop(audioCtx.currentTime+ms/1000);}catch(e){} }
-function playSuccess(){ tone(880,90,"sine"); setTimeout(()=>tone(1320,110,"sine"),90); }
-function playWarning(){ tone(520,200,"triangle"); setTimeout(()=>tone(520,160,"triangle"),230); }
-function playError(){ tone(180,220,"square"); setTimeout(()=>tone(150,260,"square"),240); }
-function haptic(type){ if(!SETTINGS.vibrate||!navigator.vibrate)return; if(type==="green"||type==="blue")navigator.vibrate(40); else if(type==="orange")navigator.vibrate([30,40,30]); else navigator.vibrate([60,50,60]); }
-function feedback(type){ haptic(type); if(!SETTINGS.sound)return; if(type==="green"||type==="blue")playSuccess(); else if(type==="orange")playWarning(); else playError(); }
-
-/* ---------- Notify banner (swipe to dismiss) ---------- */
-let notifyTimer=null;
-function notify(msg,type="green"){ const n=$("notify"); n.className=type; n.innerHTML='<div>'+esc(msg)+'</div><div class="nf-time">'+esc(timeStr())+'  ·  swipe to dismiss</div>'; n.classList.add("show"); if(notifyTimer)clearTimeout(notifyTimer); const dur=(type==="red"||type==="orange")?4000:2600; notifyTimer=setTimeout(()=>n.classList.remove("show"),dur); }
-(function(){ const n=$("notify"); let sx=0,drag=false; n.addEventListener("touchstart",e=>{sx=e.touches[0].clientX;drag=true;n.style.transition="none";},{passive:true}); n.addEventListener("touchmove",e=>{if(!drag)return;const dx=e.touches[0].clientX-sx;n.style.transform="translateX("+dx+"px)";if(Math.abs(dx)>90){drag=false;n.style.transition="";n.classList.remove("show");n.style.transform="";}},{passive:true}); n.addEventListener("touchend",()=>{drag=false;n.style.transition="";n.style.transform="";}); n.addEventListener("click",()=>n.classList.remove("show")); })();
-
-/* ================= AUTH + LISTENERS ================= */
-signInAnonymously(auth).catch(e=>notify("Auth failed: "+e.message,"red"));
-onAuthStateChanged(auth, user=>{
-  if(!user) return;
-  $("conn").classList.add("ok"); $("conn").innerText="Live";
-  attachListeners();
-  // Auto-load today's roster ONLY if roster is empty (avoids wiping today's
-  // attendance statuses on every open). Manual button re-loads on demand.
-  setTimeout(async ()=>{
-    try{
-      const snap=await getDocs(collection(db,"roster"));
-      if(snap.empty){ notify("No roster yet — loading today from Sheet…","blue"); await window.loadRosterFromSheet(); }
-    }catch(e){}
-  }, 1500);
-});
-
-function attachListeners(){
-  // Settings
-  onSnapshot(doc(db,"settings","app"), snap=>{ if(snap.exists()){ SETTINGS=Object.assign(SETTINGS,snap.data()); applySettingsUI(); } });
-  // Break overrides (manual allow-to-scan)
-  onSnapshot(doc(db,"meta","breakOverrides"), snap=>{ BREAK_OVERRIDES = (snap.exists()&&snap.data().ids)?snap.data().ids:{}; if($("t5").classList.contains("active")) renderBreakOverrides(); });
-  // Roster (today)
-  onSnapshot(collection(db,"roster"), snap=>{ ROSTER={}; snap.forEach(d=>ROSTER[cleanId(d.id)]=d.data()); renderStats(); schedulePublish(); });
-  // Waiting
-  onSnapshot(collection(db,"waiting"), snap=>{ const arr=[]; snap.forEach(d=>arr.push(Object.assign({_id:d.id},d.data()))); WAITING=arr.sort((a,b)=>(a.seq||0)-(b.seq||0)); renderWaiting(); renderChips(); schedulePublish(); }, err=>{ console.warn("waiting listener error (keeping current list)",err); });
-  // State
-  onSnapshot(collection(db,"state"), snap=>{ const m={}; snap.forEach(d=>m[cleanId(d.id)]=Object.assign({_id:d.id},d.data())); STATE=m; renderPending(); schedulePublish(); }, err=>{ console.warn("state listener error (keeping current)",err); });
-  // Queue
-  onSnapshot(collection(db,"queue"), snap=>{ QUEUE=[]; snap.forEach(d=>QUEUE.push(Object.assign({_id:d.id},d.data()))); renderQueue(); schedulePublish(); });
-  // Violators
-  onSnapshot(collection(db,"violators"), snap=>{ VIOLATORS=[]; snap.forEach(d=>VIOLATORS.push(Object.assign({_id:d.id},d.data()))); VIOLATORS.sort((a,b)=>(b.timeMs||0)-(a.timeMs||0)); renderViolators(); schedulePublish(); });
-}
-
-/* ===== DASHBOARD SNAPSHOT PUBLISHER (free-tier read saver) =====
-   Instead of 400 viewers each reading hundreds of docs, the scanner publishes
-   ONE aggregated document (dashboard/live). Viewers read only that 1 doc.
-   Debounced so a burst of scans produces at most 1 write per ~3s. */
-let _pubTimer=null;
-function schedulePublish(){
-  if(_pubTimer) clearTimeout(_pubTimer);
-  _pubTimer=setTimeout(publishSnapshot, 3000);
-}
-async function publishSnapshot(){
-  try{
-    const nm=nowMins();
-    // Build compact arrays (only fields the dashboard needs)
-    const roster=Object.entries(ROSTER).map(([id,r])=>({id, n:r.name, d:r.dsp, s:r.status||"", w:r.waveTime||"", b1:r.break1||"", b2:r.break2||"", ci:r.checkInTime||""}));
-    const waiting=WAITING.map(x=>({id:x.daId, n:x.name, d:x.dsp, b:x.batch, q:x.seq}));
-    const state=Object.values(STATE).map(x=>({id:x.daId, n:x.name, d:x.dsp, s:x.status, t:x.turn||0}));
-    const queue=QUEUE.map(x=>({id:x.daId, n:x.name, d:x.dsp, t:x.turn}));
-    const violators=VIOLATORS.slice(0,200).map(x=>({id:x.daId, n:x.name, d:x.dsp, r:x.reason, tm:x.timeStr||"", c:x.comment||""}));
-    const recent=(RECENT||[]).slice(0,15).map(h=>({id:h.daId,n:h.name,d:h.dsp,ty:h.scanType,s:h.status,tm:h.timeMs}));
-    await setDoc(doc(db,"dashboard","live"),{
-      roster, waiting, state, queue, violators, recent,
-      updatedAt: Date.now()
-    });
-  }catch(e){ /* ignore transient */ }
-}
-
-/* ================= RENDERERS ================= */
-function renderChips(){
-  let P=0,L=0,A=0; Object.values(ROSTER).forEach(r=>{const s=String(r.status||"").toLowerCase(); if(s.includes("present"))P++; else if(s.includes("late"))L++; else if(s.includes("absent"))A++;});
-  $("chipPresent").innerText=P; $("chipLate").innerText=L; $("chipAbsent").innerText=A; $("chipWaiting").innerText=WAITING.length;
-}
-function renderStats(){
-  const by={}; let TP=0,TL=0,TA=0,TT=0;
-  Object.values(ROSTER).forEach(r=>{
-    const dsp=r.dsp||"Unknown"; const s=String(r.status||"").toLowerCase();
-    if(!by[dsp])by[dsp]={P:0,L:0,A:0,T:0};
-    by[dsp].T++; TT++;
-    if(s.includes("present")){ by[dsp].P++; TP++; }
-    else if(s.includes("late")){ by[dsp].L++; TL++; }
-    else if(s.includes("absent")){ by[dsp].A++; TA++; }
   });
-  const keys=Object.keys(by).sort();
-  let h='<table style="width:100%;font-size:12px;border-collapse:collapse;">'
-    +'<tr><th style="text-align:left;color:var(--blue2);">DSP</th>'
-    +'<th style="text-align:center;color:#7cffc4;">P</th>'
-    +'<th style="text-align:center;color:#ffd08a;">L</th>'
-    +'<th style="text-align:center;color:#ff9aa4;">A</th>'
-    +'<th style="text-align:center;color:var(--muted);">Total</th></tr>';
-  keys.forEach(k=>{ const b=by[k];
-    h+=`<tr><td style="padding:6px 4px;border-bottom:1px solid rgba(255,255,255,.06);">${esc(k)}</td>`
-      +`<td style="text-align:center;font-weight:700;">${b.P}</td>`
-      +`<td style="text-align:center;font-weight:700;color:#ffd08a;">${b.L}</td>`
-      +`<td style="text-align:center;font-weight:700;color:#ff9aa4;">${b.A}</td>`
-      +`<td style="text-align:center;color:var(--muted);">${b.T}</td></tr>`;
-  });
-  // Totals row
-  h+=`<tr style="border-top:2px solid rgba(255,255,255,.15);"><td style="padding-top:8px;font-weight:800;color:var(--blue2);">TOTAL</td>`
-    +`<td style="text-align:center;font-weight:800;color:#7cffc4;">${TP}</td>`
-    +`<td style="text-align:center;font-weight:800;color:#ffd08a;">${TL}</td>`
-    +`<td style="text-align:center;font-weight:800;color:#ff9aa4;">${TA}</td>`
-    +`<td style="text-align:center;font-weight:800;">${TT}</td></tr>`;
-  h+='</table>';
-  $("dspStats").innerHTML=keys.length?h:'<div class="empty">No roster loaded yet — load today\'s roster in Settings</div>';
-  renderChips();
+  brk.sort((a,b)=>a.order-b.order || String(a.name).localeCompare(String(b.name)));
+  setT("kBreak",onBreakNow);
+  $("breakBox").innerHTML= (brk.length?('<div style="font-size:11px;color:var(--muted);margin-bottom:6px;">'+onBreakNow+' on break now · '+brk.length+' break slots</div>'):'') +
+    (brk.map(x=>`<div style="padding:10px 4px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;align-items:center;"><div><div style="font-weight:700;">${esc(x.name)}</div><div style="font-size:12px;color:var(--muted);">${esc(x.dsp)} | ${esc(x.lbl)} · ${esc(x.rng)}</div></div><div>${x.chip}</div></div>`).join("")||'<div class="empty">No breaks scheduled</div>');
+
+  // violators
+  const vlist=VIOLATORS.filter(v=>!dsp||String(v.dsp||"").toLowerCase().includes(dsp));
+  setT("kViol",vlist.length);
+  $("violBody").innerHTML=vlist.slice(0,100).map(v=>`<tr><td>${esc(v.name)}</td><td>${esc(v.dsp)}</td><td><span class="pill absent">${esc(v.reason)}</span></td></tr>`).join("")||'<tr><td colspan="3" class="empty">None</td></tr>';
+
+  // Queue (filtered by DSP)
+  const qlist=(QUEUE||[]).filter(q=>!dsp||String(q.dsp||"").toLowerCase().includes(dsp)).sort((a,b)=>(a.turn||0)-(b.turn||0));
+  setT("queueCount",qlist.length);
+  $("queueBody").innerHTML=qlist.map(q=>`<tr><td>${esc(q.name)}</td><td>${esc(q.dsp)}</td><td style="font-weight:800;color:var(--blue2);">${esc(q.turn)}</td></tr>`).join("")||'<tr><td colspan="3" class="empty">No DAs in queue</td></tr>';
+
+  // Recent scans (last 15, filtered by DSP)
+  const hlist=(HISTORY||[]).filter(h=>!dsp||String(h.dsp||"").toLowerCase().includes(dsp)).slice(0,15);
+  $("historyBox").innerHTML=hlist.map(h=>`<div style="padding:9px 4px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;"><div><div style="font-weight:700;">${esc(h.name||h.daId)}</div><div style="font-size:12px;color:var(--muted);">${esc(h.dsp)} · ${esc(h.scanType)} · ${esc(h.status)}</div></div><div style="font-size:11px;color:var(--muted);">${h.timeMs?new Date(h.timeMs).toLocaleTimeString():""}</div></div>`).join("")||'<div class="empty">No recent scans</div>';
+
+  // by DSP
+  $("dspBody").innerHTML=Object.keys(byDsp).sort().map(k=>{const b=byDsp[k];return `<tr><td>${esc(k)}</td><td>${b.n}</td><td>${(b.sum/b.n).toFixed(1)}</td><td>${b.max}</td></tr>`;}).join("")||'<tr><td colspan="4" class="empty">No data</td></tr>';
+
+  // low turns
+  const low=rosterArr.map(r=>({name:r.name,dsp:r.dsp,turn:turnsFor(r.daId)})).filter(x=>x.turn<avg).sort((a,b)=>a.turn-b.turn).slice(0,100);
+  $("lowBody").innerHTML=low.map(x=>`<tr><td>${esc(x.name)}</td><td>${esc(x.dsp)}</td><td>${x.turn}</td></tr>`).join("")||'<tr><td colspan="3" class="empty">None</td></tr>';
+
+  // DA details
+  const q=($("fName")?$("fName").value:"").toLowerCase().trim(); const words=q.split(/\s+/).filter(Boolean);
+  const details=rosterArr.filter(r=>{if(!words.length)return true;const n=String(r.name||"").toLowerCase();return words.every(w=>n.includes(w));});
+  setT("daCount",details.length);
+  $("daBody").innerHTML=details.map(r=>`<tr><td style="font-weight:700;">${esc(r.name)}</td><td>${esc(r.dsp)}</td><td>${statusPill(r.status)}</td><td style="font-weight:800;color:var(--blue2);">${turnsFor(r.daId)}</td><td>${esc(breakStatus(r))}</td></tr>`).join("")||'<tr><td colspan="5" class="empty">No DAs</td></tr>';
+  $("daCards").innerHTML=details.map(r=>`<div class="da-card"><div class="top"><div><div class="nm">${esc(r.name)}</div><div class="dsp">${esc(r.dsp)}</div></div><div class="turns">${turnsFor(r.daId)}<small>Turns</small></div></div><div class="row2">${statusPill(r.status)} <span class="pill dash">${esc(breakStatus(r))}</span></div></div>`).join("")||'<div class="empty">No DAs</div>';
+
+  setT("updated","Live · updated "+new Date().toLocaleTimeString());
 }
-function renderWaiting(){
-  selectedWaiting={};
-  if(!WAITING.length){ $("waitingList").innerHTML='<div class="empty">No waiting DA</div>'; return; }
-  const batches={}; WAITING.forEach(x=>{let b=Number(x.batch)||1; (batches[b]=batches[b]||[]).push(x);});
+
+window.renderWaiting=function(){
+  const q=($("fWait")?$("fWait").value:"").toLowerCase().trim(); const words=q.split(/\s+/).filter(Boolean);
+  const list=WAITING.filter(x=>{if(!words.length)return true;const n=String(x.name||"").toLowerCase();return words.every(w=>n.includes(w));});
+  setT("waitCount",list.length);
+  const batches={}; list.forEach(x=>{let b=Number(x.batch)||1;(batches[b]=batches[b]||[]).push(x);});
   const nums=Object.keys(batches).map(Number).sort((a,b)=>a-b);
   let html="";
-  nums.forEach(bn=>{ const m=batches[bn]; const full=m.length>=(SETTINGS.batchSize||25);
-    html+=`<div class="batch-block"><div class="batch-head"><span class="batch-title">BATCH ${bn}</span><span class="batch-count ${full?'full':''}">${m.length}/${SETTINGS.batchSize||25}</span></div>`;
-    m.forEach(x=>{ html+=`<div class="item"><div><div class="da-name">${esc(x.name)}</div><div class="da-meta">${esc(x.daId)} | ${esc(x.dsp)} | #${esc(x.seq)}</div></div>
-      <div style="display:flex;gap:10px;align-items:center;"><input type="checkbox" style="width:22px;height:22px;" onchange="toggleWait(this,'${escA(x.daId)}')">
-      <button class="rm-btn" onclick="removeWaiting('${escA(x.daId)}','${escA(x.name)}')">✕</button></div></div>`; });
-    html+=`<button class="btn btn-batch" onclick="sendBatch(${bn})">SEND BATCH ${bn} (${m.length})</button></div>`;
+  nums.forEach(bn=>{const m=batches[bn];
+    html+=`<div style="margin-bottom:12px;"><div class="batch-hd"><span class="bt">BATCH ${bn}</span><span style="font-size:11px;color:var(--muted);">${m.length} DA${m.length===1?"":"s"}</span></div>`;
+    m.forEach(x=>html+=`<div style="padding:9px 4px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;justify-content:space-between;"><div><div style="font-weight:700;">${esc(x.name)}</div><div style="font-size:12px;color:var(--muted);">${esc(x.daId)} | ${esc(x.dsp)}</div></div><div style="font-weight:800;color:var(--blue2);">#${esc(x.seq)}</div></div>`);
+    html+=`</div>`;
   });
-  $("waitingList").innerHTML=html;
-}
-function renderPending(){
-  const list=Object.values(STATE).filter(x=>x.status==="PENDING_ENTRY");
-  $("pendingList").innerHTML=list.map(x=>`<div class="item"><div><div class="da-name">${esc(x.name)}</div><div class="da-meta">${esc(x.daId)} | ${esc(x.dsp)}</div></div></div>`).join("")||'<div class="empty">No pending DA</div>';
-}
-function renderQueue(){
-  $("queueList").innerHTML=QUEUE.map(x=>`<div class="item"><div><div class="da-name">${esc(x.name)}</div><div class="da-meta">${esc(x.daId)} | ${esc(x.dsp)} | Turn ${esc(x.turn)}</div></div></div>`).join("")||'<div class="empty">No queue DA</div>';
-}
-function fmtMins(m){ const h=Math.floor(m/60), mm=m%60; return (h<10?"0"+h:h)+":"+(mm<10?"0"+mm:mm); }
-function renderBreaks(){
-  const nm=nowMins(); const rows=[]; let activeCount=0;
-  Object.entries(ROSTER).forEach(([id,r])=>{
-    [["Break 1",r.break1],["Break 2",r.break2]].forEach(([lbl,rg])=>{
-      const w=parseRange(rg); if(!w) return;
-      let state, chip, order;
-      if(nm>=w.s && nm<=w.e){ state="active"; chip='<span class="pill brk" style="background:rgba(0,212,126,.18);color:#7cffc4;">🟢 On break · '+(w.e-nm)+'m left</span>'; order=0; activeCount++; }
-      else if(nm < w.s){ state="upcoming"; chip='<span class="pill dash">⏳ '+fmtMins(w.s)+'–'+fmtMins(w.e)+'</span>'; order=1; }
-      else { state="done"; chip='<span class="pill dash" style="opacity:.75;color:#7cffc4;">✔ Break Completed</span>'; order=2; }
-      rows.push({order, id, name:r.name, dsp:r.dsp, lbl, chip, rng:fmtMins(w.s)+"–"+fmtMins(w.e)});
-    });
-  });
-  rows.sort((a,b)=>a.order-b.order || String(a.name).localeCompare(String(b.name)));
-  const head='<div class="da-meta" style="margin-bottom:8px;">'+activeCount+' on break now · '+rows.length+' break slots today</div>';
-  $("breakList").innerHTML= head + (rows.map(x=>`<div class="item"><div><div class="da-name">${esc(x.name)}</div><div class="da-meta">${esc(x.id)} | ${esc(x.dsp)} | ${esc(x.lbl)} · ${esc(x.rng)}</div></div><div>${x.chip}</div></div>`).join("") || '<div class="empty">No breaks scheduled in the roster (columns J/K)</div>');
-}
-async function removeViolator(id){
-  const cid=cleanId(id);
-  // delete ALL violator entries for this DA from Firestore
-  try{
-    const snap=await getDocs(collection(db,"violators"));
-    const b=writeBatch(db); let n=0;
-    snap.forEach(d=>{ const v=d.data(); if(cleanId(v.daId)===cid){ b.delete(d.ref); n++; } });
-    if(n>0) await b.commit();
-  }catch(e){}
-  // tell the sheet to mark this DA removed on the Violators tab (background)
-  queueSheetWrite("removeViolator",{ id:cid });
-}
-window.removeViolator=removeViolator;
-
-window.removeViolatorConfirm=async(id,name)=>{
-  if(!confirm("Remove "+(name||"this DA")+" from the violator list? They will be able to scan again."))return;
-  await removeViolator(id);
-  notify("Removed from violators","green"); feedback("green");
+  $("waitBox").innerHTML=html||'<div class="empty">No DAs waiting</div>';
 };
 
-let violSelected = {};
-window.violToggle=(cb)=>{ const id=cleanId(cb.getAttribute("data-id")); if(cb.checked) violSelected[id]=true; else delete violSelected[id]; };
-window.violToggleAll=(cb)=>{
-  violSelected={};
-  if(cb.checked){ (VIOLATORS||[]).forEach(x=>{ violSelected[cleanId(x.daId)]=true; }); }
-  renderViolators();
-};
-window.clearSelectedViolators=async()=>{
-  const ids=Object.keys(violSelected);
-  if(!ids.length){ notify("Select DAs first","orange"); feedback("orange"); return; }
-  if(!confirm("Clear "+ids.length+" selected DA(s) from the violator list? They will be able to scan attendance again."))return;
-  notify("Clearing "+ids.length+" violators…","blue");
-  for(const id of ids){ await removeViolator(id); }   // removes from Firestore + sheet
-  violSelected={};
-  const sa=$("violSelectAll"); if(sa) sa.checked=false;
-  notify(ids.length+" DA(s) cleared from violators","green"); feedback("green");
-};
-
-function renderViolators(){
-  const q=($("violSearch")?$("violSearch").value:"").toLowerCase().trim();
-  const words=q.split(/\s+/).filter(Boolean);
-  const list=(VIOLATORS||[]).filter(x=>{ if(!words.length)return true; const n=String(x.name||"").toLowerCase(); return words.every(w=>n.includes(w)); }).slice(0,200);
-  $("violatorList").innerHTML=list.map(x=>`<div class="item"><div style="display:flex;align-items:center;gap:10px;">
-      <input type="checkbox" class="violChk" data-id="${escA(x.daId)}" ${violSelected[cleanId(x.daId)]?"checked":""} onchange="violToggle(this)" style="width:20px;height:20px;flex:0 0 auto;">
-      <div><div class="da-name">${esc(x.name)}</div><div class="da-meta">${esc(x.daId)} | ${esc(x.dsp)} | ${esc(x.timeStr||"")}</div><div><span class="vio-reason">${esc(x.reason)}</span></div>${x.comment?`<div class="da-meta">${esc(x.comment)}</div>`:""}</div>
-    </div><button class="rm-btn" onclick="removeViolatorConfirm('${escA(x.daId)}','${escA(x.name)}')">✕</button></div>`).join("")||'<div class="empty">No violators</div>';
+/* ================= CSV EXPORT ================= */
+function csvCell(v){ v=String(v==null?"":v); if(/[",\n]/.test(v)){ v='"'+v.replace(/"/g,'""')+'"'; } return v; }
+function toCSV(headers, rows){
+  const lines=[headers.map(csvCell).join(",")];
+  rows.forEach(r=>lines.push(r.map(csvCell).join(",")));
+  return lines.join("\n");
 }
-
-/* ================= SETTINGS ================= */
-function applySettingsUI(){
-  $("tgSound").classList.toggle("on",!!SETTINGS.sound); $("tgVibrate").classList.toggle("on",!!SETTINGS.vibrate);
-  $("stBatch").value=SETTINGS.batchSize; $("stEarly").value=SETTINGS.earlyLimit; $("stLate").value=SETTINGS.lateAfter;
-  $("stPending").value=SETTINGS.pendingTimeout; $("stRescanAllow").value=SETTINGS.rescanAllow; $("stRescanForce").value=SETTINGS.rescanForce;
+function downloadCSV(filename, csv){
+  const stamp=new Date().toISOString().slice(0,10);
+  const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url; a.download=filename.replace("{date}",stamp); document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 500);
 }
-window.toggleSet=(k,el)=>{ SETTINGS[k]=!SETTINGS[k]; el.classList.toggle("on",!!SETTINGS[k]); };
-window.saveSettings=async()=>{
-  SETTINGS.batchSize=Math.max(1,parseInt($("stBatch").value)||25);
-  SETTINGS.earlyLimit=Math.max(0,parseInt($("stEarly").value)||30);
-  SETTINGS.lateAfter=Math.max(0,parseInt($("stLate").value)||10);
-  SETTINGS.pendingTimeout=Math.max(1,parseInt($("stPending").value)||15);
-  SETTINGS.rescanAllow=Math.max(1,parseInt($("stRescanAllow").value)||45);
-  SETTINGS.rescanForce=Math.max(1,parseInt($("stRescanForce").value)||30);
-  await setDoc(doc(db,"settings","app"),SETTINGS,{merge:true});
-  notify("Preferences saved","green"); feedback("green");
-};
+function dspFiltered(arr, getDsp){ const dsp=($("fDsp")?$("fDsp").value:"").toLowerCase(); return arr.filter(x=>!dsp||String(getDsp(x)||"").toLowerCase().includes(dsp)); }
 
-/* ================= ROSTER CSV UPLOAD ================= */
-/* ================= ROSTER + MONTHLY SHEET ================= */
-window.linkMonthlySheet=async()=>{
-  const url=($("monthUrl").value||"").trim();
-  if(!url || url.indexOf("docs.google.com/spreadsheets")<0){ notify("Paste a valid Google Sheet URL","orange"); feedback("orange"); return; }
-  notify("Linking sheet…","blue");
-  try{
-    const res=await sheetApi("saveSheetUrl",{url});
-    notify(res.msg||"Linked", res.type||"green"); feedback(res.type||"green");
-    if(res.success){
-      $("monthUrl").value="";
-      await checkMonthlySheet();
-      // auto-pull today's roster from the newly linked sheet
-      await window.loadRosterFromSheet();
-    }
-  }catch(e){ notify("Link failed — check Apps Script URL/deployment","red"); feedback("red"); }
-};
+// Build row-arrays for each section (uses current filters)
+function rowsWaiting(){ const l=dspFiltered(WAITING,x=>x.dsp).slice().sort((a,b)=>(a.batch-b.batch)||(a.seq-b.seq)); return l.map(x=>[x.batch, x.seq, x.daId, x.name, x.dsp]); }
+function rowsDaDetails(){ const arr=Object.entries(ROSTER).map(([id,r])=>Object.assign({daId:id},r)); const l=dspFiltered(arr,x=>x.dsp); return l.map(r=>[r.daId, r.name, r.dsp, r.status||"", turnsFor(r.daId), (r.checkInTime||""), breakStatus(r)]); }
+function rowsTurnsByDsp(){ const arr=Object.entries(ROSTER).map(([id,r])=>Object.assign({daId:id},r)); const l=dspFiltered(arr,x=>x.dsp); const by={}; l.forEach(r=>{const d=r.dsp||"Unknown"; const t=turnsFor(r.daId); if(!by[d])by[d]={n:0,sum:0,max:0,min:999999}; by[d].n++; by[d].sum+=t; by[d].max=Math.max(by[d].max,t); by[d].min=Math.min(by[d].min,t);}); return Object.keys(by).sort().map(k=>[k, by[k].n, (by[k].sum/by[k].n).toFixed(2), by[k].min===999999?0:by[k].min, by[k].max]); }
+function rowsBreaks(){ const nm=nowMins(); const arr=Object.entries(ROSTER).map(([id,r])=>Object.assign({daId:id},r)); const l=dspFiltered(arr,x=>x.dsp); const out=[]; l.forEach(r=>{ for(const [lbl,rg] of [["Break 1",r.break1],["Break 2",r.break2]]){ const w=parseRange(rg); if(!w)continue; let st; if(nm>=w.s&&nm<=w.e)st="On break ("+(w.e-nm)+"m left)"; else if(nm<w.s)st="Upcoming"; else st="Completed"; out.push([r.daId, r.name, r.dsp, lbl, rg, st]); } }); return out; }
+function rowsLowTurn(){ const arr=Object.entries(ROSTER).map(([id,r])=>Object.assign({daId:id},r)); const l=dspFiltered(arr,x=>x.dsp); let tot=0,c=0; l.forEach(r=>{tot+=turnsFor(r.daId);c++;}); const avg=c?tot/c:0; return l.map(r=>({r,t:turnsFor(r.daId)})).filter(o=>o.t<avg).sort((a,b)=>a.t-b.t).map(o=>[o.r.daId,o.r.name,o.r.dsp,o.t]); }
+function rowsViolators(){ const l=dspFiltered(VIOLATORS,x=>x.dsp); return l.map(v=>[v.daId, v.name, v.dsp, v.reason, (v.timeStr||""), (v.comment||"")]); }
+function rowsQueue(){ const l=dspFiltered(QUEUE,x=>x.dsp).slice().sort((a,b)=>(a.turn||0)-(b.turn||0)); return l.map(q=>[q.daId, q.name, q.dsp, q.turn]); }
+function rowsHistory(){ const l=dspFiltered(HISTORY,x=>x.dsp); return l.map(h=>[(h.timeMs?new Date(h.timeMs).toLocaleString():""), h.daId, h.name, h.dsp, h.scanType, h.status]); }
 
-window.removeMonthlySheet=async()=>{
-  if(!confirm("Remove the connected Google Sheet? The app will stop reading/writing it until you link a sheet again."))return;
-  try{
-    const res=await sheetApi("clearSheetUrl");
-    notify(res.msg||"Sheet removed", res.type||"orange"); feedback(res.type||"orange");
-    await checkMonthlySheet();
-  }catch(e){ notify("Remove failed — check Apps Script connection","red"); feedback("red"); }
-};
+window.dlWaiting=()=>downloadCSV("DUD3_Waiting_{date}.csv", toCSV(["Batch","Seq","DA ID","Name","DSP"], rowsWaiting()));
+window.dlDaDetails=()=>downloadCSV("DUD3_DA_Details_{date}.csv", toCSV(["DA ID","Name","DSP","Attendance","Turns","Check-in","Break Status"], rowsDaDetails()));
+window.dlTurnsByDsp=()=>downloadCSV("DUD3_Turns_by_DSP_{date}.csv", toCSV(["DSP","DAs","Avg Turn","Min","Max"], rowsTurnsByDsp()));
+window.dlBreaks=()=>downloadCSV("DUD3_Breaks_{date}.csv", toCSV(["DA ID","Name","DSP","Break","Window","Status"], rowsBreaks()));
+window.dlLowTurn=()=>downloadCSV("DUD3_Low_Turn_{date}.csv", toCSV(["DA ID","Name","DSP","Turns"], rowsLowTurn()));
+window.dlViolators=()=>downloadCSV("DUD3_Violators_{date}.csv", toCSV(["DA ID","Name","DSP","Reason","Time","Comment"], rowsViolators()));
+window.dlQueue=()=>downloadCSV("DUD3_Queue_{date}.csv", toCSV(["DA ID","Name","DSP","Turn"], rowsQueue()));
+window.dlHistory=()=>downloadCSV("DUD3_Recent_Scans_{date}.csv", toCSV(["Time","DA ID","Name","DSP","Scan Type","Status"], rowsHistory()));
 
-window.checkMonthlySheet=async()=>{
-  try{
-    const res=await sheetApi("sheetUrl");
-    const el=$("connSheet"); const tt=$("todayTab");
-    if(res && res.connected && res.name){ el.innerText=res.name; }
-    else if(res && res.name){ el.innerText=res.name+" (default)"; }
-    else { el.innerText="⚠ No sheet linked — paste this month's URL below"; }
-    // show which daily tab is detected for today
-    try{ const rf=await sheetApi("rosterFull"); if(tt) tt.innerText = rf && rf.sheet ? ("Today's tab: "+rf.sheet+" · "+(rf.count||0)+" DAs") : "Today's tab not detected"; }catch(e){}
-  }catch(e){ $("connSheet").innerText="Unable to reach Apps Script"; }
+// Full-day export: all sections in ONE CSV, separated by section headers
+window.downloadAllCSV=()=>{
+  const stamp=new Date().toLocaleString();
+  const parts=[];
+  parts.push("DUD3 RUSH PRO — FULL DAY EXPORT,"+stamp);
+  const P=document.getElementById("kPresent").innerText, L=document.getElementById("kLate").innerText, A=document.getElementById("kAbsent").innerText, T=document.getElementById("kTotal").innerText, PCT=document.getElementById("kPct").innerText;
+  parts.push("");
+  parts.push("SUMMARY");
+  parts.push(toCSV(["Total","Present","Late","Absent","Attendance %"], [[T,P,L,A,PCT]]));
+  parts.push("");
+  parts.push("WAITING LIST (BY BATCH)");
+  parts.push(toCSV(["Batch","Seq","DA ID","Name","DSP"], rowsWaiting()));
+  parts.push("");
+  parts.push("DA DETAILS");
+  parts.push(toCSV(["DA ID","Name","DSP","Attendance","Turns","Check-in","Break Status"], rowsDaDetails()));
+  parts.push("");
+  parts.push("TURNS BY DSP");
+  parts.push(toCSV(["DSP","DAs","Avg Turn","Min","Max"], rowsTurnsByDsp()));
+  parts.push("");
+  parts.push("BREAKS");
+  parts.push(toCSV(["DA ID","Name","DSP","Break","Window","Status"], rowsBreaks()));
+  parts.push("");
+  parts.push("LOW-TURN DAs");
+  parts.push(toCSV(["DA ID","Name","DSP","Turns"], rowsLowTurn()));
+  parts.push("");
+  parts.push("VIOLATORS");
+  parts.push(toCSV(["DA ID","Name","DSP","Reason","Time","Comment"], rowsViolators()));
+  parts.push("");
+  parts.push("QUEUE");
+  parts.push(toCSV(["DA ID","Name","DSP","Turn"], rowsQueue()));
+  parts.push("");
+  parts.push("RECENT SCANS");
+  parts.push(toCSV(["Time","DA ID","Name","DSP","Scan Type","Status"], rowsHistory()));
+  downloadCSV("DUD3_FULL_DAY_{date}.csv", parts.join("\n"));
 };
 
-window.linkSheet=async()=>{
-  const url=$("sheetUrlInput").value.trim();
-  if(!url || url.indexOf("docs.google.com/spreadsheets")<0){ notify("Paste a valid Google Sheet URL","orange"); feedback("orange"); return; }
-  notify("Linking sheet…","blue");
-  try{
-    const res=await sheetApi("saveSheetUrl",{url});
-    notify(res.msg||"Linked", res.type||"green"); feedback(res.type||"green");
-    $("sheetUrlInput").value="";
-    loadLinkedSheet();
-    // auto-load the roster from the newly linked sheet
-    setTimeout(()=>window.loadRosterFromSheet(), 600);
-  }catch(e){ notify("Link failed — check Apps Script URL/deployment","red"); feedback("red"); }
-};
+// refresh time-sensitive break math every 30s
+setInterval(()=>{ if(auth.currentUser) render(); }, 30000);
 
-async function loadLinkedSheet(){
-  try{
-    const res=await sheetApi("sheetUrl");
-    const el=$("linkedSheet"); if(!el)return;
-    if(res && res.connected && res.name){ el.innerText=res.name; }
-    else if(res && res.name){ el.innerText=res.name; }
-    else{ el.innerText="⚠ No sheet linked — paste this month's URL below"; }
-  }catch(e){ const el=$("linkedSheet"); if(el)el.innerText="Unable to reach Apps Script"; }
-}
-
-window.refreshSheetTabs=async()=>{
-  try{
-    const names=await sheetApi("sheetNames");
-    const sel=$("sheetPick"); if(!sel) return;
-    const cur=sel.value;
-    sel.innerHTML='<option value="">— auto-detect today —</option>'+(names||[]).map(n=>`<option>${esc(n)}</option>`).join("");
-    if(cur) sel.value=cur;
-    notify("Loaded "+((names||[]).length)+" day tabs","green");
-  }catch(e){ notify("Couldn't list tabs — check Apps Script","red"); }
-};
-
-window.refreshNow=async()=>{
-  notify("Refreshing from Google Sheet…","blue");
-  try{
-    await syncAttendanceFromSheet();   // pull latest attendance (fill-blanks safe), preserves connection
-    // Firestore listeners already keep waiting/queue/violators/breaks live.
-  }catch(e){ notify("Refresh failed — check connection","red"); feedback("red"); }
-};
-
-window.syncAttendanceFromSheet=async()=>{
-  const picked=$("sheetPick")?$("sheetPick").value:"";
-  notify("Syncing attendance from Sheet…","blue");
-  try{
-    const res=await sheetApi("rosterFull", picked?{sheet:picked}:{});
-    if(!res||!res.rows){ notify("Could not read sheet","red"); feedback("red"); return; }
-    // Update ONLY status + checkInTime on existing roster docs. No deletes, no
-    // waiting/queue changes. Adds any new DAs found on the sheet.
-    let b=writeBatch(db), c=0, upd=0;
-    for(const r of res.rows){
-      const id=cleanId(r.daId); if(!id)continue;
-      b.set(doc(db,"roster",id),{ daId:id, name:r.name||"", dsp:r.dsp||"", waveTime:r.waveTime||"", shiftEnd:r.shiftEnd||"", break1:r.break1||"", break2:r.break2||"", status:(r.status||""), checkInTime:(r.checkInTime||"") }, {merge:true});
-      c++; upd++;
-      if(c>=400){ await b.commit(); b=writeBatch(db); c=0; }
-    }
-    if(c>0) await b.commit();
-    notify("Attendance synced from Sheet ("+upd+" DAs)","green"); feedback("green");
-  }catch(e){ notify("Sync failed — check Apps Script connection","red"); feedback("red"); }
-};
-
-window.loadRosterFromSheet=async()=>{
-  const picked=$("sheetPick") ? $("sheetPick").value : "";
-  notify(picked?("Loading roster: "+picked+"…"):"Loading today's roster…","blue");
-  try{
-    const res=await sheetApi("rosterFull", picked?{sheet:picked}:{});
-    if(!res||!res.rows||!res.rows.length){ notify("No roster rows found in the Sheet","orange"); feedback("orange"); return; }
-
-    // 1) CLEAR existing roster (removes old/test data so only today's DAs remain)
-    const existing=await getDocs(collection(db,"roster"));
-    if(!existing.empty){
-      let del=writeBatch(db), dc=0;
-      for(const d of existing.docs){ del.delete(d.ref); dc++; if(dc>=400){ await del.commit(); del=writeBatch(db); dc=0; } }
-      if(dc>0) await del.commit();
-    }
-
-    // 2) Load fresh roster
-    let batch=writeBatch(db), count=0, total=0;
-    for(const r of res.rows){
-      const id=cleanId(r.daId); if(!id)continue;
-      batch.set(doc(db,"roster",id),{ daId:id, name:r.name||"", dsp:r.dsp||"", waveTime:r.waveTime||"", shiftEnd:r.shiftEnd||"", break1:r.break1||"", break2:r.break2||"", status:(r.status||""), checkInTime:(r.checkInTime||"") });
-      count++; total++;
-      if(count>=400){ await batch.commit(); batch=writeBatch(db); count=0; }
-    }
-    if(count>0) await batch.commit();
-    notify("Roster loaded: "+total+" DAs (tab: "+(res.sheet||"?")+")","green"); feedback("green");
-    $("rosterNote").innerText=total+" DAs loaded from tab '"+(res.sheet||"sheet")+"' at "+timeStr();
-    const tt=$("todayTab"); if(tt) tt.innerText="Loaded tab: "+(res.sheet||"?")+" · "+total+" DAs";
-  }catch(e){ notify("Sheet load failed — check Apps Script URL/deployment","red"); feedback("red"); }
-};
-
-// Push a live snapshot back to the Google Sheet (RushReport tab) for records.
-// Runs on a slow timer — NOT per scan — so it never slows the live app.
-async function pushReport(){
-  try{
-    const rows=[];
-    // one row per DA currently in state (pending/queue/road) + waiting
-    WAITING.forEach(w=>rows.push([w.daId,w.name,w.dsp,"WAITING",0,w.batch,"#"+w.seq]));
-    Object.values(STATE).forEach(st=>rows.push([st.daId,st.name,st.dsp,st.status||"",st.turn||0,"","" ]));
-    if(!rows.length) return;
-    await sheetApi("pushReport",{ rows: JSON.stringify(rows) });
-  }catch(e){}
-}
-setInterval(()=>{ if(auth.currentUser) pushReport(); }, 120000);   // every 2 min
-
-/* ================= COUNTER (per-day, permanent batch) ================= */
-async function nextSeq(){
-  const ref=doc(db,"meta","counters"); const dk=todayKey();
-  return await runTransaction(db,async tx=>{
-    const s=await tx.get(ref); let seq=1;
-    if(s.exists() && s.data().dayKey===dk){ seq=(s.data().daySeq||0)+1; }
-    tx.set(ref,{daySeq:seq,dayKey:dk},{merge:true});
-    return seq;
-  });
-}
-
-/* ================= SCAN ACTIONS ================= */
-async function addToWaiting(id,name,dsp){
-  const cid=cleanId(id);
-  // dup guard
-  if(WAITING.some(w=>cleanId(w.daId)===cid)) return {status:"EXISTS"};
-  const seq=await nextSeq();
-  const batch=Math.ceil(seq/(SETTINGS.batchSize||25));
-  await setDoc(doc(db,"waiting",cid),{ daId:cid, name, dsp, batch, seq, addedAtMs:Date.now(), addedAt:serverTimestamp() });
-  return {status:"ADDED",batch};
-}
-
-async function attendanceScan(id){
-  const cid=cleanId(id); const r=ROSTER[cid];
-  if(!r) return {msg:"Not on roster",type:"red"};
-  const cur=String(r.status||"").trim();
-  // break block (skipped if this DA has a manual override allowing them to scan)
-  const nm=nowMins();
-  if(!BREAK_OVERRIDES[cid]){
-    for(const rg of [r.break1,r.break2]){ const w=parseRange(rg); if(w&&nm>=w.s&&nm<=w.e) return {msg:`${r.name} on break (${w.e-nm}m left). Blocked.`,type:"orange"}; }
-  }
-  if(cur && cur!=="Absent"){
-    if(cur.toLowerCase().includes("present")||cur.toLowerCase().includes("late")){ const w=await addToWaiting(cid,r.name,r.dsp); return {msg:`${r.name} already marked. Waiting ${w.status}`,type:"orange"}; }
-    return {msg:`${r.name} already ${cur}`,type:"orange"};
-  }
-  const wave=parseTime(r.waveTime); let status="Present",type="green";
-  if(wave!==-1){ const diff=nm-wave;
-    if(diff < -(SETTINGS.earlyLimit||30)) return {msg:`${r.name}: too early (scan opens ${SETTINGS.earlyLimit}m before wave)`,type:"red"};
-    if(diff > (SETTINGS.lateAfter||10)){ status="Late arrived"; type="orange"; }
-  }
-  if(cur==="Absent"){ status="Late arrived"; type="orange"; }
-  await setDoc(doc(db,"roster",cid),{ daId:cid, name:r.name, dsp:r.dsp, waveTime:r.waveTime||"", status, checkInTime:timeStr() },{merge:true});
-  const w=await addToWaiting(cid,r.name,r.dsp);
-  logHistory(cid,r.name,r.dsp,"CHECK-IN",status);
-  // Write status + check-in TIME to the sheet via the background queue.
-  // Backend is fill-blanks-only, so it never overwrites a manual DSP status.
-  queueSheetWrite("markAttendance",{ id:cid, status });
-  return {msg:`${r.name} marked ${status} & added to Waiting`,type};
-}
-
-async function waitingScan(id,force){
-  const cid=cleanId(id); const r=ROSTER[cid];
-  const name=r?r.name:cid, dsp=r?r.dsp:"";
-  if(!r) return {msg:"Unknown DA",type:"red"};
-  // cooldown from last entry
-  if(!force){
-    const st=STATE[cid];
-    if(st && (st.status==="ADDED TO QUE"||st.status==="OUT ON ROAD") && st.timeMs){
-      const mins=Math.floor((Date.now()-st.timeMs)/60000);
-      const allow=SETTINGS.rescanAllow||45, fmin=SETTINGS.rescanForce||30;
-      if(mins<fmin) return {msg:`${name}: only ${mins}m since entry. Wait ${fmin-mins}m.`,type:"red"};
-      if(mins<allow) return {msg:`${name}: ${mins}m since entry (under ${allow}). Force add?`,type:"orange",canForce:true};
-    }
-  }
-  const w=await addToWaiting(cid,name,dsp);
-  return {msg:`${name} waiting ${w.status}`,type:w.status==="ADDED"?"green":"orange"};
-}
-
-async function entryScan(id){
-  const cid=cleanId(id); const st=STATE[cid];
-  if(!st||st.status!=="PENDING_ENTRY") return {msg:"DA not pending entry",type:"orange"};
-  const turn=(Number(st.turn)||0)+1;
-  await setDoc(doc(db,"state",cid),{ daId:cid, status:"ADDED TO QUE", time:serverTimestamp(), timeMs:Date.now(), turn },{merge:true});
-  await setDoc(doc(db,"queue",cid),{ daId:cid, name:st.name, dsp:st.dsp, turn, timeMs:Date.now() });
-  logHistory(cid,st.name,st.dsp,"ENTRY","Turn "+turn);
-  return {msg:`${st.name} received. Turn ${turn}`,type:"green"};
-}
-
-let RECENT=[];
-function logHistory(daId,name,dsp,scanType,status){
-  RECENT.unshift({daId,name,dsp,scanType,status,timeMs:Date.now()});
-  if(RECENT.length>15) RECENT.length=15;
-  schedulePublish();
-  // NOTE: no longer writing every scan to a scanHistory collection (saves Firebase
-  // writes). Recent scans live in the snapshot doc; full audit is in the Google Sheet.
-}
-
-/* ================= SEND / REMOVE ================= */
-window.toggleWait=(cb,id)=>{ const cid=cleanId(id); if(cb.checked){const w=WAITING.find(x=>cleanId(x.daId)===cid); if(w)selectedWaiting[cid]=w;} else delete selectedWaiting[cid]; };
-
-async function sendDrivers(list){
-  if(!list.length){ notify("None selected","orange"); feedback("orange"); return; }
-  const b=writeBatch(db);
-  list.forEach(x=>{ const cid=cleanId(x.daId);
-    const prevTurn=(STATE[cid]&&Number(STATE[cid].turn))||0;
-    b.set(doc(db,"state",cid),{daId:cid,name:x.name,dsp:x.dsp,status:"PENDING_ENTRY",time:serverTimestamp(),timeMs:Date.now(),turn:prevTurn});
-    b.delete(doc(db,"waiting",cid));
-  });
-  await b.commit();
-  notify(list.length+" DA sent inside","green"); feedback("green");
-}
-window.sendSelected=()=>{ const arr=Object.values(selectedWaiting); if(!arr.length){notify("Select DA first","orange");feedback("orange");return;} if(!confirm("Send "+arr.length+" selected DA inside?"))return; sendDrivers(arr); };
-window.sendBatch=(bn)=>{ const arr=WAITING.filter(x=>(Number(x.batch)||1)===bn); if(!arr.length)return; if(!confirm("Are you sure? Send "+arr.length+" DA"+(arr.length===1?"":"s")+" from Batch "+bn+" inside?"))return; sendDrivers(arr); };
-window.removeWaiting=async(id,name)=>{ if(!confirm("Remove "+(name||"this DA")+" from waiting?"))return; await deleteDoc(doc(db,"waiting",cleanId(id))); notify("DA removed from waiting","green"); feedback("green"); };
-
-/* ================= SCANNER ENGINE ================= */
-window.startScanner=async(type)=>{
-  const target=type==="att"?"c-att":type==="wait"?"c-wait":"c-entry";
-  stopAllScanners(); ensureAudio();
-  try{
-    const scanner=new Html5Qrcode(target,{verbose:false}); activeScanners[type]=scanner;
-    $("b-"+type).style.display="none"; $("x-"+type).style.display="block";
-    const w=$("wrap-"+type); if(w)w.classList.add("live");
-    await scanner.start({facingMode:"environment"},{fps:30,qrbox:{width:200,height:200},aspectRatio:1.0,disableFlip:true},
-      txt=>enqueueScan(type,txt),()=>{});
-    notify("Scanner ready","green");
-  }catch(e){ notify("Camera blocked. Allow permission.","red"); playError(); resetBtns(type); }
-};
-window.stopScanner=(type)=>{ const sc=activeScanners[type]; if(sc){ sc.stop().then(()=>{sc.clear();delete activeScanners[type];resetBtns(type);}).catch(()=>{delete activeScanners[type];resetBtns(type);}); } else resetBtns(type); };
-function stopAllScanners(){ Object.keys(activeScanners).forEach(k=>window.stopScanner(k)); }
-function resetBtns(type){ if($("b-"+type))$("b-"+type).style.display="block"; if($("x-"+type))$("x-"+type).style.display="none"; const w=$("wrap-"+type); if(w)w.classList.remove("live"); }
-
-function enqueueScan(type,qr){
-  const now=Date.now(); const c=cleanId(qr); if(!c)return;
-  if(now-lastAnyScanAt<150)return;
-  const key=type+"_"+c; if(lastScanMap[key]&&now-lastScanMap[key]<2500)return;
-  lastAnyScanAt=now; lastScanMap[key]=now;
-  scanQueue.push({type,qr:c}); processQueue();
-}
-async function processQueue(){
-  if(queueProcessing)return; queueProcessing=true;
-  let lastType=null, ok=false;
-  while(scanQueue.length){ const it=scanQueue.shift(); lastType=it.type;
-    try{ await handleScan(it.type,it.qr); ok=true; }catch(e){ notify("Scan failed: "+(e&&e.message?e.message:e),"red"); playError(); console.error("scan error",e); }
-  }
-  queueProcessing=false;
-  // REQ 7: stop the camera after a successful scan so a second QR can't be
-  // auto-scanned in the same session. Operator taps SCAN again for the next DA.
-  if(ok && lastType && activeScanners[lastType]){
-    stopScanner(lastType);
-  }
-}
-// Track violator-scan attempts (per DA) so the 2nd attempt offers Force Remove.
-let violatorAttempts = {};
-
-function isViolator(id){
-  const cid=cleanId(id);
-  return (VIOLATORS||[]).some(v=>cleanId(v.daId)===cid);
-}
-
-async function handleScan(type,qr){
-  const cid=cleanId(qr);
-
-  // ---- VIOLATOR BLOCK (applies to ALL scan types) ----
-  if(cid && isViolator(cid)){
-    const r=ROSTER[cid]||{};
-    const nm=r.name||cid;
-    violatorAttempts[cid]=(violatorAttempts[cid]||0)+1;
-
-    if(violatorAttempts[cid] < 2){
-      // 1st attempt — warn only
-      notify(`${nm} is a VIOLATOR — scan blocked. Scan again to force-remove.`,"red");
-      feedback("red");
-      return;
-    }
-
-    // 2nd attempt — offer Force Remove
-    const ok = confirm(nm+" is on the VIOLATOR list.\n\nForce remove from violators and allow scan?");
-    if(!ok){ notify(`${nm} still blocked (violator)`, "orange"); feedback("orange"); return; }
-
-    await removeViolator(cid);              // clear from Firestore + sheet
-    violatorAttempts[cid]=0;
-    notify(`${nm} removed from violators — proceeding`,"green"); feedback("green");
-    // fall through to the normal scan below
-  }
-
-  let res;
-  if(type==="att") res=await attendanceScan(qr);
-  else if(type==="wait"){
-    res=await waitingScan(qr,false);
-    if(res.canForce){ notify(res.msg,res.type); feedback(res.type); if(confirm(res.msg+"\n\nForce add anyway?")){ res=await waitingScan(qr,true); } else return; }
-  }
-  else if(type==="entry") res=await entryScan(qr);
-  notify(res.msg,res.type); feedback(res.type);
-}
-
-/* ================= SEARCH ================= */
-window.searchDA=()=>{
-  const q=$("sch").value.toLowerCase().trim(); const box=$("sres");
-  if(!q){box.style.display="none";box.innerHTML="";return;}
-  const words=q.split(/\s+/);
-  const list=Object.values(ROSTER).filter(r=>{const n=String(r.name||"").toLowerCase(); return words.every(w=>n.includes(w));}).slice(0,20);
-  box.innerHTML=list.map(r=>`<div class="s-row" onclick="manualAtt('${escA(r.daId)}')"><b>${esc(r.name)}</b><br><small>${esc(r.dsp)}</small></div>`).join("");
-  box.style.display="block";
-};
-window.manualAtt=async(id)=>{ $("sres").style.display="none"; $("sch").value=""; const res=await attendanceScan(id); notify(res.msg,res.type); feedback(res.type); };
-
-/* ================= DAILY / MAINTENANCE ================= */
-window.startNewDay=async()=>{
-  if(!confirm("Start a NEW DAY?\n\nThis clears Waiting, Pending/Queue, and Violators, and resets Batch 1. Roster/attendance stay (managed in the sheet)."))return;
-  notify("Starting new day…","blue");
-  // Clear waiting, state, queue, AND violators (full operational reset)
-  for(const col of ["waiting","state","queue","violators"]){
-    const snap=await getDocs(collection(db,col));
-    if(snap.empty) continue;
-    let b=writeBatch(db), c=0;
-    for(const d of snap.docs){ b.delete(d.ref); c++; if(c>=400){ await b.commit(); b=writeBatch(db); c=0; } }
-    if(c>0) await b.commit();
-  }
-  await setDoc(doc(db,"meta","counters"),{daySeq:0,dayKey:todayKey()},{merge:true});
-  violatorAttempts={};
-  notify("New day started — Batch 1 reset, violators cleared","green"); feedback("green");
-};
-window.runMaintenanceNow=async()=>{ await maintenance(); notify("Cleanup done","green"); feedback("green"); };
-
-async function maintenance(){
-  const nm=nowMins();
-
-  // SAFE AUTO-ABSENT: mark Absent ONLY if the DA has no check-in AND a blank
-  // status (never overwrites a manual Present/Late/Absent). Triggers once the
-  // current time passes wave + lateAfter (grace) minutes. Writes to the sheet
-  // fill-blanks-only via the queue, and reflects in the app immediately.
-  const grace=SETTINGS.lateAfter||10;
-  const absentBatch=writeBatch(db); let absN=0;
-  for(const [id,r] of Object.entries(ROSTER)){
-    const st=String(r.status||"").trim();
-    if(st) continue;                              // already has a status — skip
-    if(String(r.checkInTime||"").trim()) continue; // already checked in — skip
-    const wave=parseTime(r.waveTime); if(wave===-1) continue;
-    if(nm - wave > grace){
-      absentBatch.set(doc(db,"roster",id),{status:"Absent"},{merge:true});
-      absN++;
-      queueSheetWrite("markAttendance",{ id, status:"Absent" });  // fill-blanks on backend
-      logHistory(id, r.name, r.dsp, "AUTO ABSENT", "No scan by wave+"+grace);
-      if(absN>=400){ await absentBatch.commit(); }
-    }
-  }
-  if(absN>0){ try{ await absentBatch.commit(); }catch(e){} }
-
-  // Pending-entry timeout -> violators
-  const to=SETTINGS.pendingTimeout||15;
-  const outAfter=SETTINGS.outOnRoadAfter||15;   // min after ENTRY -> OUT ON ROAD
-  for(const [id,st] of Object.entries(STATE)){
-    if(st.status==="PENDING_ENTRY" && st.timeMs){ const mins=Math.floor((Date.now()-st.timeMs)/60000);
-      if(mins>to){
-        await setDoc(doc(db,"state",id),{status:"TIMEOUT"},{merge:true});
-        const vcomment="Entry refused by DA — "+mins+" min late from off yard";
-        await addDoc(collection(db,"violators"),{daId:id,name:st.name,dsp:st.dsp,reason:"ENTRY_REFUSED",timeMs:Date.now(),timeStr:timeStr(),comment:vcomment});
-        queueSheetWrite("addViolator",{id, name:st.name, dsp:st.dsp, reason:"ENTRY_REFUSED", comment:vcomment});
-      }
-    }
-    // After entry (ADDED TO QUE) for > outAfter min -> OUT ON ROAD.
-    // Stamp a fresh timeMs so the re-scan cooldown counts from THIS moment.
-    else if(st.status==="ADDED TO QUE" && st.timeMs){
-      const mins=Math.floor((Date.now()-st.timeMs)/60000);
-      if(mins>outAfter){
-        await setDoc(doc(db,"state",id),{status:"OUT ON ROAD",timeMs:Date.now(),time:serverTimestamp()},{merge:true});
-        logHistory(id, st.name, st.dsp, "OUT ON ROAD", "Auto after "+mins+" min");
-      }
-    }
-  }
-}
-setInterval(()=>{ if(auth.currentUser) maintenance().catch(()=>{}); }, 60000);
-
-// Periodic SILENT roster sync — pulls latest attendance statuses from the sheet
-// so the app never shows stale data ("attendance not updating in app" fix).
-// Merge-only, never clears waiting/queue. Runs every 90s.
-async function silentRosterSync(){
-  try{
-    const res=await sheetApi("rosterFull");
-    if(!res||!res.rows) return;
-    let b=writeBatch(db), c=0;
-    for(const r of res.rows){
-      const id=cleanId(r.daId); if(!id) continue;
-      b.set(doc(db,"roster",id),{ daId:id, name:r.name||"", dsp:r.dsp||"", waveTime:r.waveTime||"", shiftEnd:r.shiftEnd||"", break1:r.break1||"", break2:r.break2||"", status:(r.status||""), checkInTime:(r.checkInTime||"") },{merge:true});
-      c++; if(c>=400){ await b.commit(); b=writeBatch(db); c=0; }
-    }
-    if(c>0) await b.commit();
-  }catch(e){}
-}
-setInterval(()=>{ if(auth.currentUser) silentRosterSync(); }, 90000);
-
-/* ================= NAV ================= */
-async function addBreakOverride(id){
-  const cid=cleanId(id); if(!cid) return;
-  const next=Object.assign({},BREAK_OVERRIDES); next[cid]=true;
-  await setDoc(doc(db,"meta","breakOverrides"),{ids:next},{merge:true});
-  notify("Override added — DA can scan now","green"); feedback("green");
-}
-async function removeBreakOverride(id){
-  const cid=cleanId(id);
-  const next=Object.assign({},BREAK_OVERRIDES); delete next[cid];
-  await setDoc(doc(db,"meta","breakOverrides"),{ids:next},{merge:true});
-  notify("Override removed — break block restored","green"); feedback("green");
-}
-window.addBreakOverride=addBreakOverride;
-window.removeBreakOverride=removeBreakOverride;
-
-function renderBreakOverrides(){
-  // search results (DAs that have a break set, matching the query)
-  const q=($("brkSearch")?$("brkSearch").value:"").toLowerCase().trim();
-  const box=$("brkSearchRes");
-  if(box){
-    if(!q){ box.style.display="none"; box.innerHTML=""; }
-    else{
-      const words=q.split(/\s+/).filter(Boolean);
-      const list=Object.entries(ROSTER)
-        .filter(([id,r])=>{ const n=String(r.name||"").toLowerCase(); const hasBreak=parseRange(r.break1)||parseRange(r.break2); return hasBreak && words.every(w=>n.includes(w)); })
-        .slice(0,20);
-      box.innerHTML=list.map(([id,r])=>`<div class="s-row" onclick="addBreakOverride('${escA(id)}')"><b>${esc(r.name)}</b> <small style="color:var(--muted);">${esc(r.dsp)} · ${esc(r.break1||"")}${r.break2?(" / "+esc(r.break2)):""}</small> <span style="float:right;color:var(--blue2);font-weight:800;">+ Allow</span></div>`).join("") || '<div class="s-row da-meta">No matching DA with a break</div>';
-      box.style.display="block";
-    }
-  }
-  // current overrides list
-  const ids=Object.keys(BREAK_OVERRIDES||{});
-  const el=$("brkOverrideList"); if(!el) return;
-  el.innerHTML = ids.length ? ids.map(id=>{ const r=ROSTER[id]||{}; return `<div class="item"><div><div class="da-name">${esc(r.name||id)}</div><div class="da-meta">${esc(id)} | ${esc(r.dsp||"")}</div></div><button class="rm-btn" onclick="removeBreakOverride('${escA(id)}')">✕</button></div>`; }).join("") : '<div class="empty">No active overrides</div>';
-}
-
-window.openTab=(n,el)=>{ stopAllScanners(); document.querySelectorAll(".view").forEach(v=>v.classList.remove("active")); $("t"+n).classList.add("active"); document.querySelectorAll(".tab").forEach(t=>t.classList.remove("act")); el.classList.add("act"); if(n===4)renderBreaks(); if(n===5){ checkMonthlySheet(); refreshSheetTabs(); renderBreakOverrides(); } if(n===6)renderViolators(); };
-
-// refresh breaks every 30s while on break tab
-setInterval(()=>{ if($("t4").classList.contains("active")) renderBreaks(); }, 30000);
 </script>
 </body>
 </html>
