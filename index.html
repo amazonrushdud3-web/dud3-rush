@@ -799,6 +799,22 @@ async function addToWaiting(id,name,dsp){
   return {status:"ADDED",batch};
 }
 
+/* Shared break check — returns a block {msg,type} if the DA is on an active
+   break (respecting the manual override), else null. Used by all scan types
+   and the Waiting-List send path so a DA cannot bypass break via the list. */
+function breakBlock(cid){
+  const r=ROSTER[cid]; if(!r) return null;
+  if(BREAK_OVERRIDES[cid]) return null;
+  const nm=nowMins();
+  for(const rg of [r.break1,r.break2]){
+    const w=parseRange(rg);
+    if(w && nm>=w.s && nm<=w.e){
+      return { msg:`${r.name} is currently on break (${w.e-nm}m left). Scanning not allowed until the break is completed.`, type:"orange" };
+    }
+  }
+  return null;
+}
+
 async function attendanceScan(id){
   const cid=cleanId(id); const r=ROSTER[cid];
   if(!r) return {msg:"Not on roster",type:"red"};
@@ -831,6 +847,8 @@ async function waitingScan(id,force){
   const cid=cleanId(id); const r=ROSTER[cid];
   const name=r?r.name:cid, dsp=r?r.dsp:"";
   if(!r) return {msg:"Unknown DA",type:"red"};
+  // BREAK BLOCK — cannot scan waiting while on break
+  const bb=breakBlock(cid); if(bb) return bb;
   // cooldown from last entry
   if(!force){
     const st=STATE[cid];
@@ -846,7 +864,10 @@ async function waitingScan(id,force){
 }
 
 async function entryScan(id){
-  const cid=cleanId(id); const st=STATE[cid];
+  const cid=cleanId(id);
+  // BREAK BLOCK — cannot scan entry while on break
+  const bb=breakBlock(cid); if(bb) return bb;
+  const st=STATE[cid];
   if(!st||st.status!=="PENDING_ENTRY") return {msg:"DA not pending entry",type:"orange"};
   const turn=(Number(st.turn)||0)+1;
   await setDoc(doc(db,"state",cid),{ daId:cid, status:"ADDED TO QUE", time:serverTimestamp(), timeMs:Date.now(), turn },{merge:true});
@@ -869,14 +890,22 @@ window.toggleWait=(cb,id)=>{ const cid=cleanId(id); if(cb.checked){const w=WAITI
 
 async function sendDrivers(list){
   if(!list.length){ notify("None selected","orange"); feedback("orange"); return; }
+  // BREAK BLOCK — a DA on break cannot be sent inside from the Waiting List.
+  const onBreak=list.filter(x=>breakBlock(cleanId(x.daId)));
+  const sendable=list.filter(x=>!breakBlock(cleanId(x.daId)));
+  if(onBreak.length){
+    const names=onBreak.map(x=>x.name).join(", ");
+    notify(onBreak.length+" on break, not sent: "+names, "orange"); feedback("orange");
+  }
+  if(!sendable.length){ return; }
   const b=writeBatch(db);
-  list.forEach(x=>{ const cid=cleanId(x.daId);
+  sendable.forEach(x=>{ const cid=cleanId(x.daId);
     const prevTurn=(STATE[cid]&&Number(STATE[cid].turn))||0;
     b.set(doc(db,"state",cid),{daId:cid,name:x.name,dsp:x.dsp,status:"PENDING_ENTRY",time:serverTimestamp(),timeMs:Date.now(),turn:prevTurn});
     b.delete(doc(db,"waiting",cid));
   });
   await b.commit();
-  notify(list.length+" DA sent inside","green"); feedback("green");
+  notify(sendable.length+" DA sent inside","green"); feedback("green");
 }
 window.sendSelected=()=>{ const arr=Object.values(selectedWaiting); if(!arr.length){notify("Select DA first","orange");feedback("orange");return;} if(!confirm("Send "+arr.length+" selected DA inside?"))return; sendDrivers(arr); };
 window.sendBatch=(bn)=>{ const arr=WAITING.filter(x=>(Number(x.batch)||1)===bn); if(!arr.length)return; if(!confirm("Are you sure? Send "+arr.length+" DA"+(arr.length===1?"":"s")+" from Batch "+bn+" inside?"))return; sendDrivers(arr); };
