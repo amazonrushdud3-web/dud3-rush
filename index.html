@@ -70,6 +70,18 @@
   .nav{position:fixed;bottom:0;left:0;width:100%;height:calc(74px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);z-index:100;display:flex;background:rgba(10,22,34,.85);backdrop-filter:blur(16px);border-top:1px solid var(--brd);padding:6px 6px 10px;}
   .tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--muted);font-size:10px;font-weight:600;border-radius:14px;}
   .tab .tab-ic{font-size:20px;}.tab.act{color:var(--blue);background:rgba(0,168,225,.10);}
+  /* Violator decision modal */
+  #vmodal{position:fixed;inset:0;z-index:500;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);}
+  #vmodal.show{display:flex;}
+  .vbox{background:#101722;border:1px solid var(--brd);border-radius:18px;max-width:360px;width:88%;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.5);}
+  .vbox h3{margin:0 0 6px;color:var(--red);font-size:17px;}
+  .vbox .vmsg{color:var(--txt);font-size:14px;margin-bottom:4px;}
+  .vbox .vsub{color:var(--muted);font-size:12px;margin-bottom:16px;}
+  .vbox .vbtns{display:flex;flex-direction:column;gap:10px;}
+  .vbtn{width:100%;border:none;padding:14px;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;}
+  .vbtn.allow{background:linear-gradient(135deg,#00d47e,#00b368);color:#012;}
+  .vbtn.remove{background:linear-gradient(135deg,#00A8E1,#38C6FF);color:#01151d;}
+  .vbtn.cancel{background:var(--glass);color:var(--muted);border:1px solid var(--brd);}
 </style>
 </head>
 <body>
@@ -83,6 +95,19 @@
 </div>
 
 <div id="notify"></div>
+
+<div id="vmodal">
+  <div class="vbox">
+    <h3>⚠ Violator — 15-min entry rule</h3>
+    <div class="vmsg" id="vmsg">This DA exceeded the 15-minute entry rule.</div>
+    <div class="vsub">Choose how to proceed:</div>
+    <div class="vbtns">
+      <button class="vbtn allow" onclick="vModalChoose('allow')">✅ ALLOW ENTRY (remove violator & proceed)</button>
+      <button class="vbtn remove" onclick="vModalChoose('remove')">↩ NO — remove violator, scan waiting normally</button>
+      <button class="vbtn cancel" onclick="vModalChoose('cancel')">Cancel</button>
+    </div>
+  </div>
+</div>
 
 <div class="chips">
   <div class="chip p"><div class="v" id="chipPresent">0</div><div class="k">Present</div></div>
@@ -381,7 +406,7 @@ async function drainSheetQ(){
     catch(e){ /* if it fails, re-queue once at the end, then move on */
       if(!job._retried){ job._retried=true; _sheetQ.push(job); }
     }
-    await new Promise(r=>setTimeout(r, 1200));   // space out writes (Apps Script friendly)
+    await new Promise(r=>setTimeout(r, 400));   // space out writes (faster sheet updates, still Apps Script friendly)
   }
   _sheetQBusy = false;
 }
@@ -902,30 +927,39 @@ function isViolator(id){
   return (VIOLATORS||[]).some(v=>cleanId(v.daId)===cid);
 }
 
+/* Promise-based violator decision modal with two buttons */
+let _vModalResolve=null;
+function vModalPrompt(name){
+  return new Promise(resolve=>{
+    _vModalResolve=resolve;
+    const el=$("vmsg"); if(el) el.innerText=(name||"This DA")+" exceeded the 15-minute entry rule.";
+    $("vmodal").classList.add("show");
+  });
+}
+window.vModalChoose=(choice)=>{
+  $("vmodal").classList.remove("show");
+  const r=_vModalResolve; _vModalResolve=null;
+  if(r) r(choice);
+};
+
 async function handleScan(type,qr){
   const cid=cleanId(qr);
 
-  // ---- VIOLATOR BLOCK (applies to ALL scan types) ----
+  // ---- VIOLATOR: show a 2-choice warning (no auto block/remove) ----
   if(cid && isViolator(cid)){
-    const r=ROSTER[cid]||{};
-    const nm=r.name||cid;
-    violatorAttempts[cid]=(violatorAttempts[cid]||0)+1;
-
-    if(violatorAttempts[cid] < 2){
-      // 1st attempt — warn only
-      notify(`${nm} is a VIOLATOR — scan blocked. Scan again to force-remove.`,"red");
-      feedback("red");
+    const r=ROSTER[cid]||{}; const nm=r.name||cid;
+    feedback("orange");
+    const choice = await vModalPrompt(nm);
+    if(choice==="cancel"){ notify(`${nm}: still a violator (no action)`, "orange"); return; }
+    // Both ALLOW and NO remove the DA from the violator list.
+    await removeViolator(cid);
+    if(choice==="remove"){
+      // NO -> removed; let them scan WAITING normally. Do not force this scan.
+      notify(`${nm} removed from violators — scan waiting normally`,"green"); feedback("green");
       return;
     }
-
-    // 2nd attempt — offer Force Remove
-    const ok = confirm(nm+" is on the VIOLATOR list.\n\nForce remove from violators and allow scan?");
-    if(!ok){ notify(`${nm} still blocked (violator)`, "orange"); feedback("orange"); return; }
-
-    await removeViolator(cid);              // clear from Firestore + sheet
-    violatorAttempts[cid]=0;
-    notify(`${nm} removed from violators — proceeding`,"green"); feedback("green");
-    // fall through to the normal scan below
+    // ALLOW ENTRY -> removed + proceed with this scan below.
+    notify(`${nm} removed from violators — allowing entry`,"green"); feedback("green");
   }
 
   let res;
@@ -967,8 +1001,43 @@ window.startNewDay=async()=>{
 };
 window.runMaintenanceNow=async()=>{ await maintenance(); notify("Cleanup done","green"); feedback("green"); };
 
+let _autoResetChecking=false;
+async function checkMidnightReset(){
+  // If the calendar date has rolled over since the last reset, auto-run the
+  // new-day cleanup ONCE (clear waiting/state/queue/violators, reset Batch 1),
+  // then auto-load today's sheet. Runs via the 1-min maintenance loop.
+  if(_autoResetChecking) return;
+  _autoResetChecking=true;
+  try{
+    const dk=todayKey();
+    const snap=await getDoc(doc(db,"meta","dayState"));
+    const last=(snap.exists() && snap.data() && snap.data().dayKey) ? snap.data().dayKey : "";
+    if(last!==dk){
+      // mark first so concurrent hosts don't double-run
+      await setDoc(doc(db,"meta","dayState"),{dayKey:dk, resetAt:Date.now()});
+      notify("New day detected — auto-resetting…","blue");
+      // clear operational collections
+      for(const col of ["waiting","state","queue","violators"]){
+        const sn=await getDocs(collection(db,col));
+        if(sn.empty) continue;
+        let b=writeBatch(db), c=0;
+        for(const dd of sn.docs){ b.delete(dd.ref); c++; if(c>=400){ await b.commit(); b=writeBatch(db); c=0; } }
+        if(c>0) await b.commit();
+      }
+      await setDoc(doc(db,"meta","counters"),{daySeq:0,dayKey:dk},{merge:true});
+      try{ violatorAttempts={}; }catch(e){}
+      // auto-load today's roster/sheet
+      try{ if(window.loadRosterFromSheet) await window.loadRosterFromSheet(); }catch(e){}
+      notify("Auto new-day complete — today's sheet loaded","green");
+    }
+  }catch(e){} finally { _autoResetChecking=false; }
+}
+
 async function maintenance(){
   const nm=nowMins();
+
+  // Midnight auto-reset + cleanup + auto-load today's sheet
+  await checkMidnightReset();
 
   // SAFE AUTO-ABSENT: mark Absent ONLY if the DA has no check-in AND a blank
   // status (never overwrites a manual Present/Late/Absent). Triggers once the
