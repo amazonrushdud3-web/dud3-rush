@@ -526,19 +526,40 @@ function renderStats(){
   $("dspStats").innerHTML=keys.length?h:'<div class="empty">No roster loaded yet — load today\'s roster in Settings</div>';
   renderChips();
 }
+function waitMinutes(x){ const t=Number(x.addedAtMs)||0; if(!t) return 0; return Math.max(0,Math.floor((Date.now()-t)/60000)); }
+
 function renderWaiting(){
   selectedWaiting={};
   if(!WAITING.length){ $("waitingList").innerHTML='<div class="empty">No waiting DA</div>'; return; }
-  const batches={}; WAITING.forEach(x=>{let b=Number(x.batch)||1; (batches[b]=batches[b]||[]).push(x);});
-  const nums=Object.keys(batches).map(Number).sort((a,b)=>a-b);
+
+  // Split: DAs on an active break vs actively waiting (eligible)
+  const onBreak=[], active=[];
+  WAITING.forEach(x=>{ const r=ROSTER[cleanId(x.daId)]; (r && activeBreakWindow(r) && !BREAK_OVERRIDES[cleanId(x.daId)]) ? onBreak.push(x) : active.push(x); });
+
   let html="";
+
+  // --- Active waiting, grouped by batch (eligible to scan) ---
+  const batches={}; active.forEach(x=>{let b=Number(x.batch)||1; (batches[b]=batches[b]||[]).push(x);});
+  const nums=Object.keys(batches).map(Number).sort((a,b)=>a-b);
   nums.forEach(bn=>{ const m=batches[bn]; const full=m.length>=(SETTINGS.batchSize||25);
     html+=`<div class="batch-block"><div class="batch-head"><span class="batch-title">BATCH ${bn}</span><span class="batch-count ${full?'full':''}">${m.length}/${SETTINGS.batchSize||25}</span></div>`;
-    m.forEach(x=>{ html+=`<div class="item"><div><div class="da-name">${esc(x.name)}</div><div class="da-meta">${esc(x.daId)} | ${esc(x.dsp)} | #${esc(x.seq)}</div></div>
+    m.forEach(x=>{ html+=`<div class="item"><div><div class="da-name">${esc(x.name)}</div><div class="da-meta">${esc(x.daId)} | ${esc(x.dsp)} | #${esc(x.seq)} | waited ${waitMinutes(x)}m</div></div>
       <div style="display:flex;gap:10px;align-items:center;"><input type="checkbox" style="width:22px;height:22px;" onchange="toggleWait(this,'${escA(x.daId)}')">
       <button class="rm-btn" onclick="removeWaiting('${escA(x.daId)}','${escA(x.name)}')">✕</button></div></div>`; });
     html+=`<button class="btn btn-batch" onclick="sendBatch(${bn})">SEND BATCH ${bn} (${m.length})</button></div>`;
   });
+
+  // --- On Break section (visible but NOT eligible, no checkbox/send) ---
+  if(onBreak.length){
+    html+=`<div class="batch-block" style="border-color:rgba(255,159,28,.5);"><div class="batch-head"><span class="batch-title" style="color:var(--orange);">\u2615 ON BREAK — not eligible</span><span class="batch-count">${onBreak.length}</span></div>`;
+    onBreak.sort((a,b)=>(a.seq||0)-(b.seq||0)).forEach(x=>{
+      const r=ROSTER[cleanId(x.daId)]||{}; const w=activeBreakWindow(r);
+      const until=w?(" · back "+fmt12(w.e)):"";
+      html+=`<div class="item"><div><div class="da-name">${esc(x.name)}</div><div class="da-meta">${esc(x.daId)} | ${esc(x.dsp)} | #${esc(x.seq)} | waited ${waitMinutes(x)}m</div><div><span class="vio-reason" style="background:rgba(255,159,28,.16);color:#ffd08a;">On break${until}</span></div></div></div>`;
+    });
+    html+=`</div>`;
+  }
+
   $("waitingList").innerHTML=html;
 }
 function renderPending(){
@@ -802,15 +823,30 @@ async function addToWaiting(id,name,dsp){
 /* Shared break check — returns a block {msg,type} if the DA is on an active
    break (respecting the manual override), else null. Used by all scan types
    and the Waiting-List send path so a DA cannot bypass break via the list. */
+// Format minutes-from-midnight as "HH:MM AM/PM"
+function fmt12(mins){ mins=((mins%1440)+1440)%1440; let h=Math.floor(mins/60), m=mins%60; const ap=h<12?"AM":"PM"; let hh=h%12; if(hh===0)hh=12; return hh+":"+(m<10?"0"+m:m)+" "+ap; }
+
+// Returns the ACTIVE break window for a DA right now, or null.
+// Cross-midnight aware (e.g. 23:30-00:30): if end<start, the window wraps.
+function activeBreakWindow(r){
+  if(!r) return null;
+  const nm=nowMins();
+  for(const rg of [r.break1,r.break2]){
+    const w=parseRange(rg); if(!w) continue;
+    let inWin;
+    if(w.e>=w.s) inWin = (nm>=w.s && nm<=w.e);           // normal
+    else         inWin = (nm>=w.s || nm<=w.e);           // crosses midnight
+    if(inWin) return w;
+  }
+  return null;
+}
+
 function breakBlock(cid){
   const r=ROSTER[cid]; if(!r) return null;
   if(BREAK_OVERRIDES[cid]) return null;
-  const nm=nowMins();
-  for(const rg of [r.break1,r.break2]){
-    const w=parseRange(rg);
-    if(w && nm>=w.s && nm<=w.e){
-      return { msg:`${r.name} is currently on break (${w.e-nm}m left). Scanning not allowed until the break is completed.`, type:"orange" };
-    }
+  const w=activeBreakWindow(r);
+  if(w){
+    return { msg:`Scan Blocked: ${r.name} is on break from ${fmt12(w.s)} \u2013 ${fmt12(w.e)}. Please try again after the break.`, type:"orange" };
   }
   return null;
 }
@@ -1173,6 +1209,8 @@ window.openTab=(n,el)=>{ stopAllScanners(); document.querySelectorAll(".view").f
 
 // refresh breaks every 30s while on break tab
 setInterval(()=>{ if($("t4").classList.contains("active")) renderBreaks(); }, 30000);
+// Re-render waiting every 30s (wait-minutes tick up; on-break DAs move in/out of the On-Break section as breaks start/end)
+setInterval(()=>{ if($("t2") && $("t2").classList.contains("active")) renderWaiting(); }, 30000);
 
 </script>
 </body>
