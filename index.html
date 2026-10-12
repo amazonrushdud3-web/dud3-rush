@@ -532,34 +532,26 @@ function renderWaiting(){
   selectedWaiting={};
   if(!WAITING.length){ $("waitingList").innerHTML='<div class="empty">No waiting DA</div>'; return; }
 
-  // Split: DAs on an active break vs actively waiting (eligible)
-  const onBreak=[], active=[];
-  WAITING.forEach(x=>{ const r=ROSTER[cleanId(x.daId)]; (r && activeBreakWindow(r) && !BREAK_OVERRIDES[cleanId(x.daId)]) ? onBreak.push(x) : active.push(x); });
-
-  let html="";
-
-  // --- Active waiting, grouped by batch (eligible to scan) ---
-  const batches={}; active.forEach(x=>{let b=Number(x.batch)||1; (batches[b]=batches[b]||[]).push(x);});
+  // Keep ALL DAs in their batch. On-break DAs stay in place with a badge and
+  // are NOT selectable/sendable until their break ends (auto, time-based).
+  const batches={}; WAITING.forEach(x=>{let b=Number(x.batch)||1; (batches[b]=batches[b]||[]).push(x);});
   const nums=Object.keys(batches).map(Number).sort((a,b)=>a-b);
+  let html="";
   nums.forEach(bn=>{ const m=batches[bn]; const full=m.length>=(SETTINGS.batchSize||25);
     html+=`<div class="batch-block"><div class="batch-head"><span class="batch-title">BATCH ${bn}</span><span class="batch-count ${full?'full':''}">${m.length}/${SETTINGS.batchSize||25}</span></div>`;
-    m.forEach(x=>{ html+=`<div class="item"><div><div class="da-name">${esc(x.name)}</div><div class="da-meta">${esc(x.daId)} | ${esc(x.dsp)} | #${esc(x.seq)} | waited ${waitMinutes(x)}m</div></div>
-      <div style="display:flex;gap:10px;align-items:center;"><input type="checkbox" style="width:22px;height:22px;" onchange="toggleWait(this,'${escA(x.daId)}')">
-      <button class="rm-btn" onclick="removeWaiting('${escA(x.daId)}','${escA(x.name)}')">✕</button></div></div>`; });
+    m.forEach(x=>{
+      const cid=cleanId(x.daId); const r=ROSTER[cid];
+      const bw=(r && !BREAK_OVERRIDES[cid]) ? activeBreakWindow(r) : null;
+      if(bw){
+        html+=`<div class="item"><div><div class="da-name">${esc(x.name)}</div><div class="da-meta">${esc(x.daId)} | ${esc(x.dsp)} | #${esc(x.seq)} | waited ${waitMinutes(x)}m</div><div><span class="vio-reason" style="background:rgba(255,159,28,.16);color:#ffd08a;">On break - back ${fmt12(bw.e)}</span></div></div></div>`;
+      } else {
+        html+=`<div class="item"><div><div class="da-name">${esc(x.name)}</div><div class="da-meta">${esc(x.daId)} | ${esc(x.dsp)} | #${esc(x.seq)} | waited ${waitMinutes(x)}m</div></div>
+          <div style="display:flex;gap:10px;align-items:center;"><input type="checkbox" style="width:22px;height:22px;" onchange="toggleWait(this,'${escA(x.daId)}')">
+          <button class="rm-btn" onclick="removeWaiting('${escA(x.daId)}','${escA(x.name)}')">X</button></div></div>`;
+      }
+    });
     html+=`<button class="btn btn-batch" onclick="sendBatch(${bn})">SEND BATCH ${bn} (${m.length})</button></div>`;
   });
-
-  // --- On Break section (visible but NOT eligible, no checkbox/send) ---
-  if(onBreak.length){
-    html+=`<div class="batch-block" style="border-color:rgba(255,159,28,.5);"><div class="batch-head"><span class="batch-title" style="color:var(--orange);">\u2615 ON BREAK — not eligible</span><span class="batch-count">${onBreak.length}</span></div>`;
-    onBreak.sort((a,b)=>(a.seq||0)-(b.seq||0)).forEach(x=>{
-      const r=ROSTER[cleanId(x.daId)]||{}; const w=activeBreakWindow(r);
-      const until=w?(" · back "+fmt12(w.e)):"";
-      html+=`<div class="item"><div><div class="da-name">${esc(x.name)}</div><div class="da-meta">${esc(x.daId)} | ${esc(x.dsp)} | #${esc(x.seq)} | waited ${waitMinutes(x)}m</div><div><span class="vio-reason" style="background:rgba(255,159,28,.16);color:#ffd08a;">On break${until}</span></div></div></div>`;
-    });
-    html+=`</div>`;
-  }
-
   $("waitingList").innerHTML=html;
 }
 function renderPending(){
@@ -873,9 +865,9 @@ async function attendanceScan(id){
   await setDoc(doc(db,"roster",cid),{ daId:cid, name:r.name, dsp:r.dsp, waveTime:r.waveTime||"", status, checkInTime:timeStr() },{merge:true});
   const w=await addToWaiting(cid,r.name,r.dsp);
   logHistory(cid,r.name,r.dsp,"CHECK-IN",status);
-  // Write status + check-in TIME to the sheet via the background queue.
-  // Backend is fill-blanks-only, so it never overwrites a manual DSP status.
-  queueSheetWrite("markAttendance",{ id:cid, status });
+  // IMMEDIATE sheet write (attendance is low-frequency; no queue delay).
+  // Fire now; don't block the UI result on the network round-trip.
+  sheetApi("markAttendance",{ id:cid, status }).catch(()=>{ /* retry via queue if the direct call fails */ queueSheetWrite("markAttendance",{ id:cid, status }); });
   return {msg:`${r.name} marked ${status} & added to Waiting`,type};
 }
 
@@ -1091,9 +1083,10 @@ async function checkMidnightReset(){
       }
       await setDoc(doc(db,"meta","counters"),{daySeq:0,dayKey:dk},{merge:true});
       try{ violatorAttempts={}; }catch(e){}
-      // auto-load today's roster/sheet
-      try{ if(window.loadRosterFromSheet) await window.loadRosterFromSheet(); }catch(e){}
-      notify("Auto new-day complete — today's sheet loaded","green");
+      // FAST new-day roster: merge-sync today's sheet (no full clear/reload) so
+      // scanning can begin immediately. silentRosterSync pulls today's tab data.
+      try{ if(window.silentRosterSync) await silentRosterSync(); }catch(e){}
+      notify("Auto new-day complete — ready to scan","green");
     }
   }catch(e){} finally { _autoResetChecking=false; }
 }
