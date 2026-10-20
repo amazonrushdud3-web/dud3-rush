@@ -90,6 +90,13 @@
   .vbtn.cancel{background:var(--glass);color:var(--muted);border:1px solid var(--brd);}
 </style>
 </head>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js');
+    });
+  }
+</script>
 <body>
 
 <div class="head">
