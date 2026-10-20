@@ -57,6 +57,13 @@
   @media(max-width:640px){.da-table-wrap{display:none;}.da-cards{display:block;}.kpi .v{font-size:26px;}}
 </style>
 </head>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js');
+    });
+  }
+</script>
 <body>
 <div class="head"><div class="title">⚡ DUD3 Rush <b>Live Dashboard</b></div><div class="live">LIVE</div></div>
 <div class="wrap">
