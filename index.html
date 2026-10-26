@@ -286,10 +286,12 @@
       <input id="cfgApiUrl" class="cfg" placeholder="https://script.google.com/macros/s/.../exec" />
       <label style="font-size:.8rem;color:var(--muted);display:block;margin-top:8px">Link Monthly Google Sheet URL</label>
       <input id="cfgSheetUrl" class="cfg" placeholder="https://docs.google.com/spreadsheets/d/..." />
-      <div style="display:flex;gap:8px;margin-top:10px">
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
         <button class="btn" onclick="saveSheetLink()">Save / Link Sheet</button>
         <button class="btn secondary" onclick="unlinkSheet()">Remove Sheet</button>
+        <button class="btn warn" onclick="testConnection()">Test Connection</button>
       </div>
+      <div id="connResult" style="margin-top:10px;font-size:.8rem;color:var(--muted);white-space:pre-wrap"></div>
     </div>
     <div class="card">
       <h4 style="margin-bottom:10px">Thresholds &amp; Rules</h4>
@@ -953,6 +955,46 @@ function switchTab(tab, btn){
 }
 
 // ---- SETTINGS ACTIONS ----
+async function testConnection(){
+  const out=document.getElementById('connResult');
+  const url=(document.getElementById('cfgApiUrl').value.trim())||SCANNER_API_URL;
+  out.style.color='var(--amber)'; out.textContent='Testing '+url+' …';
+  if(!url || url.includes('PASTE_')){ out.style.color='var(--red)'; out.textContent='✗ No API URL set.'; return; }
+  const ctrl=new AbortController(); const killer=setTimeout(()=>ctrl.abort(),8000);
+  const t0=Date.now();
+  try{
+    // 1) GET health ping
+    const g=await fetch(url,{method:'GET',signal:ctrl.signal,redirect:'follow'});
+    const gt=await g.text();
+    let health='';
+    try{ const j=JSON.parse(gt); health=j.service||JSON.stringify(j).slice(0,80); }catch(e){ health=gt.slice(0,80); }
+    // 2) POST a harmless rosterFull
+    const pr=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'rosterFull',forceRefresh:true}),signal:ctrl.signal,redirect:'follow'});
+    clearTimeout(killer);
+    const pt=await pr.text(); let post;
+    try{ post=JSON.parse(pt); }catch(e){ post=null; }
+    const ms=Date.now()-t0;
+    if(post && post.success){
+      out.style.color='var(--green)';
+      out.textContent=`✓ CONNECTED (${ms}ms)\nHealth: ${health}\nRoster: ${ (post.roster||[]).length } DAs · Tab: ${post.todayName||'?'}`;
+      setOnlineState(true);
+    } else if(post){
+      out.style.color='var(--red)';
+      out.textContent=`⚠ Reached backend but action failed (${ms}ms):\n${post.error||pt.slice(0,160)}`;
+    } else {
+      out.style.color='var(--red)';
+      out.textContent=`⚠ Got a response but not JSON (${ms}ms). This usually means the URL is an HTML page (e.g. a login/authorization or a doGet HTML view), NOT the scanner doPost API.\nFirst 160 chars:\n${pt.slice(0,160)}`;
+    }
+  }catch(e){
+    clearTimeout(killer);
+    out.style.color='var(--red)';
+    const why = (e.name==='AbortError')?'timed out (8s)':'network/CORS blocked ('+e.message+')';
+    out.textContent=`✗ Could not reach backend — ${why}.\nLikely causes:\n• Web app not deployed with access = "Anyone"\n• URL is the Dashboard view app, not the scanner doPost API\n• Needs re-deploy after code changes`;
+    setOnlineState(false);
+  }
+}
+
 async function saveSheetLink(){
   const api=document.getElementById('cfgApiUrl').value.trim();
   if(api){ SCANNER_API_URL=api; LS.setItem('DUD3_API_URL',api); }
