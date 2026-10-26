@@ -535,8 +535,16 @@ async function refreshRoster(force=false){
   const res = await apiCall({ action:'rosterFull', forceRefresh:force });
   clearTimeout(splashTimeout);
   RushAnowSplash.hide(500);
-  if(!res || !res.success){
-    if(!state.roster.length) showBanner('Could not load roster — check API URL / Sheet link','var(--red)');
+  if(!res){
+    // POST threw → offline/CORS. apiCall already set OFFLINE + queued.
+    document.getElementById('dayLabel').innerHTML = '<span style="color:var(--red)">⚠ Backend unreachable — tap Settings → Test Connection</span>';
+    return;
+  }
+  if(!res.success){
+    // Reached backend but it returned an error (e.g. no sheet / no daily tab).
+    setOnlineState(true);
+    document.getElementById('dayLabel').innerHTML = '<span style="color:var(--amber)">⚠ '+ (res.error||'Backend error') +'</span>';
+    showBanner('Backend: '+(res.error||'error')+' — check Settings → Save/Link Sheet & that today\'s tab exists','var(--red)');
     return;
   }
   state.roster = res.roster||[];
