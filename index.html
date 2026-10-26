@@ -297,6 +297,7 @@
         <div><label style="font-size:.75rem">Pre-Wave Block (min)</label><input id="cfgPreWave" type="number" class="cfg" value="30" /></div>
         <div><label style="font-size:.75rem">Present Window (+min)</label><input id="cfgPresentWin" type="number" class="cfg" value="10" /></div>
         <div><label style="font-size:.75rem">Entry Timeout (min)</label><input id="cfgEntryTimeout" type="number" class="cfg" value="15" /></div>
+        <div><label style="font-size:.75rem">Batch Count (per batch)</label><input id="cfgBatchSize" type="number" min="1" max="500" class="cfg" value="25" /></div>
         <div><label style="font-size:.75rem">Manual Break Override</label><br><input id="cfgBreakOverride" type="checkbox" style="width:22px;height:22px;margin-top:8px" /></div>
       </div>
       <div style="display:flex;gap:8px;margin-top:12px">
@@ -314,6 +315,22 @@
       <div class="grid-2">
         <button class="btn success" onclick="resolveViolatorModal('Allow')">Allow Entry</button>
         <button class="btn danger" onclick="resolveViolatorModal('Deny')">No (Remove)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- REPLACEMENT DA MODAL -->
+  <div id="replaceModal" class="modal-backdrop">
+    <div class="modal">
+      <h3 style="color:var(--amz-orange);margin-bottom:8px">Assign Replacement DA</h3>
+      <p id="replaceModalText" style="margin-bottom:12px;color:var(--muted)"></p>
+      <label style="font-size:.78rem;color:var(--muted)">Replacement DA Name</label>
+      <input id="replNameInput" class="cfg" placeholder="Full name" autocomplete="off" />
+      <label style="font-size:.78rem;color:var(--muted);display:block;margin-top:8px">Replacement DA ID</label>
+      <input id="replIdInput" class="cfg" placeholder="DA ID / barcode" autocomplete="off" />
+      <div class="grid-2" style="margin-top:14px">
+        <button class="btn success" onclick="submitReplacement()">Assign (turns green)</button>
+        <button class="btn secondary" onclick="document.getElementById('replaceModal').classList.remove('open')">Cancel</button>
       </div>
     </div>
   </div>
@@ -538,6 +555,7 @@ async function refreshRoster(force=false){
     document.getElementById('cfgPreWave').value = state.settings.preWaveBlockMin ?? 30;
     document.getElementById('cfgPresentWin').value = state.settings.presentWindowMin ?? 10;
     document.getElementById('cfgEntryTimeout').value = state.settings.entryTimeoutMin ?? 15;
+    document.getElementById('cfgBatchSize').value = state.settings.batchSize ?? 25;
     document.getElementById('cfgBreakOverride').checked = !!state.settings.manualBreakOverride;
   }
 
@@ -817,6 +835,7 @@ function displayWaitingList(){
                   ? `<span class="badge Break">On break – back ${backAt}</span>`
                   : `<span class="badge ${m.status||'Present'}">${m.status||'Present'}</span>
                      <button class="btn success" style="padding:5px 8px;font-size:.75rem" onclick="initiateScan(${escObj(m)},'ENTRY')">Send</button>`}
+                <button class="btn secondary" style="padding:5px 8px;font-size:.75rem" onclick="openReplaceModal('${m.id}')">Replace</button>
                 <button class="btn danger" style="padding:5px 8px;font-size:.75rem" onclick="removeWaitingDA('${m.id}')">Remove</button>
               </div>
             </div>`;
@@ -826,6 +845,35 @@ function displayWaitingList(){
   document.getElementById('waitCount').textContent = totalWaiting;
 }
 function escObj(m){ return JSON.stringify({id:m.id,name:m.name,breakHours:m.breakHours}).replace(/"/g,'&quot;'); }
+
+let replaceTargetId=null;
+function openReplaceModal(id){
+  replaceTargetId=id;
+  let name=id;
+  for(const b of state.waitingBatches){ const m=(b.members||[]).find(x=>String(x.id)===String(id)); if(m){ name=m.name; break; } }
+  const da=state.roster.find(r=>String(r.id)===String(id)); if(da) name=da.displayName||da.name||name;
+  document.getElementById('replaceModalText').textContent = `Replacing: ${name} (${id})`;
+  document.getElementById('replNameInput').value='';
+  document.getElementById('replIdInput').value='';
+  document.getElementById('replaceModal').classList.add('open');
+  setTimeout(()=>document.getElementById('replNameInput').focus(),50);
+}
+async function submitReplacement(){
+  const name=document.getElementById('replNameInput').value.trim();
+  const rid=document.getElementById('replIdInput').value.trim();
+  if(!name && !rid){ showBanner('Enter replacement name or ID','var(--amber)'); return; }
+  document.getElementById('replaceModal').classList.remove('open');
+  const res=await apiCall({ action:'assignReplacement', employeeId:replaceTargetId, replacementName:name, replacementId:rid });
+  if(res && res.success){
+    playTone('success');
+    showBanner(`Replacement assigned: ${res.replacement} ✓ (M turned green)`,'var(--green)');
+    scheduleRefresh();
+  } else {
+    playTone('error');
+    showBanner((res&&res.error)||'Replacement failed','var(--red)');
+  }
+  replaceTargetId=null;
+}
 
 async function removeWaitingDA(empId){
   await apiCall({ action:'removeWaiting', employeeId:empId });
@@ -924,6 +972,7 @@ async function saveSettingsToServer(){
     preWaveBlockMin:Number(document.getElementById('cfgPreWave').value),
     presentWindowMin:Number(document.getElementById('cfgPresentWin').value),
     entryTimeoutMin:Number(document.getElementById('cfgEntryTimeout').value),
+    batchSize:Number(document.getElementById('cfgBatchSize').value)||25,
     manualBreakOverride:document.getElementById('cfgBreakOverride').checked
   };
   const res=await apiCall({ action:'saveSettings', settings });
@@ -937,8 +986,8 @@ async function triggerStartNewDay(){
 
 // ---- CSV EXPORT ----
 function exportRosterCSV(){
-  const headers=['DA ID','DA Name','Service Type','Wave time','Shift End Time','DSP','Status','Scan tme','Break 1','Break 2'];
-  const rows=state.roster.map(r=>[r.id,r.name,r.serviceType,r.waveTime,r.shiftEnd,r.dsp,r.status,r.scanTime,r.break1,r.break2]);
+  const headers=['DA ID','DA Name','Service Type','Wave time','Shift End','DSP','Status','Scan Time','Break 1','Break 2','Replacement'];
+  const rows=state.roster.map(r=>[r.id,r.name,r.serviceType,r.waveTime,r.shiftEnd,r.dsp,r.status,r.scanTime,r.break1,r.break2,r.replacement||'']);
   const csv=[headers,...rows].map(row=>row.map(c=>`"${String(c==null?'':c).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob=new Blob([csv],{type:'text/csv'});
   const a=document.createElement('a');
