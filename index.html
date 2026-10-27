@@ -243,6 +243,19 @@
     <!-- ===== WAITING TAB ===== -->
     <div id="tab-waiting" style="display:none">
       <div class="card">
+        <h4 style="margin-bottom:8px">Scan here</h4>
+        <div class="mode-switch">
+          <button id="wModeCheckIn" class="btn" onclick="setScanMode('CHECK_IN')">Check-In</button>
+          <button id="wModeEntry" class="btn secondary" onclick="setScanMode('ENTRY')">Entry (Dispatch)</button>
+        </div>
+        <div class="search-wrap">
+          <input id="waitScanInput" class="scan-input" type="text"
+            placeholder="Type/paste Employee ID or Name → Enter"
+            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+          <div id="waitFuzzyDropdown" class="dropdown"></div>
+        </div>
+      </div>
+      <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <h4>Waiting Batches (Live Queue)</h4>
           <span style="font-size:.75rem;color:var(--muted)">Permanent 25-DA Batches</span>
@@ -647,6 +660,59 @@ scanInputEl.addEventListener('keydown', (e)=>{
   else if(e.key==='Enter'){ e.preventDefault(); handleScanInput(scanInputEl.value); }
   else if(e.key==='Escape'){ dd.classList.remove('open'); }
 });
+
+// ---- WAITING-TAB scan input (self-contained; lets operators scan while watching the queue) ----
+let wFuzzyList=[], wFuzzyIndex=-1, wDebounceT=null;
+const waitScanEl = document.getElementById('waitScanInput');
+if(waitScanEl){
+  waitScanEl.addEventListener('input', ()=>{
+    clearTimeout(wDebounceT);
+    wDebounceT=setTimeout(()=>wRenderFuzzy(waitScanEl.value), 150);
+  });
+  waitScanEl.addEventListener('keydown', (e)=>{
+    const dd=document.getElementById('waitFuzzyDropdown');
+    if(e.key==='ArrowDown'){ e.preventDefault(); wFuzzyIndex=Math.min(wFuzzyIndex+1,wFuzzyList.length-1); wPaintFuzzy(); }
+    else if(e.key==='ArrowUp'){ e.preventDefault(); wFuzzyIndex=Math.max(wFuzzyIndex-1,0); wPaintFuzzy(); }
+    else if(e.key==='Enter'){ e.preventDefault(); wHandleScan(waitScanEl.value); }
+    else if(e.key==='Escape'){ dd.classList.remove('open'); }
+  });
+}
+function wRenderFuzzy(q){
+  const dd=document.getElementById('waitFuzzyDropdown');
+  if(!q || !q.trim()){ dd.classList.remove('open'); wFuzzyList=[]; return; }
+  wFuzzyList = findSimilarDAs(q);
+  wFuzzyIndex = wFuzzyList.length?0:-1;
+  if(!wFuzzyList.length){ dd.classList.remove('open'); return; }
+  wPaintFuzzy(); dd.classList.add('open');
+}
+function wPaintFuzzy(){
+  const dd=document.getElementById('waitFuzzyDropdown');
+  dd.innerHTML = wFuzzyList.map((x,i)=>`
+    <div class="opt ${i===wFuzzyIndex?'active':''}" onclick="wPickFuzzy(${i})">
+      <strong>${x.da.name}</strong> <small>(${x.da.id})</small>
+      <small style="float:right">${x.da.waveTime||''}</small>
+    </div>`).join('');
+}
+function wPickFuzzy(i){
+  const x=wFuzzyList[i]; if(!x) return;
+  document.getElementById('waitFuzzyDropdown').classList.remove('open');
+  waitScanEl.value='';
+  initiateScan(x.da, state.scanMode);
+}
+function wHandleScan(rawText){
+  const q=(rawText||'').trim(); if(!q) return;
+  let da = state.roster.find(d=>String(d.id)===q);
+  if(!da) da = state.roster.find(d=>(d.name||'').toLowerCase()===q.toLowerCase());
+  if(da){
+    document.getElementById('waitFuzzyDropdown').classList.remove('open');
+    waitScanEl.value='';
+    initiateScan(da, state.scanMode);
+    return;
+  }
+  if(wFuzzyList.length && wFuzzyIndex>=0){ wPickFuzzy(wFuzzyIndex); return; }
+  playTone('error');
+  showBanner('No match for "'+q+'"','var(--red)');
+}
 function renderFuzzy(q){
   const dd=document.getElementById('fuzzyDropdown');
   if(!q || !q.trim()){ dd.classList.remove('open'); fuzzyList=[]; return; }
@@ -713,9 +779,17 @@ function initiateScan(da, scanType){
   else doCheckIn(da);
 }
 
+function focusActiveScan(){
+  // Focus whichever scan box is currently visible (Waiting tab vs Scan tab).
+  const wt = document.getElementById('tab-waiting');
+  const we = document.getElementById('waitScanInput');
+  if(we && wt && wt.style.display !== 'none' && we.offsetParent !== null){ we.focus(); return; }
+  if(scanInputEl) scanInputEl.focus();
+}
+
 async function doCheckIn(da){
   flashGreen();
-  scanInputEl.focus();                 // re-arm input instantly — don't wait on network
+  focusActiveScan();                   // re-arm the ACTIVE input instantly — don't wait on network
   const res = await apiCall({ action:'recordCheckIn', employeeId:da.id, timestamp:new Date().toISOString() });
   if(res===null){ return; }            // queued offline
   if(res.success){
@@ -734,7 +808,7 @@ async function doCheckIn(da){
 
 async function doMarkEntry(da, forceConfirm){
   flashGreen();
-  scanInputEl.focus();
+  focusActiveScan();
   // Snapshot for rollback, then remove from the waiting list INSTANTLY so the
   // operator sees it gone with zero network wait.
   const _snapshot = JSON.stringify(state.waitingBatches);
@@ -958,9 +1032,13 @@ async function resolveViolatorModal(decision){
 // ---- TABS / MODE ----
 function setScanMode(mode){
   state.scanMode=mode;
-  document.getElementById('modeCheckIn').className = mode==='CHECK_IN'?'btn':'btn secondary';
-  document.getElementById('modeEntry').className = mode==='ENTRY'?'btn':'btn secondary';
-  scanInputEl.focus();
+  const ci = mode==='CHECK_IN'?'btn':'btn secondary';
+  const en = mode==='ENTRY'?'btn':'btn secondary';
+  document.getElementById('modeCheckIn').className = ci;
+  document.getElementById('modeEntry').className = en;
+  const wci=document.getElementById('wModeCheckIn'), wen=document.getElementById('wModeEntry');
+  if(wci) wci.className = ci;
+  if(wen) wen.className = en;
 }
 function switchTab(tab, btn){
   ['scan','waiting','breaks','violators','settings'].forEach(t=>{
