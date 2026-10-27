@@ -377,8 +377,14 @@ const splashTimeout = setTimeout(()=>RushAnowSplash.hide(500), 3500); // fail-sa
 
 // ---- CONFIG / BACKEND URL ----
 // Paste your Apps Script Deployment #1 /exec URL here (or set it in Settings).
-const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycby97F-lmB-4-tVWaUS_qdmN-uurDR16-LRjWOhYYLlBwBnegvnT5J5xGW3-FXr8P-GL/exec';
+const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec';
+// One-time migration: force-upgrade any device still holding a stale backend URL.
+const DEAD_API_URLS = ['AKfycby97F-lmB-4','AKfycbxMhqMV03B5'];
 let SCANNER_API_URL = LS.getItem('DUD3_API_URL') || DEFAULT_API_URL;
+if (DEAD_API_URLS.some(d => SCANNER_API_URL.indexOf(d) !== -1)) {
+  SCANNER_API_URL = DEFAULT_API_URL;
+  LS.setItem('DUD3_API_URL', DEFAULT_API_URL);
+}
 if (SCANNER_API_URL.includes('PASTE_')) {
   const saved = LS.getItem('DUD3_API_URL');
   if (saved && !saved.includes('PASTE_')) SCANNER_API_URL = saved;
