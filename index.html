@@ -83,7 +83,8 @@
   /* ===== HEADER ===== */
   .topbar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;
     background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
-    border-radius:12px;padding:10px 12px;}
+    border-radius:14px;padding:12px 16px;position:sticky;top:calc(3px + var(--safe-top));z-index:6000;
+    box-shadow:0 4px 18px rgba(0,0,0,.3)}
   .brand{display:flex;align-items:center;gap:9px;font-weight:800}
   .brand .mk{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;
     font-size:15px;background:linear-gradient(145deg,var(--amz-orange),var(--amz-orange-d));color:#131A22;box-shadow:0 0 14px rgba(255,153,0,.5)}
@@ -94,30 +95,66 @@
   .status-pill.connecting{background:rgba(254,189,105,.16);color:var(--amber)}
   #deviceBadge{font-size:.72rem;color:var(--muted)}
   #dayLabel{font-size:.74rem;color:var(--muted)}
+  .hdr-refresh{flex:0 0 auto;width:40px;height:40px;border-radius:12px;border:1px solid var(--line);
+    background:var(--card2);color:var(--amz-orange);cursor:pointer;display:flex;align-items:center;justify-content:center;
+    transition:transform .2s,border-color .15s}
+  .hdr-refresh:hover{border-color:var(--amz-orange)}
+  .hdr-refresh svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .hdr-refresh.spinning svg{animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
 
   /* ===== TABS ===== */
-  .tabs{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;padding-bottom:2px}
+  .tabs{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;padding-bottom:2px;-webkit-overflow-scrolling:touch}
   .tab-btn{flex:0 0 auto;background:var(--card);border:1px solid var(--line);color:var(--muted);
-    padding:8px 14px;border-radius:10px;font-weight:700;font-size:.82rem;cursor:pointer}
-  .tab-btn.active{background:var(--prime);color:#131A22;border-color:var(--prime);box-shadow:0 0 14px rgba(255,153,0,.35)}
+    padding:8px 14px;border-radius:12px;font-weight:700;font-size:.82rem;cursor:pointer;
+    display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+  .tab-btn .tabic{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+  .tab-btn b{color:var(--amz-orange);font-weight:800}
+  .tab-btn.active{background:var(--prime);color:#131A22;border-color:var(--prime);box-shadow:0 2px 12px rgba(255,153,0,.4)}
+  .tab-btn.active b{color:#131A22}
+
+  /* MOBILE → app-style bottom navigation */
+  @media(max-width:860px){
+    .tabs{position:fixed;left:0;right:0;bottom:0;z-index:7000;margin:0;gap:0;overflow:visible;
+      background:rgba(19,26,34,.96);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+      border-top:1px solid var(--line);padding:6px 4px calc(6px + var(--safe-bot));justify-content:space-around}
+    .tab-btn{flex:1 1 0;flex-direction:column;gap:3px;background:none;border:none;border-radius:12px;
+      padding:6px 2px;font-size:.6rem;letter-spacing:.2px;box-shadow:none;color:var(--muted)}
+    .tab-btn .tabic{width:22px;height:22px}
+    .tab-btn b{font-size:.6rem}
+    .tab-btn.active{background:none;color:var(--amz-orange);box-shadow:none}
+    .tab-btn.active .tabic{stroke:var(--amz-orange)}
+    .tab-btn.active b{color:var(--amz-orange)}
+    body{padding-bottom:calc(76px + var(--safe-bot))}  /* room for bottom nav */
+  }
 
   .card{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);
-    border-radius:14px;padding:14px;margin-bottom:12px;position:relative}
+    border-radius:16px;padding:16px;margin-bottom:14px;position:relative;box-shadow:0 4px 18px rgba(0,0,0,.25)}
   h4{color:var(--text)}
   .card>h4:first-child::before,h4.accent::before{content:'';display:inline-block;width:3px;height:14px;
     background:var(--amz-orange);border-radius:2px;margin-right:8px;vertical-align:-2px}
   h4{font-size:.92rem;margin-bottom:6px}
 
   .mode-switch{display:flex;gap:8px;margin-bottom:10px}
-  .btn{background:var(--prime);color:#131A22;border:none;border-radius:10px;padding:9px 14px;
-    font-weight:700;font-size:.85rem;cursor:pointer;transition:transform .05s}
+  .btn{background:linear-gradient(180deg,var(--amz-orange),var(--amz-orange-d));color:#131A22;border:none;border-radius:12px;padding:11px 16px;
+    font-weight:800;font-size:.9rem;letter-spacing:.2px;cursor:pointer;transition:transform .08s ease,box-shadow .2s ease,filter .15s ease;
+    box-shadow:0 2px 10px rgba(255,153,0,.25);display:inline-flex;align-items:center;justify-content:center;gap:7px}
+  .btn:hover{filter:brightness(1.05)}
+  .btn:active{transform:scale(.96)}
+  .btn.secondary{background:var(--card2);color:var(--text);border:1px solid var(--line);box-shadow:none}
+  .btn.secondary:hover{border-color:var(--amz-orange);color:var(--amz-orange)}
+  .btn.success{background:linear-gradient(180deg,#34d684,#25b06a);color:#06220f;box-shadow:0 2px 10px rgba(47,207,122,.3)}
+  .btn.danger{background:linear-gradient(180deg,#ff6b78,#e5424f);color:#2a0a0d;box-shadow:0 2px 10px rgba(255,90,106,.3)}
+  .btn.warn{background:linear-gradient(180deg,#FEBD69,#f0a73f);color:#2a1800}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
   .btn:active{transform:scale(.97)}
   .btn.secondary{background:var(--card2);color:var(--muted);border:1px solid var(--line)}
   .btn.success{background:var(--green)} .btn.danger{background:var(--red)} .btn.warn{background:var(--amber);color:#1a1200}
 
-  .scan-input,.cfg{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);
-    border-radius:10px;padding:11px 12px;font-size:1rem;outline:none}
-  .scan-input:focus,.cfg:focus{border-color:var(--prime)}
+  .scan-input,.cfg{width:100%;background:var(--bg2);border:1px solid var(--line);color:var(--text);
+    border-radius:12px;padding:13px 14px;font-size:1rem;outline:none;transition:border-color .15s,box-shadow .15s}
+  .scan-input:focus,.cfg:focus{border-color:var(--amz-orange);box-shadow:0 0 0 3px rgba(255,153,0,.18)}
+  .scan-input::placeholder{color:var(--muted)}
   .search-wrap{position:relative;margin-top:10px}
   .dropdown{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--card2);
     border:1px solid var(--line);border-radius:10px;z-index:50;max-height:280px;overflow:auto;display:none}
@@ -130,11 +167,19 @@
   #reader-wrap{position:relative;margin:10px 0;border-radius:12px;overflow:hidden;min-height:4px}
   #reader{width:100%}
   .flash-overlay{position:absolute;inset:0;background:var(--green);opacity:0;pointer-events:none}
+  /* full-screen scan flash */
+  .fs-flash{position:fixed;inset:0;z-index:6500;pointer-events:none;opacity:0;background:var(--green)}
+  .fs-flash.ok{background:radial-gradient(circle at 50% 45%,rgba(47,207,122,.55),transparent 70%);animation:fsPulse .5s ease}
+  .fs-flash.warn{background:radial-gradient(circle at 50% 45%,rgba(254,189,105,.5),transparent 70%);animation:fsPulse .5s ease}
+  .fs-flash.err{background:radial-gradient(circle at 50% 45%,rgba(255,90,106,.55),transparent 70%);animation:fsPulse .55s ease}
+  @keyframes fsPulse{0%{opacity:0}25%{opacity:1}100%{opacity:0}}
   .flash-overlay.flash{animation:greenFlash .45s ease}
   @keyframes greenFlash{0%{opacity:.0}25%{opacity:.55}100%{opacity:0}}
 
   .row-item{display:flex;justify-content:space-between;align-items:center;gap:8px;
-    padding:9px 10px;border:1px solid var(--line);border-radius:10px;margin-bottom:7px;background:var(--card)}
+    padding:11px 12px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:var(--bg2);
+    transition:border-color .12s,transform .08s}
+  .row-item:active{transform:scale(.995)}
   .badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.72rem;font-weight:700}
   .badge.Present{background:rgba(47,207,122,.16);color:var(--green)}
   .badge.Late{background:rgba(255,178,62,.16);color:var(--amber)}
@@ -153,7 +198,13 @@
   .modal{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;max-width:380px;width:100%}
 
   /* ===== LAYOUT: desktop 2-column ===== */
-  .is-desktop .two-col{display:grid;grid-template-columns:1.1fr .9fr;gap:12px}
+  .is-desktop .two-col{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;align-items:start}
+  .is-desktop body,body.is-desktop{} /* marker */
+  @media(min-width:861px){
+    body{max-width:1280px;margin:0 auto}
+    .tabs{gap:8px}
+    .tab-btn{padding:10px 16px;font-size:.86rem}
+  }
   .is-desktop #tab-waiting.desktop-side-visible{display:block !important}
   .is-mobile .two-col{display:block}
 </style>
@@ -187,20 +238,43 @@
     <div class="brand"><span class="mk">⚡</span> <span class="brand-name">RUSH <b>PRO</b></span>
       <span id="deviceBadge"></span>
     </div>
-    <div style="text-align:right">
-      <span id="netStatus" class="status-pill connecting">CONNECTING…</span>
-      <div id="dayLabel">Loading…</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="text-align:right">
+        <span id="netStatus" class="status-pill connecting">CONNECTING…</span>
+        <div id="dayLabel">Loading…</div>
+      </div>
+      <button class="hdr-refresh" onclick="hardRefresh(this)" title="Refresh &amp; clear cache" aria-label="Refresh">
+        <svg viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      </button>
     </div>
   </div>
 
   <!-- TABS -->
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('scan',this)">Scan</button>
-    <button class="tab-btn" onclick="switchTab('waiting',this)">Waiting (<span id="waitCount">0</span>)</button>
-    <button class="tab-btn" onclick="switchTab('breaks',this)">Breaks</button>
-    <button class="tab-btn" onclick="switchTab('violators',this)">Violators (<span id="violCount">0</span>)</button>
-    <button class="tab-btn" onclick="switchTab('settings',this)">Settings</button>
-    <button class="tab-btn" onclick="refreshRoster(true)">⟳ Refresh</button>
+    <button class="tab-btn active" onclick="switchTab('scan',this)">
+      <svg viewBox="0 0 24 24" class="tabic"><path d="M4 7V5a1 1 0 0 1 1-1h2M20 7V5a1 1 0 0 0-1-1h-2M4 17v2a1 1 0 0 0 1 1h2M20 17v2a1 1 0 0 1-1 1h-2M3 12h18"/></svg>
+      <span>Attendance</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('waiting',this)">
+      <svg viewBox="0 0 24 24" class="tabic"><path d="M3 6h18M3 12h18M3 18h12"/></svg>
+      <span>Waiting <b id="waitCount">0</b></span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('breaks',this)">
+      <svg viewBox="0 0 24 24" class="tabic"><path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4zM6 1v3M10 1v3M14 1v3"/></svg>
+      <span>Breaks</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('violators',this)">
+      <svg viewBox="0 0 24 24" class="tabic"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01"/></svg>
+      <span>Violators <b id="violCount">0</b></span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('settings',this)">
+      <svg viewBox="0 0 24 24" class="tabic"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>Settings</span>
+    </button>
+    <button class="tab-btn" onclick="hardRefresh(this)">
+      <svg viewBox="0 0 24 24" class="tabic"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      <span>Refresh</span>
+    </button>
   </div>
 
   <div class="two-col">
@@ -208,12 +282,8 @@
     <div id="tab-scan">
       <div class="card">
         <div class="mode-switch">
-          <button id="modeCheckIn" class="btn" onclick="setScanMode('CHECK_IN')">Check-In</button>
-          <button id="modeEntry" class="btn secondary" onclick="setScanMode('ENTRY')">Entry (Dispatch)</button>
-        </div>
-        <div class="mode-switch">
-          <button class="btn secondary" onclick="startCamera()">▶ Start Camera</button>
-          <button class="btn secondary" onclick="stopCamera()" style="display:none">Stop</button>
+          <button class="btn cam-start" onclick="startCamera('reader')">▶ Start Camera</button>
+          <button class="btn secondary cam-stop" onclick="stopCamera()" style="display:none">Stop</button>
         </div>
         <div id="reader-wrap">
           <div id="reader"></div>
@@ -234,7 +304,6 @@
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <h4>Recent Scans</h4>
-          <button class="btn secondary" style="padding:4px 8px;font-size:.74rem" onclick="exportRosterCSV()">⬇ Export CSV</button>
         </div>
         <div id="recentScansList"></div>
       </div>
@@ -243,11 +312,21 @@
     <!-- ===== WAITING TAB ===== -->
     <div id="tab-waiting" style="display:none">
       <div class="card">
-        <h4 style="margin-bottom:8px">Scan here</h4>
-        <div class="mode-switch">
-          <button id="wModeCheckIn" class="btn" onclick="setScanMode('CHECK_IN')">Check-In</button>
-          <button id="wModeEntry" class="btn secondary" onclick="setScanMode('ENTRY')">Entry (Dispatch)</button>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <h4>Dispatch Scan (Entry)</h4>
+          <span class="badge" style="background:rgba(255,153,0,.16);color:var(--amz-orange)">Entry mode</span>
         </div>
+        <div class="mode-switch">
+          <button class="btn cam-start" onclick="startCamera('reader2')">
+            <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 12h10"/></svg>
+            Scanner
+          </button>
+          <button class="btn secondary cam-stop" onclick="stopCamera()" style="display:none">Stop</button>
+        </div>
+        <div id="reader-wrap2" style="position:relative;margin:10px 0;border-radius:12px;overflow:hidden">
+          <div id="reader2"></div>
+        </div>
+        <label style="font-size:.74rem;color:var(--muted);display:block;margin:4px 0 6px">Manual add (use if QR won't scan):</label>
         <div class="search-wrap">
           <input id="waitScanInput" class="scan-input" type="text"
             placeholder="Type/paste Employee ID or Name → Enter"
@@ -350,6 +429,7 @@
     </div>
   </div>
 
+  <div id="fsFlash" class="fs-flash"></div>
   <div id="banner" class="banner" onclick="this.style.display='none'"></div>
 
 <!-- ================= APP SCRIPT ================= -->
@@ -451,24 +531,44 @@ function detectDeviceAndFitLayout(){
 
 // ---- SOUND / HAPTICS ----
 let audioCtx=null;
-function playTone(kind){
+function _beep(freq, start, dur, type){
   try{
     audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+    const t0 = audioCtx.currentTime + start;
     const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+    o.type = type||'sine'; o.frequency.setValueAtTime(freq, t0);
     o.connect(g); g.connect(audioCtx.destination);
-    const f = kind==='success'?880 : kind==='warn'?440 : 220;
-    o.frequency.value=f; g.gain.value=0.07; o.start();
-    setTimeout(()=>{o.stop();}, kind==='error'?260:140);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(0.14, t0+0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+    o.start(t0); o.stop(t0+dur+0.02);
   }catch(e){}
-  if(navigator.vibrate) navigator.vibrate(kind==='error'?[80,40,80]:30);
+}
+function playTone(kind){
+  // Distinct, pleasant cues per outcome.
+  if(kind==='success'){ _beep(784,0,0.11,'sine'); _beep(1175,0.09,0.13,'sine'); }      // rising two-note chime
+  else if(kind==='warn'){ _beep(520,0,0.16,'triangle'); }                               // single soft mid tone
+  else { _beep(300,0,0.14,'square'); _beep(200,0.12,0.18,'square'); }                   // error: low double buzz
+  if(navigator.vibrate) navigator.vibrate(kind==='error'?[70,40,70]:kind==='warn'?[40]:25);
 }
 
 // ---- BANNER ----
+function fsFlash(kind){           // kind: 'ok' | 'warn' | 'err'
+  const f=document.getElementById('fsFlash'); if(!f) return;
+  f.classList.remove('ok','warn','err'); void f.offsetWidth; f.classList.add(kind);
+  setTimeout(()=>f.classList.remove(kind), 600);
+}
 function showBanner(msg, color){
   const b=document.getElementById('banner');
   b.textContent=msg; b.style.borderColor=color||'var(--line)';
+  // left accent bar by severity
+  b.style.borderLeftWidth='4px';
   b.style.display='block';
   clearTimeout(b._t); b._t=setTimeout(()=>b.style.display='none',3200);
+  // mirror a full-screen flash to the banner color
+  if(color && color.indexOf('green')!==-1) fsFlash('ok');
+  else if(color && color.indexOf('red')!==-1) fsFlash('err');
+  else if(color && color.indexOf('amber')!==-1) fsFlash('warn');
 }
 
 // ---- API LAYER (with offline queue) ----
@@ -543,6 +643,25 @@ function optimisticRemoveWaiting(id){
   state.waitingBatches.forEach(b=>{ b.members=(b.members||[]).filter(m=>String(m.id)!==String(id)); });
   LS.setItem('DUD3_BATCHES', JSON.stringify(state.waitingBatches));
   displayWaitingList();
+}
+
+// ---- HARD REFRESH (clears caches + forces fresh pull; wired to every refresh button) ----
+async function hardRefresh(btn){
+  try{
+    // spin any refresh buttons
+    document.querySelectorAll('.hdr-refresh').forEach(b=>b.classList.add('spinning'));
+    // clear the local display cache (roster/batches) so stale rows can't linger;
+    // the Google Sheet remains the source of truth and we re-pull immediately.
+    try{ LS.removeItem('DUD3_ROSTER'); LS.removeItem('DUD3_BATCHES'); }catch(e){}
+    showBanner('Refreshing & clearing cache…','var(--amz-orange)');
+    _refreshInFlight = false;           // break any stuck in-flight guard
+    await refreshRoster(true);          // force = bypass server CacheService too
+    showBanner('Updated ✓','var(--green)');
+  }catch(e){
+    showBanner('Refresh failed — check connection','var(--red)');
+  }finally{
+    document.querySelectorAll('.hdr-refresh').forEach(b=>b.classList.remove('spinning'));
+  }
 }
 
 // ---- ROSTER REFRESH ----
@@ -849,12 +968,17 @@ function loadQrLib(){
     document.head.appendChild(s);
   });
 }
-async function startCamera(){
-  document.querySelector('[onclick="startCamera()"]').style.display='none';
-  document.querySelector('[onclick="stopCamera()"]').style.display='inline-block';
+let _activeReaderId = 'reader';
+function _setCamButtons(scanning){
+  document.querySelectorAll('.cam-start').forEach(b=>b.style.display = scanning?'none':'inline-flex');
+  document.querySelectorAll('.cam-stop').forEach(b=>b.style.display = scanning?'inline-flex':'none');
+}
+async function startCamera(readerId){
+  _activeReaderId = readerId || 'reader';
+  _setCamButtons(true);
   try{
     await loadQrLib();
-    html5QrScanner = new Html5Qrcode('reader');
+    html5QrScanner = new Html5Qrcode(_activeReaderId);
     await html5QrScanner.start(
       { facingMode:'environment' },
       { fps:10, qrbox:deviceProfile.cameraQrBox },
@@ -863,14 +987,13 @@ async function startCamera(){
     );
     showBanner('Camera armed — scanning…','var(--prime)');
   }catch(e){
-    showBanner('Camera unavailable — switching to text input','var(--amber)');
+    showBanner('Camera unavailable — use manual search below','var(--amber)');
     stopCamera();
-    scanInputEl.focus();
+    const w=document.getElementById(_activeReaderId==='reader2'?'waitScanInput':'scanInput'); if(w) w.focus();
   }
 }
 async function stopCamera(){
-  document.querySelector('[onclick="startCamera()"]').style.display='inline-block';
-  document.querySelector('[onclick="stopCamera()"]').style.display='none';
+  _setCamButtons(false);
   if(html5QrScanner){ try{ await html5QrScanner.stop(); await html5QrScanner.clear(); }catch(e){} html5QrScanner=null; }
 }
 function onCameraDecode(code){
@@ -1034,11 +1157,10 @@ function setScanMode(mode){
   state.scanMode=mode;
   const ci = mode==='CHECK_IN'?'btn':'btn secondary';
   const en = mode==='ENTRY'?'btn':'btn secondary';
-  document.getElementById('modeCheckIn').className = ci;
-  document.getElementById('modeEntry').className = en;
-  const wci=document.getElementById('wModeCheckIn'), wen=document.getElementById('wModeEntry');
-  if(wci) wci.className = ci;
-  if(wen) wen.className = en;
+  const a=document.getElementById('modeCheckIn'); if(a) a.className=ci;
+  const b=document.getElementById('modeEntry');   if(b) b.className=en;
+  const wci=document.getElementById('wModeCheckIn'); if(wci) wci.className=ci;
+  const wen=document.getElementById('wModeEntry');   if(wen) wen.className=en;
 }
 function switchTab(tab, btn){
   ['scan','waiting','breaks','violators','settings'].forEach(t=>{
@@ -1050,7 +1172,9 @@ function switchTab(tab, btn){
   }
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
-  if(tab==='scan') scanInputEl.focus();
+  // Fixed mode per tab: Attendance tab = Check-In, Waiting tab = Entry (Dispatch)
+  if(tab==='scan'){ setScanMode('CHECK_IN'); scanInputEl.focus(); }
+  else if(tab==='waiting'){ setScanMode('ENTRY'); const w=document.getElementById('waitScanInput'); if(w) w.focus(); }
 }
 
 // ---- SETTINGS ACTIONS ----
