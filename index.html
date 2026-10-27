@@ -735,15 +735,22 @@ async function doCheckIn(da){
 async function doMarkEntry(da, forceConfirm){
   flashGreen();
   scanInputEl.focus();
+  // Snapshot for rollback, then remove from the waiting list INSTANTLY so the
+  // operator sees it gone with zero network wait.
+  const _snapshot = JSON.stringify(state.waitingBatches);
+  optimisticRemoveWaiting(da.id);
   const res = await apiCall({ action:'markEntry', employeeId:da.id, timestamp:new Date().toISOString(), forceConfirm:!!forceConfirm });
-  if(res===null){ scanInputEl.focus(); return; }
+  if(res===null){ /* queued offline — keep it removed, will reconcile on sync */ return; }
   if(res.success){
     playTone('success');
     showBanner(`🚚 ${da.name} dispatched · Out on road ${res.outOnRoadAt} · Turn ${res.turns}`,'var(--green)');
-    optimisticRemoveWaiting(da.id);
   } else if(res.blocked==='COOLDOWN_FORCE'){
+    // restore the row, then ask to force
+    state.waitingBatches = JSON.parse(_snapshot); LS.setItem('DUD3_BATCHES', JSON.stringify(state.waitingBatches)); displayWaitingList();
     if(confirm(res.message+'\n\nForce-add this entry?')) return doMarkEntry(da, true);
   } else {
+    // blocked/failed → restore the row
+    state.waitingBatches = JSON.parse(_snapshot); LS.setItem('DUD3_BATCHES', JSON.stringify(state.waitingBatches)); displayWaitingList();
     playTone('error');
     showBanner(res.message||'Entry blocked','var(--red)');
   }
@@ -1069,8 +1076,12 @@ function boot(){
   // render from cache instantly, then pull fresh
   displayWaitingList();
   refreshRoster(false);
-  // coalesced periodic refresh of waiting ages every 30s
-  setInterval(()=>{ displayWaitingList(); renderBreaks('onBreak'); }, 30000);
+  // Re-render waiting ages every 10s (local, cheap) …
+  setInterval(()=>{ displayWaitingList(); renderBreaks('onBreak'); }, 10000);
+  // … and PULL fresh data from the sheet every 15s so scans from other
+  // operators' devices appear automatically (cross-device sync), not only
+  // when this device scans. Skips if a refresh is already in flight.
+  setInterval(()=>{ if(!_refreshInFlight) refreshRoster(false); }, 15000);
 }
 try{ boot(); }catch(err){ console.error('boot failed',err); try{RushAnowSplash.hide(300);}catch(e){} }
 
