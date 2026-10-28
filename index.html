@@ -101,6 +101,22 @@
   .hdr-refresh:hover{border-color:var(--amz-orange)}
   .hdr-refresh svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   .hdr-refresh.spinning svg{animation:spin .7s linear infinite}
+  .notif-wrap{position:relative}
+  .notif-count{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;
+    background:var(--red);color:#fff;font-size:.62rem;font-weight:800;display:flex;align-items:center;justify-content:center}
+  .notif-panel{position:absolute;right:0;top:46px;width:min(320px,86vw);max-height:60vh;overflow:auto;z-index:7000;
+    background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.5);
+    display:none;padding:8px}
+  .notif-panel.open{display:block}
+  .notif-head{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;font-weight:800;font-size:.82rem;color:var(--text)}
+  .notif-clear{background:none;border:none;color:var(--amz-orange);font-weight:700;font-size:.74rem;cursor:pointer}
+  .notif-list{display:flex;flex-direction:column;gap:6px}
+  .notif-item{position:relative;padding:9px 11px;border-radius:10px;background:var(--bg2);border-left:3px solid var(--line);
+    font-size:.82rem;color:var(--text);touch-action:pan-y;transition:transform .15s,opacity .15s}
+  .notif-item .nt{display:block;font-size:.66rem;color:var(--muted);margin-top:3px}
+  .notif-item.ok{border-left-color:var(--green)} .notif-item.warn{border-left-color:var(--amber)} .notif-item.err{border-left-color:var(--red)}
+  .notif-item.dismiss{transform:translateX(120%);opacity:0}
+  .notif-empty{padding:14px 8px;text-align:center;color:var(--muted);font-size:.8rem}
   @keyframes spin{to{transform:rotate(360deg)}}
 
   /* ===== TABS ===== */
@@ -243,6 +259,16 @@
         <span id="netStatus" class="status-pill connecting">CONNECTING…</span>
         <div id="dayLabel">Loading…</div>
       </div>
+      <div class="notif-wrap">
+        <button class="hdr-refresh" onclick="toggleNotif()" title="Notifications" aria-label="Notifications">
+          <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span id="notifCount" class="notif-count" style="display:none">0</span>
+        </button>
+        <div id="notifPanel" class="notif-panel">
+          <div class="notif-head"><span>Notifications</span><button onclick="clearNotifs()" class="notif-clear">Clear all</button></div>
+          <div id="notifList" class="notif-list"></div>
+        </div>
+      </div>
       <button class="hdr-refresh" onclick="hardRefresh(this)" title="Refresh &amp; clear cache" aria-label="Refresh">
         <svg viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
       </button>
@@ -313,8 +339,8 @@
     <div id="tab-waiting" style="display:none">
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <h4>Dispatch Scan (Entry)</h4>
-          <span class="badge" style="background:rgba(255,153,0,.16);color:var(--amz-orange)">Entry mode</span>
+          <h4>Waiting Scan (Send from Batch)</h4>
+          <span class="badge" style="background:rgba(255,153,0,.16);color:var(--amz-orange)">Send mode</span>
         </div>
         <div class="mode-switch">
           <button class="btn cam-start" onclick="startCamera('reader2')">
@@ -558,18 +584,76 @@ function fsFlash(kind){           // kind: 'ok' | 'warn' | 'err'
   f.classList.remove('ok','warn','err'); void f.offsetWidth; f.classList.add(kind);
   setTimeout(()=>f.classList.remove(kind), 600);
 }
+function _sev(color){
+  if(color && color.indexOf('green')!==-1) return 'ok';
+  if(color && color.indexOf('red')!==-1) return 'err';
+  if(color && color.indexOf('amber')!==-1) return 'warn';
+  return '';
+}
 function showBanner(msg, color){
   const b=document.getElementById('banner');
   b.textContent=msg; b.style.borderColor=color||'var(--line)';
-  // left accent bar by severity
   b.style.borderLeftWidth='4px';
   b.style.display='block';
   clearTimeout(b._t); b._t=setTimeout(()=>b.style.display='none',3200);
-  // mirror a full-screen flash to the banner color
-  if(color && color.indexOf('green')!==-1) fsFlash('ok');
-  else if(color && color.indexOf('red')!==-1) fsFlash('err');
-  else if(color && color.indexOf('amber')!==-1) fsFlash('warn');
+  const sev=_sev(color);
+  if(sev==='ok') fsFlash('ok'); else if(sev==='err') fsFlash('err'); else if(sev==='warn') fsFlash('warn');
+  pushNotif(msg, sev);   // feed the notification center
 }
+
+/* ===================== NOTIFICATION CENTER ===================== */
+let _notifs = [];               // {id,msg,sev,ts}
+const NOTIF_TTL_MS = 5*60000;   // auto-expire after 5 min
+function pushNotif(msg, sev){
+  const id = Date.now()+'_'+Math.random().toString(36).slice(2,6);
+  _notifs.unshift({ id, msg, sev:sev||'', ts: Date.now() });
+  if(_notifs.length>40) _notifs = _notifs.slice(0,40);
+  renderNotifs();
+}
+function _timeAgo(ts){
+  const s=Math.floor((Date.now()-ts)/1000);
+  if(s<60) return s+'s ago';
+  const m=Math.floor(s/60); if(m<60) return m+'m ago';
+  const h=Math.floor(m/60); return h+'h ago';
+}
+function renderNotifs(){
+  // drop expired
+  _notifs = _notifs.filter(n => Date.now()-n.ts < NOTIF_TTL_MS);
+  const list=document.getElementById('notifList'); if(!list) return;
+  const badge=document.getElementById('notifCount');
+  if(badge){ if(_notifs.length){ badge.style.display='flex'; badge.textContent=_notifs.length>9?'9+':_notifs.length; } else badge.style.display='none'; }
+  list.innerHTML = _notifs.length ? _notifs.map(n=>`
+    <div class="notif-item ${n.sev}" data-id="${n.id}" onclick="dismissNotif('${n.id}')">
+      ${n.msg.replace(/</g,'&lt;')}
+      <span class="nt">${_timeAgo(n.ts)} · tap to dismiss</span>
+    </div>`).join('') : '<div class="notif-empty">No notifications</div>';
+}
+function dismissNotif(id){
+  const el=document.querySelector('.notif-item[data-id="'+id+'"]');
+  if(el){ el.classList.add('dismiss'); setTimeout(()=>{ _notifs=_notifs.filter(n=>n.id!==id); renderNotifs(); },160); }
+  else { _notifs=_notifs.filter(n=>n.id!==id); renderNotifs(); }
+}
+function clearNotifs(){ _notifs=[]; renderNotifs(); }
+function toggleNotif(){
+  const pnl=document.getElementById('notifPanel'); if(!pnl) return;
+  pnl.classList.toggle('open');
+  if(pnl.classList.contains('open')) renderNotifs();
+}
+// close panel when tapping outside
+document.addEventListener('click',(e)=>{
+  const w=e.target.closest('.notif-wrap'); const pnl=document.getElementById('notifPanel');
+  if(!w && pnl && pnl.classList.contains('open')) pnl.classList.remove('open');
+});
+// swipe-to-dismiss on touch
+let _swipeX=0, _swipeEl=null;
+document.addEventListener('touchstart',(e)=>{ const it=e.target.closest('.notif-item'); if(it){ _swipeEl=it; _swipeX=e.touches[0].clientX; } },{passive:true});
+document.addEventListener('touchend',(e)=>{
+  if(_swipeEl){ const dx=(e.changedTouches[0].clientX-_swipeX);
+    if(Math.abs(dx)>60) dismissNotif(_swipeEl.getAttribute('data-id'));
+    _swipeEl=null; }
+},{passive:true});
+// refresh relative times periodically
+setInterval(()=>{ const p=document.getElementById('notifPanel'); if(p&&p.classList.contains('open')) renderNotifs(); else renderNotifs(); }, 20000);
 
 // ---- API LAYER (with offline queue) ----
 async function apiCall(payload, allowQueue=true){
@@ -894,8 +978,29 @@ function initiateScan(da, scanType){
     const backAt=checkBreakClient(da.breakHours);
     if(backAt){ playTone('error'); showBanner(`${da.name} is on break — back ${backAt}`,'var(--red)'); return; }
   }
-  if(scanType==='ENTRY') doMarkEntry(da);
-  else doCheckIn(da);
+  if(scanType==='ENTRY'){
+    // Waiting-tab scan. Two cases:
+    //  • Already in Waiting (Turn 1 after Attendance) → Send from batch.
+    //  • Not in Waiting (dispatched earlier) → re-queue for the next turn (Turn 2,3…).
+    //    Attendance is NOT re-done — that happens only on the 1st scan of the day.
+    if(_isInWaitingClient(da.id)) sendDA(da.id);
+    else reQueueDA(da.id, da.name);
+  } else {
+    doCheckIn(da);
+  }
+}
+async function reQueueDA(empId, name){
+  const res = await apiCall({ action:'reAddWaiting', employeeId:empId });
+  if(res && res.success){
+    if(res.already){ showBanner((name||empId)+' already in waiting','var(--amber)'); }
+    else { playTone('success'); showBanner((name||empId)+' re-queued for next turn (Batch '+(res.batch||'?')+')','var(--green)'); }
+  } else if(res){
+    playTone('error'); showBanner(res.message||'Could not re-queue','var(--red)');
+  }
+  scheduleRefresh();
+}
+function _isInWaitingClient(id){
+  return state.waitingBatches.some(b=>(b.members||[]).some(m=>String(m.id)===String(id)));
 }
 
 function focusActiveScan(){
@@ -1038,23 +1143,32 @@ function displayWaitingList(){
     const members=b.members||[];
     const filtered = members.filter(m=>!q || m.name.toLowerCase().includes(q) || String(m.id).toLowerCase().includes(q));
     totalWaiting += members.length;
+    const pending = members.filter(m=>!m.sent).length;   // not yet sent
+    const sendable = members.filter(m=>!m.sent && !checkBreakClient(m.breakHours)).length;
     return `
       <div style="margin-bottom:14px">
-        <div style="font-weight:800;color:var(--prime);margin-bottom:6px">Batch ${b.batch} (${filtered.length}/25)</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-weight:800;color:var(--prime)">Batch ${b.batch} (${members.length})</span>
+          ${members.length===0 ? ''
+            : (sendable>0 ? `<button class="btn success" style="padding:5px 10px;font-size:.74rem" onclick="sendBatch(${b.batch})">Send Batch (${sendable})</button>`
+                          : `<span class="badge" style="background:rgba(47,207,122,.16);color:var(--green)">All sent</span>`)}
+        </div>
         ${filtered.map(m=>{
           const waitedMin=Math.max(0,Math.floor((Date.now()-(m.checkInEpoch||Date.now()))/60000));
           const backAt=checkBreakClient(m.breakHours);
           return `
-            <div class="row-item" style="${backAt?'opacity:.55':''}">
+            <div class="row-item" style="${backAt?'opacity:.55':''}${m.sent?'border-left:3px solid var(--green)':''}">
               <div>
                 <strong>${m.name}</strong> <small style="color:var(--muted)">(${m.id})</small>
-                <div style="font-size:.75rem;color:var(--muted)">Waited ${waitedMin}m</div>
+                <div style="font-size:.75rem;color:var(--muted)">Waited ${waitedMin}m${m.sent?` · <span style="color:var(--green)">Sent ${m.sentAt||''}</span>`:''}</div>
               </div>
               <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
                 ${backAt
                   ? `<span class="badge Break">On break – back ${backAt}</span>`
-                  : `<span class="badge ${m.status||'Present'}">${m.status||'Present'}</span>
-                     <button class="btn success" style="padding:5px 8px;font-size:.75rem" onclick="initiateScan(${escObj(m)},'ENTRY')">Send</button>`}
+                  : (m.sent
+                      ? `<span class="badge" style="background:rgba(47,207,122,.16);color:var(--green)">Sent ✓</span>`
+                      : `<span class="badge ${m.status||'Present'}">${m.status||'Present'}</span>
+                         <button class="btn success" style="padding:5px 8px;font-size:.75rem" onclick="sendDA('${m.id}')">Send</button>`)}
                 <button class="btn secondary" style="padding:5px 8px;font-size:.75rem" onclick="openReplaceModal('${m.id}')">Replace</button>
                 <button class="btn danger" style="padding:5px 8px;font-size:.75rem" onclick="removeWaitingDA('${m.id}')">Remove</button>
               </div>
@@ -1063,6 +1177,24 @@ function displayWaitingList(){
       </div>`;
   }).join('');
   document.getElementById('waitCount').textContent = totalWaiting;
+}
+
+// Send = mark 'Sent from Waiting' (dispatch step). Entry is confirmed later by the
+// Tampermonkey bridge (queueReceived), which counts the turn and removes them.
+async function sendDA(empId){
+  // optimistic: flag locally then confirm with server
+  state.waitingBatches.forEach(b=>(b.members||[]).forEach(m=>{ if(String(m.id)===String(empId)){ m.sent=true; m.sentAt=new Date().toTimeString().slice(0,5); }}));
+  displayWaitingList();
+  const res=await apiCall({ action:'markSent', employeeId:empId });
+  if(res && res.success){ playTone('success'); showBanner('Sent from waiting — awaiting off-yard entry','var(--green)'); }
+  scheduleRefresh();
+}
+async function sendBatch(batchNum){
+  state.waitingBatches.forEach(b=>{ if(b.batch===batchNum)(b.members||[]).forEach(m=>{ if(!m.sent){ m.sent=true; m.sentAt=new Date().toTimeString().slice(0,5); }}); });
+  displayWaitingList();
+  const res=await apiCall({ action:'markSent', batch:batchNum });
+  if(res && res.success){ playTone('success'); showBanner('Batch '+batchNum+' sent — '+(res.marked||0)+' DAs awaiting off-yard entry','var(--green)'); }
+  scheduleRefresh();
 }
 function escObj(m){ return JSON.stringify({id:m.id,name:m.name,breakHours:m.breakHours}).replace(/"/g,'&quot;'); }
 
