@@ -778,7 +778,7 @@ async function refreshRoster(force=false){
   LS.setItem('DUD3_ROSTER', JSON.stringify(state.roster));
   LS.setItem('DUD3_BATCHES', JSON.stringify(state.waitingBatches));
 
-  document.getElementById('dayLabel').textContent = `Tab: ${res.todayName} • ${state.roster.length} DAs`;
+  document.getElementById('dayLabel').textContent = `Tab: ${res.todayName} • ${state.roster.length} DAs${res.version?' • '+res.version:''}`;
   document.getElementById('rosterCount').textContent = state.roster.length;
   document.getElementById('violCount').textContent = state.violators.length;
 
