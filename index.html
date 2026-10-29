@@ -995,12 +995,17 @@ function initiateScan(da, scanType){
     if(backAt){ playTone('error'); showBanner(`${da.name} is on break — back ${backAt}`,'var(--red)'); return; }
   }
   if(scanType==='ENTRY'){
-    // Waiting-tab scan. Two cases:
-    //  • Already in Waiting (Turn 1 after Attendance) → Send from batch.
-    //  • Not in Waiting (dispatched earlier) → re-queue for the next turn (Turn 2,3…).
+    // Waiting-tab scan = add/keep the DA in the waiting batch for their next turn.
+    // It must NEVER auto-send — only the Yard Marshal's Send button dispatches.
+    //  • Already in Waiting → no-op (just confirm they're queued).
+    //  • Not in Waiting (returning for turn 2,3…) → re-queue into the ongoing batch.
     //    Attendance is NOT re-done — that happens only on the 1st scan of the day.
-    if(_isInWaitingClient(da.id)) sendDA(da.id);
-    else reQueueDA(da.id, da.name);
+    if(_isInWaitingClient(da.id)){
+      playTone('warn');
+      showBanner(da.name+' already in waiting — Yard Marshal must Send to dispatch','var(--amber)');
+    } else {
+      reQueueDA(da.id, da.name);
+    }
   } else {
     doCheckIn(da);
   }
