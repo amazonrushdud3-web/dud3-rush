@@ -293,6 +293,10 @@
       <svg viewBox="0 0 24 24" class="tabic"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01"/></svg>
       <span>Violators <b id="violCount">0</b></span>
     </button>
+    <button class="tab-btn" onclick="switchTab('turns',this)">
+      <svg viewBox="0 0 24 24" class="tabic"><path d="M12 8v4l3 2M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/></svg>
+      <span>Turns</span>
+    </button>
     <button class="tab-btn" onclick="switchTab('settings',this)">
       <svg viewBox="0 0 24 24" class="tabic"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       <span>Settings</span>
@@ -424,6 +428,18 @@
         <button class="btn" onclick="saveSettingsToServer()">Save Thresholds</button>
         <button class="btn danger" onclick="triggerStartNewDay()">Start New Day (Reset)</button>
       </div>
+    </div>
+  </div>
+
+  <!-- TURNS MONITOR TAB -->
+  <div id="tab-turns" style="display:none">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <h4>Turns Monitor</h4>
+        <span style="font-size:.75rem;color:var(--muted)">Target: <b style="color:var(--amz-orange)">7</b>/DA · Total: <b id="turnsTotal">0</b></span>
+      </div>
+      <input id="turnsSearch" class="scan-input" placeholder="Search by Name or ID…" oninput="renderTurns()" />
+      <div id="turnsList" style="margin-top:10px"></div>
     </div>
   </div>
 
@@ -1247,6 +1263,33 @@ function renderBreaks(filterType){
   }).join('') || '<div style="color:var(--muted);padding:8px">No DAs in this break category.</div>';
 }
 
+let _turnsData = [];
+async function refreshTurns(){
+  const res = await apiCall({ action:'turnsReport' });
+  if(res && res.success){
+    _turnsData = res.rows || [];
+    const tt=document.getElementById('turnsTotal'); if(tt) tt.textContent = res.totalTurns||0;
+    renderTurns();
+  }
+}
+function renderTurns(){
+  const el=document.getElementById('turnsList'); if(!el) return;
+  const q=(document.getElementById('turnsSearch')?.value||'').toLowerCase();
+  const rows=_turnsData.filter(r=>!q || (r.name||'').toLowerCase().includes(q) || String(r.id).toLowerCase().includes(q));
+  if(!rows.length){ el.innerHTML='<div style="color:var(--muted);font-size:.85rem">No DAs yet.</div>'; return; }
+  el.innerHTML = rows.map(r=>{
+    const low = (r.turns||0) < 7;
+    const col = low ? 'var(--amber)' : 'var(--green)';
+    return `<div class="row-item">
+      <div><strong>${r.name||r.id}</strong> <small style="color:var(--muted)">(${r.id})</small>
+        ${r.lastEntry?`<div style="font-size:.72rem;color:var(--muted)">last ${r.lastEntry}</div>`:''}</div>
+      <div style="text-align:right">
+        <div style="font-weight:800;font-size:1.1rem;color:${col}">${r.turns||0}<small style="font-size:.6rem;color:var(--muted)">/7</small></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 function renderViolators(){
   const el=document.getElementById('violatorsList');
   if(!state.violators.length){ el.innerHTML='<div style="color:var(--muted)">No active violators.</div>'; return; }
@@ -1295,7 +1338,7 @@ function setScanMode(mode){
   const wen=document.getElementById('wModeEntry');   if(wen) wen.className=en;
 }
 function switchTab(tab, btn){
-  ['scan','waiting','breaks','violators','settings'].forEach(t=>{
+  ['scan','waiting','breaks','violators','turns','settings'].forEach(t=>{
     document.getElementById('tab-'+t).style.display = (t===tab)?'block':'none';
   });
   if(!deviceProfile.isMobile && (tab==='scan'||tab==='waiting')){
@@ -1307,6 +1350,7 @@ function switchTab(tab, btn){
   // Fixed mode per tab: Attendance tab = Check-In, Waiting tab = Entry (Dispatch)
   if(tab==='scan'){ setScanMode('CHECK_IN'); scanInputEl.focus(); }
   else if(tab==='waiting'){ setScanMode('ENTRY'); const w=document.getElementById('waitScanInput'); if(w) w.focus(); }
+  else if(tab==='turns'){ refreshTurns(); }
 }
 
 // ---- SETTINGS ACTIONS ----
