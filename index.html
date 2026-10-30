@@ -1051,31 +1051,6 @@ async function doCheckIn(da){
   scheduleRefresh();                   // coalesced, cached background sync
 }
 
-async function doMarkEntry(da, forceConfirm){
-  flashGreen();
-  focusActiveScan();
-  // Snapshot for rollback, then remove from the waiting list INSTANTLY so the
-  // operator sees it gone with zero network wait.
-  const _snapshot = JSON.stringify(state.waitingBatches);
-  optimisticRemoveWaiting(da.id);
-  const res = await apiCall({ action:'markEntry', employeeId:da.id, timestamp:new Date().toISOString(), forceConfirm:!!forceConfirm });
-  if(res===null){ /* queued offline — keep it removed, will reconcile on sync */ return; }
-  if(res.success){
-    playTone('success');
-    showBanner(`🚚 ${da.name} dispatched · Out on road ${res.outOnRoadAt} · Turn ${res.turns}`,'var(--green)');
-  } else if(res.blocked==='COOLDOWN_FORCE'){
-    // restore the row, then ask to force
-    state.waitingBatches = JSON.parse(_snapshot); LS.setItem('DUD3_BATCHES', JSON.stringify(state.waitingBatches)); displayWaitingList();
-    if(confirm(res.message+'\n\nForce-add this entry?')) return doMarkEntry(da, true);
-  } else {
-    // blocked/failed → restore the row
-    state.waitingBatches = JSON.parse(_snapshot); LS.setItem('DUD3_BATCHES', JSON.stringify(state.waitingBatches)); displayWaitingList();
-    playTone('error');
-    showBanner(res.message||'Entry blocked','var(--red)');
-  }
-  scheduleRefresh();
-}
-
 function flashGreen(){
   const f=document.getElementById('camFlash');
   f.classList.remove('flash'); void f.offsetWidth; f.classList.add('flash');
@@ -1442,17 +1417,6 @@ async function triggerStartNewDay(){
 }
 
 // ---- CSV EXPORT ----
-function exportRosterCSV(){
-  const headers=['DA ID','DA Name','Service Type','Wave time','Shift End','DSP','Status','Scan Time','Break 1','Break 2','Replacement'];
-  const rows=state.roster.map(r=>[r.id,r.name,r.serviceType,r.waveTime,r.shiftEnd,r.dsp,r.status,r.scanTime,r.break1,r.break2,r.replacement||'']);
-  const csv=[headers,...rows].map(row=>row.map(c=>`"${String(c==null?'':c).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob=new Blob([csv],{type:'text/csv'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=`DUD3_Rush_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click(); URL.revokeObjectURL(a.href);
-}
-
 // ---- KEYBOARD SHORTCUT (desktop) ----
 document.addEventListener('keydown', (e)=>{
   if(e.key==='/' && document.activeElement!==scanInputEl && !deviceProfile.isMobile){
