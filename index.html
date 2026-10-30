@@ -1171,7 +1171,10 @@ function displayWaitingList(){
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
           <span style="font-weight:800;color:var(--prime)">Batch ${b.batch} (${members.length})</span>
           ${members.length===0 ? ''
-            : (sendable>0 ? `<button class="btn success" style="padding:5px 10px;font-size:.74rem" onclick="sendBatch(${b.batch})">Send Batch (${sendable})</button>`
+            : (sendable>0 ? `<span style="display:flex;gap:6px">
+                 <button class="btn" style="padding:5px 10px;font-size:.74rem" onclick="sendSelected(${b.batch})">Send Selected</button>
+                 <button class="btn success" style="padding:5px 10px;font-size:.74rem" onclick="sendBatch(${b.batch})">Send Batch (${sendable})</button>
+               </span>`
                           : `<span class="badge" style="background:rgba(47,207,122,.16);color:var(--green)">All sent</span>`)}
         </div>
         ${filtered.map(m=>{
@@ -1188,7 +1191,8 @@ function displayWaitingList(){
                   ? `<span class="badge Break">On break – back ${backAt}</span>`
                   : (m.sent
                       ? `<span class="badge" style="background:rgba(47,207,122,.16);color:var(--green)">Sent ✓</span>`
-                      : `<span class="badge ${m.status||'Present'}">${m.status||'Present'}</span>
+                      : `<input type="checkbox" class="wait-chk" data-id="${m.id}" style="width:18px;height:18px;accent-color:var(--amz-orange)">
+                         <span class="badge ${m.status||'Present'}">${m.status||'Present'}</span>
                          <button class="btn success" style="padding:5px 8px;font-size:.75rem" onclick="sendDA('${m.id}')">Send</button>`)}
                 <button class="btn secondary" style="padding:5px 8px;font-size:.75rem" onclick="openReplaceModal('${m.id}')">Replace</button>
                 <button class="btn danger" style="padding:5px 8px;font-size:.75rem" onclick="removeWaitingDA('${m.id}')">Remove</button>
@@ -1215,6 +1219,18 @@ async function sendBatch(batchNum){
   displayWaitingList();
   const res=await apiCall({ action:'markSent', batch:batchNum });
   if(res && res.success){ playTone('success'); showBanner('Batch '+batchNum+' sent — '+(res.marked||0)+' DAs awaiting off-yard entry','var(--green)'); }
+  scheduleRefresh();
+}
+async function sendSelected(batchNum){
+  // Collect checked DA ids (within this batch's rendered rows).
+  const ids = Array.from(document.querySelectorAll('.wait-chk:checked')).map(c=>c.getAttribute('data-id'));
+  if(!ids.length){ playTone('warn'); showBanner('Tick the DAs to send first','var(--amber)'); return; }
+  // optimistic flag
+  const now=new Date().toTimeString().slice(0,5);
+  state.waitingBatches.forEach(b=>(b.members||[]).forEach(m=>{ if(ids.indexOf(String(m.id))!==-1){ m.sent=true; m.sentAt=now; }}));
+  displayWaitingList();
+  const res=await apiCall({ action:'markSent', ids:ids });
+  if(res && res.success){ playTone('success'); showBanner('Sent '+ids.length+' selected DA(s) — awaiting off-yard entry','var(--green)'); }
   scheduleRefresh();
 }
 function escObj(m){ return JSON.stringify({id:m.id,name:m.name,breakHours:m.breakHours}).replace(/"/g,'&quot;'); }
