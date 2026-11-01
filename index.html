@@ -1,1454 +1,862 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>DUD3 Rush PRO — Scanner</title>
-<style>
-  :root{
-    /* Amazon dark (Squid Ink) theme */
-    --bg:#131A22; --bg2:#0d131a; --card:#1b252f; --card2:#232F3E; --line:#37475A;
-    --text:#f3f5f7; --muted:#99a7b5;
-    --amz-orange:#FF9900; --amz-orange-d:#e88a00; --amz-smile:#FF9900;
-    --prime:#FF9900;            /* primary accent = Amazon orange */
-    --green:#2fcf7a; --amber:#FEBD69; --red:#ff5a6a; --purple:#9b7bff;
-    --safe-top:env(safe-area-inset-top,0px); --safe-bot:env(safe-area-inset-bottom,0px);
-  }
-  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-  body{font-family:'Amazon Ember','Segoe UI',Roboto,system-ui,sans-serif;background:
-    radial-gradient(900px 480px at 85% -12%,rgba(255,153,0,.10) 0%,transparent 60%),
-    radial-gradient(1000px 520px at 10% -10%,#1b2733 0%,transparent 55%),var(--bg);
-    color:var(--text);min-height:100vh;padding:calc(10px + var(--safe-top)) 10px calc(10px + var(--safe-bot));}
-  /* thin Amazon smile strip across the very top */
-  body::before{content:'';position:fixed;top:0;left:0;right:0;height:3px;z-index:8000;
-    background:linear-gradient(90deg,var(--amz-orange),#FEBD69,var(--amz-orange));}
+  <meta charset="UTF-8">
+  <title>DUD3 RUSH PRO — Scanner &amp; Dispatch</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#131A22">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
-  /* ===== SPLASH (Amazon Rush — lightning smile) ===== */
-  #rush-anow-splash{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;
-    align-items:center;justify-content:center;gap:10px;overflow:hidden;
-    background:radial-gradient(1100px 650px at 50% 35%,#1b2733 0%,#131A22 55%,#0d131a 100%);
-    transition:opacity .55s ease,visibility .55s ease;}
-  #rush-anow-splash.is-hidden{opacity:0;visibility:hidden;pointer-events:none}
+  <style>
+    :root {
+      --bg-primary: #131A22;
+      --bg-secondary: #1E2633;
+      --bg-card: #232F3E;
+      --bg-card-hover: #2D3B4E;
+      --accent-orange: #FF9900;
+      --accent-orange-hover: #E88B00;
+      --accent-blue: #00A8E1;
+      --text-main: #FFFFFF;
+      --text-muted: #9DA8B6;
+      --success: #00C853;
+      --danger: #FF3B30;
+      --warn: #FFB300;
+      --border-color: #37475A;
+      --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Amazon Ember", sans-serif;
+      --font-mono: "JetBrains Mono", Consolas, monospace;
+      --bottom-nav-height: 64px;
+    }
 
-  /* perspective grid floor */
-  .splash-floor{position:absolute;bottom:-18%;left:50%;transform:translateX(-50%) rotateX(70deg);
-    width:180%;height:65%;transform-origin:center bottom;
-    background-image:linear-gradient(rgba(255,153,0,.18) 1px,transparent 1px),
-                     linear-gradient(90deg,rgba(255,153,0,.18) 1px,transparent 1px);
-    background-size:46px 46px;opacity:.5;
-    mask-image:linear-gradient(to top,#000 5%,transparent 78%);
-    -webkit-mask-image:linear-gradient(to top,#000 5%,transparent 78%);
-    animation:floorMove 5s linear infinite;}
-  @keyframes floorMove{from{background-position:0 0}to{background-position:0 46px}}
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      background: var(--bg-primary);
+      color: var(--text-main);
+      font-family: var(--font-stack);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      padding-bottom: calc(var(--bottom-nav-height) + 16px);
+    }
 
-  /* orbiting brand particles */
-  .splash-orbit{position:absolute;z-index:1;width:300px;height:300px;border-radius:50%;animation:orbit 9s linear infinite}
-  .splash-orbit i{position:absolute;top:0;left:50%;width:8px;height:8px;border-radius:50%;
-    background:var(--amz-orange);box-shadow:0 0 14px var(--amz-orange)}
-  .splash-orbit:nth-child(2){width:420px;height:420px;animation-duration:13s;animation-direction:reverse}
-  .splash-orbit:nth-child(2) i{background:#fff;box-shadow:0 0 12px #fff}
-  @keyframes orbit{to{transform:rotate(360deg)}}
+    /* SPLASH */
+    #splash {
+      position: fixed; inset: 0; background: #0B0E14; z-index: 99999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+    }
+    #splash.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+    .splash-logo { width: 72px; height: 72px; fill: var(--accent-orange); filter: drop-shadow(0 0 16px rgba(255,153,0,0.6)); }
+    .splash-title { font-size: 26px; font-weight: 800; letter-spacing: 2px; margin-top: 16px; color: #fff; }
+    .splash-sub { font-size: 13px; color: var(--accent-orange); letter-spacing: 3px; font-weight: 700; }
+    .splash-loader { width: 48px; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 24px; overflow: hidden; }
+    .splash-bar { width: 40%; height: 100%; background: var(--accent-orange); animation: loadPulse 1.2s infinite ease-in-out; }
+    @keyframes loadPulse { 0% { transform: translateX(-100%); } 100% { transform: translateX(300%); } }
 
-  /* logo stack: lightning bolt that doubles as the smile */
-  .splash-logo{position:relative;z-index:3;width:160px;height:160px;display:flex;align-items:center;justify-content:center;
-    filter:drop-shadow(0 0 26px rgba(255,153,0,.55));}
-  .splash-logo svg{width:100%;height:100%;overflow:visible}
-  /* the smile arrow draws itself downward then settles */
-  .smile-path{stroke:var(--amz-smile);stroke-width:11;fill:none;stroke-linecap:round;
-    stroke-dasharray:240;stroke-dashoffset:240;animation:drawSmile 1.1s .25s ease-out forwards}
-  @keyframes drawSmile{to{stroke-dashoffset:0}}
-  .smile-arrow{fill:var(--amz-smile);opacity:0;transform:translateY(-14px);
-    animation:dropArrow .5s 1.15s ease-out forwards}
-  @keyframes dropArrow{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:translateY(0)}}
-  .bolt{fill:#fff;opacity:0;transform:translateY(-70px) scale(.6);transform-origin:center;
-    animation:dropBolt .7s cubic-bezier(.2,1.4,.4,1) forwards}
-  @keyframes dropBolt{0%{opacity:0;transform:translateY(-70px) scale(.6)}
-    60%{opacity:1;transform:translateY(6px) scale(1.06)}100%{opacity:1;transform:translateY(0) scale(1)}}
-  .bolt-flash{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,rgba(255,153,0,.6),transparent 60%);
-    opacity:0;animation:flash .5s .65s ease-out}
-  @keyframes flash{0%{opacity:0}40%{opacity:1}100%{opacity:0}}
+    /* HEADER */
+    header {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
+      padding: 10px 16px;
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px;
+    }
+    .brand-wrap { display: flex; align-items: center; gap: 8px; }
+    .brand-logo { color: var(--accent-orange); font-size: 20px; font-weight: 900; }
+    .brand-sub { font-size: 11px; background: rgba(255,153,0,0.15); color: var(--accent-orange); padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+    .hdr-center { display: flex; align-items: center; gap: 8px; font-size: 11px; }
+    .status-pill { padding: 3px 8px; border-radius: 12px; font-weight: 700; text-transform: uppercase; font-size: 10px; }
+    .status-pill.online { background: rgba(0, 200, 83, 0.2); color: var(--success); border: 1px solid var(--success); }
+    .status-pill.offline { background: rgba(255, 59, 48, 0.2); color: var(--danger); border: 1px solid var(--danger); }
+    .status-pill.connecting { background: rgba(255, 179, 0, 0.2); color: var(--warn); border: 1px solid var(--warn); }
+    .day-badge { color: var(--text-muted); font-family: var(--font-mono); }
+    .hdr-actions { display: flex; align-items: center; gap: 8px; }
+    .btn-icon { background: var(--bg-secondary); border: 1px solid var(--border-color); color: #fff; width: 34px; height: 34px; border-radius: 6px; display: grid; place-items: center; cursor: pointer; }
+    .btn-icon:active { transform: scale(0.95); }
 
-  /* wordmark */
-  .splash-word{z-index:3;text-align:center;opacity:0;transform:translateY(10px);
-    animation:riseWord .6s 1.35s ease-out forwards}
-  @keyframes riseWord{to{opacity:1;transform:translateY(0)}}
-  .splash-word .station{font-size:.78rem;letter-spacing:6px;color:var(--muted);font-weight:700}
-  .splash-word .name{font-size:2.3rem;font-weight:900;letter-spacing:1px;line-height:1.05;margin-top:2px;
-    background:linear-gradient(90deg,#fff 0%,#FEBD69 45%,var(--amz-orange) 100%);
-    -webkit-background-clip:text;background-clip:text;color:transparent}
-  .splash-word .name b{color:var(--amz-orange);-webkit-text-fill-color:var(--amz-orange)}
-  .splash-word .tag{font-size:.72rem;letter-spacing:4px;color:var(--muted);font-weight:600;margin-top:8px;text-transform:uppercase}
-  .splash-word .tag span{color:var(--amz-orange)}
+    /* CONTAINER */
+    main { max-width: 900px; width: 100%; margin: 0 auto; padding: 12px 14px; flex: 1; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
 
-  /* ===== HEADER ===== */
-  .topbar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;
-    background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
-    border-radius:14px;padding:12px 16px;position:sticky;top:calc(3px + var(--safe-top));z-index:6000;
-    box-shadow:0 4px 18px rgba(0,0,0,.3)}
-  .brand{display:flex;align-items:center;gap:9px;font-weight:800}
-  .brand .mk{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;
-    font-size:15px;background:linear-gradient(145deg,var(--amz-orange),var(--amz-orange-d));color:#131A22;box-shadow:0 0 14px rgba(255,153,0,.5)}
-  .brand-name{font-weight:900;letter-spacing:.5px}
-  .brand-name b{color:var(--amz-orange)}
-  .status-pill{font-size:.68rem;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(47,207,122,.16);color:var(--green)}
-  .status-pill.offline{background:rgba(255,90,106,.16);color:var(--red)}
-  .status-pill.connecting{background:rgba(254,189,105,.16);color:var(--amber)}
-  #deviceBadge{font-size:.72rem;color:var(--muted)}
-  #dayLabel{font-size:.74rem;color:var(--muted)}
-  .hdr-refresh{flex:0 0 auto;width:40px;height:40px;border-radius:12px;border:1px solid var(--line);
-    background:var(--card2);color:var(--amz-orange);cursor:pointer;display:flex;align-items:center;justify-content:center;
-    transition:transform .2s,border-color .15s}
-  .hdr-refresh:hover{border-color:var(--amz-orange)}
-  .hdr-refresh svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-  .hdr-refresh.spinning svg{animation:spin .7s linear infinite}
-  .notif-wrap{position:relative}
-  .notif-count{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;
-    background:var(--red);color:#fff;font-size:.62rem;font-weight:800;display:flex;align-items:center;justify-content:center}
-  .notif-panel{position:absolute;right:0;top:46px;width:min(320px,86vw);max-height:60vh;overflow:auto;z-index:7000;
-    background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.5);
-    display:none;padding:8px}
-  .notif-panel.open{display:block}
-  .notif-head{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;font-weight:800;font-size:.82rem;color:var(--text)}
-  .notif-clear{background:none;border:none;color:var(--amz-orange);font-weight:700;font-size:.74rem;cursor:pointer}
-  .notif-list{display:flex;flex-direction:column;gap:6px}
-  .notif-item{position:relative;padding:9px 11px;border-radius:10px;background:var(--bg2);border-left:3px solid var(--line);
-    font-size:.82rem;color:var(--text);touch-action:pan-y;transition:transform .15s,opacity .15s}
-  .notif-item .nt{display:block;font-size:.66rem;color:var(--muted);margin-top:3px}
-  .notif-item.ok{border-left-color:var(--green)} .notif-item.warn{border-left-color:var(--amber)} .notif-item.err{border-left-color:var(--red)}
-  .notif-item.dismiss{transform:translateX(120%);opacity:0}
-  .notif-empty{padding:14px 8px;text-align:center;color:var(--muted);font-size:.8rem}
-  @keyframes spin{to{transform:rotate(360deg)}}
+    /* CARDS & PANELS */
+    .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px; margin-bottom: 12px; }
+    .card-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
 
-  /* ===== TABS ===== */
-  .tabs{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;padding-bottom:2px;-webkit-overflow-scrolling:touch}
-  .tab-btn{flex:0 0 auto;background:var(--card);border:1px solid var(--line);color:var(--muted);
-    padding:8px 14px;border-radius:12px;font-weight:700;font-size:.82rem;cursor:pointer;
-    display:inline-flex;align-items:center;gap:6px;transition:all .15s}
-  .tab-btn .tabic{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
-  .tab-btn b{color:var(--amz-orange);font-weight:800}
-  .tab-btn.active{background:var(--prime);color:#131A22;border-color:var(--prime);box-shadow:0 2px 12px rgba(255,153,0,.4)}
-  .tab-btn.active b{color:#131A22}
+    /* BUTTONS */
+    .btn { background: var(--accent-orange); color: #111; font-weight: 700; border: none; border-radius: 6px; padding: 10px 14px; cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+    .btn:hover { background: var(--accent-orange-hover); }
+    .btn:active { transform: scale(0.97); }
+    .btn-secondary { background: var(--bg-secondary); color: #fff; border: 1px solid var(--border-color); }
+    .btn-danger { background: rgba(255,59,48,0.2); color: var(--danger); border: 1px solid var(--danger); }
+    .btn-danger:hover { background: var(--danger); color: #fff; }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+    .btn-block { width: 100%; }
 
-  /* MOBILE → app-style bottom navigation */
-  @media(max-width:860px){
-    .tabs{position:fixed;left:0;right:0;bottom:0;z-index:7000;margin:0;gap:0;overflow:visible;
-      background:rgba(19,26,34,.96);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-      border-top:1px solid var(--line);padding:6px 4px calc(6px + var(--safe-bot));justify-content:space-around}
-    .tab-btn{flex:1 1 0;flex-direction:column;gap:3px;background:none;border:none;border-radius:12px;
-      padding:6px 2px;font-size:.6rem;letter-spacing:.2px;box-shadow:none;color:var(--muted)}
-    .tab-btn .tabic{width:22px;height:22px}
-    .tab-btn b{font-size:.6rem}
-    .tab-btn.active{background:none;color:var(--amz-orange);box-shadow:none}
-    .tab-btn.active .tabic{stroke:var(--amz-orange)}
-    .tab-btn.active b{color:var(--amz-orange)}
-    body{padding-bottom:calc(76px + var(--safe-bot))}  /* room for bottom nav */
-  }
+    /* INPUTS */
+    .input-box { width: 100%; background: var(--bg-primary); border: 1px solid var(--border-color); color: #fff; padding: 10px 12px; border-radius: 6px; font-size: 14px; font-family: inherit; }
+    .input-box:focus { outline: none; border-color: var(--accent-orange); }
 
-  .card{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);
-    border-radius:16px;padding:16px;margin-bottom:14px;position:relative;box-shadow:0 4px 18px rgba(0,0,0,.25)}
-  h4{color:var(--text)}
-  .card>h4:first-child::before,h4.accent::before{content:'';display:inline-block;width:3px;height:14px;
-    background:var(--amz-orange);border-radius:2px;margin-right:8px;vertical-align:-2px}
-  h4{font-size:.92rem;margin-bottom:6px}
+    /* SCANNER VIEWPORT */
+    #scanner-container { border-radius: 8px; overflow: hidden; background: #000; margin-bottom: 12px; position: relative; min-height: 220px; display: none; }
+    #reader { width: 100%; }
 
-  .mode-switch{display:flex;gap:8px;margin-bottom:10px}
-  .btn{background:linear-gradient(180deg,var(--amz-orange),var(--amz-orange-d));color:#131A22;border:none;border-radius:12px;padding:11px 16px;
-    font-weight:800;font-size:.9rem;letter-spacing:.2px;cursor:pointer;transition:transform .08s ease,box-shadow .2s ease,filter .15s ease;
-    box-shadow:0 2px 10px rgba(255,153,0,.25);display:inline-flex;align-items:center;justify-content:center;gap:7px}
-  .btn:hover{filter:brightness(1.05)}
-  .btn:active{transform:scale(.96)}
-  .btn.secondary{background:var(--card2);color:var(--text);border:1px solid var(--line);box-shadow:none}
-  .btn.secondary:hover{border-color:var(--amz-orange);color:var(--amz-orange)}
-  .btn.success{background:linear-gradient(180deg,#34d684,#25b06a);color:#06220f;box-shadow:0 2px 10px rgba(47,207,122,.3)}
-  .btn.danger{background:linear-gradient(180deg,#ff6b78,#e5424f);color:#2a0a0d;box-shadow:0 2px 10px rgba(255,90,106,.3)}
-  .btn.warn{background:linear-gradient(180deg,#FEBD69,#f0a73f);color:#2a1800}
-  .btn:disabled{opacity:.5;cursor:not-allowed}
-  .btn:active{transform:scale(.97)}
-  .btn.secondary{background:var(--card2);color:var(--muted);border:1px solid var(--line)}
-  .btn.success{background:var(--green)} .btn.danger{background:var(--red)} .btn.warn{background:var(--amber);color:#1a1200}
+    /* SEARCH & SUGGESTIONS */
+    .suggest-box { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; margin-top: 4px; max-height: 180px; overflow-y: auto; }
+    .suggest-row { padding: 8px 12px; border-bottom: 1px solid var(--border-color); cursor: pointer; font-size: 13px; display: flex; justify-content: space-between; }
+    .suggest-row:hover { background: var(--bg-card-hover); }
 
-  .scan-input,.cfg{width:100%;background:var(--bg2);border:1px solid var(--line);color:var(--text);
-    border-radius:12px;padding:13px 14px;font-size:1rem;outline:none;transition:border-color .15s,box-shadow .15s}
-  .scan-input:focus,.cfg:focus{border-color:var(--amz-orange);box-shadow:0 0 0 3px rgba(255,153,0,.18)}
-  .scan-input::placeholder{color:var(--muted)}
-  .search-wrap{position:relative;margin-top:10px}
-  .dropdown{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--card2);
-    border:1px solid var(--line);border-radius:10px;z-index:50;max-height:280px;overflow:auto;display:none}
-  .dropdown.open{display:block}
-  .dropdown .opt{padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--line);font-size:.88rem}
-  .dropdown .opt:last-child{border-bottom:none}
-  .dropdown .opt.active,.dropdown .opt:hover{background:var(--prime);color:#fff}
-  .dropdown .opt small{color:var(--muted)} .dropdown .opt.active small{color:#dce7ff}
+    /* LIST ITEMS */
+    .list-item { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+    .list-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; font-family: var(--font-mono); }
 
-  #reader-wrap{position:relative;margin:10px 0;border-radius:12px;overflow:hidden;min-height:4px}
-  #reader{width:100%}
-  .flash-overlay{position:absolute;inset:0;background:var(--green);opacity:0;pointer-events:none}
-  /* full-screen scan flash */
-  .fs-flash{position:fixed;inset:0;z-index:6500;pointer-events:none;opacity:0;background:var(--green)}
-  .fs-flash.ok{background:radial-gradient(circle at 50% 45%,rgba(47,207,122,.55),transparent 70%);animation:fsPulse .5s ease}
-  .fs-flash.warn{background:radial-gradient(circle at 50% 45%,rgba(254,189,105,.5),transparent 70%);animation:fsPulse .5s ease}
-  .fs-flash.err{background:radial-gradient(circle at 50% 45%,rgba(255,90,106,.55),transparent 70%);animation:fsPulse .55s ease}
-  @keyframes fsPulse{0%{opacity:0}25%{opacity:1}100%{opacity:0}}
-  .flash-overlay.flash{animation:greenFlash .45s ease}
-  @keyframes greenFlash{0%{opacity:.0}25%{opacity:.55}100%{opacity:0}}
+    /* BATCH ACCORDION */
+    .batch-header { background: var(--bg-card-hover); padding: 10px 12px; border-radius: 6px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; font-weight: 700; cursor: pointer; border: 1px solid var(--border-color); }
+    .batch-badge { font-size: 11px; background: rgba(0, 168, 225, 0.2); color: var(--accent-blue); padding: 2px 8px; border-radius: 12px; }
+    .batch-body { padding: 4px 0 10px 0; }
+    .badge { padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+    .badge-sent { background: rgba(0, 200, 83, 0.2); color: var(--success); }
+    .badge-waiting { background: rgba(255, 179, 0, 0.2); color: var(--warn); }
+    .badge-absent { background: rgba(255, 59, 48, 0.2); color: var(--danger); }
 
-  .row-item{display:flex;justify-content:space-between;align-items:center;gap:8px;
-    padding:11px 12px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:var(--bg2);
-    transition:border-color .12s,transform .08s}
-  .row-item:active{transform:scale(.995)}
-  .badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.72rem;font-weight:700}
-  .badge.Present{background:rgba(47,207,122,.16);color:var(--green)}
-  .badge.Late{background:rgba(255,178,62,.16);color:var(--amber)}
-  .badge.Absent{background:rgba(255,90,106,.16);color:var(--red)}
-  .badge.Break{background:rgba(155,123,255,.16);color:var(--purple)}
+    /* BOTTOM NAV */
+    nav.bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      height: var(--bottom-nav-height);
+      background: var(--bg-card);
+      border-top: 1px solid var(--border-color);
+      display: flex; justify-content: space-around; align-items: center;
+      z-index: 1000;
+    }
+    .nav-btn {
+      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: none; border: none; color: var(--text-muted); cursor: pointer; height: 100%;
+      font-size: 11px; font-weight: 600; gap: 4px;
+    }
+    .nav-btn.active { color: var(--accent-orange); }
+    .nav-btn svg { width: 20px; height: 20px; fill: currentColor; }
 
-  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  label{display:block}
+    /* FLASH NOTIFICATIONS */
+    #feedback-flash {
+      position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+      opacity: 0; transition: opacity 0.2s ease-out;
+    }
+    #feedback-flash.flash-green { background: rgba(0,200,83,0.3); opacity: 1; }
+    #feedback-flash.flash-amber { background: rgba(255,179,0,0.35); opacity: 1; }
+    #feedback-flash.flash-red { background: rgba(255,59,48,0.4); opacity: 1; }
 
-  .banner{position:fixed;left:50%;bottom:calc(16px + var(--safe-bot));transform:translateX(-50%);
-    background:var(--card2);border:1px solid var(--line);color:var(--text);padding:12px 18px;
-    border-radius:12px;font-weight:700;z-index:5000;display:none;max-width:92%;box-shadow:0 8px 30px rgba(0,0,0,.4)}
-
-  .modal-backdrop{position:fixed;inset:0;background:rgba(5,8,18,.7);display:none;align-items:center;justify-content:center;z-index:6000;padding:16px}
-  .modal-backdrop.open{display:flex}
-  .modal{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;max-width:380px;width:100%}
-
-  /* ===== LAYOUT: desktop 2-column ===== */
-  .is-desktop .two-col{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;align-items:start}
-  .is-desktop body,body.is-desktop{} /* marker */
-  @media(min-width:861px){
-    body{max-width:1280px;margin:0 auto}
-    .tabs{gap:8px}
-    .tab-btn{padding:10px 16px;font-size:.86rem}
-  }
-  .is-desktop #tab-waiting.desktop-side-visible{display:block !important}
-  .is-mobile .two-col{display:block}
-</style>
+    #toast-banner {
+      position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+      background: var(--bg-card); border: 2px solid var(--border-color);
+      padding: 12px 18px; border-radius: 8px; z-index: 10000;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6); max-width: 90%; font-size: 13px; font-weight: 600;
+      display: none; align-items: center; gap: 10px;
+    }
+    #toast-banner.show { display: flex; }
+    #toast-banner.success { border-color: var(--success); color: var(--success); }
+    #toast-banner.warn { border-color: var(--warn); color: var(--warn); }
+    #toast-banner.error { border-color: var(--danger); color: var(--danger); }
+  </style>
 </head>
 <body>
-  <!-- SPLASH -->
-  <div id="rush-anow-splash">
-    <div class="splash-floor"></div>
-    <div class="splash-orbit"><i></i></div>
-    <div class="splash-orbit"><i></i></div>
-    <div class="splash-logo">
-      <div class="bolt-flash"></div>
-      <svg viewBox="0 0 160 160" aria-label="DUD3 Rush PRO">
-        <!-- lightning bolt (comes down) -->
-        <path class="bolt" d="M92 20 L50 88 L74 88 L64 140 L116 66 L88 66 Z"/>
-        <!-- Amazon smile arc -->
-        <path class="smile-path" d="M34 104 Q80 140 126 104"/>
-        <!-- smile arrowhead -->
-        <path class="smile-arrow" d="M126 104 l-3 -16 l-13 9 z"/>
-      </svg>
-    </div>
-    <div class="splash-word">
-      <div class="station">DUD3 &bull; STATION</div>
-      <div class="name">RUSH <b>PRO</b></div>
-      <div class="tag">Amazon <span>Rush</span> &bull; Attendance &amp; Dispatch</div>
-    </div>
+
+  <!-- Fullscreen Flash Overlay -->
+  <div id="feedback-flash"></div>
+  <div id="toast-banner"></div>
+
+  <!-- Splash Screen -->
+  <div id="splash">
+    <svg class="splash-logo" viewBox="0 0 24 24"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg>
+    <div class="splash-title">RUSH PRO</div>
+    <div class="splash-sub">DUD3 LOGISTICS YARD</div>
+    <div class="splash-loader"><div class="splash-bar"></div></div>
   </div>
 
-  <!-- HEADER -->
-  <div class="topbar">
-    <div class="brand"><span class="mk">⚡</span> <span class="brand-name">RUSH <b>PRO</b></span>
-      <span id="deviceBadge"></span>
+  <!-- Header -->
+  <header>
+    <div class="brand-wrap">
+      <span class="brand-logo">&#x26A1; RUSH</span>
+      <span class="brand-sub">DUD3</span>
     </div>
-    <div style="display:flex;align-items:center;gap:10px">
-      <div style="text-align:right">
-        <span id="netStatus" class="status-pill connecting">CONNECTING…</span>
-        <div id="dayLabel">Loading…</div>
+    <div class="hdr-center">
+      <span id="day-label" class="day-badge">TODAY: --</span>
+      <span id="conn-pill" class="status-pill connecting">INIT</span>
+    </div>
+    <div class="hdr-actions">
+      <button class="btn-icon" id="btn-refresh" title="Force Sync">&#x21BB;</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- TAB 1: ATTENDANCE -->
+    <section id="tab-attendance" class="tab-content active">
+      <div class="card">
+        <div class="card-title">Turn 1 Attendance Check-In</div>
+        <div style="display:flex; gap:8px; margin-bottom:10px;">
+          <button class="btn btn-block" id="btn-toggle-cam">&#x1F4F7; Start Camera Scanner</button>
+        </div>
+        <div id="scanner-container">
+          <div id="reader"></div>
+        </div>
+        <input type="text" id="manual-att-input" class="input-box" placeholder="Scan or type DA ID / Name..." autocomplete="off">
+        <div id="att-suggestions" class="suggest-box" style="display:none;"></div>
       </div>
-      <div class="notif-wrap">
-        <button class="hdr-refresh" onclick="toggleNotif()" title="Notifications" aria-label="Notifications">
-          <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-          <span id="notifCount" class="notif-count" style="display:none">0</span>
-        </button>
-        <div id="notifPanel" class="notif-panel">
-          <div class="notif-head"><span>Notifications</span><button onclick="clearNotifs()" class="notif-clear">Clear all</button></div>
-          <div id="notifList" class="notif-list"></div>
+
+      <div class="card">
+        <div class="card-title">Recent Attendance Scans</div>
+        <div id="recent-att-list"><div style="color:var(--text-muted); font-size:12px;">No scans recorded yet today.</div></div>
+      </div>
+    </section>
+
+    <!-- TAB 2: WAITING LIST & BATCHES -->
+    <section id="tab-waiting" class="tab-content">
+      <div class="card">
+        <div class="card-title">Turn 2+ / Re-Queue Waiting Scan</div>
+        <input type="text" id="manual-wait-input" class="input-box" placeholder="Scan DA returning from run (turns 2+)..." autocomplete="off">
+        <div id="wait-suggestions" class="suggest-box" style="display:none;"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>Active Waiting Batches</span>
+          <span id="waiting-count-badge" class="badge badge-waiting">0 Waiting</span>
+        </div>
+        <div id="batches-container">
+          <div style="color:var(--text-muted); font-size:12px;">No active batches.</div>
         </div>
       </div>
-      <button class="hdr-refresh" onclick="hardRefresh(this)" title="Refresh &amp; clear cache" aria-label="Refresh">
-        <svg viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-      </button>
-    </div>
-  </div>
+    </section>
 
-  <!-- TABS -->
-  <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('scan',this)">
-      <svg viewBox="0 0 24 24" class="tabic"><path d="M4 7V5a1 1 0 0 1 1-1h2M20 7V5a1 1 0 0 0-1-1h-2M4 17v2a1 1 0 0 0 1 1h2M20 17v2a1 1 0 0 1-1 1h-2M3 12h18"/></svg>
+    <!-- TAB 3: BREAKS -->
+    <section id="tab-breaks" class="tab-content">
+      <div class="card">
+        <div class="card-title">Currently On Break</div>
+        <div id="list-on-break"><div style="color:var(--text-muted); font-size:12px;">No DAs currently on break.</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Upcoming Breaks</div>
+        <div id="list-upcoming-breaks"><div style="color:var(--text-muted); font-size:12px;">No upcoming breaks.</div></div>
+      </div>
+    </section>
+
+    <!-- TAB 4: VIOLATORS -->
+    <section id="tab-violators" class="tab-content">
+      <div class="card">
+        <div class="card-title">
+          <span>Pending-Entry Violators (&gt;15 min)</span>
+          <button class="btn btn-sm btn-danger" id="btn-clear-violators">Clear All</button>
+        </div>
+        <div id="list-violators"><div style="color:var(--text-muted); font-size:12px;">No violators recorded.</div></div>
+      </div>
+    </section>
+
+    <!-- TAB 5: TURNS -->
+    <section id="tab-turns" class="tab-content">
+      <div class="card">
+        <div class="card-title">
+          <span>Turns Monitor (Min Target: 7)</span>
+          <span id="turns-total-label" style="font-family:var(--font-mono); font-size:12px;">Total Turns: 0</span>
+        </div>
+        <input type="text" id="turns-search-input" class="input-box" placeholder="Search DA Name / ID..." style="margin-bottom:10px;">
+        <div id="turns-table-wrap"></div>
+      </div>
+    </section>
+
+    <!-- TAB 6: SETTINGS -->
+    <section id="tab-settings" class="tab-content">
+      <div class="card">
+        <div class="card-title">Configuration &amp; API</div>
+        <label style="font-size:12px; color:var(--text-muted);">Backend Script /exec URL</label>
+        <input type="text" id="cfg-api-url" class="input-box" style="margin:4px 0 10px 0;">
+
+        <label style="font-size:12px; color:var(--text-muted);">Monthly Spreadsheet URL</label>
+        <input type="text" id="cfg-sheet-url" class="input-box" style="margin:4px 0 10px 0;">
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
+          <div>
+            <label style="font-size:11px; color:var(--text-muted);">Pre-Wave Block (min)</label>
+            <input type="number" id="cfg-prewave" class="input-box">
+          </div>
+          <div>
+            <label style="font-size:11px; color:var(--text-muted);">Present Window (min)</label>
+            <input type="number" id="cfg-present-win" class="input-box">
+          </div>
+          <div>
+            <label style="font-size:11px; color:var(--text-muted);">Entry Timeout (min)</label>
+            <input type="number" id="cfg-entry-timeout" class="input-box">
+          </div>
+          <div>
+            <label style="font-size:11px; color:var(--text-muted);">Batch Size</label>
+            <input type="number" id="cfg-batch-size" class="input-box">
+          </div>
+        </div>
+
+        <div style="margin-bottom:12px;">
+          <label style="font-size:12px; display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" id="cfg-break-override"> Manual Break Override (allow scans during break)
+          </label>
+        </div>
+
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn btn-block" id="btn-save-settings">Save Settings</button>
+          <button class="btn btn-secondary btn-block" id="btn-test-conn">Test Connection</button>
+          <button class="btn btn-danger btn-block" id="btn-start-new-day">Start New Day (Reset &amp; Archive)</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-tab="tab-attendance">
+      <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm-8 4H7v2h2v-2zm4 4h-2v2h2v-2zm4-4h-2v2h2v-2z"/></svg>
       <span>Attendance</span>
     </button>
-    <button class="tab-btn" onclick="switchTab('waiting',this)">
-      <svg viewBox="0 0 24 24" class="tabic"><path d="M3 6h18M3 12h18M3 18h12"/></svg>
-      <span>Waiting <b id="waitCount">0</b></span>
+    <button class="nav-btn" data-tab="tab-waiting">
+      <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>
+      <span>Waiting</span>
     </button>
-    <button class="tab-btn" onclick="switchTab('breaks',this)">
-      <svg viewBox="0 0 24 24" class="tabic"><path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4zM6 1v3M10 1v3M14 1v3"/></svg>
+    <button class="nav-btn" data-tab="tab-breaks">
+      <svg viewBox="0 0 24 24"><path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 5h-2V5h2v3zM4 19h16v2H4z"/></svg>
       <span>Breaks</span>
     </button>
-    <button class="tab-btn" onclick="switchTab('violators',this)">
-      <svg viewBox="0 0 24 24" class="tabic"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01"/></svg>
-      <span>Violators <b id="violCount">0</b></span>
+    <button class="nav-btn" data-tab="tab-violators">
+      <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+      <span>Violators</span>
     </button>
-    <button class="tab-btn" onclick="switchTab('turns',this)">
-      <svg viewBox="0 0 24 24" class="tabic"><path d="M12 8v4l3 2M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/></svg>
+    <button class="nav-btn" data-tab="tab-turns">
+      <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
       <span>Turns</span>
     </button>
-    <button class="tab-btn" onclick="switchTab('settings',this)">
-      <svg viewBox="0 0 24 24" class="tabic"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <button class="nav-btn" data-tab="tab-settings">
+      <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
       <span>Settings</span>
     </button>
-    <button class="tab-btn" onclick="hardRefresh(this)">
-      <svg viewBox="0 0 24 24" class="tabic"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-      <span>Refresh</span>
-    </button>
-  </div>
+  </nav>
 
-  <div class="two-col">
-    <!-- ===== SCAN TAB ===== -->
-    <div id="tab-scan">
-      <div class="card">
-        <div class="mode-switch">
-          <button class="btn cam-start" onclick="startCamera('reader')">▶ Start Camera</button>
-          <button class="btn secondary cam-stop" onclick="stopCamera()" style="display:none">Stop</button>
-        </div>
-        <div id="reader-wrap">
-          <div id="reader"></div>
-          <div id="camFlash" class="flash-overlay"></div>
-        </div>
-        <div class="search-wrap">
-          <input id="scanInput" class="scan-input" type="text"
-            placeholder="Type/paste Employee ID or Name → Enter"
-            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
-          <div id="fuzzyDropdown" class="dropdown"></div>
-        </div>
-        <div style="font-size:.74rem;color:var(--muted);margin-top:8px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px">
-          <span>Roster cached: <strong id="rosterCount">0</strong> DAs</span>
-          <span id="shortcutHint" style="display:none">Tip: Press <strong>/</strong> to focus search</span>
-          <span>Offline Queue: <strong id="queueCount">0</strong></span>
-        </div>
-      </div>
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <h4>Recent Scans</h4>
-        </div>
-        <div id="recentScansList"></div>
-      </div>
-    </div>
+  <script>
+    /**
+     * DUD3 RUSH PRO FRONTEND ENGINE
+     */
+    const DEFAULT_API_URL = "https://script.google.com/macros/s/AKfycbz_YOUR_DEFAULT_EXEC_URL/exec";
 
-    <!-- ===== WAITING TAB ===== -->
-    <div id="tab-waiting" style="display:none">
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <h4>Waiting Scan (Send from Batch)</h4>
-          <span class="badge" style="background:rgba(255,153,0,.16);color:var(--amz-orange)">Send mode</span>
-        </div>
-        <div class="mode-switch">
-          <button class="btn cam-start" onclick="startCamera('reader2')">
-            <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 12h10"/></svg>
-            Scanner
-          </button>
-          <button class="btn secondary cam-stop" onclick="stopCamera()" style="display:none">Stop</button>
-        </div>
-        <div id="reader-wrap2" style="position:relative;margin:10px 0;border-radius:12px;overflow:hidden">
-          <div id="reader2"></div>
-        </div>
-        <label style="font-size:.74rem;color:var(--muted);display:block;margin:4px 0 6px">Manual add (use if QR won't scan):</label>
-        <div class="search-wrap">
-          <input id="waitScanInput" class="scan-input" type="text"
-            placeholder="Type/paste Employee ID or Name → Enter"
-            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
-          <div id="waitFuzzyDropdown" class="dropdown"></div>
-        </div>
-      </div>
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <h4>Waiting Batches (Live Queue)</h4>
-          <span style="font-size:.75rem;color:var(--muted)">Permanent 25-DA Batches</span>
-        </div>
-        <input id="waitSearch" class="scan-input" placeholder="Search waiting DAs by Name or ID…" oninput="displayWaitingList()" />
-        <div id="waitingBatchesContainer" style="margin-top:10px"></div>
-      </div>
-    </div>
-  </div>
+    // Safe Storage Fallback
+    const LS = {
+      mem: {},
+      get(k) { try { return localStorage.getItem(k); } catch(e) { return this.mem[k] || null; } },
+      set(k, v) { try { localStorage.setItem(k, v); } catch(e) { this.mem[k] = String(v); } }
+    };
 
-  <!-- ===== BREAKS TAB ===== -->
-  <div id="tab-breaks" style="display:none">
-    <div class="card">
-      <div class="mode-switch">
-        <button class="btn secondary" onclick="renderBreaks('upcoming')">Upcoming</button>
-        <button class="btn" onclick="renderBreaks('onBreak')">On Break</button>
-        <button class="btn secondary" onclick="renderBreaks('completed')">Completed</button>
-      </div>
-      <div id="breaksList"></div>
-    </div>
-  </div>
+    let APP_STATE = {
+      apiUrl: LS.get("dud3_api_url") || DEFAULT_API_URL,
+      sheetUrl: LS.get("dud3_sheet_url") || "",
+      roster: [],
+      waitingBatches: [],
+      violators: [],
+      tracking: {},
+      settings: {
+        preWaveBlockMin: 30,
+        presentWindowMin: 10,
+        entryTimeoutMin: 15,
+        batchSize: 25,
+        breakOverride: false
+      },
+      lastSync: 0,
+      scannerActive: false
+    };
 
-  <!-- ===== VIOLATORS TAB ===== -->
-  <div id="tab-violators" style="display:none">
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <h4>Pending Entry Violators (&gt;15m)</h4>
-        <button class="btn danger" style="padding:6px 10px;font-size:.8rem" onclick="clearSelectedViolators()">Clear Selected</button>
-      </div>
-      <div id="violatorsList"></div>
-    </div>
-  </div>
+    let html5QrScanner = null;
+    let audioCtx = null;
 
-  <!-- ===== SETTINGS TAB ===== -->
-  <div id="tab-settings" style="display:none">
-    <div class="card">
-      <h4 style="margin-bottom:6px">Detected Hardware &amp; Viewport</h4>
-      <p id="deviceDetailsText" style="font-size:.82rem;color:var(--muted);margin-bottom:12px"></p>
-      <h4 style="margin-bottom:10px">Scanner Backend API &amp; Monthly Sheet</h4>
-      <label style="font-size:.8rem;color:var(--muted)">Apps Script Deployment #1 (/exec URL)</label>
-      <input id="cfgApiUrl" class="cfg" placeholder="https://script.google.com/macros/s/.../exec" />
-      <label style="font-size:.8rem;color:var(--muted);display:block;margin-top:8px">Link Monthly Google Sheet URL</label>
-      <input id="cfgSheetUrl" class="cfg" placeholder="https://docs.google.com/spreadsheets/d/..." />
-      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-        <button class="btn" onclick="saveSheetLink()">Save / Link Sheet</button>
-        <button class="btn secondary" onclick="unlinkSheet()">Remove Sheet</button>
-        <button class="btn warn" onclick="testConnection()">Test Connection</button>
-      </div>
-      <div id="connResult" style="margin-top:10px;font-size:.8rem;color:var(--muted);white-space:pre-wrap"></div>
-    </div>
-    <div class="card">
-      <h4 style="margin-bottom:10px">Thresholds &amp; Rules</h4>
-      <div class="grid-2">
-        <div><label style="font-size:.75rem">Pre-Wave Block (min)</label><input id="cfgPreWave" type="number" class="cfg" value="30" /></div>
-        <div><label style="font-size:.75rem">Present Window (+min)</label><input id="cfgPresentWin" type="number" class="cfg" value="10" /></div>
-        <div><label style="font-size:.75rem">Entry Timeout (min)</label><input id="cfgEntryTimeout" type="number" class="cfg" value="15" /></div>
-        <div><label style="font-size:.75rem">Batch Count (per batch)</label><input id="cfgBatchSize" type="number" min="1" max="500" class="cfg" value="25" /></div>
-        <div><label style="font-size:.75rem">Manual Break Override</label><br><input id="cfgBreakOverride" type="checkbox" style="width:22px;height:22px;margin-top:8px" /></div>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:12px">
-        <button class="btn" onclick="saveSettingsToServer()">Save Thresholds</button>
-        <button class="btn danger" onclick="triggerStartNewDay()">Start New Day (Reset)</button>
-      </div>
-    </div>
-  </div>
+    function playTone(type) {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
 
-  <!-- TURNS MONITOR TAB -->
-  <div id="tab-turns" style="display:none">
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <h4>Turns Monitor</h4>
-        <span style="font-size:.75rem;color:var(--muted)">Target: <b style="color:var(--amz-orange)">7</b>/DA · Total: <b id="turnsTotal">0</b></span>
-      </div>
-      <input id="turnsSearch" class="scan-input" placeholder="Search by Name or ID…" oninput="renderTurns()" />
-      <div id="turnsList" style="margin-top:10px"></div>
-    </div>
-  </div>
+        if (type === 'success') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(587.33, now); // D5
+          osc.frequency.setValueAtTime(880, now + 0.1); // A5
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+          osc.start(now);
+          osc.stop(now + 0.35);
+        } else if (type === 'warn') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(440, now);
+          osc.frequency.setValueAtTime(370, now + 0.12);
+          gain.gain.setValueAtTime(0.4, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+          osc.start(now);
+          osc.stop(now + 0.3);
+        } else {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(220, now);
+          osc.frequency.setValueAtTime(160, now + 0.15);
+          gain.gain.setValueAtTime(0.5, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+          osc.start(now);
+          osc.stop(now + 0.4);
+        }
+      } catch (e) { console.warn("Audio error:", e); }
+    }
 
-  <!-- VIOLATOR MODAL -->
-  <div id="violatorModal" class="modal-backdrop">
-    <div class="modal">
-      <h3 style="color:var(--red);margin-bottom:8px">⚠️ Violator Detected</h3>
-      <p id="violatorModalText" style="margin-bottom:16px;color:var(--muted)"></p>
-      <div class="grid-2">
-        <button class="btn success" onclick="resolveViolatorModal('Allow')">Allow Entry</button>
-        <button class="btn danger" onclick="resolveViolatorModal('Deny')">No (Remove)</button>
-      </div>
-    </div>
-  </div>
+    function showFlash(type) {
+      const el = document.getElementById("feedback-flash");
+      el.className = `flash-${type}`;
+      setTimeout(() => { el.className = ""; }, 300);
+      if (navigator.vibrate) {
+        if (type === 'green') navigator.vibrate(80);
+        else if (type === 'amber') navigator.vibrate([60, 40, 60]);
+        else navigator.vibrate([120, 50, 120]);
+      }
+    }
 
-  <!-- REPLACEMENT DA MODAL -->
-  <div id="replaceModal" class="modal-backdrop">
-    <div class="modal">
-      <h3 style="color:var(--amz-orange);margin-bottom:8px">Assign Replacement DA</h3>
-      <p id="replaceModalText" style="margin-bottom:12px;color:var(--muted)"></p>
-      <label style="font-size:.78rem;color:var(--muted)">Replacement DA Name</label>
-      <input id="replNameInput" class="cfg" placeholder="Full name" autocomplete="off" />
-      <label style="font-size:.78rem;color:var(--muted);display:block;margin-top:8px">Replacement DA ID</label>
-      <input id="replIdInput" class="cfg" placeholder="DA ID / barcode" autocomplete="off" />
-      <div class="grid-2" style="margin-top:14px">
-        <button class="btn success" onclick="submitReplacement()">Assign (turns green)</button>
-        <button class="btn secondary" onclick="document.getElementById('replaceModal').classList.remove('open')">Cancel</button>
-      </div>
-    </div>
-  </div>
+    function showToast(msg, type = "success") {
+      const banner = document.getElementById("toast-banner");
+      banner.textContent = msg;
+      banner.className = `show ${type}`;
+      setTimeout(() => { banner.className = ""; }, 3500);
+    }
 
-  <div id="fsFlash" class="fs-flash"></div>
-  <div id="banner" class="banner" onclick="this.style.display='none'"></div>
+    async function apiCall(action, payload = {}) {
+      if (!APP_STATE.apiUrl) throw new Error("Backend API URL not set in Settings.");
+      payload.action = action;
+      if (APP_STATE.sheetUrl) payload.sheetUrl = APP_STATE.sheetUrl;
 
-<!-- ================= APP SCRIPT ================= -->
-<script>
-// ============================================================
-// DUD3 Rush PRO — Scanner front-end logic (GitHub Pages)
-// ============================================================
+      const res = await fetch(APP_STATE.apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Action failed.");
+      return data;
+    }
 
-// ---- SAFE STORAGE (sandbox / private-mode tolerant) ----
-// localStorage access can throw SecurityError in sandboxed iframes or
-// private browsing. Wrap it so load never crashes; fall back to memory.
-const LS = (function(){
-  let backend = null;
-  try { const t='__dud3__'; window.localStorage.setItem(t,'1'); window.localStorage.removeItem(t); backend = window.localStorage; }
-  catch(e){ backend = null; }
-  const mem = {};
-  return {
-    getItem(k){ try { return backend ? backend.getItem(k) : (k in mem ? mem[k] : null); } catch(e){ return (k in mem ? mem[k] : null); } },
-    setItem(k,v){ try { if(backend) backend.setItem(k,v); else mem[k]=String(v); } catch(e){ mem[k]=String(v); } },
-    removeItem(k){ try { if(backend) backend.removeItem(k); else delete mem[k]; } catch(e){ delete mem[k]; } }
-  };
-})();
+    async function fetchRoster(silent = false) {
+      try {
+        if (!silent) updateStatusPill("connecting", "SYNCING");
+        const res = await apiCall("rosterFull");
+        APP_STATE.roster = res.roster || [];
+        APP_STATE.waitingBatches = res.waitingBatches || [];
+        APP_STATE.violators = res.violators || [];
+        APP_STATE.tracking = res.tracking || {};
+        if (res.settings) APP_STATE.settings = Object.assign(APP_STATE.settings, res.settings);
 
-// ---- SAFE JSON PARSE (never throws at load) ----
-function safeParse(raw, fallback){
-  try { const v = JSON.parse(raw); return (v==null ? fallback : v); }
-  catch(e){ return fallback; }
-}
+        document.getElementById("day-label").textContent = `${res.dayTab || 'TODAY'} (${APP_STATE.roster.length})`;
+        updateStatusPill("online", res.backendVersion || "ONLINE");
+        renderAll();
+      } catch (err) {
+        console.error(err);
+        updateStatusPill("offline", "ERR SYNC");
+        if (!silent) showToast(err.message, "error");
+      } finally {
+        const splash = document.getElementById("splash");
+        if (splash && !splash.classList.contains("hidden")) {
+          splash.classList.add("hidden");
+        }
+      }
+    }
 
-// ---- SPLASH CONTROLLER ----
-const RushAnowSplash = {
-  show(){ const s=document.getElementById('rush-anow-splash'); if(s) s.classList.remove('is-hidden'); },
-  hide(ms=500){ const s=document.getElementById('rush-anow-splash'); if(!s) return;
-    s.style.transitionDuration = ms+'ms'; s.classList.add('is-hidden'); }
-};
-RushAnowSplash.show();
-const splashTimeout = setTimeout(()=>RushAnowSplash.hide(500), 3500); // fail-safe
+    function updateStatusPill(cls, txt) {
+      const pill = document.getElementById("conn-pill");
+      pill.className = `status-pill ${cls}`;
+      pill.textContent = txt;
+    }
 
-// ---- CONFIG / BACKEND URL ----
-// Paste your Apps Script Deployment #1 /exec URL here (or set it in Settings).
-const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec';
-// One-time migration: force-upgrade any device still holding a stale backend URL.
-const DEAD_API_URLS = ['AKfycby97F-lmB-4','AKfycbxMhqMV03B5'];
-let SCANNER_API_URL = LS.getItem('DUD3_API_URL') || DEFAULT_API_URL;
-if (DEAD_API_URLS.some(d => SCANNER_API_URL.indexOf(d) !== -1)) {
-  SCANNER_API_URL = DEFAULT_API_URL;
-  LS.setItem('DUD3_API_URL', DEFAULT_API_URL);
-}
-if (SCANNER_API_URL.includes('PASTE_')) {
-  const saved = LS.getItem('DUD3_API_URL');
-  if (saved && !saved.includes('PASTE_')) SCANNER_API_URL = saved;
-}
+    function renderAll() {
+      renderWaiting();
+      renderBreaks();
+      renderViolators();
+      renderTurns();
+    }
 
-// ---- APP STATE ----
-const state = {
-  roster: safeParse(LS.getItem('DUD3_ROSTER'), []),
-  waitingBatches: safeParse(LS.getItem('DUD3_BATCHES'), [{batch:1,members:[]}]),
-  violators: [],
-  scanHistory: [],
-  settings: { preWaveBlockMin:30, presentWindowMin:10, entryTimeoutMin:15, manualBreakOverride:false },
-  offlineQueue: safeParse(LS.getItem('DUD3_QUEUE'), []),
-  scanMode: 'CHECK_IN'
-};
-let activeViolatorId = null;
-let html5QrScanner = null;
-const scanInputEl = document.getElementById('scanInput');
-
-// ---- DEVICE DETECTION ----
-let deviceProfile = { isMobile:false, os:'Unknown', model:'Device', cameraQrBox:{width:250,height:140} };
-function detectDeviceAndFitLayout(){
-  const ua = navigator.userAgent||''; const w=window.innerWidth;
-  const sw=window.screen.width, sh=window.screen.height;
-  let os='Desktop', model='Admin Laptop / PC';
-  let isMobile = w<900 || /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
-  if(/iPhone/i.test(ua)){ os='iOS'; isMobile=true;
-    const maxDim=Math.max(sw,sh);
-    model = maxDim>=932 ? 'iPhone Pro Max / Plus' : (maxDim===852||maxDim===844) ? 'iPhone 14/15/16 Pro' : 'iPhone';
-  } else if(/iPad/i.test(ua) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1)){
-    os='iPadOS'; model='iPad Tablet'; isMobile = w<960;
-  } else if(/Android/i.test(ua)){ os='Android'; isMobile=true;
-    const m=ua.match(/;\s*([^;)]+?)\s+Build\//i); model = m ? m[1].trim() : 'Android Scanner';
-  } else if(/Macintosh|Mac OS X/i.test(ua)){ os='macOS'; model='MacBook / Admin Mac';
-  } else if(/Windows/i.test(ua)){ os='Windows'; model='Admin Laptop (Win)'; }
-
-  deviceProfile = { isMobile, os, model,
-    cameraQrBox: isMobile ? {width:Math.min(260,Math.floor(w*0.72)),height:135} : {width:300,height:160} };
-
-  document.body.classList.toggle('is-mobile', isMobile);
-  document.body.classList.toggle('is-desktop', !isMobile);
-  document.getElementById('deviceBadge').textContent = `${isMobile?'📱':'💻'} ${model}`;
-  document.getElementById('deviceDetailsText').textContent =
-    `Mode: ${isMobile?'Mobile Operator UI':'Laptop Admin 2-Column'} • OS: ${os} • Model: ${model} • Viewport: ${w}px`;
-
-  const waitingTab = document.getElementById('tab-waiting');
-  const hint = document.getElementById('shortcutHint');
-  if(!isMobile){ waitingTab.classList.add('desktop-side-visible'); waitingTab.style.display='block'; hint.style.display='inline'; }
-  else { waitingTab.classList.remove('desktop-side-visible'); hint.style.display='none'; }
-}
-
-// ---- SOUND / HAPTICS ----
-let audioCtx=null;
-function _beep(freq, start, dur, type){
-  try{
-    audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
-    const t0 = audioCtx.currentTime + start;
-    const o=audioCtx.createOscillator(), g=audioCtx.createGain();
-    o.type = type||'sine'; o.frequency.setValueAtTime(freq, t0);
-    o.connect(g); g.connect(audioCtx.destination);
-    g.gain.setValueAtTime(0.0001, t0);
-    g.gain.exponentialRampToValueAtTime(0.14, t0+0.012);
-    g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
-    o.start(t0); o.stop(t0+dur+0.02);
-  }catch(e){}
-}
-function playTone(kind){
-  // Distinct, pleasant cues per outcome.
-  if(kind==='success'){ _beep(784,0,0.11,'sine'); _beep(1175,0.09,0.13,'sine'); }      // rising two-note chime
-  else if(kind==='warn'){ _beep(520,0,0.16,'triangle'); }                               // single soft mid tone
-  else { _beep(300,0,0.14,'square'); _beep(200,0.12,0.18,'square'); }                   // error: low double buzz
-  if(navigator.vibrate) navigator.vibrate(kind==='error'?[70,40,70]:kind==='warn'?[40]:25);
-}
-
-// ---- BANNER ----
-function fsFlash(kind){           // kind: 'ok' | 'warn' | 'err'
-  const f=document.getElementById('fsFlash'); if(!f) return;
-  f.classList.remove('ok','warn','err'); void f.offsetWidth; f.classList.add(kind);
-  setTimeout(()=>f.classList.remove(kind), 600);
-}
-function _sev(color){
-  if(color && color.indexOf('green')!==-1) return 'ok';
-  if(color && color.indexOf('red')!==-1) return 'err';
-  if(color && color.indexOf('amber')!==-1) return 'warn';
-  return '';
-}
-function showBanner(msg, color){
-  const b=document.getElementById('banner');
-  b.textContent=msg; b.style.borderColor=color||'var(--line)';
-  b.style.borderLeftWidth='4px';
-  b.style.display='block';
-  clearTimeout(b._t); b._t=setTimeout(()=>b.style.display='none',3200);
-  const sev=_sev(color);
-  if(sev==='ok') fsFlash('ok'); else if(sev==='err') fsFlash('err'); else if(sev==='warn') fsFlash('warn');
-  pushNotif(msg, sev);   // feed the notification center
-}
-
-/* ===================== NOTIFICATION CENTER ===================== */
-let _notifs = [];               // {id,msg,sev,ts}
-const NOTIF_TTL_MS = 5*60000;   // auto-expire after 5 min
-function pushNotif(msg, sev){
-  const id = Date.now()+'_'+Math.random().toString(36).slice(2,6);
-  _notifs.unshift({ id, msg, sev:sev||'', ts: Date.now() });
-  if(_notifs.length>40) _notifs = _notifs.slice(0,40);
-  renderNotifs();
-}
-function _timeAgo(ts){
-  const s=Math.floor((Date.now()-ts)/1000);
-  if(s<60) return s+'s ago';
-  const m=Math.floor(s/60); if(m<60) return m+'m ago';
-  const h=Math.floor(m/60); return h+'h ago';
-}
-function renderNotifs(){
-  // drop expired
-  _notifs = _notifs.filter(n => Date.now()-n.ts < NOTIF_TTL_MS);
-  const list=document.getElementById('notifList'); if(!list) return;
-  const badge=document.getElementById('notifCount');
-  if(badge){ if(_notifs.length){ badge.style.display='flex'; badge.textContent=_notifs.length>9?'9+':_notifs.length; } else badge.style.display='none'; }
-  list.innerHTML = _notifs.length ? _notifs.map(n=>`
-    <div class="notif-item ${n.sev}" data-id="${n.id}" onclick="dismissNotif('${n.id}')">
-      ${n.msg.replace(/</g,'&lt;')}
-      <span class="nt">${_timeAgo(n.ts)} · tap to dismiss</span>
-    </div>`).join('') : '<div class="notif-empty">No notifications</div>';
-}
-function dismissNotif(id){
-  const el=document.querySelector('.notif-item[data-id="'+id+'"]');
-  if(el){ el.classList.add('dismiss'); setTimeout(()=>{ _notifs=_notifs.filter(n=>n.id!==id); renderNotifs(); },160); }
-  else { _notifs=_notifs.filter(n=>n.id!==id); renderNotifs(); }
-}
-function clearNotifs(){ _notifs=[]; renderNotifs(); }
-function toggleNotif(){
-  const pnl=document.getElementById('notifPanel'); if(!pnl) return;
-  pnl.classList.toggle('open');
-  if(pnl.classList.contains('open')) renderNotifs();
-}
-// close panel when tapping outside
-document.addEventListener('click',(e)=>{
-  const w=e.target.closest('.notif-wrap'); const pnl=document.getElementById('notifPanel');
-  if(!w && pnl && pnl.classList.contains('open')) pnl.classList.remove('open');
-});
-// swipe-to-dismiss on touch
-let _swipeX=0, _swipeEl=null;
-document.addEventListener('touchstart',(e)=>{ const it=e.target.closest('.notif-item'); if(it){ _swipeEl=it; _swipeX=e.touches[0].clientX; } },{passive:true});
-document.addEventListener('touchend',(e)=>{
-  if(_swipeEl){ const dx=(e.changedTouches[0].clientX-_swipeX);
-    if(Math.abs(dx)>60) dismissNotif(_swipeEl.getAttribute('data-id'));
-    _swipeEl=null; }
-},{passive:true});
-// refresh relative times periodically
-setInterval(()=>{ const p=document.getElementById('notifPanel'); if(p&&p.classList.contains('open')) renderNotifs(); else renderNotifs(); }, 20000);
-
-// ---- API LAYER (with offline queue) ----
-async function apiCall(payload, allowQueue=true){
-  if(!SCANNER_API_URL || SCANNER_API_URL.includes('PASTE_')){
-    showBanner('Set the Scanner API URL in Settings first','var(--amber)');
-    return null;
-  }
-  const ctrl = new AbortController();
-  const killer = setTimeout(()=>ctrl.abort(), 8000); // 8s hard timeout
-  try{
-    const res = await fetch(SCANNER_API_URL, {
-      method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body: JSON.stringify(payload), signal: ctrl.signal, redirect:'follow'
+    // --- TAB SWITCHING ---
+    document.querySelectorAll(".nav-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".tab-content").forEach(tc => tc.classList.remove("active"));
+        btn.classList.add("active");
+        const target = btn.getAttribute("data-tab");
+        document.getElementById(target).classList.add("active");
+      });
     });
-    clearTimeout(killer);
-    const data = await res.json();
-    setOnlineState(true);
-    return data;
-  }catch(e){
-    clearTimeout(killer);
-    setOnlineState(false);
-    // Only queue mutating actions (not reads)
-    if(allowQueue && payload.action && payload.action!=='rosterFull'){
-      state.offlineQueue.push(payload);
-      LS.setItem('DUD3_QUEUE', JSON.stringify(state.offlineQueue));
-      document.getElementById('queueCount').textContent = state.offlineQueue.length;
-      playTone('warn');
-      showBanner('Offline: scan queued locally & will sync automatically','var(--amber)');
+
+    // --- ATTENDANCE SCAN LOGIC ---
+    async function handleAttendanceScan(daId) {
+      try {
+        const res = await apiCall("recordCheckIn", { daId });
+        playTone('success');
+        showFlash('green');
+        showToast(`Checked In: ${res.daName} [${res.status}] \u2192 Batch ${res.batchId}`, "success");
+        prependRecentScan(res.daName, res.daId, res.status, res.scanTime);
+        await fetchRoster(true);
+      } catch (err) {
+        const isWarn = err.message.includes("Wave") || err.message.includes("Break");
+        playTone(isWarn ? 'warn' : 'error');
+        showFlash(isWarn ? 'amber' : 'red');
+        showToast(err.message, isWarn ? "warn" : "error");
+      }
     }
-    return null;
-  }
-}
 
-function setOnlineState(online){
-  const el=document.getElementById('netStatus');
-  el.textContent = online?'ONLINE':'OFFLINE';
-  el.className = 'status-pill' + (online?'':' offline');
-}
-
-async function flushOfflineQueue(){
-  if(!state.offlineQueue.length) return;
-  const copy=[...state.offlineQueue];
-  for(const item of copy){
-    const res = await apiCall(item, false);
-    if(res){ state.offlineQueue.shift();
-      LS.setItem('DUD3_QUEUE', JSON.stringify(state.offlineQueue));
-      document.getElementById('queueCount').textContent = state.offlineQueue.length;
-    } else break;
-  }
-}
-
-// ---- COALESCED REFRESH + OPTIMISTIC UPDATES (keeps scanning snappy) ----
-let _refreshTimer=null, _refreshInFlight=false;
-function scheduleRefresh(){
-  // Debounce bursts of scans into one cached background refresh.
-  if(_refreshTimer) clearTimeout(_refreshTimer);
-  _refreshTimer=setTimeout(()=>{ _refreshTimer=null; if(!_refreshInFlight) refreshRoster(false); }, 1200);
-}
-function optimisticAddWaiting(da, status, batchNum){
-  batchNum = batchNum || 1;
-  let b = state.waitingBatches.find(x=>x.batch===batchNum);
-  if(!b){ b={batch:batchNum,members:[]}; state.waitingBatches.push(b); }
-  if(!(b.members||[]).some(m=>String(m.id)===String(da.id))){
-    b.members=b.members||[];
-    b.members.push({id:da.id,name:da.name,status:status||'Present',breakHours:da.breakHours,checkInEpoch:Date.now()});
-  }
-  LS.setItem('DUD3_BATCHES', JSON.stringify(state.waitingBatches));
-  displayWaitingList();
-}
-function optimisticRemoveWaiting(id){
-  state.waitingBatches.forEach(b=>{ b.members=(b.members||[]).filter(m=>String(m.id)!==String(id)); });
-  LS.setItem('DUD3_BATCHES', JSON.stringify(state.waitingBatches));
-  displayWaitingList();
-}
-
-// ---- HARD REFRESH (clears caches + forces fresh pull; wired to every refresh button) ----
-async function hardRefresh(btn){
-  try{
-    // spin any refresh buttons
-    document.querySelectorAll('.hdr-refresh').forEach(b=>b.classList.add('spinning'));
-    // clear the local display cache (roster/batches) so stale rows can't linger;
-    // the Google Sheet remains the source of truth and we re-pull immediately.
-    try{ LS.removeItem('DUD3_ROSTER'); LS.removeItem('DUD3_BATCHES'); }catch(e){}
-    showBanner('Refreshing & clearing cache…','var(--amz-orange)');
-    _refreshInFlight = false;           // break any stuck in-flight guard
-    await refreshRoster(true);          // force = bypass server CacheService too
-    showBanner('Updated ✓','var(--green)');
-  }catch(e){
-    showBanner('Refresh failed — check connection','var(--red)');
-  }finally{
-    document.querySelectorAll('.hdr-refresh').forEach(b=>b.classList.remove('spinning'));
-  }
-}
-
-// ---- ROSTER REFRESH ----
-async function refreshRoster(force=false){
-  if(_refreshInFlight) return;
-  _refreshInFlight=true;
-  try{
-  await flushOfflineQueue();
-  const res = await apiCall({ action:'rosterFull', forceRefresh:force });
-  clearTimeout(splashTimeout);
-  RushAnowSplash.hide(500);
-  if(!res){
-    // POST threw → offline/CORS. apiCall already set OFFLINE + queued.
-    document.getElementById('dayLabel').innerHTML = '<span style="color:var(--red)">⚠ Backend unreachable — tap Settings → Test Connection</span>';
-    return;
-  }
-  if(!res.success){
-    // Reached backend but it returned an error (e.g. no sheet / no daily tab).
-    setOnlineState(true);
-    document.getElementById('dayLabel').innerHTML = '<span style="color:var(--amber)">⚠ '+ (res.error||'Backend error') +'</span>';
-    showBanner('Backend: '+(res.error||'error')+' — check Settings → Save/Link Sheet & that today\'s tab exists','var(--red)');
-    return;
-  }
-  state.roster = res.roster||[];
-  state.waitingBatches = res.waitingBatches||[{batch:1,members:[]}];
-  state.violators = res.violators||[];
-  state.scanHistory = res.scanHistory||[];
-  state.settings = res.settings||state.settings;
-
-  LS.setItem('DUD3_ROSTER', JSON.stringify(state.roster));
-  LS.setItem('DUD3_BATCHES', JSON.stringify(state.waitingBatches));
-
-  document.getElementById('dayLabel').textContent = `Tab: ${res.todayName} • ${state.roster.length} DAs${res.version?' • '+res.version:''}`;
-  document.getElementById('rosterCount').textContent = state.roster.length;
-  document.getElementById('violCount').textContent = state.violators.length;
-
-  // reflect settings into inputs
-  if(state.settings){
-    document.getElementById('cfgPreWave').value = state.settings.preWaveBlockMin ?? 30;
-    document.getElementById('cfgPresentWin').value = state.settings.presentWindowMin ?? 10;
-    document.getElementById('cfgEntryTimeout').value = state.settings.entryTimeoutMin ?? 15;
-    document.getElementById('cfgBatchSize').value = state.settings.batchSize ?? 25;
-    document.getElementById('cfgBreakOverride').checked = !!state.settings.manualBreakOverride;
-  }
-
-  renderRecentScans();
-  displayWaitingList();
-  renderViolators();
-  renderBreaks('onBreak');
-  } finally { _refreshInFlight=false; }
-}
-
-// ============================================================
-// FUZZY MATCHING (in-memory, instant, offline-safe)
-// ============================================================
-function levenshtein(a,b){
-  a=a||''; b=b||'';
-  const m=a.length,n=b.length; if(!m)return n; if(!n)return m;
-  const dp=Array.from({length:m+1},(_,i)=>[i,...Array(n).fill(0)]);
-  for(let j=0;j<=n;j++) dp[0][j]=j;
-  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++){
-    const cost = a[i-1]===b[j-1]?0:1;
-    dp[i][j]=Math.min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1]+cost);
-  }
-  return dp[m][n];
-}
-function soundex(s){
-  s=(s||'').toUpperCase().replace(/[^A-Z]/g,''); if(!s) return '';
-  const codes={B:'1',F:'1',P:'1',V:'1',C:'2',G:'2',J:'2',K:'2',Q:'2',S:'2',X:'2',Z:'2',
-    D:'3',T:'3',L:'4',M:'5',N:'5',R:'6'};
-  let first=s[0], out=first, prev=codes[first]||'';
-  for(let i=1;i<s.length;i++){ const c=codes[s[i]]||''; if(c && c!==prev) out+=c; if(s[i]!=='H'&&s[i]!=='W') prev=c; if(out.length>=4) break; }
-  return (out+'000').slice(0,4);
-}
-function findSimilarDAs(query){
-  const q=(query||'').trim().toLowerCase(); if(!q) return [];
-  const qSdx=soundex(q);
-  const scored = state.roster.map(da=>{
-    const name=(da.name||'').toLowerCase(), id=(da.id||'').toLowerCase();
-    let score=999, why='';
-    if(id===q){ score=-5; why='exact id'; }
-    else if(name===q){ score=-4; why='exact name'; }
-    else if(id.startsWith(q)){ score=-3; why='id prefix'; }
-    else if(name.startsWith(q)){ score=-2; why='name prefix'; }
-    else if(name.includes(q)||id.includes(q)){ score=-1; why='substring'; }
-    else {
-      const tokens=name.split(/\s+/);
-      const tokHit = tokens.some(t=>t.startsWith(q));
-      const lev = Math.min(...(tokens.length?tokens:[name]).map(t=>levenshtein(q,t)));
-      const sdx = qSdx && soundex(name.split(/\s+/)[0])===qSdx;
-      if(tokHit) score=0.5;
-      else if(lev<=2) score=1+lev;
-      else if(sdx) score=3;
-      else score=999;
-      why = tokHit?'token':(lev<=2?'fuzzy':(sdx?'phonetic':''));
-    }
-    return {da,score,why};
-  }).filter(x=>x.score<900)
-    .sort((a,b)=>a.score-b.score)
-    .slice(0,8);
-  return scored;
-}
-
-// ---- TEXT INPUT HANDLING ----
-let fuzzyIndex=-1, fuzzyList=[];
-let debounceT=null;
-scanInputEl.addEventListener('input', ()=>{
-  clearTimeout(debounceT);
-  debounceT=setTimeout(()=>renderFuzzy(scanInputEl.value), 150);
-});
-scanInputEl.addEventListener('keydown', (e)=>{
-  const dd=document.getElementById('fuzzyDropdown');
-  if(e.key==='ArrowDown'){ e.preventDefault(); fuzzyIndex=Math.min(fuzzyIndex+1,fuzzyList.length-1); paintFuzzy(); }
-  else if(e.key==='ArrowUp'){ e.preventDefault(); fuzzyIndex=Math.max(fuzzyIndex-1,0); paintFuzzy(); }
-  else if(e.key==='Enter'){ e.preventDefault(); handleScanInput(scanInputEl.value); }
-  else if(e.key==='Escape'){ dd.classList.remove('open'); }
-});
-
-// ---- WAITING-TAB scan input (self-contained; lets operators scan while watching the queue) ----
-let wFuzzyList=[], wFuzzyIndex=-1, wDebounceT=null;
-const waitScanEl = document.getElementById('waitScanInput');
-if(waitScanEl){
-  waitScanEl.addEventListener('input', ()=>{
-    clearTimeout(wDebounceT);
-    wDebounceT=setTimeout(()=>wRenderFuzzy(waitScanEl.value), 150);
-  });
-  waitScanEl.addEventListener('keydown', (e)=>{
-    const dd=document.getElementById('waitFuzzyDropdown');
-    if(e.key==='ArrowDown'){ e.preventDefault(); wFuzzyIndex=Math.min(wFuzzyIndex+1,wFuzzyList.length-1); wPaintFuzzy(); }
-    else if(e.key==='ArrowUp'){ e.preventDefault(); wFuzzyIndex=Math.max(wFuzzyIndex-1,0); wPaintFuzzy(); }
-    else if(e.key==='Enter'){ e.preventDefault(); wHandleScan(waitScanEl.value); }
-    else if(e.key==='Escape'){ dd.classList.remove('open'); }
-  });
-}
-function wRenderFuzzy(q){
-  const dd=document.getElementById('waitFuzzyDropdown');
-  if(!q || !q.trim()){ dd.classList.remove('open'); wFuzzyList=[]; return; }
-  wFuzzyList = findSimilarDAs(q);
-  wFuzzyIndex = wFuzzyList.length?0:-1;
-  if(!wFuzzyList.length){ dd.classList.remove('open'); return; }
-  wPaintFuzzy(); dd.classList.add('open');
-}
-function wPaintFuzzy(){
-  const dd=document.getElementById('waitFuzzyDropdown');
-  dd.innerHTML = wFuzzyList.map((x,i)=>`
-    <div class="opt ${i===wFuzzyIndex?'active':''}" onclick="wPickFuzzy(${i})">
-      <strong>${x.da.name}</strong> <small>(${x.da.id})</small>
-      <small style="float:right">${x.da.waveTime||''}</small>
-    </div>`).join('');
-}
-function wPickFuzzy(i){
-  const x=wFuzzyList[i]; if(!x) return;
-  document.getElementById('waitFuzzyDropdown').classList.remove('open');
-  waitScanEl.value='';
-  initiateScan(x.da, state.scanMode);
-}
-function wHandleScan(rawText){
-  const q=(rawText||'').trim(); if(!q) return;
-  let da = state.roster.find(d=>String(d.id)===q);
-  if(!da) da = state.roster.find(d=>(d.name||'').toLowerCase()===q.toLowerCase());
-  if(da){
-    document.getElementById('waitFuzzyDropdown').classList.remove('open');
-    waitScanEl.value='';
-    initiateScan(da, state.scanMode);
-    return;
-  }
-  if(wFuzzyList.length && wFuzzyIndex>=0){ wPickFuzzy(wFuzzyIndex); return; }
-  playTone('error');
-  showBanner('No match for "'+q+'"','var(--red)');
-}
-function renderFuzzy(q){
-  const dd=document.getElementById('fuzzyDropdown');
-  if(!q || !q.trim()){ dd.classList.remove('open'); fuzzyList=[]; return; }
-  fuzzyList = findSimilarDAs(q);
-  fuzzyIndex = fuzzyList.length?0:-1;
-  if(!fuzzyList.length){ dd.classList.remove('open'); return; }
-  paintFuzzy();
-  dd.classList.add('open');
-}
-function paintFuzzy(){
-  const dd=document.getElementById('fuzzyDropdown');
-  dd.innerHTML = fuzzyList.map((x,i)=>`
-    <div class="opt ${i===fuzzyIndex?'active':''}" onclick="pickFuzzy(${i})">
-      <strong>${x.da.name}</strong> <small>(${x.da.id})</small>
-      <small style="float:right">${x.da.waveTime||''}</small>
-    </div>`).join('');
-}
-function pickFuzzy(i){
-  const x=fuzzyList[i]; if(!x) return;
-  document.getElementById('fuzzyDropdown').classList.remove('open');
-  scanInputEl.value='';
-  initiateScan(x.da, state.scanMode);
-}
-
-// ---- Resolution: exact ID → exact name → fuzzy ----
-function handleScanInput(rawText){
-  const q=(rawText||'').trim(); if(!q) return;
-  // 1. exact Employee ID
-  let da = state.roster.find(d=>String(d.id)===q);
-  // 2. exact name
-  if(!da) da = state.roster.find(d=>(d.name||'').toLowerCase()===q.toLowerCase());
-  if(da){
-    document.getElementById('fuzzyDropdown').classList.remove('open');
-    scanInputEl.value='';
-    initiateScan(da, state.scanMode);
-    return;
-  }
-  // 3. fuzzy — if a top candidate is highlighted, Enter confirms it
-  if(fuzzyList.length && fuzzyIndex>=0){ pickFuzzy(fuzzyIndex); return; }
-  playTone('error');
-  showBanner('No match for "'+q+'"','var(--red)');
-}
-
-// ============================================================
-// SCAN FLOW (both camera + text converge here)
-// ============================================================
-let lastScanGlobal=0;         // 150ms global guard
-const perDaLock={};           // 2500ms per-DA UI lock
-function initiateScan(da, scanType){
-  const now=Date.now();
-  if(now-lastScanGlobal < 150) return;        // global duplicate guard
-  lastScanGlobal=now;
-  if(perDaLock[da.id] && now-perDaLock[da.id] < 2500){
-    showBanner('Hold on — '+da.name+' just scanned','var(--amber)'); return;
-  }
-  perDaLock[da.id]=now;
-
-  // Client-side break pre-check (server re-validates)
-  if(!state.settings.manualBreakOverride){
-    const backAt=checkBreakClient(da.breakHours);
-    if(backAt){ playTone('error'); showBanner(`${da.name} is on break — back ${backAt}`,'var(--red)'); return; }
-  }
-  if(scanType==='ENTRY'){
-    // Waiting-tab scan = add/keep the DA in the waiting batch for their next turn.
-    // It must NEVER auto-send — only the Yard Marshal's Send button dispatches.
-    //  • Already in Waiting → no-op (just confirm they're queued).
-    //  • Not in Waiting (returning for turn 2,3…) → re-queue into the ongoing batch.
-    //    Attendance is NOT re-done — that happens only on the 1st scan of the day.
-    if(_isInWaitingClient(da.id)){
-      playTone('warn');
-      showBanner(da.name+' already in waiting — Yard Marshal must Send to dispatch','var(--amber)');
-    } else {
-      reQueueDA(da.id, da.name);
-    }
-  } else {
-    doCheckIn(da);
-  }
-}
-async function reQueueDA(empId, name){
-  const res = await apiCall({ action:'reAddWaiting', employeeId:empId });
-  if(res && res.success){
-    if(res.already){ showBanner((name||empId)+' already in waiting','var(--amber)'); }
-    else { playTone('success'); showBanner((name||empId)+' re-queued for next turn (Batch '+(res.batch||'?')+')','var(--green)'); }
-  } else if(res){
-    playTone('error'); showBanner(res.message||'Could not re-queue','var(--red)');
-  }
-  scheduleRefresh();
-}
-function _isInWaitingClient(id){
-  return state.waitingBatches.some(b=>(b.members||[]).some(m=>String(m.id)===String(id)));
-}
-
-function focusActiveScan(){
-  // Focus whichever scan box is currently visible (Waiting tab vs Scan tab).
-  const wt = document.getElementById('tab-waiting');
-  const we = document.getElementById('waitScanInput');
-  if(we && wt && wt.style.display !== 'none' && we.offsetParent !== null){ we.focus(); return; }
-  if(scanInputEl) scanInputEl.focus();
-}
-
-async function doCheckIn(da){
-  flashGreen();
-  focusActiveScan();                   // re-arm the ACTIVE input instantly — don't wait on network
-  const res = await apiCall({ action:'recordCheckIn', employeeId:da.id, timestamp:new Date().toISOString() });
-  if(res===null){ return; }            // queued offline
-  if(res.success){
-    playTone('success');
-    showBanner(`✓ ${da.name} — ${res.status} · Batch ${res.batch}`,'var(--green)');
-    // optimistic local update so the Waiting tab reflects it immediately
-    optimisticAddWaiting(da, res.status, res.batch);
-  } else if(res.blocked==='VIOLATOR'){
-    openViolatorModal(da);
-  } else {
-    playTone(res.blocked==='NO_OP'?'warn':'error');
-    showBanner(res.message||'Scan blocked', res.blocked==='NO_OP'?'var(--amber)':'var(--red)');
-  }
-  scheduleRefresh();                   // coalesced, cached background sync
-}
-
-function flashGreen(){
-  const f=document.getElementById('camFlash');
-  f.classList.remove('flash'); void f.offsetWidth; f.classList.add('flash');
-}
-
-// ============================================================
-// CAMERA (GitHub Pages HTTPS origin only)
-// ============================================================
-function loadQrLib(){
-  return new Promise((resolve,reject)=>{
-    if(window.Html5Qrcode) return resolve();
-    const s=document.createElement('script');
-    s.src='https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
-    s.onload=()=>resolve();
-    s.onerror=()=>reject(new Error('qr lib failed to load'));
-    document.head.appendChild(s);
-  });
-}
-let _activeReaderId = 'reader';
-function _setCamButtons(scanning){
-  document.querySelectorAll('.cam-start').forEach(b=>b.style.display = scanning?'none':'inline-flex');
-  document.querySelectorAll('.cam-stop').forEach(b=>b.style.display = scanning?'inline-flex':'none');
-}
-async function startCamera(readerId){
-  _activeReaderId = readerId || 'reader';
-  _setCamButtons(true);
-  try{
-    await loadQrLib();
-    html5QrScanner = new Html5Qrcode(_activeReaderId);
-    await html5QrScanner.start(
-      { facingMode:'environment' },
-      { fps:10, qrbox:deviceProfile.cameraQrBox },
-      (decoded)=>onCameraDecode(decoded),
-      ()=>{}
-    );
-    showBanner('Camera armed — scanning…','var(--prime)');
-  }catch(e){
-    showBanner('Camera unavailable — use manual search below','var(--amber)');
-    stopCamera();
-    const w=document.getElementById(_activeReaderId==='reader2'?'waitScanInput':'scanInput'); if(w) w.focus();
-  }
-}
-async function stopCamera(){
-  _setCamButtons(false);
-  if(html5QrScanner){ try{ await html5QrScanner.stop(); await html5QrScanner.clear(); }catch(e){} html5QrScanner=null; }
-}
-function onCameraDecode(code){
-  // one scan per session — stop immediately, operator re-arms
-  stopCamera();
-  const da = state.roster.find(d=>String(d.id)===String(code)) ||
-             state.roster.find(d=>(d.name||'').toLowerCase()===String(code).toLowerCase());
-  if(da){ initiateScan(da, state.scanMode); }
-  else { playTone('error'); showBanner('Scanned code not on roster: '+code,'var(--red)'); }
-}
-
-// ============================================================
-// RENDERERS
-// ============================================================
-function renderRecentScans(){
-  const el=document.getElementById('recentScansList');
-  if(!state.scanHistory.length){ el.innerHTML='<div style="color:var(--muted);font-size:.85rem">No scans yet today.</div>'; return; }
-  el.innerHTML = state.scanHistory.slice(0,12).map(s=>`
-    <div class="row-item">
-      <div><strong>${s.name}</strong> <small style="color:var(--muted)">(${s.id})</small></div>
-      <div><span class="badge Present">${s.type}</span> <small style="color:var(--muted)">${s.time}</small></div>
-    </div>`).join('');
-}
-
-function checkBreakClient(breakStr){
-  if(!breakStr || breakStr==='--') return null;
-  const now=new Date(); const nowMin=now.getHours()*60+now.getMinutes();
-  for(const w of String(breakStr).split(',')){
-    const p=w.trim().split('-'); if(p.length!==2) continue;
-    const toM=(s)=>{const t=s.trim().match(/(\d{1,2}):(\d{2})/); return t?(+t[1])*60+(+t[2]):null;};
-    const s=toM(p[0]), e=toM(p[1]); if(s===null||e===null) continue;
-    if((s<=e && nowMin>=s && nowMin<e) || (s>e && (nowMin>=s||nowMin<e))) return p[1].trim();
-  }
-  return null;
-}
-
-function displayWaitingList(){
-  const q=(document.getElementById('waitSearch').value||'').toLowerCase();
-  let totalWaiting=0;
-  const container=document.getElementById('waitingBatchesContainer');
-  container.innerHTML = state.waitingBatches.map(b=>{
-    const members=b.members||[];
-    const filtered = members.filter(m=>!q || m.name.toLowerCase().includes(q) || String(m.id).toLowerCase().includes(q));
-    totalWaiting += members.length;
-    const pending = members.filter(m=>!m.sent).length;   // not yet sent
-    const sendable = members.filter(m=>!m.sent && !checkBreakClient(m.breakHours)).length;
-    return `
-      <div style="margin-bottom:14px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <span style="font-weight:800;color:var(--prime)">Batch ${b.batch} (${members.length})</span>
-          ${members.length===0 ? ''
-            : (sendable>0 ? `<span style="display:flex;gap:6px">
-                 <button class="btn" style="padding:5px 10px;font-size:.74rem" onclick="sendSelected(${b.batch})">Send Selected</button>
-                 <button class="btn success" style="padding:5px 10px;font-size:.74rem" onclick="sendBatch(${b.batch})">Send Batch (${sendable})</button>
-               </span>`
-                          : `<span class="badge" style="background:rgba(47,207,122,.16);color:var(--green)">All sent</span>`)}
+    function prependRecentScan(name, id, status, time) {
+      const list = document.getElementById("recent-att-list");
+      if (list.innerText.includes("No scans")) list.innerHTML = "";
+      const div = document.createElement("div");
+      div.className = "list-item";
+      div.innerHTML = `
+        <div>
+          <strong style="color:#fff;">${name}</strong>
+          <div class="list-meta">${id} &bull; Wave: ${time}</div>
         </div>
-        ${filtered.map(m=>{
-          const waitedMin=Math.max(0,Math.floor((Date.now()-(m.checkInEpoch||Date.now()))/60000));
-          const backAt=checkBreakClient(m.breakHours);
-          return `
-            <div class="row-item" style="${backAt?'opacity:.55':''}${m.sent?'border-left:3px solid var(--green)':''}">
-              <div>
-                <strong>${m.name}</strong> <small style="color:var(--muted)">(${m.id})</small>
-                <div style="font-size:.75rem;color:var(--muted)">Waited ${waitedMin}m${m.sent?` · <span style="color:var(--green)">Sent ${m.sentAt||''}</span>`:''}</div>
-              </div>
-              <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
-                ${backAt
-                  ? `<span class="badge Break">On break – back ${backAt}</span>`
-                  : (m.sent
-                      ? `<span class="badge" style="background:rgba(47,207,122,.16);color:var(--green)">Sent ✓</span>`
-                      : `<input type="checkbox" class="wait-chk" data-id="${m.id}" style="width:18px;height:18px;accent-color:var(--amz-orange)">
-                         <span class="badge ${m.status||'Present'}">${m.status||'Present'}</span>
-                         <button class="btn success" style="padding:5px 8px;font-size:.75rem" onclick="sendDA('${m.id}')">Send</button>`)}
-                <button class="btn secondary" style="padding:5px 8px;font-size:.75rem" onclick="openReplaceModal('${m.id}')">Replace</button>
-                <button class="btn danger" style="padding:5px 8px;font-size:.75rem" onclick="removeWaitingDA('${m.id}')">Remove</button>
-              </div>
-            </div>`;
-        }).join('') || '<div style="color:var(--muted);font-size:.8rem">Empty</div>'}
-      </div>`;
-  }).join('');
-  document.getElementById('waitCount').textContent = totalWaiting;
-}
-
-// Send = mark 'Sent from Waiting' (dispatch step). Entry is confirmed later by the
-// Tampermonkey bridge (queueReceived), which counts the turn and removes them.
-async function sendDA(empId){
-  // optimistic: flag locally then confirm with server
-  state.waitingBatches.forEach(b=>(b.members||[]).forEach(m=>{ if(String(m.id)===String(empId)){ m.sent=true; m.sentAt=new Date().toTimeString().slice(0,5); }}));
-  displayWaitingList();
-  const res=await apiCall({ action:'markSent', employeeId:empId });
-  if(res && res.success){ playTone('success'); showBanner('Sent from waiting — awaiting off-yard entry','var(--green)'); }
-  scheduleRefresh();
-}
-async function sendBatch(batchNum){
-  state.waitingBatches.forEach(b=>{ if(b.batch===batchNum)(b.members||[]).forEach(m=>{ if(!m.sent){ m.sent=true; m.sentAt=new Date().toTimeString().slice(0,5); }}); });
-  displayWaitingList();
-  const res=await apiCall({ action:'markSent', batch:batchNum });
-  if(res && res.success){ playTone('success'); showBanner('Batch '+batchNum+' sent — '+(res.marked||0)+' DAs awaiting off-yard entry','var(--green)'); }
-  scheduleRefresh();
-}
-async function sendSelected(batchNum){
-  // Collect checked DA ids (within this batch's rendered rows).
-  const ids = Array.from(document.querySelectorAll('.wait-chk:checked')).map(c=>c.getAttribute('data-id'));
-  if(!ids.length){ playTone('warn'); showBanner('Tick the DAs to send first','var(--amber)'); return; }
-  // optimistic flag
-  const now=new Date().toTimeString().slice(0,5);
-  state.waitingBatches.forEach(b=>(b.members||[]).forEach(m=>{ if(ids.indexOf(String(m.id))!==-1){ m.sent=true; m.sentAt=now; }}));
-  displayWaitingList();
-  const res=await apiCall({ action:'markSent', ids:ids });
-  if(res && res.success){ playTone('success'); showBanner('Sent '+ids.length+' selected DA(s) — awaiting off-yard entry','var(--green)'); }
-  scheduleRefresh();
-}
-function escObj(m){ return JSON.stringify({id:m.id,name:m.name,breakHours:m.breakHours}).replace(/"/g,'&quot;'); }
-
-let replaceTargetId=null;
-function openReplaceModal(id){
-  replaceTargetId=id;
-  let name=id;
-  for(const b of state.waitingBatches){ const m=(b.members||[]).find(x=>String(x.id)===String(id)); if(m){ name=m.name; break; } }
-  const da=state.roster.find(r=>String(r.id)===String(id)); if(da) name=da.displayName||da.name||name;
-  document.getElementById('replaceModalText').textContent = `Replacing: ${name} (${id})`;
-  document.getElementById('replNameInput').value='';
-  document.getElementById('replIdInput').value='';
-  document.getElementById('replaceModal').classList.add('open');
-  setTimeout(()=>document.getElementById('replNameInput').focus(),50);
-}
-async function submitReplacement(){
-  const name=document.getElementById('replNameInput').value.trim();
-  const rid=document.getElementById('replIdInput').value.trim();
-  if(!name && !rid){ showBanner('Enter replacement name or ID','var(--amber)'); return; }
-  document.getElementById('replaceModal').classList.remove('open');
-  const res=await apiCall({ action:'assignReplacement', employeeId:replaceTargetId, replacementName:name, replacementId:rid });
-  if(res && res.success){
-    playTone('success');
-    showBanner(`Replacement assigned: ${res.replacement} ✓ (M turned green)`,'var(--green)');
-    scheduleRefresh();
-  } else {
-    playTone('error');
-    showBanner((res&&res.error)||'Replacement failed','var(--red)');
-  }
-  replaceTargetId=null;
-}
-
-async function removeWaitingDA(empId){
-  await apiCall({ action:'removeWaiting', employeeId:empId });
-  refreshRoster(true);
-}
-
-function renderBreaks(filterType){
-  const el=document.getElementById('breaksList');
-  const items = state.roster.filter(r=>r.breakHours && r.breakHours!=='--');
-  el.innerHTML = items.map(r=>{
-    const backAt=checkBreakClient(r.breakHours);
-    if(filterType==='onBreak' && !backAt) return '';
-    if(filterType==='completed' && backAt) return '';
-    return `
-      <div class="row-item">
-        <div><strong>${r.name}</strong> <small style="color:var(--muted)">(${r.id})</small></div>
-        <div><span class="badge Break">${r.breakHours}</span>${backAt?` <small style="color:var(--purple)">back ${backAt}</small>`:''}</div>
-      </div>`;
-  }).join('') || '<div style="color:var(--muted);padding:8px">No DAs in this break category.</div>';
-}
-
-let _turnsData = [];
-async function refreshTurns(){
-  const res = await apiCall({ action:'turnsReport' });
-  if(res && res.success){
-    _turnsData = res.rows || [];
-    const tt=document.getElementById('turnsTotal'); if(tt) tt.textContent = res.totalTurns||0;
-    renderTurns();
-  }
-}
-function renderTurns(){
-  const el=document.getElementById('turnsList'); if(!el) return;
-  const q=(document.getElementById('turnsSearch')?.value||'').toLowerCase();
-  const rows=_turnsData.filter(r=>!q || (r.name||'').toLowerCase().includes(q) || String(r.id).toLowerCase().includes(q));
-  if(!rows.length){ el.innerHTML='<div style="color:var(--muted);font-size:.85rem">No DAs yet.</div>'; return; }
-  el.innerHTML = rows.map(r=>{
-    const low = (r.turns||0) < 7;
-    const col = low ? 'var(--amber)' : 'var(--green)';
-    return `<div class="row-item">
-      <div><strong>${r.name||r.id}</strong> <small style="color:var(--muted)">(${r.id})</small>
-        ${r.lastEntry?`<div style="font-size:.72rem;color:var(--muted)">last ${r.lastEntry}</div>`:''}</div>
-      <div style="text-align:right">
-        <div style="font-weight:800;font-size:1.1rem;color:${col}">${r.turns||0}<small style="font-size:.6rem;color:var(--muted)">/7</small></div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function renderViolators(){
-  const el=document.getElementById('violatorsList');
-  if(!state.violators.length){ el.innerHTML='<div style="color:var(--muted)">No active violators.</div>'; return; }
-  el.innerHTML = state.violators.map(v=>`
-    <div class="row-item">
-      <label style="display:flex;gap:8px;align-items:center">
-        <input type="checkbox" class="viol-chk" value="${v.id}" />
-        <span><strong>${v.name}</strong> (${v.id}) — Waited ${v.minutesWaiting}m</span>
-      </label>
-    </div>`).join('');
-}
-
-async function clearSelectedViolators(){
-  const ids=Array.from(document.querySelectorAll('.viol-chk:checked')).map(c=>c.value);
-  if(!ids.length){ showBanner('Select violators first','var(--amber)'); return; }
-  await apiCall({ action:'clearViolators', employeeIds:ids });
-  refreshRoster(true);
-}
-
-// ---- VIOLATOR MODAL ----
-function openViolatorModal(da){
-  activeViolatorId = da.id;
-  document.getElementById('violatorModalText').textContent =
-    `${da.name} (${da.id}) is in the Violators list. Allow entry or remove?`;
-  document.getElementById('violatorModal').classList.add('open');
-}
-async function resolveViolatorModal(decision){
-  document.getElementById('violatorModal').classList.remove('open');
-  if(!activeViolatorId) return;
-  // Both Allow and Deny REMOVE the DA from the violator list.
-  await apiCall({ action:'resolveViolator', employeeId:activeViolatorId, decision });
-  showBanner(decision==='Allow'?'Entry allowed — violator cleared':'Violator removed',
-             decision==='Allow'?'var(--green)':'var(--amber)');
-  activeViolatorId=null;
-  refreshRoster(true);
-}
-
-// ---- TABS / MODE ----
-function setScanMode(mode){
-  state.scanMode=mode;
-  const ci = mode==='CHECK_IN'?'btn':'btn secondary';
-  const en = mode==='ENTRY'?'btn':'btn secondary';
-  const a=document.getElementById('modeCheckIn'); if(a) a.className=ci;
-  const b=document.getElementById('modeEntry');   if(b) b.className=en;
-  const wci=document.getElementById('wModeCheckIn'); if(wci) wci.className=ci;
-  const wen=document.getElementById('wModeEntry');   if(wen) wen.className=en;
-}
-function switchTab(tab, btn){
-  ['scan','waiting','breaks','violators','turns','settings'].forEach(t=>{
-    document.getElementById('tab-'+t).style.display = (t===tab)?'block':'none';
-  });
-  if(!deviceProfile.isMobile && (tab==='scan'||tab==='waiting')){
-    document.getElementById('tab-scan').style.display='block';
-    document.getElementById('tab-waiting').style.display='block';
-  }
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-  // Fixed mode per tab: Attendance tab = Check-In, Waiting tab = Entry (Dispatch)
-  if(tab==='scan'){ setScanMode('CHECK_IN'); scanInputEl.focus(); }
-  else if(tab==='waiting'){ setScanMode('ENTRY'); const w=document.getElementById('waitScanInput'); if(w) w.focus(); }
-  else if(tab==='turns'){ refreshTurns(); }
-}
-
-// ---- SETTINGS ACTIONS ----
-async function testConnection(){
-  const out=document.getElementById('connResult');
-  const url=(document.getElementById('cfgApiUrl').value.trim())||SCANNER_API_URL;
-  out.style.color='var(--amber)'; out.textContent='Testing '+url+' …';
-  if(!url || url.includes('PASTE_')){ out.style.color='var(--red)'; out.textContent='✗ No API URL set.'; return; }
-  const ctrl=new AbortController(); const killer=setTimeout(()=>ctrl.abort(),8000);
-  const t0=Date.now();
-  try{
-    // POST-only — matches the real scan path (iOS Safari can fail a cross-origin GET redirect)
-    const pr=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({action:'rosterFull',forceRefresh:true}),signal:ctrl.signal,redirect:'follow',cache:'no-store'});
-    clearTimeout(killer);
-    const pt=await pr.text(); let post;
-    try{ post=JSON.parse(pt); }catch(e){ post=null; }
-    const ms=Date.now()-t0;
-    if(post && post.success){
-      out.style.color='var(--green)';
-      out.textContent=`✓ CONNECTED (${ms}ms)\nRoster: ${ (post.roster||[]).length } DAs · Tab: ${post.todayName||'?'}`;
-      setOnlineState(true);
-    } else if(post){
-      out.style.color='var(--red)';
-      out.textContent=`⚠ Reached backend but action failed (${ms}ms):\n${post.error||pt.slice(0,160)}`;
-    } else {
-      out.style.color='var(--red)';
-      out.textContent=`⚠ Got a response but not JSON (${ms}ms) — looks like a Google LOGIN/HTML page, not the scanner API.\nThis means the deployment access is NOT "Anyone".\nFirst 160 chars:\n${pt.slice(0,160)}`;
+        <span class="badge ${status === 'Present' ? 'badge-sent' : 'badge-waiting'}">${status}</span>
+      `;
+      list.prepend(div);
     }
-  }catch(e){
-    clearTimeout(killer);
-    out.style.color='var(--red)';
-    const why = (e.name==='AbortError')?'timed out (8s)':'network/CORS blocked ('+e.message+')';
-    out.textContent=`✗ Could not reach backend — ${why}.\n#1 cause (desktop works, mobile fails): deployment access is "Anyone with Google account" → set it to "Anyone".\nAlso check:\n• iOS: disable content blockers / Private Relay\n• Re-deploy a NEW version after code edits\n• Try phone on WiFi vs cellular`;
-    setOnlineState(false);
-  }
-}
 
-async function saveSheetLink(){
-  const api=document.getElementById('cfgApiUrl').value.trim();
-  if(api){ SCANNER_API_URL=api; LS.setItem('DUD3_API_URL',api); }
-  const url=document.getElementById('cfgSheetUrl').value.trim();
-  if(url){
-    const res=await apiCall({ action:'saveSheetUrl', sheetUrl:url });
-    if(res) showBanner(res.message||'Saved');
-  }
-  refreshRoster(true);
-}
-async function unlinkSheet(){
-  const res=await apiCall({ action:'saveSheetUrl', sheetUrl:'' });
-  if(res) showBanner(res.message||'Sheet unlinked');
-}
-async function saveSettingsToServer(){
-  const settings={
-    preWaveBlockMin:Number(document.getElementById('cfgPreWave').value),
-    presentWindowMin:Number(document.getElementById('cfgPresentWin').value),
-    entryTimeoutMin:Number(document.getElementById('cfgEntryTimeout').value),
-    batchSize:Number(document.getElementById('cfgBatchSize').value)||25,
-    manualBreakOverride:document.getElementById('cfgBreakOverride').checked
-  };
-  const res=await apiCall({ action:'saveSettings', settings });
-  if(res && res.success) showBanner('Settings saved','var(--green)');
-}
-async function triggerStartNewDay(){
-  if(!confirm('Reset waiting batches & violators for a new day?')) return;
-  const res=await apiCall({ action:'startNewDay' });
-  if(res && res.success){ showBanner(res.message,'var(--green)'); refreshRoster(true); }
-}
+    // --- WAITING LIST & DISPATCH ---
+    function renderWaiting() {
+      const wrap = document.getElementById("batches-container");
+      wrap.innerHTML = "";
+      let totalWaiting = 0;
 
-// ---- CSV EXPORT ----
-// ---- KEYBOARD SHORTCUT (desktop) ----
-document.addEventListener('keydown', (e)=>{
-  if(e.key==='/' && document.activeElement!==scanInputEl && !deviceProfile.isMobile){
-    e.preventDefault(); switchTab('scan'); scanInputEl.focus();
-  }
-});
+      if (!APP_STATE.waitingBatches.length) {
+        wrap.innerHTML = `<div style="color:var(--text-muted); font-size:12px;">No active batches.</div>`;
+        document.getElementById("waiting-count-badge").textContent = `0 Waiting`;
+        return;
+      }
 
-// ---- NETWORK EVENTS ----
-window.addEventListener('online', ()=>{ setOnlineState(true); flushOfflineQueue(); });
-window.addEventListener('offline', ()=>setOnlineState(false));
+      APP_STATE.waitingBatches.forEach(b => {
+        const waitingCount = b.members.filter(m => !m.sent).length;
+        totalWaiting += waitingCount;
+        const bDiv = document.createElement("div");
+        bDiv.style.marginBottom = "8px";
 
-// ---- BOOT ----
-function boot(){
-  detectDeviceAndFitLayout();
-  window.addEventListener('resize', detectDeviceAndFitLayout);
-  document.getElementById('queueCount').textContent = state.offlineQueue.length;
-  setScanMode('CHECK_IN');
-  // prefill API url in settings
-  if(SCANNER_API_URL && !SCANNER_API_URL.includes('PASTE_')) document.getElementById('cfgApiUrl').value=SCANNER_API_URL;
-  // render from cache instantly, then pull fresh
-  displayWaitingList();
-  refreshRoster(false);
-  // Re-render waiting ages every 10s (local, cheap) …
-  setInterval(()=>{ displayWaitingList(); renderBreaks('onBreak'); }, 10000);
-  // … and PULL fresh data from the sheet every 15s so scans from other
-  // operators' devices appear automatically (cross-device sync), not only
-  // when this device scans. Skips if a refresh is already in flight.
-  setInterval(()=>{ if(!_refreshInFlight) refreshRoster(false); }, 15000);
-}
-try{ boot(); }catch(err){ console.error('boot failed',err); try{RushAnowSplash.hide(300);}catch(e){} }
+        bDiv.innerHTML = `
+          <div class="batch-header">
+            <div>
+              <span>Batch ${b.batchId}</span>
+              <span class="batch-badge">${b.members.length} DAs</span>
+            </div>
+            <button class="btn btn-sm" onclick="sendBatch(${b.batchId})">Send Whole Batch</button>
+          </div>
+          <div class="batch-body">
+            ${b.members.map(m => `
+              <div class="list-item">
+                <div>
+                  <strong>${m.daName}</strong>
+                  <div class="list-meta">${m.daId} &bull; Turns: ${APP_STATE.tracking[m.daId]?.turns || 0}</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <span class="badge ${m.sent ? 'badge-sent' : 'badge-waiting'}">${m.sent ? 'SENT' : 'WAITING'}</span>
+                  ${!m.sent ? `<button class="btn btn-sm btn-secondary" onclick="sendSingle('${m.daId}', ${b.batchId})">Send</button>` : ''}
+                  <button class="btn btn-sm btn-danger" onclick="removeFromBatch('${m.daId}', ${b.batchId})">&#x2715;</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+        wrap.appendChild(bDiv);
+      });
 
+      document.getElementById("waiting-count-badge").textContent = `${totalWaiting} Waiting`;
+    }
 
-</script>
+    window.sendBatch = async function(batchId) {
+      try {
+        await apiCall("markSent", { batchId });
+        playTone('success');
+        showToast(`Batch ${batchId} dispatched to station!`, "success");
+        await fetchRoster(true);
+      } catch (e) { showToast(e.message, "error"); }
+    };
+
+    window.sendSingle = async function(daId, batchId) {
+      try {
+        await apiCall("markSent", { daId, batchId });
+        playTone('success');
+        showToast(`Dispatched DA to station.`, "success");
+        await fetchRoster(true);
+      } catch (e) { showToast(e.message, "error"); }
+    };
+
+    window.removeFromBatch = async function(daId, batchId) {
+      if (!confirm("Remove DA from waiting list?")) return;
+      try {
+        await apiCall("resolveViolator", { daId, removeOnly: true, batchId });
+        await fetchRoster(true);
+      } catch (e) { showToast(e.message, "error"); }
+    };
+
+    // --- RE-QUEUE WAITING SCAN (TURNS 2+) ---
+    async function handleWaitingScan(daId) {
+      try {
+        const res = await apiCall("reAddWaiting", { daId });
+        playTone('success');
+        showFlash('green');
+        showToast(`Re-Queued: ${res.daName} \u2192 Batch ${res.batchId}`, "success");
+        await fetchRoster(true);
+      } catch (err) {
+        playTone('error');
+        showFlash('red');
+        showToast(err.message, "error");
+      }
+    }
+
+    // --- BREAKS TAB ---
+    function renderBreaks() {
+      const now = new Date();
+      const curM = now.getHours() * 60 + now.getMinutes();
+
+      const onBreakList = document.getElementById("list-on-break");
+      const upBreakList = document.getElementById("list-upcoming-breaks");
+      onBreakList.innerHTML = "";
+      upBreakList.innerHTML = "";
+
+      let onCount = 0, upCount = 0;
+
+      APP_STATE.roster.forEach(r => {
+        const breaks = [r.break1, r.break2].filter(Boolean);
+        breaks.forEach(brk => {
+          const parts = brk.split("-");
+          if (parts.length !== 2) return;
+          const [sH, sM] = parts[0].split(":").map(Number);
+          const [eH, eM] = parts[1].split(":").map(Number);
+          const sMin = sH * 60 + sM;
+          const eMin = eH * 60 + eM;
+
+          if (curM >= sMin && curM < eMin) {
+            onCount++;
+            onBreakList.innerHTML += `<div class="list-item"><div><strong>${r.daName}</strong><div class="list-meta">${r.daId} &bull; ${brk}</div></div><span class="badge badge-absent">ON BREAK</span></div>`;
+          } else if (sMin > curM && sMin - curM <= 45) {
+            upCount++;
+            upBreakList.innerHTML += `<div class="list-item"><div><strong>${r.daName}</strong><div class="list-meta">${r.daId} &bull; Starts in ${sMin - curM}m</div></div><span class="badge badge-waiting">${brk}</span></div>`;
+          }
+        });
+      });
+
+      if (!onCount) onBreakList.innerHTML = `<div style="color:var(--text-muted); font-size:12px;">No DAs currently on break.</div>`;
+      if (!upCount) upBreakList.innerHTML = `<div style="color:var(--text-muted); font-size:12px;">No upcoming breaks within 45 min.</div>`;
+    }
+
+    // --- VIOLATORS TAB ---
+    function renderViolators() {
+      const wrap = document.getElementById("list-violators");
+      wrap.innerHTML = "";
+      if (!APP_STATE.violators.length) {
+        wrap.innerHTML = `<div style="color:var(--text-muted); font-size:12px;">No pending-entry violators.</div>`;
+        return;
+      }
+      APP_STATE.violators.forEach(v => {
+        wrap.innerHTML += `
+          <div class="list-item">
+            <div>
+              <strong>${v.daName}</strong>
+              <div class="list-meta">${v.daId} &bull; Waiting: ${v.minutesWaiting}m</div>
+            </div>
+            <div style="display:flex; gap:6px;">
+              <button class="btn btn-sm" onclick="resolveViolatorModal('${v.daId}', true)">Allow</button>
+              <button class="btn btn-sm btn-danger" onclick="resolveViolatorModal('${v.daId}', false)">Deny</button>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    window.resolveViolatorModal = async function(daId, allow) {
+      try {
+        await apiCall("resolveViolator", { daId, allow });
+        showToast(allow ? "DA Allowed Entry." : "DA Denied & Cleared.", "success");
+        await fetchRoster(true);
+      } catch (e) { showToast(e.message, "error"); }
+    };
+
+    document.getElementById("btn-clear-violators").addEventListener("click", async () => {
+      if (!confirm("Clear all recorded violators?")) return;
+      try {
+        await apiCall("clearViolators");
+        await fetchRoster(true);
+      } catch (e) { showToast(e.message, "error"); }
+    });
+
+    // --- TURNS MONITOR TAB ---
+    function renderTurns() {
+      const wrap = document.getElementById("turns-table-wrap");
+      const q = (document.getElementById("turns-search-input").value || "").toLowerCase();
+      let totalTurns = 0;
+
+      const rows = APP_STATE.roster.filter(r => {
+        return r.daName.toLowerCase().includes(q) || r.daId.toLowerCase().includes(q);
+      }).map(r => {
+        const turns = APP_STATE.tracking[r.daId]?.turns || 0;
+        totalTurns += turns;
+        const reached = turns >= 7;
+        return `
+          <div class="list-item">
+            <div>
+              <strong>${r.daName}</strong>
+              <div class="list-meta">${r.daId} &bull; Wave: ${r.waveTime}</div>
+            </div>
+            <div style="text-align:right;">
+              <span style="font-size:16px; font-weight:800; font-family:var(--font-mono); color:${reached ? 'var(--success)' : 'var(--warn)'}">${turns}</span>
+              <span style="font-size:10px; color:var(--text-muted);"> / 7</span>
+            </div>
+          </div>
+        `;
+      });
+
+      wrap.innerHTML = rows.join('') || `<div style="color:var(--text-muted); font-size:12px;">No matching records.</div>`;
+      document.getElementById("turns-total-label").textContent = `Total Turns: ${totalTurns}`;
+    }
+
+    document.getElementById("turns-search-input").addEventListener("input", renderTurns);
+
+    // --- CAMERA ENGINE ---
+    document.getElementById("btn-toggle-cam").addEventListener("click", () => {
+      const box = document.getElementById("scanner-container");
+      if (APP_STATE.scannerActive) {
+        if (html5QrScanner) {
+          html5QrScanner.stop().then(() => {
+            box.style.display = "none";
+            APP_STATE.scannerActive = false;
+            document.getElementById("btn-toggle-cam").textContent = "\uD83D\uDCF7 Start Camera Scanner";
+          });
+        }
+      } else {
+        box.style.display = "block";
+        html5QrScanner = new Html5Qrcode("reader");
+        html5QrScanner.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 250, height: 250 } },
+          (decodedText) => {
+            handleAttendanceScan(decodedText.trim());
+          },
+          () => {}
+        ).then(() => {
+          APP_STATE.scannerActive = true;
+          document.getElementById("btn-toggle-cam").textContent = "\u23F9 Stop Camera";
+        }).catch(err => {
+          showToast("Camera access failed: " + err, "error");
+          box.style.display = "none";
+        });
+      }
+    });
+
+    // --- FUZZY SEARCH INPUT WIDGETS ---
+    function setupFuzzyInput(inputId, suggId, onSelect) {
+      const inp = document.getElementById(inputId);
+      const box = document.getElementById(suggId);
+
+      inp.addEventListener("input", () => {
+        const q = inp.value.trim().toLowerCase();
+        if (q.length < 2) { box.style.display = "none"; return; }
+        const matches = APP_STATE.roster.filter(r => r.daName.toLowerCase().includes(q) || r.daId.toLowerCase().includes(q)).slice(0, 5);
+        if (!matches.length) { box.style.display = "none"; return; }
+
+        box.innerHTML = matches.map(m => `
+          <div class="suggest-row" data-id="${m.daId}">
+            <span>${m.daName}</span>
+            <span style="font-family:var(--font-mono); font-size:11px; color:var(--text-muted);">${m.daId}</span>
+          </div>
+        `).join('');
+        box.style.display = "block";
+
+        box.querySelectorAll(".suggest-row").forEach(r => {
+          r.addEventListener("click", () => {
+            const id = r.getAttribute("data-id");
+            inp.value = "";
+            box.style.display = "none";
+            onSelect(id);
+          });
+        });
+      });
+
+      inp.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && inp.value.trim()) {
+          const raw = inp.value.trim();
+          inp.value = "";
+          box.style.display = "none";
+          onSelect(raw);
+        }
+      });
+    }
+
+    setupFuzzyInput("manual-att-input", "att-suggestions", handleAttendanceScan);
+    setupFuzzyInput("manual-wait-input", "wait-suggestions", handleWaitingScan);
+
+    // --- SETTINGS CONTROLS ---
+    function loadSettingsToForm() {
+      document.getElementById("cfg-api-url").value = APP_STATE.apiUrl;
+      document.getElementById("cfg-sheet-url").value = APP_STATE.sheetUrl;
+      document.getElementById("cfg-prewave").value = APP_STATE.settings.preWaveBlockMin;
+      document.getElementById("cfg-present-win").value = APP_STATE.settings.presentWindowMin;
+      document.getElementById("cfg-entry-timeout").value = APP_STATE.settings.entryTimeoutMin;
+      document.getElementById("cfg-batch-size").value = APP_STATE.settings.batchSize;
+      document.getElementById("cfg-break-override").checked = !!APP_STATE.settings.breakOverride;
+    }
+
+    document.getElementById("btn-save-settings").addEventListener("click", async () => {
+      APP_STATE.apiUrl = document.getElementById("cfg-api-url").value.trim();
+      APP_STATE.sheetUrl = document.getElementById("cfg-sheet-url").value.trim();
+      LS.set("dud3_api_url", APP_STATE.apiUrl);
+      LS.set("dud3_sheet_url", APP_STATE.sheetUrl);
+
+      const newSettings = {
+        preWaveBlockMin: Number(document.getElementById("cfg-prewave").value),
+        presentWindowMin: Number(document.getElementById("cfg-present-win").value),
+        entryTimeoutMin: Number(document.getElementById("cfg-entry-timeout").value),
+        batchSize: Number(document.getElementById("cfg-batch-size").value),
+        breakOverride: document.getElementById("cfg-break-override").checked
+      };
+
+      try {
+        await apiCall("saveSettings", { settings: newSettings });
+        if (APP_STATE.sheetUrl) await apiCall("saveSheetUrl", { sheetUrl: APP_STATE.sheetUrl });
+        showToast("Settings preserved successfully.", "success");
+        await fetchRoster();
+      } catch (e) { showToast(e.message, "error"); }
+    });
+
+    document.getElementById("btn-test-conn").addEventListener("click", async () => {
+      try {
+        const res = await apiCall("rosterFull");
+        showToast(`Connected! Backend Version: ${res.backendVersion}`, "success");
+      } catch (e) { showToast("Connection failed: " + e.message, "error"); }
+    });
+
+    document.getElementById("btn-start-new-day").addEventListener("click", async () => {
+      const conf = prompt("Type 'CONFIRM' to snapshot today's data to RushReport and start a fresh day:");
+      if (conf !== "CONFIRM") return;
+      try {
+        await apiCall("startNewDay");
+        showToast("New day initialized successfully.", "success");
+        await fetchRoster();
+      } catch (e) { showToast(e.message, "error"); }
+    });
+
+    document.getElementById("btn-refresh").addEventListener("click", () => fetchRoster());
+
+    // --- BOOT ---
+    window.addEventListener("DOMContentLoaded", () => {
+      loadSettingsToForm();
+      fetchRoster();
+      // Background poll sync every 15s
+      setInterval(() => fetchRoster(true), 15000);
+      // Failsafe auto-hide splash
+      setTimeout(() => {
+        const sp = document.getElementById("splash");
+        if (sp) sp.classList.add("hidden");
+      }, 3500);
+    });
+  </script>
 </body>
 </html>
