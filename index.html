@@ -368,7 +368,7 @@
           da.status = (wMin !== null && curMin > wMin + (Number(STATE.settings.waveGraceMin) || 10)) ? "Late Arrival" : "Present";
         }
       } else {
-        da.turns = (da.turns || 1) + 1; // Turn 2+
+        da.turns = (da.turns || 1) + 1; 
       }
 
       const bId = enqueueDriverIntoStrictBatch(da);
@@ -396,7 +396,6 @@
       return targetBatchId;
     }
 
-    // FUZZY SEARCH LOGIC
     function bindFuzzySearch(inputId, suggId, onPick) {
       const inp = document.getElementById(inputId); const box = document.getElementById(suggId);
       inp.addEventListener("input", () => {
@@ -412,19 +411,16 @@
     }
 
     function renderAll() {
-      // KPI
       const pCount = STATE.roster.filter(r => ["Present", "Late Arrival", "Replacement Present", "Received", "Out for Delivery"].includes(r.status)).length;
       document.getElementById("kpi-present").textContent = pCount;
       document.getElementById("kpi-absent").textContent = STATE.roster.filter(r => r.status === "Absent").length;
       document.getElementById("kpi-waiting").textContent = STATE.batches.reduce((sum, b) => sum + b.members.filter(m => !m.sent).length, 0);
       document.getElementById("kpi-pending").textContent = STATE.pendingArrivals.length;
 
-      // Replacements
       const absentDAs = STATE.roster.filter(r => r.status === "Absent");
       document.getElementById("sel-absent-driver").innerHTML = `<option value="">-- Select Absent Driver (${absentDAs.length}) --</option>` + absentDAs.map(d => `<option value="${d.daId}">${d.daName} (${d.daId})</option>`).join("");
       document.getElementById("absent-drivers-list").innerHTML = absentDAs.map(d => `<div class="da-item"><div class="da-info"><div class="da-name">${d.daName} <span class="badge b-absent">Absent</span></div><div class="da-sub">ID: ${d.daId}</div></div></div>`).join("");
 
-      // Batches / Waiting List
       const regWrap = document.getElementById("regular-batches-container");
       const openBatches = STATE.batches.filter(b => !b.completed && b.members.some(m => !m.sent));
       regWrap.innerHTML = openBatches.map(b => `
@@ -443,12 +439,10 @@
       
       regWrap.querySelectorAll(".reg-chk").forEach(c => c.onchange = (e) => { if (e.target.checked) STATE.selectedRegSet.add(e.target.dataset.id); else STATE.selectedRegSet.delete(e.target.dataset.id); });
 
-      // Breaks
       document.getElementById("active-breaks-list").innerHTML = STATE.roster.filter(r => r.onBreak).map(d => `<div class="da-item"><div class="da-info"><div class="da-name">${d.daName} <span class="badge b-late">ON BREAK</span></div></div><button class="btn btn-sm btn-success" onclick="endBreak('${d.daId}')">End Break</button></div>`).join("");
       document.getElementById("scheduled-breaks-list").innerHTML = STATE.roster.filter(r => !r.onBreak).map(d => `<div class="da-item"><div class="da-info"><div class="da-name">${d.daName}</div><div class="da-sub">Break: ${d.break1 || "None"}</div></div><button class="btn btn-sm btn-secondary" onclick="startBreak('${d.daId}')">Start Break</button></div>`).join("");
     }
 
-    // Batch Actions
     window.sendFullBatch = function(batchId) {
       const b = STATE.batches.find(x => x.batchId === batchId);
       if(b) {
@@ -464,11 +458,9 @@
     };
     window.removeSingleReg = function(daId, batchId) { const b = STATE.batches.find(x => x.batchId === batchId); if (b) b.members = b.members.filter(x => x.daId !== daId); STATE.selectedRegSet.delete(daId); saveState(); renderAll(); };
 
-    // Break Actions
     window.startBreak = function(daId) { const da = STATE.roster.find(r => r.daId === daId); if(da) { da.onBreak = true; saveState(); renderAll(); } };
     window.endBreak = function(daId) { const da = STATE.roster.find(r => r.daId === daId); if(da) { da.onBreak = false; enqueueDriverIntoStrictBatch(da); saveState(); renderAll(); } };
 
-    // Initialization
     window.addEventListener("DOMContentLoaded", () => {
       loadState();
       document.getElementById("set-api-url").value = STATE.apiUrl || "";
@@ -490,7 +482,6 @@
       document.getElementById("btn-load-demo").onclick = () => { STATE.roster = getInitialDemoRoster(); saveState(); renderAll(); };
       document.getElementById("btn-force-sync").onclick = () => { syncWithGoogleSheets("rosterFull"); };
 
-      // Camera Scanners
       let qrAtt = null, qrWait = null;
       document.getElementById("btn-cam-toggle").onclick = () => {
         const box = document.getElementById("cam-box-att");
