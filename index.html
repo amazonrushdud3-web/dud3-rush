@@ -58,8 +58,7 @@
     
     .da-list { display: flex; flex-direction: column; gap: 6px; }
     .da-item { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
-    .da-name { font-weight: 700; font-size: 13px; } .da-sub { font-size: 11px; color: var(--text-muted); margin-top:3px;}
-    .badge { padding: 3px 7px; border-radius: 5px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+    .da-name { font-weight: 700; font-size: 13px; } 
     
     .cam-box { display: none; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 10px; width: 100%; }
     .sugg-box { background: var(--bg-dark); border: 1px solid var(--border); border-radius: 7px; margin-top: -4px; max-height: 190px; overflow-y: auto; display: none; margin-bottom: 10px;}
@@ -152,20 +151,19 @@
     <!-- TAB 4: SETTINGS (ADMIN ONLY) -->
     <section id="pane-settings" class="tab-pane">
       <div class="card">
-        <div class="card-title">⚙️ Admin Settings</div>
-        <label style="font-size:11px; color:var(--text-muted);">Apps Script Web App URL</label>
-        <input type="text" id="set-api-url" class="input">
-        <label style="font-size:11px; color:var(--text-muted);">Google Sheet URL</label>
-        <input type="text" id="set-sheet-url" class="input">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div class="card-title" style="margin:0;">⚙️ Admin Settings</div>
+          <button class="btn btn-danger" id="btn-reset-day" style="padding:6px 10px;">RESET DAY</button>
+        </div>
         
         <div style="display:flex;gap:10px;margin-bottom:10px;">
-          <div style="flex:1"><label style="font-size:11px; color:var(--text-muted);">Pre-Wave Block (min)</label><input type="number" id="set-pre-block" class="input" value="30"></div>
-          <div style="flex:1"><label style="font-size:11px; color:var(--text-muted);">Wave Grace (min)</label><input type="number" id="set-wave-grace" class="input" value="10"></div>
+          <div style="flex:1"><label style="font-size:11px; color:var(--text-muted);">Pre-Wave Block (min)</label><input type="number" id="set-pre-block" class="input"></div>
+          <div style="flex:1"><label style="font-size:11px; color:var(--text-muted);">Wave Grace (min)</label><input type="number" id="set-wave-grace" class="input"></div>
         </div>
         <div style="display:flex;gap:10px;margin-bottom:15px;">
-          <div style="flex:1"><label style="font-size:11px; color:var(--text-muted);">Batch Size</label><input type="number" id="set-batch-size" class="input" value="25"></div>
+          <div style="flex:1"><label style="font-size:11px; color:var(--text-muted);">Batch Size</label><input type="number" id="set-batch-size" class="input"></div>
         </div>
-        <button class="btn" id="btn-save-settings" style="width:100%; background:var(--accent-orange); color:#000;">Save & Sync Settings</button>
+        <button class="btn" id="btn-save-settings" style="width:100%; background:var(--accent-orange); color:#000;">Save Global Settings to Sheet</button>
       </div>
     </section>
   </main>
@@ -190,11 +188,18 @@
   </nav>
 
   <script>
-    const STORAGE_KEY = "DUD3_RUSH_PRO_V8";
+    const STORAGE_KEY = "DUD3_RUSH_PRO_V10";
+    
+    // ==========================================
+    // YOUR LINKS MUST BE PASTED HERE
+    // ==========================================
+    const CONST_API_URL = "https://script.google.com/macros/s/AKfycbwyjKBYUa4e4MLAVSOG7deemoWWZlx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mOa2Qk0/exec"; 
+    const CONST_SHEET_URL = "https://docs.google.com/spreadsheets/d/1LJPPty6zCuq2QFGlMryhu_jIXBlYNFqIaLd1oU2r9gc/edit"; 
+    
     let isAdmin = !(/Mobi|Android|iPhone/i.test(navigator.userAgent));
 
     let STATE = {
-      apiUrl: "", sheetUrl: "", selectedDateTab: getTodayTabString(), availableTabs: getRecentDateTabs(),
+      selectedDateTab: getTodayTabString(), availableTabs: getRecentDateTabs(),
       settings: { waveGraceMin: 10, preWaveBlockMin: 30, batchSize: 25 },
       roster: [], batches: [], pendingArrivals: [], selectedRegSet: new Set()
     };
@@ -221,28 +226,53 @@
       try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) { const parsed = JSON.parse(raw); STATE = Object.assign(STATE, parsed); STATE.selectedRegSet = new Set(parsed.selectedRegSet || []); } } catch (e) {}
     }
 
+    // INSTANT BACKGROUND SYNC
     function syncWithGoogleSheets(action = "rosterFull", payload = {}) {
       saveState();
       const pill = document.getElementById("sync-status-pill");
-      if (!STATE.apiUrl) { pill.className = "status-pill offline"; pill.textContent = "LOCAL"; return; }
       
-      pill.textContent = "SYNCING...";
-      pill.className = "status-pill offline"; 
+      if(action === "rosterFull" || action === "saveSettings" || action === "resetDay") {
+         pill.textContent = "SYNCING..."; pill.className = "status-pill offline"; 
+      }
 
-      payload.action = action; payload.sheetUrl = STATE.sheetUrl; payload.dayTab = STATE.selectedDateTab;
+      payload.action = action; payload.sheetUrl = CONST_SHEET_URL; payload.dayTab = STATE.selectedDateTab;
+      if(action === "saveSettings") payload.settings = STATE.settings;
       
-      fetch(STATE.apiUrl, { method: "POST", body: JSON.stringify(payload) })
+      fetch(CONST_API_URL, { method: "POST", body: JSON.stringify(payload) })
       .then(res => res.json())
       .then(data => {
         if (data && data.success) {
           pill.className = "status-pill online"; pill.textContent = "SYNCED";
-          if (action === "rosterFull" && Array.isArray(data.roster)) {
-            STATE.roster = data.roster; saveState(); renderAll();
+          
+          if (data.settings) {
+             STATE.settings = data.settings;
+             document.getElementById("set-pre-block").value = STATE.settings.preWaveBlockMin;
+             document.getElementById("set-wave-grace").value = STATE.settings.waveGraceMin;
+             document.getElementById("set-batch-size").value = STATE.settings.batchSize;
+          }
+          if (action === "rosterFull" || action === "resetDay") {
+            STATE.roster = data.roster || [];
+            if(action === "resetDay") {
+               STATE.batches = []; STATE.pendingArrivals = []; STATE.selectedRegSet.clear();
+            }
+            renderAll();
+          } else if (action === "syncOnly" && data.roster) {
+             // Silently check if tampered received a DA inside
+             data.roster.forEach(serverDA => {
+                let localDA = STATE.roster.find(r => r.daId === serverDA.daId);
+                if(localDA && serverDA.status === "Received" && localDA.status !== "Received") {
+                   localDA.status = "Received";
+                   // Remove from OP Bridge list instantly
+                   STATE.pendingArrivals = STATE.pendingArrivals.filter(p => p.daId !== localDA.daId);
+                }
+             });
+             renderAll();
           }
         }
       }).catch(() => { pill.className = "status-pill offline"; pill.textContent = "OFFLINE"; });
     }
 
+    // AUTO ABSENT LOGIC
     function enforceWaveTimeAutoAbsent() {
       const now = new Date(); const curMin = now.getHours() * 60 + now.getMinutes(); const grace = Number(STATE.settings.waveGraceMin) || 10;
       let newlyAbsentIds = [];
@@ -252,9 +282,10 @@
           if (wMin !== null && curMin > (wMin + grace)) { da.status = "Absent"; newlyAbsentIds.push(da.daId); }
         }
       });
-      if (newlyAbsentIds.length > 0) { saveState(); renderAll(); syncWithGoogleSheets("markAbsent", { ids: newlyAbsentIds }); }
+      if (newlyAbsentIds.length > 0) { renderAll(); syncWithGoogleSheets("markAbsent", { ids: newlyAbsentIds }); }
     }
 
+    // FAST CHECK-IN LOGIC
     function recordDriverCheckIn(inputToken, isDirectToWaiting = false) {
       const clean = String(inputToken || "").trim().toLowerCase();
       if (!clean) return;
@@ -272,7 +303,7 @@
 
         if (wMin !== null) {
           if (curMin < (wMin - preBlock)) return showTopBanner(`Too Early! Can only scan ${preBlock}m before Wave (${da.waveTime})`, "warn");
-          if (curMin > (wMin + grace)) assignedStatus = "Late Arrival";
+          if (curMin > (wMin + grace) || da.status === "Absent") assignedStatus = "Late Arrival";
         }
         da.status = assignedStatus;
       }
@@ -280,20 +311,33 @@
       const bId = enqueueDriverIntoStrictBatch(da);
       showTopBanner(`${isDirectToWaiting ? 'Waiting List' : assignedStatus}: ${da.daName} -> Batch ${bId}`, "success");
       
-      renderAll();
+      renderAll(); // Instant Update
       syncWithGoogleSheets("recordCheckIn", { daId: da.daId, daName: da.daName, sentStatus: assignedStatus, isWaiting: isDirectToWaiting });
     }
 
+    // STRICT BATCH SEPARATION
     function enqueueDriverIntoStrictBatch(da) {
       const cap = Number(STATE.settings.batchSize) || 25;
-      let batchObj = STATE.batches.find(b => b.batchId === da.originalBatchId) || STATE.batches.find(b => !b.completed && b.members.length < cap);
-      if (!batchObj) { batchObj = { batchId: STATE.batches.length + 1, completed: false, members: [] }; STATE.batches.push(batchObj); }
-      da.originalBatchId = batchObj.batchId;
-      const activeId = da.repDaId || da.daId;
-      if (!batchObj.members.find(m => m.daId.toLowerCase() === activeId.toLowerCase())) {
-        batchObj.members.push({ daId: activeId, daName: da.daName, batchId: batchObj.batchId, scanTime: da.scanTime || nowHHMM(), sent: false });
+      let targetBatchObj = null;
+
+      if (da.originalBatchId) {
+          targetBatchObj = STATE.batches.find(b => b.batchId === da.originalBatchId);
       }
-      return batchObj.batchId;
+      if (!targetBatchObj) {
+          targetBatchObj = STATE.batches.find(b => !b.completed && b.members.length < cap && !b.hasSentMembers);
+      }
+      if (!targetBatchObj) { 
+        targetBatchObj = { batchId: STATE.batches.length + 1, completed: false, hasSentMembers: false, members: [] }; 
+        STATE.batches.push(targetBatchObj); 
+      }
+      
+      da.originalBatchId = targetBatchObj.batchId;
+      const activeId = da.repDaId || da.daId;
+      
+      if (!targetBatchObj.members.find(m => m.daId.toLowerCase() === activeId.toLowerCase())) {
+        targetBatchObj.members.push({ daId: activeId, daName: da.daName, batchId: targetBatchObj.batchId, scanTime: da.scanTime || nowHHMM(), sent: false });
+      }
+      return targetBatchObj.batchId;
     }
 
     function renderAll() {
@@ -318,24 +362,24 @@
       const sel = document.getElementById("date-tab-select");
       if (!STATE.availableTabs.includes(STATE.selectedDateTab)) STATE.availableTabs.push(STATE.selectedDateTab);
       sel.innerHTML = STATE.availableTabs.map(t => `<option value="${t}" ${t === STATE.selectedDateTab ? "selected" : ""}>${t}</option>`).join("");
-
+      
       const absentDAs = STATE.roster.filter(r => r.status === "Absent");
       document.getElementById("sel-absent-driver").innerHTML = `<option value="">-- Select Absent Driver --</option>` + absentDAs.map(d => `<option value="${d.daId}">${d.daName}</option>`).join("");
-      
+
       const regWrap = document.getElementById("regular-batches-container");
       regWrap.innerHTML = STATE.batches.filter(b => !b.completed && b.members.some(m => !m.sent)).map(b => `
         <div style="border:1px solid var(--border); border-radius:8px; padding:10px; margin-bottom:10px; background:var(--bg-primary);">
           <strong>Batch ${b.batchId}</strong>
           ${b.members.filter(m => !m.sent).map(m => `
             <div class="da-item" style="margin-top:5px; padding:8px;">
-              <div><input type="checkbox" class="chk reg-chk" data-id="${m.daId}" ${STATE.selectedRegSet.has(m.daId)?"checked":""}> <span style="font-size:12px;font-weight:bold;">${m.daName}</span></div>
+              <div><input type="checkbox" class="chk reg-chk" data-id="${m.daId}" ${STATE.selectedRegSet.has(m.daId)?"checked":""}> <span style="font-size:12px;font-weight:bold;margin-left:5px;">${m.daName}</span></div>
             </div>
           `).join("")}
         </div>
       `).join("");
       regWrap.querySelectorAll(".reg-chk").forEach(c => c.onchange = (e) => { if (e.target.checked) STATE.selectedRegSet.add(e.target.dataset.id); else STATE.selectedRegSet.delete(e.target.dataset.id); });
 
-      document.getElementById("pending-arrival-list").innerHTML = STATE.pendingArrivals.map(p => `<div class="da-item"><div class="da-name">${p.daName}</div></div>`).join("");
+      document.getElementById("pending-arrival-list").innerHTML = STATE.pendingArrivals.map(p => `<div class="da-item" style="padding:8px;"><div class="da-name">${p.daName}</div></div>`).join("");
     }
 
     function bindFuzzySearch(inputId, suggId, onPick) {
@@ -354,12 +398,7 @@
 
     window.addEventListener("DOMContentLoaded", () => {
       loadState();
-      document.getElementById("set-api-url").value = STATE.apiUrl || "";
-      document.getElementById("set-sheet-url").value = STATE.sheetUrl || "";
-      document.getElementById("set-pre-block").value = STATE.settings.preWaveBlockMin || 30;
-      document.getElementById("set-wave-grace").value = STATE.settings.waveGraceMin || 10;
-      renderAll();
-
+      
       document.querySelectorAll(".nav-item").forEach(btn => {
         btn.onclick = () => {
           const target = btn.getAttribute("data-target");
@@ -373,21 +412,40 @@
         };
       });
 
-      document.getElementById("date-tab-select").onchange = (e) => { STATE.selectedDateTab = e.target.value; syncWithGoogleSheets("rosterFull"); };
-
-      document.getElementById("btn-save-settings").onclick = () => {
-        STATE.apiUrl = document.getElementById("set-api-url").value.trim(); 
-        STATE.sheetUrl = document.getElementById("set-sheet-url").value.trim();
-        STATE.settings.preWaveBlockMin = Number(document.getElementById("set-pre-block").value);
-        STATE.settings.waveGraceMin = Number(document.getElementById("set-wave-grace").value);
-        saveState(); syncWithGoogleSheets("saveSettings", {}); showTopBanner("Settings saved", "success");
+      document.getElementById("date-tab-select").onchange = (e) => { 
+        STATE.selectedDateTab = e.target.value; 
+        STATE.batches = []; STATE.pendingArrivals = []; 
+        syncWithGoogleSheets("rosterFull"); 
       };
 
+      document.getElementById("btn-reset-day").onclick = () => {
+        if(confirm("Are you sure you want to reset the app for a new day? This will clear active batches.")) {
+           STATE.selectedDateTab = getTodayTabString();
+           syncWithGoogleSheets("resetDay");
+           showTopBanner("Day Reset Successfully", "success");
+        }
+      };
+
+      document.getElementById("btn-save-settings").onclick = () => {
+        STATE.settings.preWaveBlockMin = Number(document.getElementById("set-pre-block").value);
+        STATE.settings.waveGraceMin = Number(document.getElementById("set-wave-grace").value);
+        STATE.settings.batchSize = Number(document.getElementById("set-batch-size").value);
+        syncWithGoogleSheets("saveSettings"); showTopBanner("Global Settings Saved to Sheet", "success");
+      };
+
+      // BATCH SENDING LOGIC (With Strict Lockdown)
       document.getElementById("btn-reg-send-selected").onclick = () => {
         let sentIds = [];
-        STATE.batches.forEach(b => b.members.forEach(m => {
-          if(!m.sent && STATE.selectedRegSet.has(m.daId)) { m.sent = true; STATE.pendingArrivals.push({ daId: m.daId, daName: m.daName }); sentIds.push(m.daId); }
-        }));
+        STATE.batches.forEach(b => {
+           let sentFromThisBatch = false;
+           b.members.forEach(m => {
+             if(!m.sent && STATE.selectedRegSet.has(m.daId)) { 
+                m.sent = true; sentFromThisBatch = true;
+                STATE.pendingArrivals.push({ daId: m.daId, daName: m.daName }); sentIds.push(m.daId); 
+             }
+           });
+           if(sentFromThisBatch) b.hasSentMembers = true; 
+        });
         STATE.selectedRegSet.clear(); renderAll(); showTopBanner("Sent to OP", "success");
         if(sentIds.length > 0) syncWithGoogleSheets("logEvent", { ids: sentIds, action: "Sent to OP Waiting List" });
       };
@@ -419,7 +477,9 @@
       bindFuzzySearch("inp-checkin", "sugg-checkin", val => recordDriverCheckIn(val, false));
       bindFuzzySearch("inp-requeue-da", "sugg-requeue", val => recordDriverCheckIn(val, true));
 
-      setInterval(enforceWaveTimeAutoAbsent, 25000);
+      setInterval(enforceWaveTimeAutoAbsent, 30000);
+      setInterval(() => { syncWithGoogleSheets("syncOnly"); }, 8000); // Check for QuickSight scans every 8s
+      
       syncWithGoogleSheets("rosterFull"); // Initial fetch
     });
   </script>
