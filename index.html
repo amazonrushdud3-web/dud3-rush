@@ -58,7 +58,7 @@
     
     .da-list { display: flex; flex-direction: column; gap: 6px; }
     .da-item { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
-    .da-name { font-weight: 700; font-size: 13px; } 
+    .da-name { font-weight: 700; font-size: 13px; } .da-sub { font-size: 11px; color: var(--text-muted); margin-top:3px;}
     
     .cam-box { display: none; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 10px; width: 100%; }
     .sugg-box { background: var(--bg-dark); border: 1px solid var(--border); border-radius: 7px; margin-top: -4px; max-height: 190px; overflow-y: auto; display: none; margin-bottom: 10px;}
@@ -92,6 +92,7 @@
   </header>
 
   <main>
+    <!-- KPI DASHBOARD -->
     <div class="kpi-wrapper">
       <div class="kpi-box"><div class="kpi-val" id="kpi-present" style="color:var(--success);">0</div><div class="kpi-lbl">Present</div></div>
       <div class="kpi-box"><div class="kpi-val" id="kpi-late" style="color:var(--warn);">0</div><div class="kpi-lbl">Late</div></div>
@@ -156,6 +157,13 @@
           <button class="btn btn-danger" id="btn-reset-day" style="padding:6px 10px;">RESET DAY</button>
         </div>
         
+        <!-- URL INPUTS RESTORED AS REQUESTED -->
+        <label style="font-size:11px; color:var(--text-muted);">Apps Script Web App URL (/exec)</label>
+        <input type="text" id="set-api-url" class="input" placeholder="https://script.google.com/macros/s/..." style="margin-bottom:10px;">
+        
+        <label style="font-size:11px; color:var(--text-muted);">Google Sheet URL</label>
+        <input type="text" id="set-sheet-url" class="input" placeholder="https://docs.google.com/spreadsheets/d/..." style="margin-bottom:15px;">
+        
         <div style="display:flex;gap:10px;margin-bottom:10px;">
           <div style="flex:1"><label style="font-size:11px; color:var(--text-muted);">Pre-Wave Block (min)</label><input type="number" id="set-pre-block" class="input"></div>
           <div style="flex:1"><label style="font-size:11px; color:var(--text-muted);">Wave Grace (min)</label><input type="number" id="set-wave-grace" class="input"></div>
@@ -163,7 +171,7 @@
         <div style="display:flex;gap:10px;margin-bottom:15px;">
           <div style="flex:1"><label style="font-size:11px; color:var(--text-muted);">Batch Size</label><input type="number" id="set-batch-size" class="input"></div>
         </div>
-        <button class="btn" id="btn-save-settings" style="width:100%; background:var(--accent-orange); color:#000;">Save Global Settings to Sheet</button>
+        <button class="btn" id="btn-save-settings" style="width:100%; background:var(--accent-orange); color:#000;">Save Settings & Sync to Sheet</button>
       </div>
     </section>
   </main>
@@ -188,10 +196,10 @@
   </nav>
 
   <script>
-    const STORAGE_KEY = "DUD3_RUSH_PRO_V10";
+    const STORAGE_KEY = "DUD3_RUSH_PRO_V11";
     
     // ==========================================
-    // YOUR LINKS MUST BE PASTED HERE
+    // FALLBACK DEFAULTS (Overridden by app settings)
     // ==========================================
     const CONST_API_URL = "https://script.google.com/macros/s/AKfycbwyjKBYUa4e4MLAVSOG7deemoWWZlx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mOa2Qk0/exec"; 
     const CONST_SHEET_URL = "https://docs.google.com/spreadsheets/d/1LJPPty6zCuq2QFGlMryhu_jIXBlYNFqIaLd1oU2r9gc/edit"; 
@@ -199,6 +207,8 @@
     let isAdmin = !(/Mobi|Android|iPhone/i.test(navigator.userAgent));
 
     let STATE = {
+      apiUrl: CONST_API_URL, 
+      sheetUrl: CONST_SHEET_URL, 
       selectedDateTab: getTodayTabString(), availableTabs: getRecentDateTabs(),
       settings: { waveGraceMin: 10, preWaveBlockMin: 30, batchSize: 25 },
       roster: [], batches: [], pendingArrivals: [], selectedRegSet: new Set()
@@ -224,21 +234,32 @@
     }
     function loadState() {
       try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) { const parsed = JSON.parse(raw); STATE = Object.assign(STATE, parsed); STATE.selectedRegSet = new Set(parsed.selectedRegSet || []); } } catch (e) {}
+      if (!STATE.apiUrl) STATE.apiUrl = CONST_API_URL;
+      if (!STATE.sheetUrl) STATE.sheetUrl = CONST_SHEET_URL;
     }
 
-    // INSTANT BACKGROUND SYNC
+    function updateSettingsUI() {
+       document.getElementById("set-api-url").value = STATE.apiUrl || "";
+       document.getElementById("set-sheet-url").value = STATE.sheetUrl || "";
+       document.getElementById("set-pre-block").value = STATE.settings.preWaveBlockMin || 30;
+       document.getElementById("set-wave-grace").value = STATE.settings.waveGraceMin || 10;
+       document.getElementById("set-batch-size").value = STATE.settings.batchSize || 25;
+    }
+
+    // SYNC WITH GOOGLE SHEETS
     function syncWithGoogleSheets(action = "rosterFull", payload = {}) {
       saveState();
       const pill = document.getElementById("sync-status-pill");
       
+      if (!STATE.apiUrl) { pill.className = "status-pill offline"; pill.textContent = "NO URL"; return; }
       if(action === "rosterFull" || action === "saveSettings" || action === "resetDay") {
          pill.textContent = "SYNCING..."; pill.className = "status-pill offline"; 
       }
 
-      payload.action = action; payload.sheetUrl = CONST_SHEET_URL; payload.dayTab = STATE.selectedDateTab;
+      payload.action = action; payload.sheetUrl = STATE.sheetUrl; payload.dayTab = STATE.selectedDateTab;
       if(action === "saveSettings") payload.settings = STATE.settings;
       
-      fetch(CONST_API_URL, { method: "POST", body: JSON.stringify(payload) })
+      fetch(STATE.apiUrl, { method: "POST", body: JSON.stringify(payload) })
       .then(res => res.json())
       .then(data => {
         if (data && data.success) {
@@ -246,9 +267,7 @@
           
           if (data.settings) {
              STATE.settings = data.settings;
-             document.getElementById("set-pre-block").value = STATE.settings.preWaveBlockMin;
-             document.getElementById("set-wave-grace").value = STATE.settings.waveGraceMin;
-             document.getElementById("set-batch-size").value = STATE.settings.batchSize;
+             updateSettingsUI();
           }
           if (action === "rosterFull" || action === "resetDay") {
             STATE.roster = data.roster || [];
@@ -257,12 +276,10 @@
             }
             renderAll();
           } else if (action === "syncOnly" && data.roster) {
-             // Silently check if tampered received a DA inside
              data.roster.forEach(serverDA => {
                 let localDA = STATE.roster.find(r => r.daId === serverDA.daId);
                 if(localDA && serverDA.status === "Received" && localDA.status !== "Received") {
                    localDA.status = "Received";
-                   // Remove from OP Bridge list instantly
                    STATE.pendingArrivals = STATE.pendingArrivals.filter(p => p.daId !== localDA.daId);
                 }
              });
@@ -272,7 +289,6 @@
       }).catch(() => { pill.className = "status-pill offline"; pill.textContent = "OFFLINE"; });
     }
 
-    // AUTO ABSENT LOGIC
     function enforceWaveTimeAutoAbsent() {
       const now = new Date(); const curMin = now.getHours() * 60 + now.getMinutes(); const grace = Number(STATE.settings.waveGraceMin) || 10;
       let newlyAbsentIds = [];
@@ -285,7 +301,6 @@
       if (newlyAbsentIds.length > 0) { renderAll(); syncWithGoogleSheets("markAbsent", { ids: newlyAbsentIds }); }
     }
 
-    // FAST CHECK-IN LOGIC
     function recordDriverCheckIn(inputToken, isDirectToWaiting = false) {
       const clean = String(inputToken || "").trim().toLowerCase();
       if (!clean) return;
@@ -311,11 +326,10 @@
       const bId = enqueueDriverIntoStrictBatch(da);
       showTopBanner(`${isDirectToWaiting ? 'Waiting List' : assignedStatus}: ${da.daName} -> Batch ${bId}`, "success");
       
-      renderAll(); // Instant Update
+      renderAll(); 
       syncWithGoogleSheets("recordCheckIn", { daId: da.daId, daName: da.daName, sentStatus: assignedStatus, isWaiting: isDirectToWaiting });
     }
 
-    // STRICT BATCH SEPARATION
     function enqueueDriverIntoStrictBatch(da) {
       const cap = Number(STATE.settings.batchSize) || 25;
       let targetBatchObj = null;
@@ -398,13 +412,14 @@
 
     window.addEventListener("DOMContentLoaded", () => {
       loadState();
+      updateSettingsUI();
       
       document.querySelectorAll(".nav-item").forEach(btn => {
         btn.onclick = () => {
           const target = btn.getAttribute("data-target");
           if (target === "pane-settings" && !isAdmin) {
              const pin = prompt("Enter Admin PIN to access settings:");
-             if (pin !== "1234") { showTopBanner("Admin access denied. Incorrect PIN.", "danger"); return; }
+             if (pin !== "1234") { showTopBanner("Admin access denied.", "danger"); return; }
              isAdmin = true;
           }
           document.querySelectorAll(".nav-item, .tab-pane").forEach(el => el.classList.remove("active"));
@@ -419,7 +434,7 @@
       };
 
       document.getElementById("btn-reset-day").onclick = () => {
-        if(confirm("Are you sure you want to reset the app for a new day? This will clear active batches.")) {
+        if(confirm("Are you sure you want to reset the app for a new day?")) {
            STATE.selectedDateTab = getTodayTabString();
            syncWithGoogleSheets("resetDay");
            showTopBanner("Day Reset Successfully", "success");
@@ -427,13 +442,16 @@
       };
 
       document.getElementById("btn-save-settings").onclick = () => {
+        STATE.apiUrl = document.getElementById("set-api-url").value.trim();
+        STATE.sheetUrl = document.getElementById("set-sheet-url").value.trim();
         STATE.settings.preWaveBlockMin = Number(document.getElementById("set-pre-block").value);
         STATE.settings.waveGraceMin = Number(document.getElementById("set-wave-grace").value);
         STATE.settings.batchSize = Number(document.getElementById("set-batch-size").value);
+        
+        saveState();
         syncWithGoogleSheets("saveSettings"); showTopBanner("Global Settings Saved to Sheet", "success");
       };
 
-      // BATCH SENDING LOGIC (With Strict Lockdown)
       document.getElementById("btn-reg-send-selected").onclick = () => {
         let sentIds = [];
         STATE.batches.forEach(b => {
@@ -478,9 +496,9 @@
       bindFuzzySearch("inp-requeue-da", "sugg-requeue", val => recordDriverCheckIn(val, true));
 
       setInterval(enforceWaveTimeAutoAbsent, 30000);
-      setInterval(() => { syncWithGoogleSheets("syncOnly"); }, 8000); // Check for QuickSight scans every 8s
+      setInterval(() => { syncWithGoogleSheets("syncOnly"); }, 8000); 
       
-      syncWithGoogleSheets("rosterFull"); // Initial fetch
+      syncWithGoogleSheets("rosterFull"); 
     });
   </script>
 </body>
