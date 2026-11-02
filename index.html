@@ -65,7 +65,6 @@
     .sugg-box { background: var(--bg-dark); border: 1px solid var(--border); border-radius: 7px; margin-top: -4px; max-height: 190px; overflow-y: auto; display: none; margin-bottom: 10px;}
     .sugg-item { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; cursor:pointer;}
 
-    /* BOTTOM NAV WITH ICONS */
     nav.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-h); background: var(--bg-card); border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(4, 1fr); z-index: 900; }
     .nav-item { background: none; border: none; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 10px; font-weight: 700; cursor: pointer; }
     .nav-item svg { width: 22px; height: 22px; fill: currentColor; }
@@ -82,7 +81,6 @@
   <header>
     <div class="brand">
       <div class="brand-text">RUSH PRO <span>DUD3</span></div>
-      <!-- Amazon Smile Logo -->
       <svg viewBox="0 0 115 35" width="65" height="18" style="margin-top:-2px;">
         <path d="M78.6,23.6 C60,33 41,32 23.9,23.6 C20.4,21.9 17.6,19 17.6,19 C17.6,19 16.6,22.2 21.6,25.6 C37.8,36.5 61,37.6 81.9,26.5 C85.6,24.5 83.1,21.3 78.6,23.6 Z" fill="#FF9900"/>
         <path d="M84.7,24.3 C83.2,23.4 79.5,24.2 79.5,24.2 C79.5,24.2 82.5,26.8 83,30.4 C83.4,32.8 85.3,31.7 85.3,31.7 C85.3,31.7 89.2,25.1 84.7,24.3 Z" fill="#FF9900"/>
@@ -223,14 +221,13 @@
       try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) { const parsed = JSON.parse(raw); STATE = Object.assign(STATE, parsed); STATE.selectedRegSet = new Set(parsed.selectedRegSet || []); } } catch (e) {}
     }
 
-    // INSTANT BACKGROUND SYNC (Optimistic UI)
     function syncWithGoogleSheets(action = "rosterFull", payload = {}) {
       saveState();
       const pill = document.getElementById("sync-status-pill");
       if (!STATE.apiUrl) { pill.className = "status-pill offline"; pill.textContent = "LOCAL"; return; }
       
       pill.textContent = "SYNCING...";
-      pill.className = "status-pill offline"; // Briefly turn yellow
+      pill.className = "status-pill offline"; 
 
       payload.action = action; payload.sheetUrl = STATE.sheetUrl; payload.dayTab = STATE.selectedDateTab;
       
@@ -258,7 +255,6 @@
       if (newlyAbsentIds.length > 0) { saveState(); renderAll(); syncWithGoogleSheets("markAbsent", { ids: newlyAbsentIds }); }
     }
 
-    // INSTANT CHECK-IN
     function recordDriverCheckIn(inputToken, isDirectToWaiting = false) {
       const clean = String(inputToken || "").trim().toLowerCase();
       if (!clean) return;
@@ -284,7 +280,6 @@
       const bId = enqueueDriverIntoStrictBatch(da);
       showTopBanner(`${isDirectToWaiting ? 'Waiting List' : assignedStatus}: ${da.daName} -> Batch ${bId}`, "success");
       
-      // Update UI Instantly, Sync to Sheet in background
       renderAll();
       syncWithGoogleSheets("recordCheckIn", { daId: da.daId, daName: da.daName, sentStatus: assignedStatus, isWaiting: isDirectToWaiting });
     }
