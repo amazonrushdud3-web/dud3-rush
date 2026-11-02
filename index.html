@@ -2,14 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>DUD3 RUSH PRO — Scanner &amp; Dispatch</title>
+  <title>DUD3 RUSH PRO — Attendance, Replacement &amp; Dispatch</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#131A22">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-
   <style>
     :root {
       --bg-primary: #131A22;
@@ -25,48 +21,31 @@
       --danger: #FF3B30;
       --warn: #FFB300;
       --border-color: #37475A;
-      --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Amazon Ember", sans-serif;
+      --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       --font-mono: "JetBrains Mono", Consolas, monospace;
       --bottom-nav-height: 64px;
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     body {
-      background: var(--bg-primary);
-      color: var(--text-main);
-      font-family: var(--font-stack);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      overflow-x: hidden;
-      padding-bottom: calc(var(--bottom-nav-height) + 16px);
+      background: var(--bg-primary); color: var(--text-main); font-family: var(--font-stack);
+      min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden;
+      padding-bottom: calc(var(--bottom-nav-height) + 20px);
     }
-
-    /* SPLASH */
     #splash {
       position: fixed; inset: 0; background: #0B0E14; z-index: 99999;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       transition: opacity 0.4s ease, visibility 0.4s ease;
     }
     #splash.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-    .splash-logo { width: 72px; height: 72px; fill: var(--accent-orange); filter: drop-shadow(0 0 16px rgba(255,153,0,0.6)); }
-    .splash-title { font-size: 26px; font-weight: 800; letter-spacing: 2px; margin-top: 16px; color: #fff; }
-    .splash-sub { font-size: 13px; color: var(--accent-orange); letter-spacing: 3px; font-weight: 700; }
-    .splash-loader { width: 48px; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 24px; overflow: hidden; }
-    .splash-bar { width: 40%; height: 100%; background: var(--accent-orange); animation: loadPulse 1.2s infinite ease-in-out; }
-    @keyframes loadPulse { 0% { transform: translateX(-100%); } 100% { transform: translateX(300%); } }
-
-    /* HEADER */
+    .splash-logo { width: 68px; height: 68px; fill: var(--accent-orange); }
+    .splash-title { font-size: 24px; font-weight: 800; letter-spacing: 2px; margin-top: 12px; }
+    .splash-sub { font-size: 12px; color: var(--accent-orange); letter-spacing: 3px; font-weight: 700; }
     header {
-      background: var(--bg-card);
-      border-bottom: 1px solid var(--border-color);
-      padding: 10px 16px;
-      position: sticky; top: 0; z-index: 100;
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 12px;
+      background: var(--bg-card); border-bottom: 1px solid var(--border-color); padding: 10px 16px;
+      position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; gap: 10px;
     }
     .brand-wrap { display: flex; align-items: center; gap: 8px; }
-    .brand-logo { color: var(--accent-orange); font-size: 20px; font-weight: 900; }
+    .brand-logo { color: var(--accent-orange); font-size: 19px; font-weight: 900; }
     .brand-sub { font-size: 11px; background: rgba(255,153,0,0.15); color: var(--accent-orange); padding: 2px 6px; border-radius: 4px; font-weight: 700; }
     .hdr-center { display: flex; align-items: center; gap: 8px; font-size: 11px; }
     .status-pill { padding: 3px 8px; border-radius: 12px; font-weight: 700; text-transform: uppercase; font-size: 10px; }
@@ -74,63 +53,38 @@
     .status-pill.offline { background: rgba(255, 59, 48, 0.2); color: var(--danger); border: 1px solid var(--danger); }
     .status-pill.connecting { background: rgba(255, 179, 0, 0.2); color: var(--warn); border: 1px solid var(--warn); }
     .day-badge { color: var(--text-muted); font-family: var(--font-mono); }
-    .hdr-actions { display: flex; align-items: center; gap: 8px; }
     .btn-icon { background: var(--bg-secondary); border: 1px solid var(--border-color); color: #fff; width: 34px; height: 34px; border-radius: 6px; display: grid; place-items: center; cursor: pointer; }
-    .btn-icon:active { transform: scale(0.95); }
-
-    /* CONTAINER */
-    main { max-width: 900px; width: 100%; margin: 0 auto; padding: 12px 14px; flex: 1; }
+    main { max-width: 960px; width: 100%; margin: 0 auto; padding: 12px 14px; flex: 1; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
-
-    /* CARDS & PANELS */
     .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px; margin-bottom: 12px; }
-    .card-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-
-    /* BUTTONS */
-    .btn { background: var(--accent-orange); color: #111; font-weight: 700; border: none; border-radius: 6px; padding: 10px 14px; cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+    .card-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .btn { background: var(--accent-orange); color: #111; font-weight: 700; border: none; border-radius: 6px; padding: 9px 13px; cursor: pointer; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
     .btn:hover { background: var(--accent-orange-hover); }
-    .btn:active { transform: scale(0.97); }
     .btn-secondary { background: var(--bg-secondary); color: #fff; border: 1px solid var(--border-color); }
     .btn-danger { background: rgba(255,59,48,0.2); color: var(--danger); border: 1px solid var(--danger); }
-    .btn-danger:hover { background: var(--danger); color: #fff; }
-    .btn-sm { padding: 5px 10px; font-size: 12px; }
+    .btn-sm { padding: 5px 10px; font-size: 11px; }
     .btn-block { width: 100%; }
-
-    /* INPUTS */
-    .input-box { width: 100%; background: var(--bg-primary); border: 1px solid var(--border-color); color: #fff; padding: 10px 12px; border-radius: 6px; font-size: 14px; font-family: inherit; }
+    .input-box { width: 100%; background: var(--bg-primary); border: 1px solid var(--border-color); color: #fff; padding: 10px 12px; border-radius: 6px; font-size: 14px; }
     .input-box:focus { outline: none; border-color: var(--accent-orange); }
-
-    /* SCANNER VIEWPORT */
-    #scanner-container { border-radius: 8px; overflow: hidden; background: #000; margin-bottom: 12px; position: relative; min-height: 220px; display: none; }
+    #scanner-container { border-radius: 8px; overflow: hidden; background: #000; margin-bottom: 12px; display: none; }
     #reader { width: 100%; }
-
-    /* SEARCH & SUGGESTIONS */
     .suggest-box { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; margin-top: 4px; max-height: 180px; overflow-y: auto; }
     .suggest-row { padding: 8px 12px; border-bottom: 1px solid var(--border-color); cursor: pointer; font-size: 13px; display: flex; justify-content: space-between; }
     .suggest-row:hover { background: var(--bg-card-hover); }
-
-    /* LIST ITEMS */
-    .list-item { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
-    .list-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; font-family: var(--font-mono); }
-
-    /* BATCH ACCORDION */
-    .batch-header { background: var(--bg-card-hover); padding: 10px 12px; border-radius: 6px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; font-weight: 700; cursor: pointer; border: 1px solid var(--border-color); }
-    .batch-badge { font-size: 11px; background: rgba(0, 168, 225, 0.2); color: var(--accent-blue); padding: 2px 8px; border-radius: 12px; }
-    .batch-body { padding: 4px 0 10px 0; }
-    .badge { padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; }
-    .badge-sent { background: rgba(0, 200, 83, 0.2); color: var(--success); }
-    .badge-waiting { background: rgba(255, 179, 0, 0.2); color: var(--warn); }
-    .badge-absent { background: rgba(255, 59, 48, 0.2); color: var(--danger); }
-
-    /* BOTTOM NAV */
+    .list-item { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 13px; }
+    .list-meta { font-size: 11px; color: var(--text-muted); margin-top: 3px; font-family: var(--font-mono); }
+    .batch-header { background: var(--bg-card-hover); padding: 10px 12px; border-radius: 6px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; font-weight: 700; border: 1px solid var(--border-color); flex-wrap: wrap; gap: 8px; }
+    .batch-badge { font-size: 11px; background: rgba(0, 168, 225, 0.2); color: var(--accent-blue); padding: 2px 8px; border-radius: 12px; margin-left: 6px; }
+    .badge { padding: 3px 7px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+    .badge-sent { background: rgba(0, 200, 83, 0.2); color: var(--success); border: 1px solid var(--success); }
+    .badge-waiting { background: rgba(255, 179, 0, 0.2); color: var(--warn); border: 1px solid var(--warn); }
+    .badge-absent { background: rgba(255, 59, 48, 0.2); color: var(--danger); border: 1px solid var(--danger); }
+    .da-checkbox { width: 18px; height: 18px; accent-color: var(--accent-orange); cursor: pointer; }
     nav.bottom-nav {
-      position: fixed; bottom: 0; left: 0; right: 0;
-      height: var(--bottom-nav-height);
-      background: var(--bg-card);
-      border-top: 1px solid var(--border-color);
-      display: flex; justify-content: space-around; align-items: center;
-      z-index: 1000;
+      position: fixed; bottom: 0; left: 0; right: 0; height: var(--bottom-nav-height);
+      background: var(--bg-card); border-top: 1px solid var(--border-color);
+      display: flex; justify-content: space-around; align-items: center; z-index: 1000;
     }
     .nav-btn {
       flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -139,24 +93,16 @@
     }
     .nav-btn.active { color: var(--accent-orange); }
     .nav-btn svg { width: 20px; height: 20px; fill: currentColor; }
-
-    /* FLASH NOTIFICATIONS */
-    #feedback-flash {
-      position: fixed; inset: 0; pointer-events: none; z-index: 9999;
-      opacity: 0; transition: opacity 0.2s ease-out;
-    }
+    #feedback-flash { position: fixed; inset: 0; pointer-events: none; z-index: 9999; opacity: 0; transition: opacity 0.2s; }
     #feedback-flash.flash-green { background: rgba(0,200,83,0.3); opacity: 1; }
-    #feedback-flash.flash-amber { background: rgba(255,179,0,0.35); opacity: 1; }
     #feedback-flash.flash-red { background: rgba(255,59,48,0.4); opacity: 1; }
-
     #toast-banner {
-      position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+      position: fixed; top: 62px; left: 50%; transform: translateX(-50%);
       background: var(--bg-card); border: 2px solid var(--border-color);
-      padding: 12px 18px; border-radius: 8px; z-index: 10000;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.6); max-width: 90%; font-size: 13px; font-weight: 600;
-      display: none; align-items: center; gap: 10px;
+      padding: 11px 18px; border-radius: 8px; z-index: 10000;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.65); max-width: 92%; font-size: 13px; font-weight: 700; display: none;
     }
-    #toast-banner.show { display: flex; }
+    #toast-banner.show { display: block; }
     #toast-banner.success { border-color: var(--success); color: var(--success); }
     #toast-banner.warn { border-color: var(--warn); color: var(--warn); }
     #toast-banner.error { border-color: var(--danger); color: var(--danger); }
@@ -164,161 +110,157 @@
 </head>
 <body>
 
-  <!-- Fullscreen Flash Overlay -->
   <div id="feedback-flash"></div>
   <div id="toast-banner"></div>
 
-  <!-- Splash Screen -->
   <div id="splash">
     <svg class="splash-logo" viewBox="0 0 24 24"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg>
-    <div class="splash-title">RUSH PRO</div>
-    <div class="splash-sub">DUD3 LOGISTICS YARD</div>
-    <div class="splash-loader"><div class="splash-bar"></div></div>
+    <div class="splash-title">DUD3 RUSH PRO</div>
+    <div class="splash-sub">ATTENDANCE &bull; REPLACEMENT &bull; SCAN-OUT</div>
   </div>
 
-  <!-- Header -->
   <header>
     <div class="brand-wrap">
-      <span class="brand-logo">&#x26A1; RUSH</span>
+      <span class="brand-logo">&#x26A1; RUSH PRO</span>
       <span class="brand-sub">DUD3</span>
     </div>
     <div class="hdr-center">
       <span id="day-label" class="day-badge">TODAY: --</span>
       <span id="conn-pill" class="status-pill connecting">INIT</span>
     </div>
-    <div class="hdr-actions">
-      <button class="btn-icon" id="btn-refresh" title="Force Sync">&#x21BB;</button>
+    <div>
+      <button class="btn-icon" id="btn-refresh" title="Sync Sheet &amp; Replacements">&#x21BB;</button>
     </div>
   </header>
 
   <main>
-    <!-- TAB 1: ATTENDANCE -->
     <section id="tab-attendance" class="tab-content active">
       <div class="card">
-        <div class="card-title">Turn 1 Attendance Check-In</div>
-        <div style="display:flex; gap:8px; margin-bottom:10px;">
-          <button class="btn btn-block" id="btn-toggle-cam">&#x1F4F7; Start Camera Scanner</button>
+        <div class="card-title">
+          <span>1. Attendance Check-In (Col G Status &amp; Col H 24h HH:MM)</span>
+          <button class="btn btn-sm btn-secondary" id="btn-toggle-cam">Camera</button>
         </div>
-        <div id="scanner-container">
-          <div id="reader"></div>
-        </div>
-        <input type="text" id="manual-att-input" class="input-box" placeholder="Scan or type DA ID / Name..." autocomplete="off">
+        <div id="scanner-container"><div id="reader"></div></div>
+        <input type="text" id="manual-att-input" class="input-box" placeholder="Scan or type DA ID / Name for Attendance..." autocomplete="off">
         <div id="att-suggestions" class="suggest-box" style="display:none;"></div>
       </div>
 
+      <div class="card" style="border-color: var(--accent-blue);">
+        <div class="card-title">
+          <span style="color: var(--accent-blue);">2. Rush Pro Scan-Out Monitor (Out for Delivery &bull; Turn = 1 &bull; Col H HH:MM)</span>
+        </div>
+        <input type="text" id="manual-scanout-input" class="input-box" placeholder="Scan DA Barcode on Road Dispatch (Scan Out)..." autocomplete="off">
+        <div id="scanout-suggestions" class="suggest-box" style="display:none;"></div>
+      </div>
+
       <div class="card">
-        <div class="card-title">Recent Attendance Scans</div>
-        <div id="recent-att-list"><div style="color:var(--text-muted); font-size:12px;">No scans recorded yet today.</div></div>
+        <div class="card-title">Recent Attendance &amp; Scan-Out Activity</div>
+        <div id="recent-att-list"><div style="color:var(--text-muted); font-size:12px;">No scans recorded yet.</div></div>
       </div>
     </section>
 
-    <!-- TAB 2: WAITING LIST & BATCHES -->
     <section id="tab-waiting" class="tab-content">
+      <div class="card" style="border-color: var(--accent-orange);">
+        <div class="card-title">
+          <span style="color: var(--accent-orange);">Replacement DA Waiting List (Col G = Absent + Col L = NAME - ID)</span>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-sm btn-secondary" id="btn-sync-replacements">Sync Sheet Col L</button>
+            <button class="btn btn-sm" id="btn-send-selected-rep">Send Selected</button>
+          </div>
+        </div>
+        <div id="replacement-waiting-container">
+          <div style="color:var(--text-muted); font-size:12px;">No replacement DAs currently in Waiting List.</div>
+        </div>
+      </div>
+
       <div class="card">
-        <div class="card-title">Turn 2+ / Re-Queue Waiting Scan</div>
-        <input type="text" id="manual-wait-input" class="input-box" placeholder="Scan DA returning from run (turns 2+)..." autocomplete="off">
-        <div id="wait-suggestions" class="suggest-box" style="display:none;"></div>
+        <div class="card-title">Quick Assign Replacement to Absent DA (Writes "NAME - ID" to Column L)</div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr auto; gap:8px; align-items:center;">
+          <select id="absent-da-select" class="input-box">
+            <option value="">-- Select Absent DA --</option>
+          </select>
+          <input type="text" id="replacement-input-str" class="input-box" placeholder="ABU YASIR TARIQ - ANYUGLWVDFBVT">
+          <button class="btn" id="btn-assign-repl">Save to Col L</button>
+        </div>
       </div>
 
       <div class="card">
         <div class="card-title">
-          <span>Active Waiting Batches</span>
-          <span id="waiting-count-badge" class="badge badge-waiting">0 Waiting</span>
+          <span>Regular Waiting Batches (Strict Batch Isolation)</span>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <span id="waiting-count-badge" class="badge badge-waiting">0 Waiting</span>
+            <button class="btn btn-sm" id="btn-send-selected-reg">Send Selected DAs</button>
+          </div>
         </div>
+        <input type="text" id="manual-wait-input" class="input-box" placeholder="Re-Queue returning DA into their locked original batch..." autocomplete="off" style="margin-bottom:10px;">
+        <div id="wait-suggestions" class="suggest-box" style="display:none; margin-bottom:10px;"></div>
         <div id="batches-container">
           <div style="color:var(--text-muted); font-size:12px;">No active batches.</div>
         </div>
       </div>
     </section>
 
-    <!-- TAB 3: BREAKS -->
     <section id="tab-breaks" class="tab-content">
-      <div class="card">
-        <div class="card-title">Currently On Break</div>
-        <div id="list-on-break"><div style="color:var(--text-muted); font-size:12px;">No DAs currently on break.</div></div>
-      </div>
-      <div class="card">
-        <div class="card-title">Upcoming Breaks</div>
-        <div id="list-upcoming-breaks"><div style="color:var(--text-muted); font-size:12px;">No upcoming breaks.</div></div>
-      </div>
+      <div class="card"><div class="card-title">Currently On Break</div><div id="list-on-break"></div></div>
+      <div class="card"><div class="card-title">Upcoming Breaks</div><div id="list-upcoming-breaks"></div></div>
     </section>
 
-    <!-- TAB 4: VIOLATORS -->
     <section id="tab-violators" class="tab-content">
       <div class="card">
         <div class="card-title">
-          <span>Pending-Entry Violators (&gt;15 min)</span>
+          <span>Pending-Entry Violators</span>
           <button class="btn btn-sm btn-danger" id="btn-clear-violators">Clear All</button>
         </div>
-        <div id="list-violators"><div style="color:var(--text-muted); font-size:12px;">No violators recorded.</div></div>
+        <div id="list-violators"></div>
       </div>
     </section>
 
-    <!-- TAB 5: TURNS -->
     <section id="tab-turns" class="tab-content">
       <div class="card">
         <div class="card-title">
-          <span>Turns Monitor (Min Target: 7)</span>
+          <span>Sent Entry List &amp; Turns Monitor</span>
           <span id="turns-total-label" style="font-family:var(--font-mono); font-size:12px;">Total Turns: 0</span>
         </div>
-        <input type="text" id="turns-search-input" class="input-box" placeholder="Search DA Name / ID..." style="margin-bottom:10px;">
+        <input type="text" id="turns-search-input" class="input-box" placeholder="Search DA Name, Replacement, or ID..." style="margin-bottom:10px;">
         <div id="turns-table-wrap"></div>
       </div>
     </section>
 
-    <!-- TAB 6: SETTINGS -->
     <section id="tab-settings" class="tab-content">
       <div class="card">
         <div class="card-title">Configuration &amp; API</div>
         <label style="font-size:12px; color:var(--text-muted);">Backend Script /exec URL</label>
         <input type="text" id="cfg-api-url" class="input-box" style="margin:4px 0 10px 0;">
-
         <label style="font-size:12px; color:var(--text-muted);">Monthly Spreadsheet URL</label>
         <input type="text" id="cfg-sheet-url" class="input-box" style="margin:4px 0 10px 0;">
-
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
-          <div>
-            <label style="font-size:11px; color:var(--text-muted);">Pre-Wave Block (min)</label>
-            <input type="number" id="cfg-prewave" class="input-box">
-          </div>
-          <div>
-            <label style="font-size:11px; color:var(--text-muted);">Present Window (min)</label>
-            <input type="number" id="cfg-present-win" class="input-box">
-          </div>
-          <div>
-            <label style="font-size:11px; color:var(--text-muted);">Entry Timeout (min)</label>
-            <input type="number" id="cfg-entry-timeout" class="input-box">
-          </div>
-          <div>
-            <label style="font-size:11px; color:var(--text-muted);">Batch Size</label>
-            <input type="number" id="cfg-batch-size" class="input-box">
-          </div>
+          <div><label style="font-size:11px; color:var(--text-muted);">Pre-Wave Block (min)</label><input type="number" id="cfg-prewave" class="input-box"></div>
+          <div><label style="font-size:11px; color:var(--text-muted);">Present Window (min)</label><input type="number" id="cfg-present-win" class="input-box"></div>
+          <div><label style="font-size:11px; color:var(--text-muted);">Entry Timeout (min)</label><input type="number" id="cfg-entry-timeout" class="input-box"></div>
+          <div><label style="font-size:11px; color:var(--text-muted);">Batch Size</label><input type="number" id="cfg-batch-size" class="input-box"></div>
         </div>
-
         <div style="margin-bottom:12px;">
           <label style="font-size:12px; display:flex; align-items:center; gap:8px;">
-            <input type="checkbox" id="cfg-break-override"> Manual Break Override (allow scans during break)
+            <input type="checkbox" id="cfg-break-override"> Manual Break Override
           </label>
         </div>
-
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
           <button class="btn btn-block" id="btn-save-settings">Save Settings</button>
           <button class="btn btn-secondary btn-block" id="btn-test-conn">Test Connection</button>
-          <button class="btn btn-danger btn-block" id="btn-start-new-day">Start New Day (Reset &amp; Archive)</button>
+          <button class="btn btn-danger btn-block" id="btn-start-new-day">Start New Day (Snapshot &amp; Reset)</button>
         </div>
       </div>
     </section>
   </main>
 
-  <!-- Bottom Navigation -->
   <nav class="bottom-nav">
     <button class="nav-btn active" data-tab="tab-attendance">
-      <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm-8 4H7v2h2v-2zm4 4h-2v2h2v-2zm4-4h-2v2h2v-2z"/></svg>
-      <span>Attendance</span>
+      <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>
+      <span>Scan In/Out</span>
     </button>
     <button class="nav-btn" data-tab="tab-waiting">
       <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>
-      <span>Waiting</span>
+      <span>Waiting &amp; Repl</span>
     </button>
     <button class="nav-btn" data-tab="tab-breaks">
       <svg viewBox="0 0 24 24"><path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 5h-2V5h2v3zM4 19h16v2H4z"/></svg>
@@ -330,42 +272,34 @@
     </button>
     <button class="nav-btn" data-tab="tab-turns">
       <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
-      <span>Turns</span>
+      <span>Turns/Entry</span>
     </button>
     <button class="nav-btn" data-tab="tab-settings">
-      <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+      <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37-.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58z"/></svg>
       <span>Settings</span>
     </button>
   </nav>
 
   <script>
-    /**
-     * DUD3 RUSH PRO FRONTEND ENGINE
-     */
     const DEFAULT_API_URL = "https://script.google.com/macros/s/AKfycbz_YOUR_DEFAULT_EXEC_URL/exec";
-
-    // Safe Storage Fallback
     const LS = {
       mem: {},
       get(k) { try { return localStorage.getItem(k); } catch(e) { return this.mem[k] || null; } },
       set(k, v) { try { localStorage.setItem(k, v); } catch(e) { this.mem[k] = String(v); } }
     };
 
-    let APP_STATE = {
+    const APP_STATE = {
       apiUrl: LS.get("dud3_api_url") || DEFAULT_API_URL,
       sheetUrl: LS.get("dud3_sheet_url") || "",
       roster: [],
       waitingBatches: [],
+      replacementWaiting: [],
+      entryList: [],
       violators: [],
       tracking: {},
-      settings: {
-        preWaveBlockMin: 30,
-        presentWindowMin: 10,
-        entryTimeoutMin: 15,
-        batchSize: 25,
-        breakOverride: false
-      },
-      lastSync: 0,
+      selectedRepIds: new Set(),
+      selectedRegIds: new Set(),
+      settings: { preWaveBlockMin: 30, presentWindowMin: 10, entryTimeoutMin: 15, batchSize: 25, breakOverride: false },
       scannerActive: false
     };
 
@@ -377,68 +311,44 @@
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
+        osc.connect(gain); gain.connect(audioCtx.destination);
         const now = audioCtx.currentTime;
-
-        if (type === 'success') {
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(587.33, now); // D5
-          osc.frequency.setValueAtTime(880, now + 0.1); // A5
-          gain.gain.setValueAtTime(0.3, now);
-          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
-          osc.start(now);
-          osc.stop(now + 0.35);
-        } else if (type === 'warn') {
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(440, now);
-          osc.frequency.setValueAtTime(370, now + 0.12);
-          gain.gain.setValueAtTime(0.4, now);
-          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-          osc.start(now);
-          osc.stop(now + 0.3);
+        if (type === "success") {
+          osc.type = "sine"; osc.frequency.setValueAtTime(587.33, now); osc.frequency.setValueAtTime(880, now + 0.1);
+          gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+          osc.start(now); osc.stop(now + 0.35);
         } else {
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(220, now);
-          osc.frequency.setValueAtTime(160, now + 0.15);
-          gain.gain.setValueAtTime(0.5, now);
-          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-          osc.start(now);
-          osc.stop(now + 0.4);
+          osc.type = "sawtooth"; osc.frequency.setValueAtTime(220, now); osc.frequency.setValueAtTime(150, now + 0.15);
+          gain.gain.setValueAtTime(0.4, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+          osc.start(now); osc.stop(now + 0.4);
         }
-      } catch (e) { console.warn("Audio error:", e); }
+      } catch (e) {}
     }
 
     function showFlash(type) {
       const el = document.getElementById("feedback-flash");
-      el.className = `flash-${type}`;
+      el.className = "flash-" + type;
       setTimeout(() => { el.className = ""; }, 300);
-      if (navigator.vibrate) {
-        if (type === 'green') navigator.vibrate(80);
-        else if (type === 'amber') navigator.vibrate([60, 40, 60]);
-        else navigator.vibrate([120, 50, 120]);
-      }
     }
 
     function showToast(msg, type = "success") {
       const banner = document.getElementById("toast-banner");
       banner.textContent = msg;
-      banner.className = `show ${type}`;
-      setTimeout(() => { banner.className = ""; }, 3500);
+      banner.className = "show " + type;
+      setTimeout(() => { banner.className = ""; }, 4000);
     }
 
     async function apiCall(action, payload = {}) {
-      if (!APP_STATE.apiUrl) throw new Error("Backend API URL not set in Settings.");
+      if (!APP_STATE.apiUrl) throw new Error("Set Backend API URL in Settings.");
       payload.action = action;
       if (APP_STATE.sheetUrl) payload.sheetUrl = APP_STATE.sheetUrl;
-
       const res = await fetch(APP_STATE.apiUrl, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify(payload)
       });
       const data = await res.json();
-      if (!data.success) throw new Error(data.error || "Action failed.");
+      if (!data.success) throw new Error(data.error || "Request failed.");
       return data;
     }
 
@@ -448,352 +358,417 @@
         const res = await apiCall("rosterFull");
         APP_STATE.roster = res.roster || [];
         APP_STATE.waitingBatches = res.waitingBatches || [];
+        APP_STATE.replacementWaiting = res.replacementWaiting || [];
+        APP_STATE.entryList = res.entryList || [];
         APP_STATE.violators = res.violators || [];
         APP_STATE.tracking = res.tracking || {};
         if (res.settings) APP_STATE.settings = Object.assign(APP_STATE.settings, res.settings);
-
-        document.getElementById("day-label").textContent = `${res.dayTab || 'TODAY'} (${APP_STATE.roster.length})`;
+        document.getElementById("day-label").textContent = (res.dayTab || "TODAY") + " (" + APP_STATE.roster.length + ")";
         updateStatusPill("online", res.backendVersion || "ONLINE");
         renderAll();
       } catch (err) {
-        console.error(err);
-        updateStatusPill("offline", "ERR SYNC");
+        updateStatusPill("offline", "OFFLINE");
         if (!silent) showToast(err.message, "error");
       } finally {
-        const splash = document.getElementById("splash");
-        if (splash && !splash.classList.contains("hidden")) {
-          splash.classList.add("hidden");
-        }
+        const sp = document.getElementById("splash");
+        if (sp) sp.classList.add("hidden");
       }
     }
 
     function updateStatusPill(cls, txt) {
       const pill = document.getElementById("conn-pill");
-      pill.className = `status-pill ${cls}`;
+      pill.className = "status-pill " + cls;
       pill.textContent = txt;
     }
 
     function renderAll() {
-      renderWaiting();
+      renderReplacementWaiting();
+      renderAbsentSelectDropdown();
+      renderWaitingBatches();
       renderBreaks();
       renderViolators();
       renderTurns();
     }
 
-    // --- TAB SWITCHING ---
     document.querySelectorAll(".nav-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
         document.querySelectorAll(".tab-content").forEach(tc => tc.classList.remove("active"));
         btn.classList.add("active");
-        const target = btn.getAttribute("data-tab");
-        document.getElementById(target).classList.add("active");
+        document.getElementById(btn.getAttribute("data-tab")).classList.add("active");
       });
     });
 
-    // --- ATTENDANCE SCAN LOGIC ---
     async function handleAttendanceScan(daId) {
       try {
-        const res = await apiCall("recordCheckIn", { daId });
-        playTone('success');
-        showFlash('green');
-        showToast(`Checked In: ${res.daName} [${res.status}] \u2192 Batch ${res.batchId}`, "success");
-        prependRecentScan(res.daName, res.daId, res.status, res.scanTime);
+        const res = await apiCall("recordCheckIn", { daId: daId });
+        playTone("success"); showFlash("green");
+        showToast("Attendance: " + res.daName + " [" + res.status + "] | Col H: " + res.scanTime + " | Batch " + res.batchId, "success");
+        prependActivityItem(res.daName, res.daId, res.status, res.scanTime, "Batch " + res.batchId);
         await fetchRoster(true);
       } catch (err) {
-        const isWarn = err.message.includes("Wave") || err.message.includes("Break");
-        playTone(isWarn ? 'warn' : 'error');
-        showFlash(isWarn ? 'amber' : 'red');
-        showToast(err.message, isWarn ? "warn" : "error");
+        playTone("error"); showFlash("red"); showToast(err.message, "error");
       }
     }
 
-    function prependRecentScan(name, id, status, time) {
+    async function handleScanOut(daId) {
+      try {
+        const res = await apiCall("recordScanOut", { daId: daId });
+        const item = (res.results && res.results[0]) || {};
+        playTone("success"); showFlash("green");
+        showToast("Out for Delivery: " + item.daName + " | Turn: " + item.turns + " | Col H: " + item.scanOutTime, "success");
+        prependActivityItem(item.daName, item.daId, "Out for Delivery", item.scanOutTime, "Batch " + item.batchId + " • Turn " + item.turns);
+        await fetchRoster(true);
+      } catch (err) {
+        playTone("error"); showFlash("red"); showToast(err.message, "error");
+      }
+    }
+
+    function prependActivityItem(name, id, status, time, extra) {
       const list = document.getElementById("recent-att-list");
       if (list.innerText.includes("No scans")) list.innerHTML = "";
       const div = document.createElement("div");
       div.className = "list-item";
-      div.innerHTML = `
-        <div>
-          <strong style="color:#fff;">${name}</strong>
-          <div class="list-meta">${id} &bull; Wave: ${time}</div>
-        </div>
-        <span class="badge ${status === 'Present' ? 'badge-sent' : 'badge-waiting'}">${status}</span>
-      `;
+      div.innerHTML = "<div><strong>" + name + "</strong><div class='list-meta'>" + id + " • Col H: " + time + " • " + extra + "</div></div><span class='badge badge-sent'>" + status + "</span>";
       list.prepend(div);
     }
 
-    // --- WAITING LIST & DISPATCH ---
-    function renderWaiting() {
+    function renderReplacementWaiting() {
+      const wrap = document.getElementById("replacement-waiting-container");
+      wrap.innerHTML = "";
+      if (!APP_STATE.replacementWaiting.length) {
+        wrap.innerHTML = "<div style='color:var(--text-muted); font-size:12px;'>No replacement DAs waiting. Mark a DA Absent in Col G and enter 'NAME - DA_ID' in Col L.</div>";
+        return;
+      }
+
+      const byBatch = {};
+      APP_STATE.replacementWaiting.forEach(item => {
+        const bId = item.batchId || 1;
+        if (!byBatch[bId]) byBatch[bId] = [];
+        byBatch[bId].push(item);
+      });
+
+      Object.keys(byBatch).sort((a, b) => Number(a) - Number(b)).forEach(batchId => {
+        const members = byBatch[batchId];
+        const bDiv = document.createElement("div");
+        bDiv.style.marginBottom = "10px";
+        bDiv.innerHTML = [
+          "<div class='batch-header'>",
+          "  <div><span>Replacement Batch " + batchId + "</span><span class='batch-badge'>" + members.length + " Replacement DAs</span></div>",
+          "  <button class='btn btn-sm' onclick='sendReplacementBatch(" + batchId + ")'>Send Full Batch " + batchId + "</button>",
+          "</div>",
+          "<div>",
+          members.map(m => {
+            const checked = APP_STATE.selectedRepIds.has(m.repDaId) ? "checked" : "";
+            const badgeCls = (m.status === "Out for Delivery" || m.status === "Received" || m.sent) ? "badge-sent" : "badge-waiting";
+            return [
+              "<div class='list-item'>",
+              "  <div style='display:flex; align-items:center; gap:10px;'>",
+              "    <input type='checkbox' class='da-checkbox rep-chk' data-id='" + m.repDaId + "' " + checked + " " + (m.sent ? "disabled" : "") + ">",
+              "    <div><strong>" + m.displayName + "</strong><div class='list-meta'>Replacement ID: " + m.repDaId + " • Orig ID: " + m.origDaId + " • Batch " + m.batchId + "</div></div>",
+              "  </div>",
+              "  <div style='display:flex; align-items:center; gap:6px;'>",
+              "    <span class='badge " + badgeCls + "'>" + (m.status || (m.sent ? "Sent" : "Waiting")) + "</span>",
+              !m.sent ? "<button class='btn btn-sm btn-secondary' onclick=\"sendSingleReplacement('" + m.repDaId + "')\">Send</button>" : "",
+              "  </div>",
+              "</div>"
+            ].join("");
+          }).join(""),
+          "</div>"
+        ].join("");
+        wrap.appendChild(bDiv);
+      });
+
+      wrap.querySelectorAll(".rep-chk").forEach(chk => {
+        chk.addEventListener("change", (e) => {
+          const id = e.target.getAttribute("data-id");
+          if (e.target.checked) APP_STATE.selectedRepIds.add(id);
+          else APP_STATE.selectedRepIds.delete(id);
+        });
+      });
+    }
+
+    document.getElementById("btn-send-selected-rep").addEventListener("click", async () => {
+      const ids = Array.from(APP_STATE.selectedRepIds);
+      if (!ids.length) return showToast("Select at least one Replacement DA checkbox first.", "warn");
+      try {
+        const res = await apiCall("markReplacementSent", { daIds: ids });
+        APP_STATE.selectedRepIds.clear();
+        playTone("success");
+        showToast("Sent " + res.markedCount + " Replacement DA(s) to Entry List!", "success");
+        await fetchRoster(true);
+      } catch (e) { showToast(e.message, "error"); }
+    });
+
+    window.sendSingleReplacement = async function(repDaId) {
+      try {
+        await apiCall("markReplacementSent", { daIds: [repDaId] });
+        APP_STATE.selectedRepIds.delete(repDaId);
+        playTone("success");
+        showToast("Replacement DA " + repDaId + " sent to Entry List!", "success");
+        await fetchRoster(true);
+      } catch (e) { showToast(e.message, "error"); }
+    };
+
+    window.sendReplacementBatch = async function(batchId) {
+      try {
+        const res = await apiCall("markReplacementSent", { batchId: batchId });
+        playTone("success");
+        showToast("Full Replacement Batch " + batchId + " (" + res.markedCount + " DAs) sent to Entry List!", "success");
+        await fetchRoster(true);
+      } catch (e) { showToast(e.message, "error"); }
+    };
+
+    document.getElementById("btn-sync-replacements").addEventListener("click", async () => {
+      await fetchRoster();
+      showToast("Synced Absent DAs & Column L replacements.", "success");
+    });
+
+    function renderAbsentSelectDropdown() {
+      const sel = document.getElementById("absent-da-select");
+      const curVal = sel.value;
+      const absentDAs = APP_STATE.roster.filter(r => !r.status || r.status.toLowerCase() === "absent");
+      sel.innerHTML = "<option value=''>-- Select Absent / Unscanned DA (" + absentDAs.length + ") --</option>" +
+        absentDAs.map(r => "<option value='" + r.rowIndex + "'>" + r.daName + " (" + r.daId + ") - " + (r.status || "Unscanned") + "</option>").join("");
+      sel.value = curVal;
+    }
+
+    document.getElementById("btn-assign-repl").addEventListener("click", async () => {
+      const rowIndex = Number(document.getElementById("absent-da-select").value);
+      const replacementText = document.getElementById("replacement-input-str").value.trim();
+      if (!rowIndex || !replacementText.includes("-")) {
+        return showToast("Select a DA and enter replacement in format: NAME - DA_ID", "warn");
+      }
+      try {
+        await apiCall("assignReplacement", { rowIndex: rowIndex, replacementText: replacementText });
+        document.getElementById("replacement-input-str").value = "";
+        playTone("success");
+        showToast("Column L updated, Status set to Replacement Present, and added to Waiting List!", "success");
+        await fetchRoster(true);
+      } catch (e) { showToast(e.message, "error"); }
+    });
+
+    function renderWaitingBatches() {
       const wrap = document.getElementById("batches-container");
       wrap.innerHTML = "";
       let totalWaiting = 0;
 
       if (!APP_STATE.waitingBatches.length) {
-        wrap.innerHTML = `<div style="color:var(--text-muted); font-size:12px;">No active batches.</div>`;
-        document.getElementById("waiting-count-badge").textContent = `0 Waiting`;
+        wrap.innerHTML = "<div style='color:var(--text-muted); font-size:12px;'>No regular waiting batches yet.</div>";
+        document.getElementById("waiting-count-badge").textContent = "0 Waiting";
         return;
       }
 
       APP_STATE.waitingBatches.forEach(b => {
-        const waitingCount = b.members.filter(m => !m.sent).length;
-        totalWaiting += waitingCount;
+        totalWaiting += b.members.filter(m => !m.sent).length;
         const bDiv = document.createElement("div");
-        bDiv.style.marginBottom = "8px";
-
-        bDiv.innerHTML = `
-          <div class="batch-header">
-            <div>
-              <span>Batch ${b.batchId}</span>
-              <span class="batch-badge">${b.members.length} DAs</span>
-            </div>
-            <button class="btn btn-sm" onclick="sendBatch(${b.batchId})">Send Whole Batch</button>
-          </div>
-          <div class="batch-body">
-            ${b.members.map(m => `
-              <div class="list-item">
-                <div>
-                  <strong>${m.daName}</strong>
-                  <div class="list-meta">${m.daId} &bull; Turns: ${APP_STATE.tracking[m.daId]?.turns || 0}</div>
-                </div>
-                <div style="display:flex; align-items:center; gap:6px;">
-                  <span class="badge ${m.sent ? 'badge-sent' : 'badge-waiting'}">${m.sent ? 'SENT' : 'WAITING'}</span>
-                  ${!m.sent ? `<button class="btn btn-sm btn-secondary" onclick="sendSingle('${m.daId}', ${b.batchId})">Send</button>` : ''}
-                  <button class="btn btn-sm btn-danger" onclick="removeFromBatch('${m.daId}', ${b.batchId})">&#x2715;</button>
-                </div>
-              </div>
-            `).join('')}
-          </div>
-        `;
+        bDiv.style.marginBottom = "10px";
+        bDiv.innerHTML = [
+          "<div class='batch-header'>",
+          "  <div><span>Batch " + b.batchId + " (Locked Assignment)</span><span class='batch-badge'>" + b.members.length + " DAs</span></div>",
+          "  <button class='btn btn-sm' onclick='sendFullRegularBatch(" + b.batchId + ")'>Send Full Batch " + b.batchId + "</button>",
+          "</div>",
+          "<div>",
+          b.members.map(m => {
+            const checked = APP_STATE.selectedRegIds.has(m.daId) ? "checked" : "";
+            const statusTxt = m.status || (m.sent ? "Sent" : "Waiting");
+            const turns = (APP_STATE.tracking[m.daId] && APP_STATE.tracking[m.daId].turns) || 0;
+            return [
+              "<div class='list-item'>",
+              "  <div style='display:flex; align-items:center; gap:10px;'>",
+              "    <input type='checkbox' class='da-checkbox reg-chk' data-id='" + m.daId + "' " + checked + " " + (m.sent ? "disabled" : "") + ">",
+              "    <div><strong>" + m.daName + "</strong><div class='list-meta'>" + m.daId + " • Locked Batch " + b.batchId + " • Turns: " + turns + "</div></div>",
+              "  </div>",
+              "  <div style='display:flex; align-items:center; gap:6px;'>",
+              "    <span class='badge " + (m.sent ? "badge-sent" : "badge-waiting") + "'>" + statusTxt + "</span>",
+              !m.sent ? "<button class='btn btn-sm btn-secondary' onclick=\"sendSingleRegular('" + m.daId + "', " + b.batchId + ")\">Send</button>" : "",
+              "  </div>",
+              "</div>"
+            ].join("");
+          }).join(""),
+          "</div>"
+        ].join("");
         wrap.appendChild(bDiv);
       });
 
-      document.getElementById("waiting-count-badge").textContent = `${totalWaiting} Waiting`;
-    }
-
-    window.sendBatch = async function(batchId) {
-      try {
-        await apiCall("markSent", { batchId });
-        playTone('success');
-        showToast(`Batch ${batchId} dispatched to station!`, "success");
-        await fetchRoster(true);
-      } catch (e) { showToast(e.message, "error"); }
-    };
-
-    window.sendSingle = async function(daId, batchId) {
-      try {
-        await apiCall("markSent", { daId, batchId });
-        playTone('success');
-        showToast(`Dispatched DA to station.`, "success");
-        await fetchRoster(true);
-      } catch (e) { showToast(e.message, "error"); }
-    };
-
-    window.removeFromBatch = async function(daId, batchId) {
-      if (!confirm("Remove DA from waiting list?")) return;
-      try {
-        await apiCall("resolveViolator", { daId, removeOnly: true, batchId });
-        await fetchRoster(true);
-      } catch (e) { showToast(e.message, "error"); }
-    };
-
-    // --- RE-QUEUE WAITING SCAN (TURNS 2+) ---
-    async function handleWaitingScan(daId) {
-      try {
-        const res = await apiCall("reAddWaiting", { daId });
-        playTone('success');
-        showFlash('green');
-        showToast(`Re-Queued: ${res.daName} \u2192 Batch ${res.batchId}`, "success");
-        await fetchRoster(true);
-      } catch (err) {
-        playTone('error');
-        showFlash('red');
-        showToast(err.message, "error");
-      }
-    }
-
-    // --- BREAKS TAB ---
-    function renderBreaks() {
-      const now = new Date();
-      const curM = now.getHours() * 60 + now.getMinutes();
-
-      const onBreakList = document.getElementById("list-on-break");
-      const upBreakList = document.getElementById("list-upcoming-breaks");
-      onBreakList.innerHTML = "";
-      upBreakList.innerHTML = "";
-
-      let onCount = 0, upCount = 0;
-
-      APP_STATE.roster.forEach(r => {
-        const breaks = [r.break1, r.break2].filter(Boolean);
-        breaks.forEach(brk => {
-          const parts = brk.split("-");
-          if (parts.length !== 2) return;
-          const [sH, sM] = parts[0].split(":").map(Number);
-          const [eH, eM] = parts[1].split(":").map(Number);
-          const sMin = sH * 60 + sM;
-          const eMin = eH * 60 + eM;
-
-          if (curM >= sMin && curM < eMin) {
-            onCount++;
-            onBreakList.innerHTML += `<div class="list-item"><div><strong>${r.daName}</strong><div class="list-meta">${r.daId} &bull; ${brk}</div></div><span class="badge badge-absent">ON BREAK</span></div>`;
-          } else if (sMin > curM && sMin - curM <= 45) {
-            upCount++;
-            upBreakList.innerHTML += `<div class="list-item"><div><strong>${r.daName}</strong><div class="list-meta">${r.daId} &bull; Starts in ${sMin - curM}m</div></div><span class="badge badge-waiting">${brk}</span></div>`;
-          }
+      wrap.querySelectorAll(".reg-chk").forEach(chk => {
+        chk.addEventListener("change", (e) => {
+          const id = e.target.getAttribute("data-id");
+          if (e.target.checked) APP_STATE.selectedRegIds.add(id);
+          else APP_STATE.selectedRegIds.delete(id);
         });
       });
 
-      if (!onCount) onBreakList.innerHTML = `<div style="color:var(--text-muted); font-size:12px;">No DAs currently on break.</div>`;
-      if (!upCount) upBreakList.innerHTML = `<div style="color:var(--text-muted); font-size:12px;">No upcoming breaks within 45 min.</div>`;
+      document.getElementById("waiting-count-badge").textContent = totalWaiting + " Waiting";
     }
 
-    // --- VIOLATORS TAB ---
-    function renderViolators() {
-      const wrap = document.getElementById("list-violators");
-      wrap.innerHTML = "";
-      if (!APP_STATE.violators.length) {
-        wrap.innerHTML = `<div style="color:var(--text-muted); font-size:12px;">No pending-entry violators.</div>`;
-        return;
-      }
-      APP_STATE.violators.forEach(v => {
-        wrap.innerHTML += `
-          <div class="list-item">
-            <div>
-              <strong>${v.daName}</strong>
-              <div class="list-meta">${v.daId} &bull; Waiting: ${v.minutesWaiting}m</div>
-            </div>
-            <div style="display:flex; gap:6px;">
-              <button class="btn btn-sm" onclick="resolveViolatorModal('${v.daId}', true)">Allow</button>
-              <button class="btn btn-sm btn-danger" onclick="resolveViolatorModal('${v.daId}', false)">Deny</button>
-            </div>
-          </div>
-        `;
-      });
-    }
-
-    window.resolveViolatorModal = async function(daId, allow) {
+    document.getElementById("btn-send-selected-reg").addEventListener("click", async () => {
+      const ids = Array.from(APP_STATE.selectedRegIds);
+      if (!ids.length) return showToast("Select at least one DA checkbox.", "warn");
       try {
-        await apiCall("resolveViolator", { daId, allow });
-        showToast(allow ? "DA Allowed Entry." : "DA Denied & Cleared.", "success");
-        await fetchRoster(true);
-      } catch (e) { showToast(e.message, "error"); }
-    };
-
-    document.getElementById("btn-clear-violators").addEventListener("click", async () => {
-      if (!confirm("Clear all recorded violators?")) return;
-      try {
-        await apiCall("clearViolators");
+        const res = await apiCall("markSent", { daIds: ids });
+        APP_STATE.selectedRegIds.clear();
+        playTone("success");
+        showToast("Dispatched " + res.markedCount + " DA(s) (original batches preserved).", "success");
         await fetchRoster(true);
       } catch (e) { showToast(e.message, "error"); }
     });
 
-    // --- TURNS MONITOR TAB ---
+    window.sendFullRegularBatch = async function(batchId) {
+      try {
+        await apiCall("markSent", { batchId: batchId });
+        playTone("success");
+        showToast("Full Batch " + batchId + " sent to Entry List!", "success");
+        await fetchRoster(true);
+      } catch (e) { showToast(e.message, "error"); }
+    };
+
+    window.sendSingleRegular = async function(daId, batchId) {
+      try {
+        await apiCall("markSent", { daIds: [daId], batchId: batchId });
+        APP_STATE.selectedRegIds.delete(daId);
+        playTone("success");
+        showToast("DA " + daId + " sent (Batch " + batchId + ").", "success");
+        await fetchRoster(true);
+      } catch (e) { showToast(e.message, "error"); }
+    };
+
+    async function handleWaitingScan(daId) {
+      try {
+        const res = await apiCall("reAddWaiting", { daId: daId });
+        playTone("success"); showFlash("green");
+        showToast("Re-Queued " + res.daName + " into their original Batch " + res.batchId, "success");
+        await fetchRoster(true);
+      } catch (err) {
+        playTone("error"); showFlash("red"); showToast(err.message, "error");
+      }
+    }
+
+    function renderBreaks() {
+      const now = new Date();
+      const curM = now.getHours() * 60 + now.getMinutes();
+      const onList = document.getElementById("list-on-break");
+      const upList = document.getElementById("list-upcoming-breaks");
+      onList.innerHTML = ""; upList.innerHTML = "";
+      let onC = 0, upC = 0;
+
+      APP_STATE.roster.forEach(r => {
+        [r.break1, r.break2].filter(Boolean).forEach(brk => {
+          const p = brk.split("-");
+          if (p.length !== 2) return;
+          const sP = p[0].split(":").map(Number);
+          const eP = p[1].split(":").map(Number);
+          const sMin = sP[0] * 60 + sP[1], eMin = eP[0] * 60 + eP[1];
+          if (curM >= sMin && curM < eMin) {
+            onC++;
+            onList.innerHTML += "<div class='list-item'><div><strong>" + r.daName + "</strong><div class='list-meta'>" + r.activeDaId + " • " + brk + "</div></div><span class='badge badge-absent'>ON BREAK</span></div>";
+          } else if (sMin > curM && sMin - curM <= 45) {
+            upC++;
+            upList.innerHTML += "<div class='list-item'><div><strong>" + r.daName + "</strong><div class='list-meta'>" + r.activeDaId + " • Starts in " + (sMin - curM) + "m</div></div><span class='badge badge-waiting'>" + brk + "</span></div>";
+          }
+        });
+      });
+      if (!onC) onList.innerHTML = "<div style='color:var(--text-muted); font-size:12px;'>No DAs currently on break.</div>";
+      if (!upC) upList.innerHTML = "<div style='color:var(--text-muted); font-size:12px;'>No upcoming breaks within 45m.</div>";
+    }
+
+    function renderViolators() {
+      const wrap = document.getElementById("list-violators");
+      if (!APP_STATE.violators.length) {
+        wrap.innerHTML = "<div style='color:var(--text-muted); font-size:12px;'>No pending-entry violators.</div>";
+        return;
+      }
+      wrap.innerHTML = APP_STATE.violators.map(v =>
+        "<div class='list-item'><div><strong>" + v.daName + "</strong><div class='list-meta'>" + v.daId + " • " + v.minutesWaiting + "m waiting</div></div><button class='btn btn-sm' onclick=\"resolveViolatorItem('" + v.daId + "')\">Resolve</button></div>"
+      ).join("");
+    }
+
+    window.resolveViolatorItem = async function(daId) {
+      await apiCall("resolveViolator", { daId: daId, allow: true });
+      await fetchRoster(true);
+    };
+
     function renderTurns() {
       const wrap = document.getElementById("turns-table-wrap");
       const q = (document.getElementById("turns-search-input").value || "").toLowerCase();
       let totalTurns = 0;
 
-      const rows = APP_STATE.roster.filter(r => {
-        return r.daName.toLowerCase().includes(q) || r.daId.toLowerCase().includes(q);
-      }).map(r => {
-        const turns = APP_STATE.tracking[r.daId]?.turns || 0;
+      const rows = APP_STATE.roster.filter(r =>
+        r.daName.toLowerCase().includes(q) ||
+        r.daId.toLowerCase().includes(q) ||
+        (r.repDaId && r.repDaId.toLowerCase().includes(q))
+      ).map(r => {
+        const key = r.repDaId || r.daId;
+        const tObj = APP_STATE.tracking[key] || APP_STATE.tracking[r.daId] || {};
+        const turns = tObj.turns || 0;
         totalTurns += turns;
-        const reached = turns >= 7;
-        return `
-          <div class="list-item">
-            <div>
-              <strong>${r.daName}</strong>
-              <div class="list-meta">${r.daId} &bull; Wave: ${r.waveTime}</div>
-            </div>
-            <div style="text-align:right;">
-              <span style="font-size:16px; font-weight:800; font-family:var(--font-mono); color:${reached ? 'var(--success)' : 'var(--warn)'}">${turns}</span>
-              <span style="font-size:10px; color:var(--text-muted);"> / 7</span>
-            </div>
-          </div>
-        `;
+        const batchTxt = tObj.originalBatchId ? "Batch " + tObj.originalBatchId : "Unbatched";
+        return [
+          "<div class='list-item'>",
+          "  <div><strong>" + r.daName + "</strong><div class='list-meta'>ID: " + key + " • " + batchTxt + " • Status: " + (r.status || "Unscanned") + " • Col H: " + (r.scanTime || "--:--") + "</div></div>",
+          "  <div style='text-align:right;'><span style='font-size:16px; font-weight:800; font-family:var(--font-mono); color:" + (turns >= 1 ? "var(--success)" : "var(--warn)") + "'>Turn " + turns + "</span></div>",
+          "</div>"
+        ].join("");
       });
 
-      wrap.innerHTML = rows.join('') || `<div style="color:var(--text-muted); font-size:12px;">No matching records.</div>`;
-      document.getElementById("turns-total-label").textContent = `Total Turns: ${totalTurns}`;
+      wrap.innerHTML = rows.join("") || "<div style='color:var(--text-muted); font-size:12px;'>No matching DAs.</div>";
+      document.getElementById("turns-total-label").textContent = "Total Turns: " + totalTurns;
     }
 
     document.getElementById("turns-search-input").addEventListener("input", renderTurns);
 
-    // --- CAMERA ENGINE ---
     document.getElementById("btn-toggle-cam").addEventListener("click", () => {
       const box = document.getElementById("scanner-container");
-      if (APP_STATE.scannerActive) {
-        if (html5QrScanner) {
-          html5QrScanner.stop().then(() => {
-            box.style.display = "none";
-            APP_STATE.scannerActive = false;
-            document.getElementById("btn-toggle-cam").textContent = "\uD83D\uDCF7 Start Camera Scanner";
-          });
-        }
+      if (APP_STATE.scannerActive && html5QrScanner) {
+        html5QrScanner.stop().then(() => { box.style.display = "none"; APP_STATE.scannerActive = false; });
       } else {
         box.style.display = "block";
         html5QrScanner = new Html5Qrcode("reader");
         html5QrScanner.start(
           { facingMode: "environment" },
-          { fps: 10, qrbox: { width: 250, height: 250 } },
-          (decodedText) => {
-            handleAttendanceScan(decodedText.trim());
-          },
+          { fps: 10, qrbox: { width: 240, height: 240 } },
+          (decoded) => handleAttendanceScan(decoded.trim()),
           () => {}
-        ).then(() => {
-          APP_STATE.scannerActive = true;
-          document.getElementById("btn-toggle-cam").textContent = "\u23F9 Stop Camera";
-        }).catch(err => {
-          showToast("Camera access failed: " + err, "error");
-          box.style.display = "none";
-        });
+        ).then(() => { APP_STATE.scannerActive = true; });
       }
     });
 
-    // --- FUZZY SEARCH INPUT WIDGETS ---
     function setupFuzzyInput(inputId, suggId, onSelect) {
       const inp = document.getElementById(inputId);
       const box = document.getElementById(suggId);
-
       inp.addEventListener("input", () => {
         const q = inp.value.trim().toLowerCase();
         if (q.length < 2) { box.style.display = "none"; return; }
-        const matches = APP_STATE.roster.filter(r => r.daName.toLowerCase().includes(q) || r.daId.toLowerCase().includes(q)).slice(0, 5);
+        const matches = APP_STATE.roster.filter(r =>
+          r.daName.toLowerCase().includes(q) ||
+          r.daId.toLowerCase().includes(q) ||
+          (r.repDaId && r.repDaId.toLowerCase().includes(q))
+        ).slice(0, 6);
         if (!matches.length) { box.style.display = "none"; return; }
-
-        box.innerHTML = matches.map(m => `
-          <div class="suggest-row" data-id="${m.daId}">
-            <span>${m.daName}</span>
-            <span style="font-family:var(--font-mono); font-size:11px; color:var(--text-muted);">${m.daId}</span>
-          </div>
-        `).join('');
+        box.innerHTML = matches.map(m => {
+          const targetId = m.repDaId || m.daId;
+          return "<div class='suggest-row' data-id='" + targetId + "'><span>" + m.daName + "</span><span style='font-family:var(--font-mono); font-size:11px; color:var(--text-muted);'>" + targetId + "</span></div>";
+        }).join("");
         box.style.display = "block";
-
-        box.querySelectorAll(".suggest-row").forEach(r => {
-          r.addEventListener("click", () => {
-            const id = r.getAttribute("data-id");
-            inp.value = "";
-            box.style.display = "none";
-            onSelect(id);
+        box.querySelectorAll(".suggest-row").forEach(row => {
+          row.addEventListener("click", () => {
+            const id = row.getAttribute("data-id");
+            inp.value = ""; box.style.display = "none"; onSelect(id);
           });
         });
       });
-
       inp.addEventListener("keydown", (e) => {
         if (e.key === "Enter" && inp.value.trim()) {
-          const raw = inp.value.trim();
-          inp.value = "";
-          box.style.display = "none";
-          onSelect(raw);
+          const val = inp.value.trim();
+          inp.value = ""; box.style.display = "none"; onSelect(val);
         }
       });
     }
 
     setupFuzzyInput("manual-att-input", "att-suggestions", handleAttendanceScan);
+    setupFuzzyInput("manual-scanout-input", "scanout-suggestions", handleScanOut);
     setupFuzzyInput("manual-wait-input", "wait-suggestions", handleWaitingScan);
 
-    // --- SETTINGS CONTROLS ---
     function loadSettingsToForm() {
       document.getElementById("cfg-api-url").value = APP_STATE.apiUrl;
       document.getElementById("cfg-sheet-url").value = APP_STATE.sheetUrl;
@@ -809,7 +784,6 @@
       APP_STATE.sheetUrl = document.getElementById("cfg-sheet-url").value.trim();
       LS.set("dud3_api_url", APP_STATE.apiUrl);
       LS.set("dud3_sheet_url", APP_STATE.sheetUrl);
-
       const newSettings = {
         preWaveBlockMin: Number(document.getElementById("cfg-prewave").value),
         presentWindowMin: Number(document.getElementById("cfg-present-win").value),
@@ -817,11 +791,10 @@
         batchSize: Number(document.getElementById("cfg-batch-size").value),
         breakOverride: document.getElementById("cfg-break-override").checked
       };
-
       try {
         await apiCall("saveSettings", { settings: newSettings });
         if (APP_STATE.sheetUrl) await apiCall("saveSheetUrl", { sheetUrl: APP_STATE.sheetUrl });
-        showToast("Settings preserved successfully.", "success");
+        showToast("Settings saved.", "success");
         await fetchRoster();
       } catch (e) { showToast(e.message, "error"); }
     });
@@ -829,29 +802,22 @@
     document.getElementById("btn-test-conn").addEventListener("click", async () => {
       try {
         const res = await apiCall("rosterFull");
-        showToast(`Connected! Backend Version: ${res.backendVersion}`, "success");
-      } catch (e) { showToast("Connection failed: " + e.message, "error"); }
+        showToast("Connected! Backend: " + res.backendVersion, "success");
+      } catch (e) { showToast(e.message, "error"); }
     });
 
     document.getElementById("btn-start-new-day").addEventListener("click", async () => {
-      const conf = prompt("Type 'CONFIRM' to snapshot today's data to RushReport and start a fresh day:");
-      if (conf !== "CONFIRM") return;
-      try {
-        await apiCall("startNewDay");
-        showToast("New day initialized successfully.", "success");
-        await fetchRoster();
-      } catch (e) { showToast(e.message, "error"); }
+      if (prompt("Type 'CONFIRM' to archive today and start a new day:") !== "CONFIRM") return;
+      await apiCall("startNewDay");
+      await fetchRoster();
     });
 
     document.getElementById("btn-refresh").addEventListener("click", () => fetchRoster());
 
-    // --- BOOT ---
     window.addEventListener("DOMContentLoaded", () => {
       loadSettingsToForm();
       fetchRoster();
-      // Background poll sync every 15s
       setInterval(() => fetchRoster(true), 15000);
-      // Failsafe auto-hide splash
       setTimeout(() => {
         const sp = document.getElementById("splash");
         if (sp) sp.classList.add("hidden");
