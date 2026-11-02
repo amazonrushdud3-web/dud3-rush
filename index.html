@@ -3,199 +3,106 @@
 <head>
   <meta charset="UTF-8">
   <title>DUD3 Rush PRO Scanner</title>
-  
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#131A22">
-  
-  <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Barcode_scanner_icon.svg/512px-Barcode_scanner_icon.svg.png">
-  <link rel="manifest" href='data:application/manifest+json;utf8,{"name":"RUSH PRO DUD3","short_name":"RUSH PRO","display":"standalone","background_color":"#131A22","theme_color":"#FF9900","icons":[{"src":"https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Barcode_scanner_icon.svg/512px-Barcode_scanner_icon.svg.png","sizes":"512x512","type":"image/png"}]}'>
-
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <style>
     :root {
       --bg-dark: #0F141C; --bg-primary: #131A22; --bg-secondary: #1B2430;
-      --bg-card: #232F3E; --bg-card-hover: #2C3B4E;
-      --accent-orange: #FF9900; --accent-blue: #00A8E1;
+      --bg-card: #232F3E; --accent-orange: #FF9900; --accent-blue: #00A8E1;
       --text-main: #FFFFFF; --text-muted: #9BA7B6;
       --success: #00C853; --danger: #FF3B30; --warn: #FFB300;
       --border: #354558; --radius: 10px; --nav-h: 66px;
-      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     html, body { width: 100%; max-width: 100vw; overflow-x: hidden; background: var(--bg-primary); color: var(--text-main); font-family: var(--font-sans); font-size: 14px; line-height: 1.4; }
     body { min-height: 100vh; display: flex; flex-direction: column; padding-bottom: calc(var(--nav-h) + 20px); }
 
-    #top-alert-banner { position: fixed; top: 8px; left: 50%; transform: translateX(-50%) translateY(-150%); width: calc(100% - 24px); max-width: 540px; padding: 11px 16px; border-radius: 8px; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: space-between; z-index: 10000; box-shadow: 0 8px 24px rgba(0,0,0,0.65); transition: transform 0.28s; }
+    #top-alert-banner { position: fixed; top: 8px; left: 50%; transform: translateX(-50%) translateY(-150%); width: calc(100% - 24px); max-width: 540px; padding: 11px 16px; border-radius: 8px; font-weight: 800; font-size: 13px; display: flex; justify-content: space-between; z-index: 10000; box-shadow: 0 8px 24px rgba(0,0,0,0.65); transition: transform 0.28s; }
     #top-alert-banner.show { transform: translateX(-50%) translateY(0); }
     #top-alert-banner.banner-success { background: #00C853; color: #062010; }
     #top-alert-banner.banner-danger { background: #FF3B30; color: #FFFFFF; }
     #top-alert-banner.banner-warn { background: #FFB300; color: #1A1300; }
 
-    header { position: sticky; top: 0; z-index: 500; background: rgba(35, 47, 62, 0.96); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
-    .brand { display: flex; align-items: center; gap: 6px; }
-    .brand-bolt { color: var(--accent-orange); font-size: 18px; font-weight: 900; }
-    .brand-title { font-weight: 800; font-size: 15px; letter-spacing: 0.5px; }
-    .hdr-controls { display: flex; align-items: center; gap: 6px; }
-    .date-select { background: var(--bg-primary); color: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font-size: 12px; font-weight: 700; cursor: pointer; }
-    .status-pill { padding: 4px 8px; border-radius: 12px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+    header { position: sticky; top: 0; z-index: 500; background: rgba(35, 47, 62, 0.96); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); padding: 10px 12px; display: flex; justify-content: space-between; }
+    .brand { font-size: 15px; font-weight: 900; color: var(--accent-orange); }
+    .status-pill { padding: 4px 8px; border-radius: 12px; font-size: 10px; font-weight: 800; }
     .status-pill.online { background: rgba(0,200,83,0.18); color: var(--success); border: 1px solid var(--success); }
     .status-pill.offline { background: rgba(255,179,0,0.18); color: var(--warn); border: 1px solid var(--warn); }
-    .icon-btn { background: var(--bg-secondary); color: #fff; border: 1px solid var(--border); width: 32px; height: 32px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; }
+    .date-select { background: var(--bg-primary); color: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 5px; font-size: 12px; font-weight: 700; margin-right:5px;}
 
     main { width: 100%; max-width: 860px; margin: 0 auto; padding: 12px; flex: 1; }
-    .tab-pane { display: none; } .tab-pane.active { display: block; animation: fadeIn 0.18s ease; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    .tab-pane { display: none; } .tab-pane.active { display: block; }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; }
+    .card-title { font-size: 12px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px;}
 
-    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
-    .kpi-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 8px 6px; text-align: center; }
-    .kpi-val { font-size: 18px; font-weight: 800; } .kpi-lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; margin-top: 2px; }
-
-    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-    .card-hdr { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 10px; }
-    .card-title { font-size: 12px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); }
-
-    .btn-scan {
-      background: var(--accent-orange); color: #000; font-size: 15px; font-weight: 900;
-      padding: 14px; border-radius: 8px; text-transform: uppercase; letter-spacing: 1px;
-      box-shadow: 0 4px 15px rgba(255, 153, 0, 0.3); display: flex; justify-content: center;
-      align-items: center; gap: 8px; width: 100%; margin-bottom: 12px; border: none; cursor: pointer;
-    }
-    .btn-scan:active { transform: scale(0.97); }
-
-    .input, select.input { width: 100%; background: var(--bg-primary); color: #fff; border: 1px solid var(--border); border-radius: 7px; padding: 10px 12px; font-size: 14px; }
-    .row-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    @media (max-width: 480px) { .row-grid { grid-template-columns: 1fr; } }
-    
-    .btn { background: var(--accent-orange); color: #111; border: none; border-radius: 7px; padding: 9px 13px; font-size: 12px; font-weight: 800; cursor: pointer; }
-    .btn-secondary { background: var(--bg-secondary); color: #fff; border: 1px solid var(--border); }
-    .btn-blue { background: var(--accent-blue); color: #051B24; }
-    .btn-success { background: var(--success); color: #04200E; }
+    .btn-scan { background: var(--accent-orange); color: #000; font-size: 15px; font-weight: 900; padding: 14px; border-radius: 8px; width: 100%; margin-bottom: 12px; border: none; cursor: pointer; text-align:center;}
+    .input { width: 100%; background: var(--bg-primary); color: #fff; border: 1px solid var(--border); border-radius: 7px; padding: 10px; font-size: 14px; margin-bottom: 8px;}
+    .btn { background: var(--accent-blue); color: #051B24; border: none; border-radius: 7px; padding: 9px 13px; font-size: 12px; font-weight: 800; cursor: pointer; }
     .btn-danger { background: rgba(255,59,48,0.18); color: var(--danger); border: 1px solid var(--danger); }
-    .btn-sm { padding: 5px 9px; font-size: 11px; }
-
+    
     .da-list { display: flex; flex-direction: column; gap: 6px; }
-    .da-item { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .da-left { display: flex; align-items: center; gap: 10px; flex: 1; }
-    .da-info { flex: 1; } .da-name { font-weight: 700; font-size: 13px; } .da-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-    .chk { width: 18px; height: 18px; accent-color: var(--accent-orange); cursor: pointer; }
-
-    .badge { padding: 3px 7px; border-radius: 5px; font-size: 10px; font-weight: 800; text-transform: uppercase; white-space: nowrap; }
+    .da-item { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
+    .da-name { font-weight: 700; font-size: 13px; } .da-sub { font-size: 11px; color: var(--text-muted); }
+    .badge { padding: 3px 7px; border-radius: 5px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
     .b-present { background: rgba(0,200,83,0.18); color: var(--success); border: 1px solid var(--success); }
-    .b-late { background: rgba(255,179,0,0.18); color: var(--warn); border: 1px solid var(--warn); }
     .b-absent { background: rgba(255,59,48,0.18); color: var(--danger); border: 1px solid var(--danger); }
-    .b-repl { background: rgba(0,168,225,0.18); color: var(--accent-blue); border: 1px solid var(--accent-blue); }
+    .b-late { background: rgba(255,179,0,0.18); color: var(--warn); border: 1px solid var(--warn); }
 
     .cam-box { display: none; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 10px; width: 100%; }
-    
-    .sugg-box { background: var(--bg-dark); border: 1px solid var(--border); border-radius: 7px; margin-top: 4px; max-height: 190px; overflow-y: auto; display: none; }
-    .sugg-item { padding: 9px 12px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 13px; }
+    .sugg-box { background: var(--bg-dark); border: 1px solid var(--border); border-radius: 7px; margin-top: -4px; max-height: 190px; overflow-y: auto; display: none; margin-bottom: 10px;}
+    .sugg-item { padding: 9px 12px; border-bottom: 1px solid var(--border); font-size: 13px; cursor:pointer;}
 
-    nav.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-h); background: var(--bg-card); border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(5, 1fr); z-index: 900; }
-    .nav-item { background: none; border: none; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 10px; font-weight: 700; cursor: pointer; position: relative; }
+    nav.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-h); background: var(--bg-card); border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(4, 1fr); z-index: 900; }
+    .nav-item { background: none; border: none; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; cursor: pointer; }
     .nav-item.active { color: var(--accent-orange); }
-    .nav-item svg { width: 20px; height: 20px; fill: currentColor; }
-    .nav-counter { position: absolute; top: 6px; right: calc(50% - 18px); background: var(--danger); color: #fff; font-size: 9px; font-weight: 800; padding: 1px 5px; border-radius: 10px; }
   </style>
 </head>
 <body>
 
-  <div id="top-alert-banner">
-    <span id="top-alert-text"></span>
-    <button class="btn btn-sm btn-secondary" onclick="hideTopBanner()">Dismiss</button>
-  </div>
+  <div id="top-alert-banner"><span id="top-alert-text"></span><button style="background:none;border:none;color:#fff;font-weight:bold;" onclick="hideTopBanner()">X</button></div>
 
   <header>
-    <div class="brand">
-      <span class="brand-bolt">&#x26A1;</span>
-      <span class="brand-title">RUSH PRO DUD3</span>
-    </div>
-    <div class="hdr-controls">
-      <!-- DATE/TAB DROPDOWN IS BACK -->
+    <div class="brand">⚡ RUSH PRO DUD3</div>
+    <div>
       <select id="date-tab-select" class="date-select"></select>
       <span id="sync-status-pill" class="status-pill online">SYNCED</span>
-      <button class="icon-btn" id="btn-force-sync">&#x21BB;</button>
     </div>
   </header>
 
   <main>
-    <div class="kpi-grid">
-      <div class="kpi-box"><div class="kpi-val" id="kpi-present" style="color:var(--success);">0</div><div class="kpi-lbl">Present</div></div>
-      <div class="kpi-box"><div class="kpi-val" id="kpi-absent" style="color:var(--danger);">0</div><div class="kpi-lbl">Absent</div></div>
-      <div class="kpi-box"><div class="kpi-val" id="kpi-waiting" style="color:var(--accent-orange);">0</div><div class="kpi-lbl">In Waiting</div></div>
-      <div class="kpi-box"><div class="kpi-val" id="kpi-pending" style="color:var(--accent-blue);">0</div><div class="kpi-lbl">Pending OP</div></div>
-    </div>
-
     <!-- TAB 1: ATTENDANCE -->
     <section id="pane-attendance" class="tab-pane active">
       <div class="card">
-        <div class="card-hdr">
-          <div class="card-title">&#x1F4F7; 1. DA Attendance Scan</div>
-        </div>
-        
+        <div class="card-title">1. DA Attendance Scan</div>
         <button class="btn-scan" id="btn-cam-toggle">📸 START SCANNER</button>
         <div id="cam-box-att" class="cam-box"><div id="qr-reader-att"></div></div>
-
-        <div class="row-grid">
-          <div>
-            <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Check-In (Search Name or ID)</label>
-            <input type="text" id="inp-checkin" class="input" placeholder="Type DA Name / ID..." autocomplete="off">
-            <div id="sugg-checkin" class="sugg-box"></div>
-          </div>
-          <div>
-            <label style="font-size:11px; color:var(--accent-blue); display:block; margin-bottom:4px;">Station Scan-Out</label>
-            <input type="text" id="inp-scanout" class="input" placeholder="Search DA Name / ID..." autocomplete="off">
-            <div id="sugg-scanout" class="sugg-box"></div>
-          </div>
-        </div>
+        <input type="text" id="inp-checkin" class="input" placeholder="Check-In (Type DA Name / ID...)" autocomplete="off">
+        <div id="sugg-checkin" class="sugg-box"></div>
       </div>
-
       <div class="card" style="border-color: var(--accent-orange);">
-        <div class="card-hdr">
-          <div class="card-title" style="color:var(--accent-orange);">&#x1F501; 2. Replacement DA Management</div>
-          <span class="badge b-repl" id="repl-count-badge">0 Absent</span>
-        </div>
-        <div class="row-grid" style="margin-bottom:8px;">
-          <div>
-            <select id="sel-absent-driver" class="input">
-              <option value="">-- Select Absent Driver --</option>
-            </select>
-          </div>
-          <div>
-            <select id="sel-col-l-repl" class="input">
-              <option value="">-- Choose from Col L --</option>
-            </select>
-          </div>
-        </div>
-        <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
-          <input type="text" id="inp-custom-repl" class="input" placeholder="Or enter: ABU YASIR - DAID123" style="flex:1; min-width:210px;">
-          <button class="btn" id="btn-confirm-replacement">&#x1F501; Assign</button>
-        </div>
-        <div id="absent-drivers-list" class="da-list"></div>
+        <div class="card-title" style="color:var(--accent-orange);">2. Replacement DA</div>
+        <select id="sel-absent-driver" class="input"><option value="">-- Select Absent Driver --</option></select>
+        <input type="text" id="inp-custom-repl" class="input" placeholder="Replacement: NAME - ID">
+        <button class="btn" id="btn-confirm-replacement">Assign Replacement</button>
       </div>
     </section>
 
     <!-- TAB 2: WAITING LIST -->
     <section id="pane-batches" class="tab-pane">
       <div class="card" style="border-color: var(--success);">
-        <div class="card-hdr">
-          <div class="card-title" style="color:var(--success);">📥 Add Directly to Waiting List</div>
-        </div>
-        <button class="btn-scan" id="btn-cam-waiting-toggle" style="background:var(--success); color:#fff; box-shadow:0 4px 15px rgba(0,200,83,0.3);">
-          📸 SCAN TO WAITING LIST
-        </button>
+        <div class="card-title" style="color:var(--success);">📥 Add to Waiting List (Turn 2+)</div>
+        <button class="btn-scan" id="btn-cam-waiting-toggle" style="background:var(--success); color:#fff;">📸 SCAN TO WAITING</button>
         <div id="cam-box-waiting" class="cam-box"><div id="qr-reader-wait"></div></div>
-        <input type="text" id="inp-requeue-da" class="input" placeholder="Type DA ID to add to waiting list..." autocomplete="off">
+        <input type="text" id="inp-requeue-da" class="input" placeholder="Type DA ID to add..." autocomplete="off">
         <div id="sugg-requeue" class="sugg-box"></div>
       </div>
-
       <div class="card">
-        <div class="card-hdr">
-          <div class="card-title">&#x1F4E6; Active Waiting List Batches</div>
-          <button class="btn btn-sm" id="btn-reg-send-selected">Send Selected</button>
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+          <div class="card-title">📦 Active Batches</div>
+          <button class="btn" id="btn-reg-send-selected">Send Selected</button>
         </div>
         <div id="regular-batches-container"></div>
       </div>
@@ -203,104 +110,60 @@
 
     <!-- TAB 3: OP BRIDGE -->
     <section id="pane-bridge" class="tab-pane">
-      <div class="card" style="border-color: var(--success);">
-        <div class="card-hdr"><div class="card-title" style="color:var(--success);">&#x1F6AA; Station RUSH LM Scan-In</div></div>
-        <div style="display:flex; gap:8px;">
-          <input type="text" id="inp-station-scanin" class="input" placeholder="Scan DA Badge arriving at Station..." style="flex:1;">
-          <button class="btn btn-success" id="btn-station-scanin">Verify</button>
-        </div>
-      </div>
       <div class="card">
-        <div class="card-hdr"><div class="card-title">&#x23F1; Pending Arrival List</div></div>
+        <div class="card-title">⏱️ Pending Arrival List</div>
         <div id="pending-arrival-list" class="da-list"></div>
       </div>
       <div class="card" style="border-color: var(--danger);">
-        <div class="card-hdr">
-          <div class="card-title" style="color:var(--danger);">&#x26A0;&#xFE0F; Violation Tracker</div>
-          <button class="btn btn-sm btn-danger" id="btn-clear-violators">Clear All</button>
-        </div>
+        <div class="card-title" style="color:var(--danger);">⚠️ Violators</div>
         <div id="violators-list" class="da-list"></div>
       </div>
-      <div class="card">
-        <div class="card-hdr"><div class="card-title">&#x2705; Station Entry List</div></div>
-        <div id="station-entry-list" class="da-list"></div>
-      </div>
     </section>
 
-    <!-- TAB 4: BREAKS -->
-    <section id="pane-breaks" class="tab-pane">
-      <div class="card">
-        <div class="card-hdr">
-          <div class="card-title">&#x2615; Drivers Currently On Break</div>
-          <button class="btn btn-sm btn-secondary" id="btn-add-break-modal">+ Put DA On Break</button>
-        </div>
-        <div id="active-breaks-list" class="da-list"></div>
-      </div>
-      <div class="card">
-        <div class="card-hdr"><div class="card-title">&#x1F552; Scheduled Roster Breaks</div></div>
-        <div id="scheduled-breaks-list" class="da-list"></div>
-      </div>
-    </section>
-
-    <!-- TAB 5: SETTINGS -->
+    <!-- TAB 4: SETTINGS (ADMIN ONLY) -->
     <section id="pane-settings" class="tab-pane">
       <div class="card">
-        <div class="card-hdr"><div class="card-title">&#x2699;&#xFE0F; Settings & Google Sheet Setup</div></div>
-        
-        <label style="font-size:11px; color:var(--text-muted);">Apps Script Web App URL</label>
-        <input type="text" id="set-api-url" class="input" style="margin:4px 0 10px 0;">
-        
+        <div class="card-title">⚙️ Admin Settings</div>
+        <label style="font-size:11px; color:var(--text-muted);">Apps Script URL</label>
+        <input type="text" id="set-api-url" class="input">
         <label style="font-size:11px; color:var(--text-muted);">Google Sheet URL</label>
-        <input type="text" id="set-sheet-url" class="input" style="margin:4px 0 10px 0;">
+        <input type="text" id="set-sheet-url" class="input">
         
-        <div class="row-grid" style="margin-bottom:10px;">
-          <div><label style="font-size:11px; color:var(--text-muted);">Wave Grace (min)</label><input type="number" id="set-wave-grace" class="input" value="10"></div>
-          <div><label style="font-size:11px; color:var(--text-muted);">Pending Timeout (min)</label><input type="number" id="set-arrival-timeout" class="input" value="15"></div>
-          <div><label style="font-size:11px; color:var(--text-muted);">Batch Size</label><input type="number" id="set-batch-size" class="input" value="25"></div>
+        <div style="display:flex;gap:10px;margin-bottom:10px;">
+          <div style="flex:1"><label style="font-size:11px; color:var(--text-muted);">Pre-Wave Block (min)</label><input type="number" id="set-pre-block" class="input" value="30"></div>
+          <div style="flex:1"><label style="font-size:11px; color:var(--text-muted);">Wave Grace (min)</label><input type="number" id="set-wave-grace" class="input" value="10"></div>
         </div>
-        
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <button class="btn" id="btn-save-settings">Save & Sync Settings</button>
-          <button class="btn btn-secondary" id="btn-load-demo">Load Demo Roster</button>
+        <div style="display:flex;gap:10px;margin-bottom:10px;">
+          <div style="flex:1"><label style="font-size:11px; color:var(--text-muted);">Batch Size</label><input type="number" id="set-batch-size" class="input" value="25"></div>
+          <div style="flex:1"><label style="font-size:11px; color:var(--text-muted);">Pending Timeout</label><input type="number" id="set-arrival-timeout" class="input" value="15"></div>
         </div>
+        <button class="btn" id="btn-save-settings" style="width:100%; background:var(--accent-orange);">Save & Sync Settings</button>
       </div>
     </section>
   </main>
 
   <nav class="bottom-nav">
-    <button class="nav-item active" data-target="pane-attendance"><svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg><span>Attendance</span></button>
-    <button class="nav-item" data-target="pane-batches"><svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg><span>Waiting List</span><span class="nav-counter" id="nav-badge-batches" style="display:none;">0</span></button>
-    <button class="nav-item" data-target="pane-bridge"><svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg><span>OP Bridge</span><span class="nav-counter" id="nav-badge-violators" style="display:none;">0</span></button>
-    <button class="nav-item" data-target="pane-breaks"><svg viewBox="0 0 24 24"><path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 5h-2V5h2v3zM4 19h16v2H4z"/></svg><span>Breaks</span></button>
-    <button class="nav-item" data-target="pane-settings"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58z"/></svg><span>Settings</span></button>
+    <button class="nav-item active" data-target="pane-attendance">Attendance</button>
+    <button class="nav-item" data-target="pane-batches">Waiting List</button>
+    <button class="nav-item" data-target="pane-bridge">OP Bridge</button>
+    <button class="nav-item" id="nav-settings" data-target="pane-settings">Settings</button>
   </nav>
 
   <script>
-    const STORAGE_KEY = "DUD3_RUSH_PRO_V5";
-
-    function getInitialDemoRoster() {
-      const now = new Date();
-      const pastWave = minutesToHHMM((now.getHours() * 60 + now.getMinutes()) - 18);
-      const currentWave = minutesToHHMM(now.getHours() * 60 + now.getMinutes());
-      return [
-        { rowIndex: 2, daId: "A1QADDOOS991", daName: "Abdul Qaddoos Tariq", dsp: "ZNDS", waveTime: pastWave, status: "Absent", scanTime: "", colLReplacement: "", repDaId: "", onBreak: false },
-        { rowIndex: 3, daId: "A2MUDASSAR882", daName: "Muhammad Mudassar", dsp: "FTRM", waveTime: currentWave, status: "", scanTime: "", colLReplacement: "", repDaId: "", onBreak: false }
-      ];
-    }
+    const STORAGE_KEY = "DUD3_RUSH_PRO_V6";
+    // ADMIN CHECK: If not on a mobile device, consider as admin. 
+    let isAdmin = !(/Mobi|Android|iPhone/i.test(navigator.userAgent));
 
     let STATE = {
-      apiUrl: "", sheetUrl: "", selectedDateTab: getTodayTabString(),
-      availableTabs: getRecentDateTabs(),
-      settings: { waveGraceMin: 10, arrivalTimeoutMin: 15, batchSize: 25 },
-      roster: [], replacementWaiting: [], batches: [], pendingArrivals: [], violators: [], entryList: [],
-      selectedRepSet: new Set(), selectedRegSet: new Set()
+      apiUrl: "", sheetUrl: "", selectedDateTab: getTodayTabString(), availableTabs: getRecentDateTabs(),
+      settings: { waveGraceMin: 10, preWaveBlockMin: 30, arrivalTimeoutMin: 15, batchSize: 25 },
+      roster: [], batches: [], pendingArrivals: [], violators: [], selectedRegSet: new Set()
     };
 
     function getTodayTabString() { const d = new Date(); const m = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]; return ("0" + d.getDate()).slice(-2) + " " + m[d.getMonth()]; }
     function getRecentDateTabs() { const tabs = []; const m = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]; for (let offset = -2; offset <= 2; offset++) { const d = new Date(); d.setDate(d.getDate() + offset); tabs.push(("0" + d.getDate()).slice(-2) + " " + m[d.getMonth()]); } return tabs; }
     function nowHHMM() { const d = new Date(); return ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2); }
     function parseHHMMToMinutes(str) { if (!str) return null; const m = String(str).trim().match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i); if (!m) return null; let hr = parseInt(m[1], 10); const mn = parseInt(m[2], 10); const ap = m[3] ? m[3].toUpperCase() : null; if (ap === "PM" && hr < 12) hr += 12; if (ap === "AM" && hr === 12) hr = 0; return hr * 60 + mn; }
-    function minutesToHHMM(mins) { const norm = ((mins % 1440) + 1440) % 1440; const h = Math.floor(norm / 60); const m = norm % 60; return ("0" + h).slice(-2) + ":" + ("0" + m).slice(-2); }
 
     let bannerTimer = null;
     function showTopBanner(msg, variant = "success") {
@@ -308,47 +171,38 @@
       document.getElementById("top-alert-text").textContent = msg;
       el.className = "show banner-" + variant;
       if (bannerTimer) clearTimeout(bannerTimer);
-      bannerTimer = setTimeout(() => { el.className = ""; }, 4200);
+      bannerTimer = setTimeout(() => { el.className = ""; }, 4000);
     }
     window.hideTopBanner = function() { document.getElementById("top-alert-banner").className = ""; };
 
     function saveState() {
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(Object.assign({}, STATE, { selectedRepSet: Array.from(STATE.selectedRepSet), selectedRegSet: Array.from(STATE.selectedRegSet) }))); } catch (e) {}
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(Object.assign({}, STATE, { selectedRegSet: Array.from(STATE.selectedRegSet) }))); } catch (e) {}
     }
     function loadState() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) { const parsed = JSON.parse(raw); STATE = Object.assign(STATE, parsed); STATE.selectedRepSet = new Set(parsed.selectedRepSet || []); STATE.selectedRegSet = new Set(parsed.selectedRegSet || []); }
-        else { STATE.roster = getInitialDemoRoster(); }
-      } catch (e) { STATE.roster = getInitialDemoRoster(); }
+      try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) { const parsed = JSON.parse(raw); STATE = Object.assign(STATE, parsed); STATE.selectedRegSet = new Set(parsed.selectedRegSet || []); } } catch (e) {}
     }
 
-    // INSTANT SYNC LOGIC - Frontend updates first, backend updates silently
     async function syncWithGoogleSheets(action = "rosterFull", payload = {}) {
       saveState();
       const pill = document.getElementById("sync-status-pill");
-      if (!STATE.apiUrl) { pill.className = "status-pill offline"; pill.textContent = "LOCAL"; return null; }
+      if (!STATE.apiUrl) { pill.className = "status-pill offline"; pill.textContent = "LOCAL"; return; }
       try {
         if(action === "rosterFull") pill.textContent = "SYNCING...";
         payload.action = action; payload.sheetUrl = STATE.sheetUrl; payload.dayTab = STATE.selectedDateTab;
-        
-        // Background fetch - Does not block UI
-        fetch(STATE.apiUrl, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) })
+        fetch(STATE.apiUrl, { method: "POST", body: JSON.stringify(payload) })
         .then(res => res.json())
         .then(data => {
           if (data && data.success) {
             pill.className = "status-pill online"; pill.textContent = "SYNCED";
             if (action === "rosterFull" && Array.isArray(data.roster)) {
-              STATE.roster = data.roster.map(r => ({ ...r, onBreak: false }));
-              saveState(); renderAll();
+              STATE.roster = data.roster; saveState(); renderAll();
             }
           }
-        }).catch(err => { pill.className = "status-pill offline"; pill.textContent = "OFFLINE"; });
+        }).catch(() => { pill.className = "status-pill offline"; pill.textContent = "OFFLINE"; });
       } catch (err) { pill.className = "status-pill offline"; pill.textContent = "OFFLINE"; }
-      return null;
     }
 
-    // AUTO ABSENT SYNC LOGIC (Runs every 30 seconds)
+    // AUTO ABSENT LOGIC
     function enforceWaveTimeAutoAbsent() {
       const now = new Date();
       const curMin = now.getHours() * 60 + now.getMinutes();
@@ -366,189 +220,170 @@
       });
       if (newlyAbsentIds.length > 0) {
         saveState(); renderAll();
-        // Sync absent statuses to Google Sheet
         syncWithGoogleSheets("markAbsent", { ids: newlyAbsentIds });
       }
     }
 
+    // CHECK-IN LOGIC WITH WAVE TIME RULES
     function recordDriverCheckIn(inputToken, isDirectToWaiting = false) {
       const clean = String(inputToken || "").trim().toLowerCase();
       if (!clean) return;
       
-      // Better Fuzzy search logic to match IDs or Names safely
       const da = STATE.roster.find(r => 
         (r.daId && r.daId.toLowerCase().includes(clean)) || 
         (r.repDaId && r.repDaId.toLowerCase().includes(clean)) || 
         (r.daName && r.daName.toLowerCase().includes(clean))
       );
 
-      if (!da) {
-        showTopBanner(`DA Not Found: "${inputToken}"`, "danger");
-        return;
-      }
-      if (da.onBreak) return showTopBanner(`${da.daName} is on Break.`, "warn");
+      if (!da) return showTopBanner(`DA Not Found: "${inputToken}"`, "danger");
 
       if (!da.scanTime) da.scanTime = nowHHMM();
+      let assignedStatus = "Present";
       
       if (!isDirectToWaiting) {
-        if (!["Present", "Late Arrival", "Replacement Present", "Received", "Out for Delivery"].includes(da.status)) {
-          const wMin = parseHHMMToMinutes(da.waveTime);
-          const curMin = (new Date()).getHours() * 60 + (new Date()).getMinutes();
-          da.status = (wMin !== null && curMin > wMin + (Number(STATE.settings.waveGraceMin) || 10)) ? "Late Arrival" : "Present";
+        const wMin = parseHHMMToMinutes(da.waveTime);
+        const curMin = (new Date()).getHours() * 60 + (new Date()).getMinutes();
+        const preBlock = Number(STATE.settings.preWaveBlockMin) || 30;
+        const grace = Number(STATE.settings.waveGraceMin) || 10;
+
+        if (wMin !== null) {
+          if (curMin < (wMin - preBlock)) {
+            return showTopBanner(`Scan Rejected: Cannot scan earlier than ${preBlock} mins before Wave Time (${da.waveTime})`, "warn");
+          }
+          if (curMin > (wMin + grace)) {
+            assignedStatus = "Late Arrival";
+          }
         }
+        da.status = assignedStatus;
       } else {
         da.turns = (da.turns || 1) + 1; 
       }
 
       const bId = enqueueDriverIntoStrictBatch(da);
-      showTopBanner(`${isDirectToWaiting ? 'Added to Waiting List' : 'Checked In'}: ${da.daName} -> Batch ${bId}`, "success");
+      showTopBanner(`${isDirectToWaiting ? 'Waiting List' : assignedStatus}: ${da.daName} -> Batch ${bId}`, "success");
       
-      // Instant UI update, backend updates silently without returning full roster
       saveState(); renderAll();
-      if(!isDirectToWaiting) syncWithGoogleSheets("recordCheckIn", { daId: da.daId });
+      if(!isDirectToWaiting) syncWithGoogleSheets("recordCheckIn", { daId: da.daId, sentStatus: assignedStatus });
     }
 
     function enqueueDriverIntoStrictBatch(da) {
       const cap = Number(STATE.settings.batchSize) || 25;
-      let targetBatchId = da.originalBatchId;
-      let batchObj = null;
-      if (targetBatchId) {
-        batchObj = STATE.batches.find(b => b.batchId === targetBatchId);
-        if (!batchObj) { batchObj = { batchId: targetBatchId, completed: false, members: [] }; STATE.batches.push(batchObj); STATE.batches.sort((a, b) => a.batchId - b.batchId); }
-      } else {
-        batchObj = STATE.batches.find(b => !b.completed && b.members.length < cap);
-        if (!batchObj) { const maxId = STATE.batches.reduce((m, b) => Math.max(m, b.batchId), 0); batchObj = { batchId: maxId + 1, completed: false, members: [] }; STATE.batches.push(batchObj); }
-        targetBatchId = batchObj.batchId; da.originalBatchId = targetBatchId;
+      let batchObj = STATE.batches.find(b => b.batchId === da.originalBatchId) || STATE.batches.find(b => !b.completed && b.members.length < cap);
+      if (!batchObj) { 
+        batchObj = { batchId: STATE.batches.length + 1, completed: false, members: [] }; 
+        STATE.batches.push(batchObj); 
       }
+      da.originalBatchId = batchObj.batchId;
       const activeId = da.repDaId || da.daId;
       if (!batchObj.members.find(m => m.daId.toLowerCase() === activeId.toLowerCase())) {
-        batchObj.members.push({ daId: activeId, origDaId: da.daId, daName: da.daName, batchId: targetBatchId, scanTime: da.scanTime || nowHHMM(), sent: false });
+        batchObj.members.push({ daId: activeId, daName: da.daName, batchId: batchObj.batchId, scanTime: da.scanTime || nowHHMM(), sent: false });
       }
-      return targetBatchId;
-    }
-
-    // FUZZY SEARCH (For Check-in and Scan-out inputs)
-    function bindFuzzySearch(inputId, suggId, onPick) {
-      const inp = document.getElementById(inputId); const box = document.getElementById(suggId);
-      inp.addEventListener("input", () => {
-        const q = inp.value.trim().toLowerCase();
-        if (q.length < 2) { box.style.display = "none"; return; }
-        const matches = STATE.roster.filter(r => r.daName.toLowerCase().includes(q) || r.daId.toLowerCase().includes(q)).slice(0, 6);
-        if (!matches.length) { box.style.display = "none"; return; }
-        box.innerHTML = matches.map(m => `<div class="sugg-item" data-id="${m.daId}"><span>${m.daName}</span><span style="font-size:11px;color:var(--text-muted);">${m.daId}</span></div>`).join("");
-        box.style.display = "block";
-        box.querySelectorAll(".sugg-item").forEach(row => row.onclick = () => { onPick(row.getAttribute("data-id")); inp.value = ""; box.style.display = "none"; });
-      });
-      inp.addEventListener("keydown", (e) => { if (e.key === "Enter" && inp.value.trim()) { onPick(inp.value.trim()); inp.value = ""; box.style.display = "none"; } });
-    }
-    
-    // RESTORES THE DATE DROPDOWN VISUALLY
-    function renderDateSelector() {
-      const sel = document.getElementById("date-tab-select");
-      if (!STATE.availableTabs.includes(STATE.selectedDateTab)) {
-        STATE.availableTabs.push(STATE.selectedDateTab);
-      }
-      sel.innerHTML = STATE.availableTabs.map(t => `<option value="${t}" ${t === STATE.selectedDateTab ? "selected" : ""}>${t}</option>`).join("");
+      return batchObj.batchId;
     }
 
     function renderAll() {
-      renderDateSelector(); // Calls the function above
+      // Setup Dropdown
+      const sel = document.getElementById("date-tab-select");
+      if (!STATE.availableTabs.includes(STATE.selectedDateTab)) STATE.availableTabs.push(STATE.selectedDateTab);
+      sel.innerHTML = STATE.availableTabs.map(t => `<option value="${t}" ${t === STATE.selectedDateTab ? "selected" : ""}>${t}</option>`).join("");
 
-      const pCount = STATE.roster.filter(r => ["Present", "Late Arrival", "Replacement Present", "Received", "Out for Delivery"].includes(r.status)).length;
-      document.getElementById("kpi-present").textContent = pCount;
-      document.getElementById("kpi-absent").textContent = STATE.roster.filter(r => r.status === "Absent").length;
-      document.getElementById("kpi-waiting").textContent = STATE.batches.reduce((sum, b) => sum + b.members.filter(m => !m.sent).length, 0);
-      document.getElementById("kpi-pending").textContent = STATE.pendingArrivals.length;
-
+      // Replacements
       const absentDAs = STATE.roster.filter(r => r.status === "Absent");
-      document.getElementById("sel-absent-driver").innerHTML = `<option value="">-- Select Absent Driver (${absentDAs.length}) --</option>` + absentDAs.map(d => `<option value="${d.daId}">${d.daName} (${d.daId})</option>`).join("");
-      document.getElementById("absent-drivers-list").innerHTML = absentDAs.map(d => `<div class="da-item"><div class="da-info"><div class="da-name">${d.daName} <span class="badge b-absent">Absent</span></div><div class="da-sub">ID: ${d.daId}</div></div></div>`).join("");
-
+      document.getElementById("sel-absent-driver").innerHTML = `<option value="">-- Select Absent Driver --</option>` + absentDAs.map(d => `<option value="${d.daId}">${d.daName}</option>`).join("");
+      
+      // Batches
       const regWrap = document.getElementById("regular-batches-container");
-      const openBatches = STATE.batches.filter(b => !b.completed && b.members.some(m => !m.sent));
-      regWrap.innerHTML = openBatches.map(b => `
+      regWrap.innerHTML = STATE.batches.filter(b => !b.completed && b.members.some(m => !m.sent)).map(b => `
         <div style="border:1px solid var(--border); border-radius:8px; padding:10px; margin-bottom:10px; background:var(--bg-primary);">
-          <div style="display:flex; justify-content:space-between; margin-bottom:8px;"><strong>Batch ${b.batchId}</strong> <button class="btn btn-sm" onclick="sendFullBatch(${b.batchId})">Send Full Batch</button></div>
-          <div class="da-list">
-            ${b.members.filter(m => !m.sent).map(m => `
-              <div class="da-item">
-                <div class="da-left"><input type="checkbox" class="chk reg-chk" data-id="${m.daId}" ${STATE.selectedRegSet.has(m.daId)?"checked":""}> <div class="da-info"><div class="da-name">${m.daName}</div><div class="da-sub">Scan: ${m.scanTime}</div></div></div>
-                <button class="btn btn-sm btn-danger" onclick="removeSingleReg('${m.daId}', ${b.batchId})">Remove</button>
-              </div>
-            `).join("")}
-          </div>
+          <strong>Batch ${b.batchId}</strong>
+          ${b.members.filter(m => !m.sent).map(m => `
+            <div class="da-item" style="margin-top:5px;">
+              <div><input type="checkbox" class="chk reg-chk" data-id="${m.daId}" ${STATE.selectedRegSet.has(m.daId)?"checked":""}> <span style="font-size:12px;font-weight:bold;">${m.daName}</span></div>
+            </div>
+          `).join("")}
         </div>
       `).join("");
       
       regWrap.querySelectorAll(".reg-chk").forEach(c => c.onchange = (e) => { if (e.target.checked) STATE.selectedRegSet.add(e.target.dataset.id); else STATE.selectedRegSet.delete(e.target.dataset.id); });
 
-      document.getElementById("active-breaks-list").innerHTML = STATE.roster.filter(r => r.onBreak).map(d => `<div class="da-item"><div class="da-info"><div class="da-name">${d.daName} <span class="badge b-late">ON BREAK</span></div></div><button class="btn btn-sm btn-success" onclick="endBreak('${d.daId}')">End Break</button></div>`).join("");
-      document.getElementById("scheduled-breaks-list").innerHTML = STATE.roster.filter(r => !r.onBreak).map(d => `<div class="da-item"><div class="da-info"><div class="da-name">${d.daName}</div><div class="da-sub">Break: ${d.break1 || "None"}</div></div><button class="btn btn-sm btn-secondary" onclick="startBreak('${d.daId}')">Start Break</button></div>`).join("");
+      // OP Bridge
+      document.getElementById("pending-arrival-list").innerHTML = STATE.pendingArrivals.map(p => `<div class="da-item"><div class="da-name">${p.daName}</div></div>`).join("");
     }
 
-    window.sendFullBatch = function(batchId) {
-      const b = STATE.batches.find(x => x.batchId === batchId);
-      if(b) {
-        b.members.filter(m=>!m.sent).forEach(m => { m.sent = true; STATE.pendingArrivals.push({ daId: m.daId, daName: m.daName, sentAtMs: Date.now() }); });
-        b.completed = true; saveState(); renderAll(); showTopBanner(`Batch ${batchId} Sent to OP`, "success");
-      }
-    };
-    document.getElementById("btn-reg-send-selected").onclick = () => {
-      STATE.batches.forEach(b => b.members.forEach(m => {
-        if(!m.sent && STATE.selectedRegSet.has(m.daId)) { m.sent = true; STATE.pendingArrivals.push({ daId: m.daId, daName: m.daName, sentAtMs: Date.now() }); }
-      }));
-      STATE.selectedRegSet.clear(); saveState(); renderAll(); showTopBanner("Selected DAs sent to OP", "success");
-    };
-    window.removeSingleReg = function(daId, batchId) { const b = STATE.batches.find(x => x.batchId === batchId); if (b) b.members = b.members.filter(x => x.daId !== daId); STATE.selectedRegSet.delete(daId); saveState(); renderAll(); };
-
-    window.startBreak = function(daId) { const da = STATE.roster.find(r => r.daId === daId); if(da) { da.onBreak = true; saveState(); renderAll(); } };
-    window.endBreak = function(daId) { const da = STATE.roster.find(r => r.daId === daId); if(da) { da.onBreak = false; enqueueDriverIntoStrictBatch(da); saveState(); renderAll(); } };
+    function bindFuzzySearch(inputId, suggId, onPick) {
+      const inp = document.getElementById(inputId); const box = document.getElementById(suggId);
+      inp.addEventListener("input", () => {
+        const q = inp.value.trim().toLowerCase();
+        if (q.length < 2) { box.style.display = "none"; return; }
+        const matches = STATE.roster.filter(r => r.daName.toLowerCase().includes(q) || r.daId.toLowerCase().includes(q)).slice(0, 5);
+        if (!matches.length) { box.style.display = "none"; return; }
+        box.innerHTML = matches.map(m => `<div class="sugg-item" data-id="${m.daId}">${m.daName}</div>`).join("");
+        box.style.display = "block";
+        box.querySelectorAll(".sugg-item").forEach(row => row.onclick = () => { onPick(row.getAttribute("data-id")); inp.value = ""; box.style.display = "none"; });
+      });
+      inp.addEventListener("keydown", (e) => { if (e.key === "Enter" && inp.value.trim()) { onPick(inp.value.trim()); inp.value = ""; box.style.display = "none"; } });
+    }
 
     window.addEventListener("DOMContentLoaded", () => {
       loadState();
       document.getElementById("set-api-url").value = STATE.apiUrl || "";
       document.getElementById("set-sheet-url").value = STATE.sheetUrl || "";
+      document.getElementById("set-pre-block").value = STATE.settings.preWaveBlockMin || 30;
+      document.getElementById("set-wave-grace").value = STATE.settings.waveGraceMin || 10;
       renderAll();
 
+      // Navigation Logic (With Admin PIN Lock for Settings)
       document.querySelectorAll(".nav-item").forEach(btn => {
         btn.onclick = () => {
+          const target = btn.getAttribute("data-target");
+          if (target === "pane-settings" && !isAdmin) {
+             const pin = prompt("Enter Admin PIN to access settings:");
+             if (pin !== "1234") { // DEFAULT PIN IS 1234
+                 showTopBanner("Admin access denied. Incorrect PIN.", "danger");
+                 return;
+             }
+             isAdmin = true; // Unlocked for this session
+          }
           document.querySelectorAll(".nav-item, .tab-pane").forEach(el => el.classList.remove("active"));
-          btn.classList.add("active"); document.getElementById(btn.getAttribute("data-target")).classList.add("active");
+          btn.classList.add("active"); document.getElementById(target).classList.add("active");
         };
       });
 
-      // Date Tab Change Event
-      document.getElementById("date-tab-select").onchange = (e) => {
-        STATE.selectedDateTab = e.target.value;
-        saveState(); syncWithGoogleSheets("rosterFull");
-      };
+      document.getElementById("date-tab-select").onchange = (e) => { STATE.selectedDateTab = e.target.value; syncWithGoogleSheets("rosterFull"); };
 
       document.getElementById("btn-save-settings").onclick = () => {
-        STATE.apiUrl = document.getElementById("set-api-url").value.trim(); STATE.sheetUrl = document.getElementById("set-sheet-url").value.trim();
+        STATE.apiUrl = document.getElementById("set-api-url").value.trim(); 
+        STATE.sheetUrl = document.getElementById("set-sheet-url").value.trim();
+        STATE.settings.preWaveBlockMin = Number(document.getElementById("set-pre-block").value);
+        STATE.settings.waveGraceMin = Number(document.getElementById("set-wave-grace").value);
         saveState(); syncWithGoogleSheets("saveSettings", {}); showTopBanner("Settings saved", "success");
       };
-      
-      document.getElementById("btn-load-demo").onclick = () => { STATE.roster = getInitialDemoRoster(); saveState(); renderAll(); };
-      document.getElementById("btn-force-sync").onclick = () => { syncWithGoogleSheets("rosterFull"); };
 
+      document.getElementById("btn-reg-send-selected").onclick = () => {
+        STATE.batches.forEach(b => b.members.forEach(m => {
+          if(!m.sent && STATE.selectedRegSet.has(m.daId)) { m.sent = true; STATE.pendingArrivals.push({ daId: m.daId, daName: m.daName }); }
+        }));
+        STATE.selectedRegSet.clear(); saveState(); renderAll(); showTopBanner("Sent to OP", "success");
+      };
+
+      // Scanners
       let qrAtt = null, qrWait = null;
       document.getElementById("btn-cam-toggle").onclick = () => {
         const box = document.getElementById("cam-box-att");
-        if (box.style.display === "block") { box.style.display = "none"; if (qrAtt) qrAtt.stop(); }
-        else { box.style.display = "block"; qrAtt = new Html5Qrcode("qr-reader-att"); qrAtt.start({ facingMode: "environment" }, { fps: 10 }, text => { recordDriverCheckIn(text, false); qrAtt.stop(); box.style.display="none"; }); }
+        if (box.style.display === "block") { box.style.display = "none"; if(qrAtt) qrAtt.stop(); }
+        else { box.style.display = "block"; qrAtt = new Html5Qrcode("qr-reader-att"); qrAtt.start({facingMode:"environment"}, {fps:10}, t => { recordDriverCheckIn(t, false); qrAtt.stop(); box.style.display="none"; }); }
       };
       document.getElementById("btn-cam-waiting-toggle").onclick = () => {
         const box = document.getElementById("cam-box-waiting");
-        if (box.style.display === "block") { box.style.display = "none"; if (qrWait) qrWait.stop(); }
-        else { box.style.display = "block"; qrWait = new Html5Qrcode("qr-reader-wait"); qrWait.start({ facingMode: "environment" }, { fps: 10 }, text => { recordDriverCheckIn(text, true); qrWait.stop(); box.style.display="none"; }); }
+        if (box.style.display === "block") { box.style.display = "none"; if(qrWait) qrWait.stop(); }
+        else { box.style.display = "block"; qrWait = new Html5Qrcode("qr-reader-wait"); qrWait.start({facingMode:"environment"}, {fps:10}, t => { recordDriverCheckIn(t, true); qrWait.stop(); box.style.display="none"; }); }
       };
 
       bindFuzzySearch("inp-checkin", "sugg-checkin", val => recordDriverCheckIn(val, false));
-      bindFuzzySearch("inp-scanout", "sugg-scanout", val => syncWithGoogleSheets("recordScanOut", { daId: val }));
       bindFuzzySearch("inp-requeue-da", "sugg-requeue", val => recordDriverCheckIn(val, true));
-      
-      // Auto absent background loop
-      setInterval(enforceWaveTimeAutoAbsent, 30000);
+
+      setInterval(enforceWaveTimeAutoAbsent, 25000);
+      syncWithGoogleSheets("rosterFull"); // Initial fetch
     });
   </script>
 </body>
