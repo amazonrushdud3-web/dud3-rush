@@ -92,7 +92,6 @@
   </header>
 
   <main>
-    <!-- KPI DASHBOARD -->
     <div class="kpi-wrapper">
       <div class="kpi-box"><div class="kpi-val" id="kpi-present" style="color:var(--success);">0</div><div class="kpi-lbl">Present</div></div>
       <div class="kpi-box"><div class="kpi-val" id="kpi-late" style="color:var(--warn);">0</div><div class="kpi-lbl">Late</div></div>
@@ -157,7 +156,6 @@
           <button class="btn btn-danger" id="btn-reset-day" style="padding:6px 10px;">RESET DAY</button>
         </div>
         
-        <!-- URL INPUTS RESTORED AS REQUESTED -->
         <label style="font-size:11px; color:var(--text-muted);">Apps Script Web App URL (/exec)</label>
         <input type="text" id="set-api-url" class="input" placeholder="https://script.google.com/macros/s/..." style="margin-bottom:10px;">
         
@@ -199,7 +197,7 @@
     const STORAGE_KEY = "DUD3_RUSH_PRO_V11";
     
     // ==========================================
-    // FALLBACK DEFAULTS (Overridden by app settings)
+    // ⚠️ നിങ്ങളുടെ ലിങ്ക് ഇവിടെ നൽകുക ⚠️
     // ==========================================
     const CONST_API_URL = "https://script.google.com/macros/s/AKfycbwyjKBYUa4e4MLAVSOG7deemoWWZlx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mOa2Qk0/exec"; 
     const CONST_SHEET_URL = "https://docs.google.com/spreadsheets/d/1LJPPty6zCuq2QFGlMryhu_jIXBlYNFqIaLd1oU2r9gc/edit"; 
@@ -246,7 +244,6 @@
        document.getElementById("set-batch-size").value = STATE.settings.batchSize || 25;
     }
 
-    // SYNC WITH GOOGLE SHEETS
     function syncWithGoogleSheets(action = "rosterFull", payload = {}) {
       saveState();
       const pill = document.getElementById("sync-status-pill");
@@ -496,7 +493,9 @@
       bindFuzzySearch("inp-requeue-da", "sugg-requeue", val => recordDriverCheckIn(val, true));
 
       setInterval(enforceWaveTimeAutoAbsent, 30000);
-      setInterval(() => { syncWithGoogleSheets("syncOnly"); }, 8000); 
+      
+      // ⚠️ 3 സെക്കൻഡിൽ ഇൻസ്റ്റന്റ് ആയി സിങ്ക് ആകാൻ ⚠️
+      setInterval(() => { syncWithGoogleSheets("syncOnly"); }, 3000); 
       
       syncWithGoogleSheets("rosterFull"); 
     });
