@@ -3,20 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <title>DUD3 Rush PRO Scanner</title>
-
+  
+  <!-- ഫോണിൽ ആപ്പ് ആയി ഇൻസ്റ്റാൾ ചെയ്യാൻ (PWA Setup) -->
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="DUD3 Rush">
   <meta name="theme-color" content="#131A22">
-
+  
   <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Barcode_scanner_icon.svg/512px-Barcode_scanner_icon.svg.png">
   <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Barcode_scanner_icon.svg/512px-Barcode_scanner_icon.svg.png">
   <link rel="manifest" id="manifest-link">
-
+  
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-
+  
   <style>
     :root {
       --bg-dark: #0F141C; --bg-primary: #131A22; --bg-secondary: #1B2430;
@@ -40,7 +41,7 @@
     .brand { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; }
     .brand-text { font-size: 16px; font-weight: 900; color: #fff; letter-spacing: 0.5px; display: flex; align-items: center; gap: 4px; }
     .brand-text span { color: var(--accent-orange); }
-
+    
     .status-pill { padding: 4px 8px; border-radius: 12px; font-size: 10px; font-weight: 800; margin-left:6px;}
     .status-pill.online { background: rgba(0,200,83,0.18); color: var(--success); border: 1px solid var(--success); }
     .status-pill.offline { background: rgba(255,59,48,0.18); color: var(--danger); border: 1px solid var(--danger); }
@@ -53,7 +54,7 @@
 
     .kpi-wrapper { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
     .kpi-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 8px 4px; text-align: center; }
-    .kpi-val { font-size: 17px; font-weight: 900; }
+    .kpi-val { font-size: 17px; font-weight: 900; } 
     .kpi-lbl { font-size: 9px; color: var(--text-muted); text-transform: uppercase; margin-top: 4px; font-weight:bold;}
 
     .btn-scan { background: var(--accent-orange); color: #000; font-size: 15px; font-weight: 900; padding: 14px; border-radius: 8px; width: 100%; margin-bottom: 12px; border: none; cursor: pointer; text-align:center; box-shadow: 0 4px 15px rgba(255,153,0,0.25);}
@@ -61,11 +62,11 @@
     .input { width: 100%; background: var(--bg-primary); color: #fff; border: 1px solid var(--border); border-radius: 7px; padding: 12px; font-size: 14px; margin-bottom: 8px;}
     .btn { background: var(--accent-blue); color: #051B24; border: none; border-radius: 7px; padding: 10px 14px; font-size: 12px; font-weight: 800; cursor: pointer; }
     .btn-danger { background: rgba(255,59,48,0.18); color: var(--danger); border: 1px solid var(--danger); }
-
+    
     .da-list { display: flex; flex-direction: column; gap: 6px; }
     .da-item { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
     .da-name { font-weight: 700; font-size: 13px; } .da-sub { font-size: 11px; color: var(--text-muted); margin-top:3px;}
-
+    
     .cam-box { display: none; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 10px; width: 100%; }
     .sugg-box { background: var(--bg-dark); border: 1px solid var(--border); border-radius: 7px; margin-top: -4px; max-height: 190px; overflow-y: auto; display: none; margin-bottom: 10px;}
     .sugg-item { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; cursor:pointer;}
@@ -78,7 +79,7 @@
 </head>
 <body>
 
-  <div id="top-alert-banner"><span id="top-alert-text"></span><button style="background:none;border:none;color:#fff;font-weight:bold;font-size:18px;cursor:pointer;" onclick="hideTopBanner()">&times;</button></div>
+  <div id="top-alert-banner"><span id="top-alert-text"></span><button style="background:none;border:none;color:#fff;font-weight:bold;font-size:18px;cursor:pointer;" onclick="hideTopBanner()">×</button></div>
 
   <header>
     <div class="brand">
@@ -103,11 +104,10 @@
       <div class="kpi-box"><div class="kpi-val" id="kpi-received" style="color:var(--success);">0</div><div class="kpi-lbl">Received Inside</div></div>
     </div>
 
-    <!-- TAB 1: ATTENDANCE -->
     <section id="pane-attendance" class="tab-pane active">
       <div class="card">
         <div class="card-title">&#x1F4F7; 1. DA Attendance Scan</div>
-        <button class="btn-scan" id="btn-cam-toggle">&#x1F4F8; START SCANNER</button>
+        <button class="btn-scan" id="btn-cam-toggle">📸 START SCANNER</button>
         <div id="cam-box-att" class="cam-box"><div id="qr-reader-att"></div></div>
         <input type="text" id="inp-checkin" class="input" placeholder="Search DA Name / ID to Check-In..." autocomplete="off">
         <div id="sugg-checkin" class="sugg-box"></div>
@@ -120,37 +120,34 @@
       </div>
     </section>
 
-    <!-- TAB 2: WAITING LIST -->
     <section id="pane-batches" class="tab-pane">
       <div class="card" style="border-color: var(--success);">
-        <div class="card-title" style="color:var(--success);">&#x1F4E5; Add to Waiting List (Turn 2+)</div>
-        <button class="btn-scan" id="btn-cam-waiting-toggle" style="background:var(--success); color:#fff;">&#x1F4F8; SCAN TO WAITING</button>
+        <div class="card-title" style="color:var(--success);">📥 Add to Waiting List (Turn 2+)</div>
+        <button class="btn-scan" id="btn-cam-waiting-toggle" style="background:var(--success); color:#fff;">📸 SCAN TO WAITING</button>
         <div id="cam-box-waiting" class="cam-box"><div id="qr-reader-wait"></div></div>
         <input type="text" id="inp-requeue-da" class="input" placeholder="Type DA ID to add..." autocomplete="off">
         <div id="sugg-requeue" class="sugg-box"></div>
       </div>
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-          <div class="card-title" style="margin:0;">&#x1F4E6; Active Batches</div>
+          <div class="card-title" style="margin:0;">📦 Active Batches</div>
           <button class="btn" id="btn-reg-send-selected">Send Selected</button>
         </div>
         <div id="regular-batches-container"></div>
       </div>
     </section>
 
-    <!-- TAB 3: OP BRIDGE -->
     <section id="pane-bridge" class="tab-pane">
       <div class="card">
-        <div class="card-title">&#x23F1;&#xFE0F; Sent to OP (Pending Arrival)</div>
+        <div class="card-title">⏱️ Sent to OP (Pending Arrival)</div>
         <div id="pending-arrival-list" class="da-list"></div>
       </div>
     </section>
 
-    <!-- TAB 4: SETTINGS -->
     <section id="pane-settings" class="tab-pane">
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-          <div class="card-title" style="margin:0;">&#x2699;&#xFE0F; Admin Settings</div>
+          <div class="card-title" style="margin:0;">⚙️ Admin Settings</div>
           <button class="btn btn-danger" id="btn-reset-day" style="padding:6px 10px;">RESET DAY</button>
         </div>
         <label style="font-size:11px; color:var(--text-muted);">Apps Script Web App URL (/exec)</label>
@@ -164,7 +161,7 @@
         <div style="display:flex;gap:10px;margin-bottom:15px;">
           <div style="flex:1"><label style="font-size:11px; color:var(--text-muted);">Batch Size</label><input type="number" id="set-batch-size" class="input"></div>
         </div>
-        <button class="btn" id="btn-save-settings" style="width:100%; background:var(--accent-orange); color:#000;">Save Settings &amp; Sync Globally</button>
+        <button class="btn" id="btn-save-settings" style="width:100%; background:var(--accent-orange); color:#000;">Save Settings & Sync Globally</button>
       </div>
     </section>
   </main>
@@ -177,27 +174,23 @@
   </nav>
 
   <script>
-    // ⚠️ IMPORTANT: Put your real links here ⚠️
-    const CONST_API_URL = "https://script.google.com/macros/s/AKfycbwyjKBYUa4e4MLAVSOG7deemoWWZlx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mOa2Qk0/exec";
-    const CONST_SHEET_URL = "https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit";
-
-    // FIX #9: hard-code a canonical start_url so PWA install doesn't bake in stale query params / raw GitHub URL.
-    const PWA_START_URL = (location.origin + location.pathname);
+    // ⚠️ പ്രധാനപ്പെട്ടത്: നിങ്ങളുടെ യഥാർത്ഥ ലിങ്കുകൾ (ഇത് മാറ്റരുത്) ⚠️
+    const CONST_API_URL = "https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec"; 
+    const CONST_SHEET_URL = "https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit"; 
+    
+    // ആപ്പ് ഫോണിൽ ഇൻസ്റ്റാൾ ചെയ്യാനുള്ള കോഡ്
     const manifestJSON = {
       "name": "DUD3 Rush PRO", "short_name": "DUD3 Rush",
-      "start_url": PWA_START_URL, "display": "standalone",
+      "start_url": window.location.href, "display": "standalone",
       "background_color": "#131A22", "theme_color": "#FF9900",
       "icons": [{"src": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Barcode_scanner_icon.svg/512px-Barcode_scanner_icon.svg.png", "sizes": "512x512", "type": "image/png"}]
     };
     const manifestBlob = new Blob([JSON.stringify(manifestJSON)], {type: 'application/json'});
     document.getElementById('manifest-link').href = URL.createObjectURL(manifestBlob);
 
-    const STORAGE_KEY = "DUD3_RUSH_PRO_V15";
+    const STORAGE_KEY = "DUD3_RUSH_PRO_FINAL";
     let isAdmin = !(/Mobi|Android|iPhone/i.test(navigator.userAgent));
     let STATE = { apiUrl: CONST_API_URL, sheetUrl: CONST_SHEET_URL, selectedDateTab: getTodayTabString(), availableTabs: getRecentDateTabs(), settings: { waveGraceMin: 10, preWaveBlockMin: 30, batchSize: 25 }, roster: [], batches: [], pendingArrivals: [], selectedRegSet: new Set() };
-
-    // FIX #2: pause the fast poll while a camera is open so a scan POST never queues behind a sync POST.
-    let CAM_ACTIVE = false;
 
     function getTodayTabString() { const d = new Date(); const m = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]; return ("0" + d.getDate()).slice(-2) + " " + m[d.getMonth()]; }
     function getRecentDateTabs() { const tabs = []; const m = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]; for (let offset = -2; offset <= 2; offset++) { const d = new Date(); d.setDate(d.getDate() + offset); tabs.push(("0" + d.getDate()).slice(-2) + " " + m[d.getMonth()]); } return tabs; }
@@ -209,9 +202,12 @@
     window.hideTopBanner = function() { document.getElementById("top-alert-banner").className = ""; };
 
     function saveState() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(Object.assign({}, STATE, { selectedRegSet: Array.from(STATE.selectedRegSet) }))); } catch (e) {} }
+    
+    // മൊബൈൽ OFFLINE പ്രശ്നം പരിഹരിക്കുന്നു: എപ്പോഴും മെയിൻ ലിങ്കുകൾ തന്നെ ഉപയോഗിക്കുന്നു
     function loadState() {
       try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) { const parsed = JSON.parse(raw); STATE = Object.assign(STATE, parsed); STATE.selectedRegSet = new Set(parsed.selectedRegSet || []); } } catch (e) {}
-      STATE.apiUrl = CONST_API_URL; STATE.sheetUrl = CONST_SHEET_URL; // force sync
+      STATE.apiUrl = CONST_API_URL; 
+      STATE.sheetUrl = CONST_SHEET_URL; 
     }
 
     function updateSettingsUI() {
@@ -227,27 +223,20 @@
 
       payload.action = action; payload.sheetUrl = STATE.sheetUrl; payload.dayTab = STATE.selectedDateTab;
       if(action === "saveSettings") payload.settings = STATE.settings;
-
+      
       fetch(STATE.apiUrl, { method: "POST", body: JSON.stringify(payload) })
       .then(res => res.json())
       .then(data => {
         if (data && data.success) {
           pill.className = "status-pill online"; pill.textContent = "SYNCED";
+          // ഗ്ലോബൽ സിങ്ക്: അഡ്മിൻ മാറ്റിയ സെറ്റിംഗ്സ് ഓട്ടോമാറ്റിക് ആയി ഫോണുകളിൽ വരും
           if (data.settings) { STATE.settings = data.settings; updateSettingsUI(); }
           if (action === "rosterFull" || action === "resetDay") {
             STATE.roster = data.roster || []; if(action === "resetDay") { STATE.batches = []; STATE.pendingArrivals = []; STATE.selectedRegSet.clear(); } renderAll();
           } else if (action === "syncOnly" && data.roster) {
-             // FIX #5: reconcile the FULL status for every DA from the server, not just the "Received" promotion.
              data.roster.forEach(serverDA => {
                 let localDA = STATE.roster.find(r => r.daId === serverDA.daId);
-                if (!localDA) return;
-                if (serverDA.status && serverDA.status !== localDA.status) {
-                  localDA.status = serverDA.status;
-                }
-                if (serverDA.scanTime && !localDA.scanTime) localDA.scanTime = serverDA.scanTime;
-                if (serverDA.status === "Received") {
-                  STATE.pendingArrivals = STATE.pendingArrivals.filter(p => p.daId !== localDA.daId);
-                }
+                if(localDA && serverDA.status === "Received" && localDA.status !== "Received") { localDA.status = "Received"; STATE.pendingArrivals = STATE.pendingArrivals.filter(p => p.daId !== localDA.daId); }
              });
              renderAll();
           }
@@ -257,45 +246,25 @@
 
     function enforceWaveTimeAutoAbsent() {
       const now = new Date(); const curMin = now.getHours() * 60 + now.getMinutes(); const grace = Number(STATE.settings.waveGraceMin) || 10; let newlyAbsentIds = [];
-      STATE.roster.forEach(da => { if (!da.status && !da.scanTime) { const wMin = parseHHMMToMinutes(da.waveTime); if (wMin !== null && curMin > (wMin + grace)) { da.status = "Absent"; newlyAbsentIds.push(da.daId); } } });
+      STATE.roster.forEach(da => { if (!da.status) { const wMin = parseHHMMToMinutes(da.waveTime); if (wMin !== null && curMin > (wMin + grace)) { da.status = "Absent"; newlyAbsentIds.push(da.daId); } } });
       if (newlyAbsentIds.length > 0) { renderAll(); syncWithGoogleSheets("markAbsent", { ids: newlyAbsentIds }); }
     }
 
-    // FIX #3: separate EXACT match (hardware/QR scans) from FUZZY includes() match (typed search box).
-    function findDaExact(token) {
-      const clean = String(token || "").trim().toLowerCase();
-      if (!clean) return null;
-      return STATE.roster.find(r =>
-        (r.daId && r.daId.toLowerCase() === clean) ||
-        (r.repDaId && r.repDaId.toLowerCase() === clean) ||
-        (r.daName && r.daName.toLowerCase() === clean)
-      ) || null;
-    }
-    function findDaFuzzy(token) {
-      const clean = String(token || "").trim().toLowerCase();
-      if (!clean) return null;
-      return STATE.roster.find(r =>
-        (r.daId && r.daId.toLowerCase().includes(clean)) ||
-        (r.repDaId && r.repDaId.toLowerCase().includes(clean)) ||
-        (r.daName && r.daName.toLowerCase().includes(clean))
-      ) || null;
-    }
-
-    function recordDriverCheckIn(inputToken, isDirectToWaiting = false, exactMatch = true) {
-      const raw = String(inputToken || "").trim(); if (!raw) return;
-      const da = exactMatch ? findDaExact(raw) : findDaFuzzy(raw);
+    function recordDriverCheckIn(inputToken, isDirectToWaiting = false) {
+      const clean = String(inputToken || "").trim().toLowerCase(); if (!clean) return;
+      const da = STATE.roster.find(r => (r.daId && r.daId.toLowerCase().includes(clean)) || (r.repDaId && r.repDaId.toLowerCase().includes(clean)) || (r.daName && r.daName.toLowerCase().includes(clean)));
       if (!da) return showTopBanner(`DA Not Found: "${inputToken}"`, "danger");
 
       if (!da.scanTime) da.scanTime = nowHHMM();
       let assignedStatus = "Present";
-
+      
       if (!isDirectToWaiting) {
         const wMin = parseHHMMToMinutes(da.waveTime); const curMin = (new Date()).getHours() * 60 + (new Date()).getMinutes();
         const preBlock = Number(STATE.settings.preWaveBlockMin) || 30; const grace = Number(STATE.settings.waveGraceMin) || 10;
         if (wMin !== null) { if (curMin < (wMin - preBlock)) return showTopBanner(`Too Early! (${da.waveTime})`, "warn"); if (curMin > (wMin + grace) || da.status === "Absent") assignedStatus = "Late Arrival"; }
-        if (da.status !== "Replacement Present") da.status = assignedStatus;
+        da.status = assignedStatus;
       }
-
+      
       const bId = enqueueDriverIntoStrictBatch(da);
       showTopBanner(`${isDirectToWaiting ? 'Waiting List' : assignedStatus}: ${da.daName} -> Batch ${bId}`, "success");
       renderAll(); syncWithGoogleSheets("recordCheckIn", { daId: da.daId, daName: da.daName, sentStatus: assignedStatus, isWaiting: isDirectToWaiting });
@@ -303,19 +272,11 @@
 
     function enqueueDriverIntoStrictBatch(da) {
       const cap = Number(STATE.settings.batchSize) || 25; let targetBatchObj = null;
-      // FIX #6: the member key for a DA is stable (always the base daId), so a replacement does not create a duplicate.
-      const memberKey = (da.daId || da.repDaId || "").toLowerCase();
-      const displayId = da.repDaId || da.daId;
       if (da.originalBatchId) targetBatchObj = STATE.batches.find(b => b.batchId === da.originalBatchId);
       if (!targetBatchObj) targetBatchObj = STATE.batches.find(b => !b.completed && b.members.length < cap && !b.hasSentMembers);
       if (!targetBatchObj) { targetBatchObj = { batchId: STATE.batches.length + 1, completed: false, hasSentMembers: false, members: [] }; STATE.batches.push(targetBatchObj); }
-      da.originalBatchId = targetBatchObj.batchId;
-      const existing = targetBatchObj.members.find(m => (m.key || m.daId).toLowerCase() === memberKey);
-      if (existing) {
-        existing.daId = displayId; existing.daName = da.daName; // keep display fresh if replaced
-      } else {
-        targetBatchObj.members.push({ key: memberKey, daId: displayId, daName: da.daName, batchId: targetBatchObj.batchId, scanTime: da.scanTime || nowHHMM(), sent: false });
-      }
+      da.originalBatchId = targetBatchObj.batchId; const activeId = da.repDaId || da.daId;
+      if (!targetBatchObj.members.find(m => m.daId.toLowerCase() === activeId.toLowerCase())) { targetBatchObj.members.push({ daId: activeId, daName: da.daName, batchId: targetBatchObj.batchId, scanTime: da.scanTime || nowHHMM(), sent: false }); }
       return targetBatchObj.batchId;
     }
 
@@ -327,7 +288,7 @@
       document.getElementById("kpi-present").textContent = cPresent; document.getElementById("kpi-late").textContent = cLate; document.getElementById("kpi-repl").textContent = cRepl; document.getElementById("kpi-absent").textContent = cAbsent; document.getElementById("kpi-waiting").textContent = cWait; document.getElementById("kpi-sent").textContent = cSent; document.getElementById("kpi-received").textContent = cRecv;
       const sel = document.getElementById("date-tab-select"); if (!STATE.availableTabs.includes(STATE.selectedDateTab)) STATE.availableTabs.push(STATE.selectedDateTab);
       sel.innerHTML = STATE.availableTabs.map(t => `<option value="${t}" ${t === STATE.selectedDateTab ? "selected" : ""}>${t}</option>`).join("");
-
+      
       const absentDAs = STATE.roster.filter(r => r.status === "Absent");
       document.getElementById("sel-absent-driver").innerHTML = `<option value="">-- Select Absent Driver --</option>` + absentDAs.map(d => `<option value="${d.daId}">${d.daName}</option>`).join("");
       const regWrap = document.getElementById("regular-batches-container");
@@ -363,49 +324,18 @@
       document.getElementById("btn-save-settings").onclick = () => { STATE.apiUrl = document.getElementById("set-api-url").value.trim(); STATE.sheetUrl = document.getElementById("set-sheet-url").value.trim(); STATE.settings.preWaveBlockMin = Number(document.getElementById("set-pre-block").value); STATE.settings.waveGraceMin = Number(document.getElementById("set-wave-grace").value); STATE.settings.batchSize = Number(document.getElementById("set-batch-size").value); saveState(); syncWithGoogleSheets("saveSettings"); showTopBanner("Global Settings Saved", "success"); };
       document.getElementById("btn-reg-send-selected").onclick = () => { let sentIds = []; STATE.batches.forEach(b => { let sentFromThisBatch = false; b.members.forEach(m => { if(!m.sent && STATE.selectedRegSet.has(m.daId)) { m.sent = true; sentFromThisBatch = true; STATE.pendingArrivals.push({ daId: m.daId, daName: m.daName }); sentIds.push(m.daId); } }); if(sentFromThisBatch) b.hasSentMembers = true; }); STATE.selectedRegSet.clear(); renderAll(); showTopBanner("Sent to OP", "success"); if(sentIds.length > 0) syncWithGoogleSheets("logEvent", { ids: sentIds, action: "Sent to OP Waiting List" }); };
       document.getElementById("btn-confirm-replacement").onclick = () => { const origId = document.getElementById("sel-absent-driver").value; const replStr = document.getElementById("inp-custom-repl").value.trim(); if (!origId || !replStr) return showTopBanner("Select DA and enter info.", "warn"); const da = STATE.roster.find(r => r.daId === origId); if(da) { da.status = "Replacement Present"; showTopBanner(`Replacement Assigned`, "success"); renderAll(); syncWithGoogleSheets("assignReplacement", { rowIndex: da.rowIndex, replacementText: replStr }); document.getElementById("inp-custom-repl").value = ""; } };
-
-      // FIX #1: handle html5-qrcode .stop() as the async promise it is, guard against double-fire.
+      
       let qrAtt = null, qrWait = null;
-      let attBusy = false, waitBusy = false;
-
-      function stopScanner(qr, box, clearBusy) {
-        const finish = () => { box.style.display = "none"; CAM_ACTIVE = false; clearBusy(); };
-        if (qr) { qr.stop().then(finish).catch(finish); } else { finish(); }
-      }
-
-      document.getElementById("btn-cam-toggle").onclick = () => {
-        const box = document.getElementById("cam-box-att");
-        if (box.style.display === "block") { stopScanner(qrAtt, box, () => { attBusy = false; }); return; }
-        box.style.display = "block"; CAM_ACTIVE = true; attBusy = false;
-        qrAtt = new Html5Qrcode("qr-reader-att");
-        qrAtt.start({ facingMode: "environment" }, { fps: 10 }, (t) => {
-          if (attBusy) return;
-          attBusy = true;
-          recordDriverCheckIn(t, false, true);
-          stopScanner(qrAtt, box, () => { attBusy = false; });
-        }).catch(() => { showTopBanner("Camera failed to start", "danger"); box.style.display = "none"; CAM_ACTIVE = false; });
-      };
-
-      document.getElementById("btn-cam-waiting-toggle").onclick = () => {
-        const box = document.getElementById("cam-box-waiting");
-        if (box.style.display === "block") { stopScanner(qrWait, box, () => { waitBusy = false; }); return; }
-        box.style.display = "block"; CAM_ACTIVE = true; waitBusy = false;
-        qrWait = new Html5Qrcode("qr-reader-wait");
-        qrWait.start({ facingMode: "environment" }, { fps: 10 }, (t) => {
-          if (waitBusy) return;
-          waitBusy = true;
-          recordDriverCheckIn(t, true, true);
-          stopScanner(qrWait, box, () => { waitBusy = false; });
-        }).catch(() => { showTopBanner("Camera failed to start", "danger"); box.style.display = "none"; CAM_ACTIVE = false; });
-      };
-
-      bindFuzzySearch("inp-checkin", "sugg-checkin", val => recordDriverCheckIn(val, false, true));
-      bindFuzzySearch("inp-requeue-da", "sugg-requeue", val => recordDriverCheckIn(val, true, true));
-
+      document.getElementById("btn-cam-toggle").onclick = () => { const box = document.getElementById("cam-box-att"); if (box.style.display === "block") { box.style.display = "none"; if(qrAtt) qrAtt.stop(); } else { box.style.display = "block"; qrAtt = new Html5Qrcode("qr-reader-att"); qrAtt.start({facingMode:"environment"}, {fps:10}, t => { recordDriverCheckIn(t, false); qrAtt.stop(); box.style.display="none"; }); } };
+      document.getElementById("btn-cam-waiting-toggle").onclick = () => { const box = document.getElementById("cam-box-waiting"); if (box.style.display === "block") { box.style.display = "none"; if(qrWait) qrWait.stop(); } else { box.style.display = "block"; qrWait = new Html5Qrcode("qr-reader-wait"); qrWait.start({facingMode:"environment"}, {fps:10}, t => { recordDriverCheckIn(t, true); qrWait.stop(); box.style.display="none"; }); } };
+      bindFuzzySearch("inp-checkin", "sugg-checkin", val => recordDriverCheckIn(val, false)); bindFuzzySearch("inp-requeue-da", "sugg-requeue", val => recordDriverCheckIn(val, true));
+      
       setInterval(enforceWaveTimeAutoAbsent, 30000);
-      // FIX #2: slower poll (8s) and skip while camera open.
-      setInterval(() => { if (!CAM_ACTIVE) syncWithGoogleSheets("syncOnly"); }, 8000);
-      syncWithGoogleSheets("rosterFull");
+      
+      // എല്ലാ സിസ്റ്റത്തിലും യാന്ത്രികമായി സിങ്ക് ചെയ്യാൻ 3 സെക്കൻഡ് ഇടവേള
+      setInterval(() => { syncWithGoogleSheets("syncOnly"); }, 3000); 
+      
+      syncWithGoogleSheets("rosterFull"); 
     });
   </script>
 </body>
