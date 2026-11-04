@@ -1,353 +1,426 @@
-
-// ============================================================
-// COMPLETE <script> BLOCK FOR index.html v2
-// Replace the entire <script>...</script> in the previous file
-// ============================================================
-
-const CONST_API_URL="https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec";
-const CONST_SHEET_URL="https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit";
-
-const manifestJSON={name:"DUD3 Rush PRO v2",short_name:"DUD3 Rush",start_url:window.location.href,display:"standalone",background_color:"#131A22",theme_color:"#FF9900",icons:[{src:"https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Barcode_scanner_icon.svg/512px-Barcode_scanner_icon.svg.png",sizes:"512x512",type:"image/png"}]};
-document.getElementById('manifest-link').href=URL.createObjectURL(new Blob([JSON.stringify(manifestJSON)],{type:'application/json'}));
-
-const STORAGE_KEY="DUD3_RUSH_PRO_V2";
-let isAdmin=!(/Mobi|Android|iPhone/i.test(navigator.userAgent));
-let rushScanMode="in";
-
-let STATE={apiUrl:CONST_API_URL,sheetUrl:CONST_SHEET_URL,selectedDateTab:getTodayTabString(),availableTabs:getRecentDateTabs(),settings:{waveGraceMin:10,preWaveBlockMin:30,batchSize:25},roster:[],batches:[],pendingArrivals:[],receivedList:[],ofdList:[],selectedRegSet:new Set()};
-
-// ============ UTILITY FUNCTIONS ============
-function getTodayTabString(){const d=new Date();const m=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];return("0"+d.getDate()).slice(-2)+" "+m[d.getMonth()];}
-function getRecentDateTabs(){const tabs=[];const m=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];for(let o=-2;o<=2;o++){const d=new Date();d.setDate(d.getDate()+o);tabs.push(("0"+d.getDate()).slice(-2)+" "+m[d.getMonth()]);}return tabs;}
-function nowHHMM(){const d=new Date();return("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2);}
-function parseHHMMToMinutes(str){if(!str)return null;const m=String(str).trim().match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);if(!m)return null;let hr=parseInt(m[1],10);const mn=parseInt(m[2],10);const ap=m[3]?m[3].toUpperCase():null;if(ap==="PM"&&hr<12)hr+=12;if(ap==="AM"&&hr===12)hr=0;return hr*60+mn;}
-
-// ============ BANNER ============
-let bannerTimer=null;
-function showTopBanner(msg,variant="success"){const el=document.getElementById("top-alert-banner");document.getElementById("top-alert-text").textContent=msg;el.className="show banner-"+variant;if(bannerTimer)clearTimeout(bannerTimer);bannerTimer=setTimeout(()=>{el.className="";},4000);}
-window.hideTopBanner=function(){document.getElementById("top-alert-banner").className="";};
-
-// ============ STATE PERSISTENCE ============
-function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(Object.assign({},STATE,{selectedRegSet:Array.from(STATE.selectedRegSet)})));}catch(e){}}
-function loadState(){
-  try{const raw=localStorage.getItem(STORAGE_KEY);if(raw){const p=JSON.parse(raw);STATE=Object.assign(STATE,p);STATE.selectedRegSet=new Set(p.selectedRegSet||[]);}}catch(e){}
-  STATE.apiUrl=CONST_API_URL;STATE.sheetUrl=CONST_SHEET_URL;
-}
-function updateSettingsUI(){
-  document.getElementById("set-api-url").value=STATE.apiUrl||"";
-  document.getElementById("set-sheet-url").value=STATE.sheetUrl||"";
-  document.getElementById("set-pre-block").value=STATE.settings.preWaveBlockMin||30;
-  document.getElementById("set-wave-grace").value=STATE.settings.waveGraceMin||10;
-  document.getElementById("set-batch-size").value=STATE.settings.batchSize||25;
-}
-
-// ============ REBUILD LISTS FROM ROSTER ============
-function rebuildListsFromRoster(){
-  STATE.pendingArrivals=[];STATE.receivedList=[];STATE.ofdList=[];
-  STATE.roster.forEach(da=>{
-    if(da.status==="Sent to OP") STATE.pendingArrivals.push({daId:da.daId,daName:da.daName,marshalName:da.marshalName||"",sentTime:da.sentTime||"",slipNumber:da.slipNumber||""});
-    if(da.status.indexOf("Received")>-1) STATE.receivedList.push({daId:da.daId,daName:da.daName,time:da.rushScanInTime||"",tokenNumber:da.tokenNumber||""});
-    if(da.status==="OFD") STATE.ofdList.push({daId:da.daId,daName:da.daName,time:da.ofdTime||""});
-  });
-}
-
-// ============ API SYNC ============
-function syncWithGoogleSheets(action="rosterFull",payload={}){
-  saveState();
-  const pill=document.getElementById("sync-status-pill");
-  if(!STATE.apiUrl){pill.className="status-pill offline";pill.textContent="OFFLINE";return;}
-  if(["rosterFull","saveSettings","resetDay"].includes(action)){pill.textContent="SYNCING...";pill.className="status-pill offline";}
-
-  payload.action=action;payload.sheetUrl=STATE.sheetUrl;payload.dayTab=STATE.selectedDateTab;
-  if(action==="saveSettings")payload.settings=STATE.settings;
-
-  fetch(STATE.apiUrl,{method:"POST",body:JSON.stringify(payload)})
-  .then(r=>r.json())
-  .then(data=>{
-    if(data&&data.success){
-      pill.className="status-pill online";pill.textContent="SYNCED";
-      if(data.settings){STATE.settings=data.settings;updateSettingsUI();}
-
-      if(action==="rosterFull"||action==="resetDay"){
-        STATE.roster=data.roster||[];
-        if(action==="resetDay"){STATE.batches=[];STATE.pendingArrivals=[];STATE.receivedList=[];STATE.ofdList=[];STATE.selectedRegSet.clear();}
-        rebuildListsFromRoster();renderAll();
-      }
-      else if(action==="syncOnly"&&data.roster){
-        data.roster.forEach(srv=>{
-          let loc=STATE.roster.find(r=>r.daId===srv.daId);
-          if(loc){
-            if(srv.status.indexOf("Received")>-1&&loc.status!=="Received"&&loc.status.indexOf("Received")===-1){
-              loc.status=srv.status;
-              STATE.pendingArrivals=STATE.pendingArrivals.filter(p=>p.daId!==loc.daId);
-              if(!STATE.receivedList.find(r=>r.daId===loc.daId))STATE.receivedList.push({daId:loc.daId,daName:loc.daName,time:srv.rushScanInTime||""});
-            }
-            if(srv.status==="OFD"&&loc.status!=="OFD"){
-              loc.status="OFD";
-              STATE.receivedList=STATE.receivedList.filter(r=>r.daId!==loc.daId);
-              if(!STATE.ofdList.find(o=>o.daId===loc.daId))STATE.ofdList.push({daId:loc.daId,daName:loc.daName,time:srv.ofdTime||""});
-            }
-          }
-        });
-        if(data.violations&&data.violations.length>0)renderViolations(data.violations);
-        renderAll();
-      }
-      else if(action==="sendDA"&&data.slip){
-        // Move sent DAs from batches to pendingArrivals
-        var sentIds=payload.ids||[];
-        STATE.batches.forEach(b=>{
-          b.members.forEach(m=>{
-            if(sentIds.includes(m.daId)&&!m.sent){
-              m.sent=true;
-              STATE.pendingArrivals.push({daId:m.daId,daName:m.daName,marshalName:data.slip.marshalName,sentTime:data.slip.sentTime,slipNumber:data.slip.slipNumber});
-            }
-          });
-          if(b.members.some(m=>m.sent))b.hasSentMembers=true;
-        });
-        STATE.selectedRegSet.clear();
-        showSlipModal(data.slip);
-        renderAll();
-      }
-      else if(action==="rushQueueScanIn"){
-        if(data.result){
-          let r=data.result;
-          if(r.violation){
-            showTopBanner("⚠️ "+r.violation.message,"danger");
-          } else {
-            showTopBanner("✅ "+r.daName+" → RECEIVED (Rush Queue Scan IN)","success");
-          }
-          STATE.pendingArrivals=STATE.pendingArrivals.filter(p=>p.daId!==payload.daId);
-          if(!STATE.receivedList.find(x=>x.daId===payload.daId))STATE.receivedList.push({daId:payload.daId,daName:r.daName,time:nowHHMM()});
-          let loc=STATE.roster.find(x=>x.daId===payload.daId);
-          if(loc)loc.status=r.violation?"Received ⚠️":"Received";
-          renderAll();
-        }
-      }
-      else if(action==="rushQueueScanOut"){
-        if(data.result&&data.result.found){
-          showTopBanner("🚚 "+data.result.daName+" → OFD (Rush Queue Scan OUT)","success");
-          STATE.receivedList=STATE.receivedList.filter(x=>x.daId!==payload.daId);
-          if(!STATE.ofdList.find(o=>o.daId===payload.daId))STATE.ofdList.push({daId:payload.daId,daName:data.result.daName,time:nowHHMM()});
-          let loc=STATE.roster.find(x=>x.daId===payload.daId);
-          if(loc)loc.status="OFD";
-          renderAll();
-        }
-      }
-    } else if(data&&data.success===false&&data.errors){
-      showTopBanner("⚠️ "+data.errors[0],"danger");
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DUD3 Rush PRO Scanner</title>
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="DUD3 Rush">
+  <meta name="theme-color" content="#131A22">
+  
+  <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Barcode_scanner_icon.svg/512px-Barcode_scanner_icon.svg.png">
+  <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Barcode_scanner_icon.svg/512px-Barcode_scanner_icon.svg.png">
+  <link rel="manifest" id="manifest-link">
+  
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  
+  <style>
+    :root {
+      --bg-dark: #0F141C; --bg-primary: #131A22; --bg-secondary: #1B2430;
+      --bg-card: #232F3E; --accent-orange: #FF9900; --accent-blue: #00A8E1;
+      --text-main: #FFFFFF; --text-muted: #9BA7B6;
+      --success: #00C853; --danger: #FF3B30; --warn: #FFB300;
+      --border: #354558; --radius: 10px; --nav-h: 66px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
-  }).catch(()=>{pill.className="status-pill offline";pill.textContent="OFFLINE";});
-}
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { width: 100%; max-width: 100vw; overflow-x: hidden; background: var(--bg-primary); color: var(--text-main); font-family: var(--font-sans); font-size: 14px; line-height: 1.4; }
+    body { min-height: 100vh; display: flex; flex-direction: column; padding-bottom: calc(var(--nav-h) + 20px); }
 
-// ============ WAVE TIME AUTO ABSENT ============
-function enforceWaveTimeAutoAbsent(){
-  const now=new Date();const curMin=now.getHours()*60+now.getMinutes();const grace=Number(STATE.settings.waveGraceMin)||10;let newlyAbsentIds=[];
-  STATE.roster.forEach(da=>{if(!da.status){const wMin=parseHHMMToMinutes(da.waveTime);if(wMin!==null&&curMin>(wMin+grace)){da.status="Absent";newlyAbsentIds.push(da.daId);}}});
-  if(newlyAbsentIds.length>0){renderAll();syncWithGoogleSheets("markAbsent",{ids:newlyAbsentIds});}
-}
+    #top-alert-banner { position: fixed; top: 8px; left: 50%; transform: translateX(-50%) translateY(-150%); width: calc(100% - 24px); max-width: 540px; padding: 12px 16px; border-radius: 8px; font-weight: 800; font-size: 13px; display: flex; justify-content: space-between; align-items:center; z-index: 10000; box-shadow: 0 8px 24px rgba(0,0,0,0.65); transition: transform 0.28s; }
+    #top-alert-banner.show { transform: translateX(-50%) translateY(0); }
+    .banner-success { background: #00C853; color: #062010; }
+    .banner-danger { background: #FF3B30; color: #FFFFFF; }
+    .banner-warn { background: #FFB300; color: #1A1300; }
 
-// ============ CHECK-IN LOGIC ============
-function recordDriverCheckIn(inputToken,isDirectToWaiting=false){
-  const clean=String(inputToken||"").trim().toLowerCase();if(!clean)return;
-  const da=STATE.roster.find(r=>(r.daId&&r.daId.toLowerCase().includes(clean))||(r.repDaId&&r.repDaId.toLowerCase().includes(clean))||(r.daName&&r.daName.toLowerCase().includes(clean)));
-  if(!da)return showTopBanner('DA Not Found: "'+inputToken+'"',"danger");
-  if(!da.scanTime)da.scanTime=nowHHMM();
-  let assignedStatus="Present";
-  if(!isDirectToWaiting){
-    const wMin=parseHHMMToMinutes(da.waveTime);const curMin=(new Date()).getHours()*60+(new Date()).getMinutes();
-    const preBlock=Number(STATE.settings.preWaveBlockMin)||30;const grace=Number(STATE.settings.waveGraceMin)||10;
-    if(wMin!==null){if(curMin<(wMin-preBlock))return showTopBanner("Too Early! ("+da.waveTime+")","warn");if(curMin>(wMin+grace)||da.status==="Absent")assignedStatus="Late Arrival";}
-    da.status=assignedStatus;
-  }
-  const bId=enqueueDriverIntoStrictBatch(da);
-  showTopBanner((isDirectToWaiting?"Waiting List":assignedStatus)+": "+da.daName+" → Batch "+bId,"success");
-  renderAll();syncWithGoogleSheets("recordCheckIn",{daId:da.daId,daName:da.daName,sentStatus:assignedStatus,isWaiting:isDirectToWaiting});
-}
+    header { position: sticky; top: 0; z-index: 500; background: rgba(35, 47, 62, 0.96); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); padding: 10px 12px; display: flex; justify-content: space-between; align-items:center; }
+    .brand { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; }
+    .brand-text { font-size: 16px; font-weight: 900; color: #fff; letter-spacing: 0.5px; display: flex; align-items: center; gap: 4px; }
+    .brand-text span { color: var(--accent-orange); }
+    
+    .status-pill { padding: 4px 8px; border-radius: 12px; font-size: 10px; font-weight: 800; margin-left:6px;}
+    .status-pill.online { background: rgba(0,200,83,0.18); color: var(--success); border: 1px solid var(--success); }
+    .status-pill.offline { background: rgba(255,59,48,0.18); color: var(--danger); border: 1px solid var(--danger); }
+    .date-select { background: var(--bg-primary); color: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 6px; font-size: 12px; font-weight: 700; }
 
-function enqueueDriverIntoStrictBatch(da){
-  const cap=Number(STATE.settings.batchSize)||25;let targetBatchObj=null;
-  if(da.originalBatchId)targetBatchObj=STATE.batches.find(b=>b.batchId===da.originalBatchId);
-  if(!targetBatchObj)targetBatchObj=STATE.batches.find(b=>!b.completed&&b.members.length<cap&&!b.hasSentMembers);
-  if(!targetBatchObj){targetBatchObj={batchId:STATE.batches.length+1,completed:false,hasSentMembers:false,members:[]};STATE.batches.push(targetBatchObj);}
-  da.originalBatchId=targetBatchObj.batchId;const activeId=da.repDaId||da.daId;
-  if(!targetBatchObj.members.find(m=>m.daId.toLowerCase()===activeId.toLowerCase())){targetBatchObj.members.push({daId:activeId,daName:da.daName,batchId:targetBatchObj.batchId,scanTime:da.scanTime||nowHHMM(),sent:false});}
-  return targetBatchObj.batchId;
-}
+    main { width: 100%; max-width: 860px; margin: 0 auto; padding: 12px; flex: 1; }
+    .tab-pane { display: none; } .tab-pane.active { display: block; }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; }
+    .card-title { font-size: 12px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px;}
 
-// ============ RUSH QUEUE SCAN ============
-function rushScanIn(){
-  const badge=document.getElementById("rush-scan-input").value.trim();
-  if(!badge)return showTopBanner("Scan or enter DA badge","warn");
-  syncWithGoogleSheets("rushQueueScanIn",{daId:badge});
-  document.getElementById("rush-scan-input").value="";
-  document.getElementById("rush-scan-input").focus();
-}
+    .kpi-wrapper { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+    .kpi-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 8px 4px; text-align: center; }
+    .kpi-val { font-size: 17px; font-weight: 900; } 
+    .kpi-lbl { font-size: 9px; color: var(--text-muted); text-transform: uppercase; margin-top: 4px; font-weight:bold;}
 
-function rushScanOut(){
-  const badge=document.getElementById("rush-scan-input").value.trim();
-  if(!badge)return showTopBanner("Scan or enter DA badge","warn");
-  syncWithGoogleSheets("rushQueueScanOut",{daId:badge});
-  document.getElementById("rush-scan-input").value="";
-  document.getElementById("rush-scan-input").focus();
-}
+    .btn-scan { background: var(--accent-orange); color: #000; font-size: 15px; font-weight: 900; padding: 14px; border-radius: 8px; width: 100%; margin-bottom: 12px; border: none; cursor: pointer; text-align:center; box-shadow: 0 4px 15px rgba(255,153,0,0.25);}
+    .btn-scan:active { transform: scale(0.97); }
+    .input { width: 100%; background: var(--bg-primary); color: #fff; border: 1px solid var(--border); border-radius: 7px; padding: 12px; font-size: 14px; margin-bottom: 8px;}
+    .btn { background: var(--accent-blue); color: #051B24; border: none; border-radius: 7px; padding: 10px 14px; font-size: 12px; font-weight: 800; cursor: pointer; }
+    .btn-danger { background: rgba(255,59,48,0.18); color: var(--danger); border: 1px solid var(--danger); }
+    
+    .da-list { display: flex; flex-direction: column; gap: 6px; }
+    .da-item { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
+    .da-name { font-weight: 700; font-size: 13px; } .da-sub { font-size: 11px; color: var(--text-muted); margin-top:3px;}
+    
+    .cam-box { display: none; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 10px; width: 100%; }
+    .sugg-box { background: var(--bg-dark); border: 1px solid var(--border); border-radius: 7px; margin-top: -4px; max-height: 190px; overflow-y: auto; display: none; margin-bottom: 10px;}
+    .sugg-item { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; cursor:pointer;}
 
-// ============ SLIP MODAL ============
-function showSlipModal(slip){
-  const el=document.getElementById("slip-content");
-  let dasHtml=slip.daList.map((d,i)=>'<div class="slip-da">'+(i+1)+'. '+d.daName+' <span style="float:right;font-size:10px;color:#666;">'+d.daId+'</span></div>').join("");
-  el.innerHTML='<h3>📋 DISPATCH SLIP</h3>'+
-    '<div class="slip-row"><span>Slip #</span><strong>'+slip.slipNumber+'</strong></div>'+
-    '<div class="slip-row"><span>Yard Marshal</span><strong>'+slip.marshalName+'</strong></div>'+
-    '<div class="slip-row"><span>Time</span><strong>'+slip.sentTime+'</strong></div>'+
-    '<div class="slip-row"><span>DA Count</span><strong>'+slip.count+'</strong></div>'+
-    '<div style="margin:10px 0;border-top:1px dashed #999;padding-top:8px;">'+dasHtml+'</div>'+
-    '<div class="slip-footer">DUD3 Rush PRO v2 — Dispatch Record<br>'+
-    '<button onclick="document.getElementById(\'slip-modal\').classList.remove(\'show\')" style="margin-top:8px;padding:8px 20px;background:#232F3E;color:#fff;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">CLOSE</button></div>';
-  document.getElementById("slip-modal").classList.add("show");
-}
+    nav.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-h); background: var(--bg-card); border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(5, 1fr); z-index: 900; }
+    .nav-item { background: none; border: none; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 10px; font-weight: 700; cursor: pointer; }
+    .nav-item svg { width: 22px; height: 22px; fill: currentColor; }
+    .nav-item.active { color: var(--accent-orange); }
 
-// ============ VIOLATIONS RENDER ============
-function renderViolations(violations){
-  const container=document.getElementById("violations-container");
-  if(!violations||violations.length===0){container.innerHTML="";return;}
-  container.innerHTML=violations.map(v=>'<div class="violation-badge'+(v.severity==="MEDIUM"?" medium":"")+'">⚠️ '+v.message+'</div>').join("");
-}
+    /* Glass Effect Overlay Box */
+    #ghost-overlay-container {
+        display: none; position: fixed; top: 150px; left: 50%; transform: translateX(-50%);
+        width: 320px; height: 50px; background: rgba(255, 153, 0, 0.1); 
+        border: 2px dashed #FF9900; border-radius: 8px; z-index: 9999999;
+        align-items: center; justify-content: center; cursor: grab; backdrop-filter: blur(2px); box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+    #ghost-overlay-input {
+        width: 90%; height: 80%; background: transparent; border: none;
+        color: #FF9900; font-weight: bold; text-align: center; outline: none; font-size: 14px;
+    }
+    #ghost-overlay-input::placeholder { color: rgba(255, 153, 0, 0.6); }
+  </style>
+</head>
+<body>
 
-// ============ RENDER ALL ============
-function renderAll(){
-  let cPresent=0,cLate=0,cRepl=0,cAbsent=0,cWait=0,cSent=STATE.pendingArrivals.length,cRecv=STATE.receivedList.length,cOfd=STATE.ofdList.length;
-  STATE.roster.forEach(r=>{if(r.status==="Present")cPresent++;if(r.status==="Late Arrival")cLate++;if(r.status==="Replacement Present")cRepl++;if(r.status==="Absent")cAbsent++;});
-  STATE.batches.forEach(b=>{if(!b.completed)cWait+=b.members.filter(m=>!m.sent).length;});
+  <!-- Ghost Scanner Overlay -->
+  <div id="ghost-overlay-container">
+    <button onclick="document.getElementById('ghost-overlay-container').style.display='none'" style="position:absolute; right:-10px; top:-10px; background:red; color:#fff; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer; font-weight:bold; font-size:10px;">X</button>
+    <input type="text" id="ghost-overlay-input" placeholder="Drag me & Scan Here..." autocomplete="off">
+  </div>
 
-  document.getElementById("kpi-present").textContent=cPresent;
-  document.getElementById("kpi-late").textContent=cLate;
-  document.getElementById("kpi-repl").textContent=cRepl;
-  document.getElementById("kpi-absent").textContent=cAbsent;
-  document.getElementById("kpi-waiting").textContent=cWait;
-  document.getElementById("kpi-sent").textContent=cSent;
-  document.getElementById("kpi-received").textContent=cRecv;
-  document.getElementById("kpi-ofd").textContent=cOfd;
+  <div id="top-alert-banner"><span id="top-alert-text"></span><button style="background:none;border:none;color:#fff;font-weight:bold;font-size:18px;cursor:pointer;" onclick="hideTopBanner()">×</button></div>
 
-  // Date tabs
-  const sel=document.getElementById("date-tab-select");
-  if(!STATE.availableTabs.includes(STATE.selectedDateTab))STATE.availableTabs.push(STATE.selectedDateTab);
-  sel.innerHTML=STATE.availableTabs.map(t=>'<option value="'+t+'"'+(t===STATE.selectedDateTab?" selected":"")+'>'+t+'</option>').join("");
+  <header>
+    <div class="brand">
+      <div class="brand-text">RUSH PRO <span>DUD3</span></div>
+    </div>
+    <div style="display:flex; align-items:center;">
+      <select id="date-tab-select" class="date-select"></select>
+      <span id="sync-status-pill" class="status-pill offline">OFFLINE</span>
+    </div>
+  </header>
 
-  // Absent dropdown
-  const absentDAs=STATE.roster.filter(r=>r.status==="Absent");
-  document.getElementById("sel-absent-driver").innerHTML='<option value="">-- Select Absent Driver --</option>'+absentDAs.map(d=>'<option value="'+d.daId+'">'+d.daName+'</option>').join("");
+  <main>
+    <div class="kpi-wrapper">
+      <div class="kpi-box"><div class="kpi-val" id="kpi-present" style="color:var(--success);">0</div><div class="kpi-lbl">Present</div></div>
+      <div class="kpi-box"><div class="kpi-val" id="kpi-late" style="color:var(--warn);">0</div><div class="kpi-lbl">Late</div></div>
+      <div class="kpi-box"><div class="kpi-val" id="kpi-repl" style="color:var(--accent-blue);">0</div><div class="kpi-lbl">Replaced</div></div>
+      <div class="kpi-box"><div class="kpi-val" id="kpi-absent" style="color:var(--danger);">0</div><div class="kpi-lbl">Absent</div></div>
+    </div>
+    <div class="kpi-wrapper" style="grid-template-columns: repeat(3, 1fr);">
+      <div class="kpi-box" style="border-color:var(--accent-orange);"><div class="kpi-val" id="kpi-waiting">0</div><div class="kpi-lbl">In Waiting List</div></div>
+      <div class="kpi-box"><div class="kpi-val" id="kpi-sent">0</div><div class="kpi-lbl">Sent (Pending)</div></div>
+      <div class="kpi-box"><div class="kpi-val" id="kpi-received" style="color:var(--success);">0</div><div class="kpi-lbl">Received Inside</div></div>
+    </div>
 
-  // Batch list with checkboxes
-  const regWrap=document.getElementById("regular-batches-container");
-  regWrap.innerHTML=STATE.batches.filter(b=>!b.completed&&b.members.some(m=>!m.sent)).map(b=>'<div style="border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:10px;background:var(--bg-primary);"><strong>Batch '+b.batchId+'</strong>'+b.members.filter(m=>!m.sent).map(m=>'<div class="da-item" style="margin-top:5px;padding:8px;"><div><input type="checkbox" class="chk reg-chk" data-id="'+m.daId+'" '+(STATE.selectedRegSet.has(m.daId)?"checked":"")+'> <span style="font-size:12px;font-weight:bold;margin-left:5px;">'+m.daName+'</span></div><div style="font-size:10px;color:var(--text-muted);">'+m.scanTime+'</div></div>').join("")+'</div>').join("");
-  regWrap.querySelectorAll(".reg-chk").forEach(c=>c.onchange=(e)=>{if(e.target.checked)STATE.selectedRegSet.add(e.target.dataset.id);else STATE.selectedRegSet.delete(e.target.dataset.id);});
+    <section id="pane-attendance" class="tab-pane active">
+      <div class="card">
+        <div class="card-title">&#x1F4F7; 1. DA Attendance Scan</div>
+        <button class="btn-scan" id="btn-cam-toggle">📸 START SCANNER</button>
+        <div id="cam-box-att" class="cam-box"><div id="qr-reader-att"></div></div>
+        <input type="text" id="inp-checkin" class="input" placeholder="Search DA Name / ID to Check-In..." autocomplete="off">
+        <div id="sugg-checkin" class="sugg-box"></div>
+      </div>
+      <div class="card" style="border-color: var(--accent-blue);">
+        <div class="card-title" style="color:var(--accent-blue);">&#x1F501; 2. Replacement DA</div>
+        <select id="sel-absent-driver" class="input"><option value="">-- Select Absent Driver --</option></select>
+        <input type="text" id="inp-custom-repl" class="input" placeholder="Enter Replacement (NAME - ID)">
+        <button class="btn" id="btn-confirm-replacement" style="width:100%;">Assign Replacement DA</button>
+      </div>
+    </section>
 
-  // Sent list (pending Rush Queue scan)
-  document.getElementById("pending-arrival-list").innerHTML=STATE.pendingArrivals.length?STATE.pendingArrivals.map(p=>'<div class="da-item" style="padding:8px;border-left:4px solid var(--warn);"><div><div class="da-name">'+p.daName+'</div><div class="da-sub">YM: '+(p.marshalName||"—")+' · Slip: '+(p.slipNumber||"—")+' · Sent: '+(p.sentTime||"—")+'</div></div><span class="status-sent">SENT</span></div>').join(""):'<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:12px;">No DAs pending arrival</div>';
+    <section id="pane-batches" class="tab-pane">
+      <div class="card" style="border-color: var(--success);">
+        <div class="card-title" style="color:var(--success);">📥 Add to Waiting List (Turn 2+)</div>
+        <button class="btn-scan" id="btn-cam-waiting-toggle" style="background:var(--success); color:#fff;">📸 SCAN TO WAITING</button>
+        <div id="cam-box-waiting" class="cam-box"><div id="qr-reader-wait"></div></div>
+        <input type="text" id="inp-requeue-da" class="input" placeholder="Type DA ID to add..." autocomplete="off">
+        <div id="sugg-requeue" class="sugg-box"></div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div class="card-title" style="margin:0;">📦 Active Batches</div>
+          <button class="btn" id="btn-reg-send-selected">Send Selected</button>
+        </div>
+        <div id="regular-batches-container"></div>
+      </div>
+    </section>
 
-  // Received list
-  document.getElementById("received-list").innerHTML=STATE.receivedList.length?STATE.receivedList.map(r=>'<div class="da-item" style="padding:8px;border-left:4px solid var(--success);"><div><div class="da-name">'+r.daName+'</div><div class="da-sub">Scan IN: '+(r.time||"—")+(r.tokenNumber?" · Token: "+r.tokenNumber:"")+'</div></div><span class="status-recv">RECEIVED</span></div>').join(""):'<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:12px;">No DAs received yet</div>';
+    <section id="pane-bridge" class="tab-pane">
+      <div class="card">
+        <div class="card-title">⏱️ Sent to OP (Pending Arrival)</div>
+        <div id="pending-arrival-list" class="da-list"></div>
+      </div>
+    </section>
 
-  // OFD list
-  document.getElementById("ofd-list").innerHTML=STATE.ofdList.length?STATE.ofdList.map(o=>'<div class="da-item" style="padding:8px;border-left:4px solid var(--ofd-purple);"><div><div class="da-name">'+o.daName+'</div><div class="da-sub">OFD: '+(o.time||"—")+'</div></div><span class="status-ofd">🚚 OFD</span></div>').join(""):'<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:12px;">No DAs dispatched yet</div>';
+    <!-- പുതിയ ENTRY ലിസ്റ്റ് ടാബ് -->
+    <section id="pane-entry" class="tab-pane">
+      <div class="card" style="border-color: var(--success);">
+        <div class="card-title" style="color:var(--success);">✅ ENTRY LIST (Received Inside)</div>
+        <div id="entry-list-container" class="da-list"></div>
+      </div>
+    </section>
 
-  saveState();
-}
+    <section id="pane-settings" class="tab-pane">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div class="card-title" style="margin:0;">⚙️ Admin Settings</div>
+          <button class="btn btn-danger" id="btn-reset-day" style="padding:6px 10px;">RESET DAY</button>
+        </div>
+        <!-- പുതിയ Ghost Scanner ബട്ടൺ -->
+        <button class="btn-scan" id="btn-launch-ghost" style="margin-bottom:15px;">Launch Ghost Scanner Overlay</button>
+        
+        <label style="font-size:11px; color:var(--text-muted);">Apps Script Web App URL (/exec)</label>
+        <input type="text" id="set-api-url" class="input" placeholder="https://script.google.com/macros/s/..." style="margin-bottom:10px;">
+        <label style="font-size:11px; color:var(--text-muted);">Google Sheet URL</label>
+        <input type="text" id="set-sheet-url" class="input" placeholder="https://docs.google.com/spreadsheets/d/..." style="margin-bottom:15px;">
+        <div style="display:flex;gap:10px;margin-bottom:10px;">
+          <div style="flex:1"><label style="font-size:11px; color:var(--text-muted);">Pre-Wave Block (min)</label><input type="number" id="set-pre-block" class="input"></div>
+          <div style="flex:1"><label style="font-size:11px; color:var(--text-muted);">Wave Grace (min)</label><input type="number" id="set-wave-grace" class="input"></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:15px;">
+          <div style="flex:1"><label style="font-size:11px; color:var(--text-muted);">Batch Size</label><input type="number" id="set-batch-size" class="input"></div>
+        </div>
+        <button class="btn" id="btn-save-settings" style="width:100%; background:var(--accent-orange); color:#000;">Save Settings & Sync Globally</button>
+      </div>
+    </section>
+  </main>
 
-// ============ FUZZY SEARCH ============
-function bindFuzzySearch(inputId,suggId,onPick){
-  const inp=document.getElementById(inputId);const box=document.getElementById(suggId);
-  inp.addEventListener("input",()=>{
-    const q=inp.value.trim().toLowerCase();if(q.length<2){box.style.display="none";return;}
-    const matches=STATE.roster.filter(r=>r.daName.toLowerCase().includes(q)||r.daId.toLowerCase().includes(q)).slice(0,5);
-    if(!matches.length){box.style.display="none";return;}
-    box.innerHTML=matches.map(m=>'<div class="sugg-item" data-id="'+m.daId+'">'+m.daName+' <br><span style="font-size:10px;color:var(--text-muted)">'+m.daId+'</span></div>').join("");
-    box.style.display="block";box.querySelectorAll(".sugg-item").forEach(row=>row.onclick=()=>{onPick(row.getAttribute("data-id"));inp.value="";box.style.display="none";});
-  });
-  inp.addEventListener("keydown",(e)=>{if(e.key==="Enter"&&inp.value.trim()){onPick(inp.value.trim());inp.value="";box.style.display="none";}});
-}
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-target="pane-attendance"><svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg><span>Attendance</span></button>
+    <button class="nav-item" data-target="pane-batches"><svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg><span>Waiting</span></button>
+    <button class="nav-item" data-target="pane-bridge"><svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg><span>Sent</span></button>
+    <button class="nav-item" data-target="pane-entry"><svg viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg><span>Entry</span></button>
+    <button class="nav-item" id="nav-settings" data-target="pane-settings"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58z"/></svg><span>Settings</span></button>
+  </nav>
 
-// ============ DOM READY ============
-window.addEventListener("DOMContentLoaded",()=>{
-  loadState();updateSettingsUI();
+  <script>
+    const CONST_API_URL = "https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec"; 
+    const CONST_SHEET_URL = "https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit"; 
+    
+    const manifestJSON = { "name": "DUD3 Rush PRO", "short_name": "DUD3 Rush", "start_url": window.location.href, "display": "standalone", "background_color": "#131A22", "theme_color": "#FF9900", "icons": [{"src": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Barcode_scanner_icon.svg/512px-Barcode_scanner_icon.svg.png", "sizes": "512x512", "type": "image/png"}] };
+    const manifestBlob = new Blob([JSON.stringify(manifestJSON)], {type: 'application/json'});
+    document.getElementById('manifest-link').href = URL.createObjectURL(manifestBlob);
 
-  // NAV TABS
-  document.querySelectorAll(".nav-item").forEach(btn=>{
-    btn.onclick=()=>{
-      const target=btn.getAttribute("data-target");
-      if(target==="pane-settings"&&!isAdmin){const pin=prompt("Enter Admin PIN:");if(pin!=="[PIN]")return showTopBanner("Access denied.","danger");isAdmin=true;}
-      document.querySelectorAll(".nav-item,.tab-pane").forEach(el=>el.classList.remove("active"));
-      btn.classList.add("active");document.getElementById(target).classList.add("active");
-    };
-  });
+    const STORAGE_KEY = "DUD3_RUSH_PRO_FINAL";
+    let isAdmin = !(/Mobi|Android|iPhone/i.test(navigator.userAgent));
+    let STATE = { apiUrl: CONST_API_URL, sheetUrl: CONST_SHEET_URL, selectedDateTab: getTodayTabString(), availableTabs: getRecentDateTabs(), settings: { waveGraceMin: 10, preWaveBlockMin: 30, batchSize: 25 }, roster: [], batches: [], pendingArrivals: [], receivedList: [], selectedRegSet: new Set() };
 
-  // DATE SELECT
-  document.getElementById("date-tab-select").onchange=(e)=>{STATE.selectedDateTab=e.target.value;STATE.batches=[];STATE.pendingArrivals=[];STATE.receivedList=[];STATE.ofdList=[];syncWithGoogleSheets("rosterFull");};
+    function getTodayTabString() { const d = new Date(); const m = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]; return ("0" + d.getDate()).slice(-2) + " " + m[d.getMonth()]; }
+    function getRecentDateTabs() { const tabs = []; const m = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]; for (let offset = -2; offset <= 2; offset++) { const d = new Date(); d.setDate(d.getDate() + offset); tabs.push(("0" + d.getDate()).slice(-2) + " " + m[d.getMonth()]); } return tabs; }
+    function nowHHMM() { const d = new Date(); return ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2); }
+    function parseHHMMToMinutes(str) { if (!str) return null; const m = String(str).trim().match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i); if (!m) return null; let hr = parseInt(m[1], 10); const mn = parseInt(m[2], 10); const ap = m[3] ? m[3].toUpperCase() : null; if (ap === "PM" && hr < 12) hr += 12; if (ap === "AM" && hr === 12) hr = 0; return hr * 60 + mn; }
 
-  // RESET DAY
-  document.getElementById("btn-reset-day").onclick=()=>{if(confirm("Reset the app for a new day?")){STATE.selectedDateTab=getTodayTabString();syncWithGoogleSheets("resetDay");showTopBanner("Reset Success","success");}};
+    let bannerTimer = null;
+    function showTopBanner(msg, variant = "success") { const el = document.getElementById("top-alert-banner"); document.getElementById("top-alert-text").textContent = msg; el.className = "show banner-" + variant; if (bannerTimer) clearTimeout(bannerTimer); bannerTimer = setTimeout(() => { el.className = ""; }, 4000); }
+    window.hideTopBanner = function() { document.getElementById("top-alert-banner").className = ""; };
 
-  // SAVE SETTINGS
-  document.getElementById("btn-save-settings").onclick=()=>{
-    STATE.apiUrl=document.getElementById("set-api-url").value.trim();STATE.sheetUrl=document.getElementById("set-sheet-url").value.trim();
-    STATE.settings.preWaveBlockMin=Number(document.getElementById("set-pre-block").value);STATE.settings.waveGraceMin=Number(document.getElementById("set-wave-grace").value);STATE.settings.batchSize=Number(document.getElementById("set-batch-size").value);
-    saveState();syncWithGoogleSheets("saveSettings");showTopBanner("Global Settings Saved","success");
-  };
+    function saveState() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(Object.assign({}, STATE, { selectedRegSet: Array.from(STATE.selectedRegSet) }))); } catch (e) {} }
+    
+    function loadState() {
+      try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) { const parsed = JSON.parse(raw); STATE = Object.assign(STATE, parsed); STATE.selectedRegSet = new Set(parsed.selectedRegSet || []); } } catch (e) {}
+      STATE.apiUrl = CONST_API_URL; STATE.sheetUrl = CONST_SHEET_URL; 
+    }
 
-  // SEND SELECTED — Now with Slip + YM Name
-  document.getElementById("btn-reg-send-selected").onclick=()=>{
-    const ymName=document.getElementById("inp-ym-name").value.trim();
-    if(!ymName)return showTopBanner("Enter Yard Marshal name first!","warn");
-    const sentIds=[];
-    STATE.batches.forEach(b=>{b.members.forEach(m=>{if(!m.sent&&STATE.selectedRegSet.has(m.daId))sentIds.push(m.daId);});});
-    if(sentIds.length===0)return showTopBanner("Select DAs to send","warn");
-    syncWithGoogleSheets("sendDA",{ids:sentIds,marshalName:ymName});
-    showTopBanner("Sending "+sentIds.length+" DAs...","success");
-  };
+    function updateSettingsUI() {
+       document.getElementById("set-api-url").value = STATE.apiUrl || ""; document.getElementById("set-sheet-url").value = STATE.sheetUrl || "";
+       document.getElementById("set-pre-block").value = STATE.settings.preWaveBlockMin || 30; document.getElementById("set-wave-grace").value = STATE.settings.waveGraceMin || 10; document.getElementById("set-batch-size").value = STATE.settings.batchSize || 25;
+    }
 
-  // REPLACEMENT
-  document.getElementById("btn-confirm-replacement").onclick=()=>{
-    const origId=document.getElementById("sel-absent-driver").value;const replStr=document.getElementById("inp-custom-repl").value.trim();
-    if(!origId||!replStr)return showTopBanner("Select DA and enter info.","warn");
-    const da=STATE.roster.find(r=>r.daId===origId);
-    if(da){da.status="Replacement Present";showTopBanner("Replacement Assigned","success");renderAll();syncWithGoogleSheets("assignReplacement",{rowIndex:da.rowIndex,replacementText:replStr});document.getElementById("inp-custom-repl").value="";}
-  };
+    function syncWithGoogleSheets(action = "rosterFull", payload = {}) {
+      saveState();
+      const pill = document.getElementById("sync-status-pill");
+      if (!STATE.apiUrl) { pill.className = "status-pill offline"; pill.textContent = "OFFLINE"; return; }
+      if(action === "rosterFull" || action === "saveSettings" || action === "resetDay") { pill.textContent = "SYNCING..."; pill.className = "status-pill offline"; }
 
-  // RUSH QUEUE BUTTONS
-  document.getElementById("btn-rush-scanin").onclick=rushScanIn;
-  document.getElementById("btn-rush-scanout").onclick=rushScanOut;
+      payload.action = action; payload.sheetUrl = STATE.sheetUrl; payload.dayTab = STATE.selectedDateTab;
+      if(action === "saveSettings") payload.settings = STATE.settings;
+      
+      fetch(STATE.apiUrl, { method: "POST", body: JSON.stringify(payload) })
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.success) {
+          pill.className = "status-pill online"; pill.textContent = "SYNCED";
+          if (data.settings) { STATE.settings = data.settings; updateSettingsUI(); }
+          if (action === "rosterFull" || action === "resetDay") {
+            STATE.roster = data.roster || []; if(action === "resetDay") { STATE.batches = []; STATE.pendingArrivals = []; STATE.receivedList = []; STATE.selectedRegSet.clear(); } renderAll();
+          } else if (action === "syncOnly" && data.roster) {
+             data.roster.forEach(serverDA => {
+                let localDA = STATE.roster.find(r => r.daId === serverDA.daId);
+                if(localDA && serverDA.status === "Received" && localDA.status !== "Received") { 
+                    localDA.status = "Received"; 
+                    STATE.pendingArrivals = STATE.pendingArrivals.filter(p => p.daId !== localDA.daId); 
+                    if(!STATE.receivedList.find(rl => rl.daId === localDA.daId)) STATE.receivedList.push({daId: localDA.daId, daName: localDA.daName});
+                }
+             });
+             renderAll();
+          }
+        } else if (data && data.success === false && data.errors) {
+            // സ്കാൻ ചെയ്യുമ്പോൾ 'Sent' ലിസ്റ്റിൽ ഇല്ലാത്തതിൻ്റെ എറർ (RED Notification)
+            showTopBanner("⚠️ " + data.errors[0], "danger");
+        }
+      }).catch(() => { pill.className = "status-pill offline"; pill.textContent = "OFFLINE"; });
+    }
 
-  // RUSH QUEUE — ENTER KEY defaults to Scan IN
-  document.getElementById("rush-scan-input").addEventListener("keydown",function(e){
-    if(e.key==="Enter"){e.preventDefault();rushScanIn();}
-  });
+    function enforceWaveTimeAutoAbsent() {
+      const now = new Date(); const curMin = now.getHours() * 60 + now.getMinutes(); const grace = Number(STATE.settings.waveGraceMin) || 10; let newlyAbsentIds = [];
+      STATE.roster.forEach(da => { if (!da.status) { const wMin = parseHHMMToMinutes(da.waveTime); if (wMin !== null && curMin > (wMin + grace)) { da.status = "Absent"; newlyAbsentIds.push(da.daId); } } });
+      if (newlyAbsentIds.length > 0) { renderAll(); syncWithGoogleSheets("markAbsent", { ids: newlyAbsentIds }); }
+    }
 
-  // QR SCANNERS
-  let qrAtt=null,qrWait=null;
-  document.getElementById("btn-cam-toggle").onclick=()=>{
-    const box=document.getElementById("cam-box-att");
-    if(box.style.display==="block"){box.style.display="none";if(qrAtt)qrAtt.stop();}
-    else{box.style.display="block";qrAtt=new Html5Qrcode("qr-reader-att");qrAtt.start({facingMode:"environment"},{fps:10},t=>{recordDriverCheckIn(t,false);qrAtt.stop();box.style.display="none";});}
-  };
-  document.getElementById("btn-cam-waiting-toggle").onclick=()=>{
-    const box=document.getElementById("cam-box-waiting");
-    if(box.style.display==="block"){box.style.display="none";if(qrWait)qrWait.stop();}
-    else{box.style.display="block";qrWait=new Html5Qrcode("qr-reader-wait");qrWait.start({facingMode:"environment"},{fps:10},t=>{recordDriverCheckIn(t,true);qrWait.stop();box.style.display="none";});}
-  };
+    function recordDriverCheckIn(inputToken, isDirectToWaiting = false) {
+      const clean = String(inputToken || "").trim().toLowerCase(); if (!clean) return;
+      const da = STATE.roster.find(r => (r.daId && r.daId.toLowerCase().includes(clean)) || (r.repDaId && r.repDaId.toLowerCase().includes(clean)) || (r.daName && r.daName.toLowerCase().includes(clean)));
+      if (!da) return showTopBanner(`DA Not Found: "${inputToken}"`, "danger");
 
-  // FUZZY SEARCH BINDINGS
-  bindFuzzySearch("inp-checkin","sugg-checkin",val=>recordDriverCheckIn(val,false));
-  bindFuzzySearch("inp-requeue-da","sugg-requeue",val=>recordDriverCheckIn(val,true));
+      if (!da.scanTime) da.scanTime = nowHHMM();
+      let assignedStatus = "Present";
+      
+      if (!isDirectToWaiting) {
+        const wMin = parseHHMMToMinutes(da.waveTime); const curMin = (new Date()).getHours() * 60 + (new Date()).getMinutes();
+        const preBlock = Number(STATE.settings.preWaveBlockMin) || 30; const grace = Number(STATE.settings.waveGraceMin) || 10;
+        if (wMin !== null) { if (curMin < (wMin - preBlock)) return showTopBanner(`Too Early! (${da.waveTime})`, "warn"); if (curMin > (wMin + grace) || da.status === "Absent") assignedStatus = "Late Arrival"; }
+        da.status = assignedStatus;
+      }
+      
+      const bId = enqueueDriverIntoStrictBatch(da);
+      showTopBanner(`${isDirectToWaiting ? 'Waiting List' : assignedStatus}: ${da.daName} -> Batch ${bId}`, "success");
+      renderAll(); syncWithGoogleSheets("recordCheckIn", { daId: da.daId, daName: da.daName, sentStatus: assignedStatus, isWaiting: isDirectToWaiting });
+    }
 
-  // Save YM name locally
-  const savedYM=localStorage.getItem("dud3_ym_name");
-  if(savedYM)document.getElementById("inp-ym-name").value=savedYM;
-  document.getElementById("inp-ym-name").addEventListener("change",function(){localStorage.setItem("dud3_ym_name",this.value);});
+    function enqueueDriverIntoStrictBatch(da) {
+      const cap = Number(STATE.settings.batchSize) || 25; let targetBatchObj = null;
+      if (da.originalBatchId) targetBatchObj = STATE.batches.find(b => b.batchId === da.originalBatchId);
+      if (!targetBatchObj) targetBatchObj = STATE.batches.find(b => !b.completed && b.members.length < cap && !b.hasSentMembers);
+      if (!targetBatchObj) { targetBatchObj = { batchId: STATE.batches.length + 1, completed: false, hasSentMembers: false, members: [] }; STATE.batches.push(targetBatchObj); }
+      da.originalBatchId = targetBatchObj.batchId; const activeId = da.repDaId || da.daId;
+      if (!targetBatchObj.members.find(m => m.daId.toLowerCase() === activeId.toLowerCase())) { targetBatchObj.members.push({ daId: activeId, daName: da.daName, batchId: targetBatchObj.batchId, scanTime: da.scanTime || nowHHMM(), sent: false }); }
+      return targetBatchObj.batchId;
+    }
 
-  // AUTO-SYNC & TIMERS
-  setInterval(enforceWaveTimeAutoAbsent,30000);
-  setInterval(()=>{syncWithGoogleSheets("syncOnly");},3000);
-  syncWithGoogleSheets("rosterFull");
-});
+    function renderAll() {
+      let cPresent = 0, cLate = 0, cRepl = 0, cAbsent = 0, cWait = 0, cSent = STATE.pendingArrivals.length, cRecv = 0;
+      STATE.roster.forEach(r => { if (r.status === "Present") cPresent++; if (r.status === "Late Arrival") cLate++; if (r.status === "Replacement Present") cRepl++; if (r.status === "Absent") cAbsent++; if (r.status === "Received") cRecv++; });
+      STATE.batches.forEach(b => { if(!b.completed) cWait += b.members.filter(m=>!m.sent).length; });
 
-``
+      document.getElementById("kpi-present").textContent = cPresent; document.getElementById("kpi-late").textContent = cLate; document.getElementById("kpi-repl").textContent = cRepl; document.getElementById("kpi-absent").textContent = cAbsent; document.getElementById("kpi-waiting").textContent = cWait; document.getElementById("kpi-sent").textContent = cSent; document.getElementById("kpi-received").textContent = cRecv;
+      const sel = document.getElementById("date-tab-select"); if (!STATE.availableTabs.includes(STATE.selectedDateTab)) STATE.availableTabs.push(STATE.selectedDateTab);
+      sel.innerHTML = STATE.availableTabs.map(t => `<option value="${t}" ${t === STATE.selectedDateTab ? "selected" : ""}>${t}</option>`).join("");
+      
+      const absentDAs = STATE.roster.filter(r => r.status === "Absent");
+      document.getElementById("sel-absent-driver").innerHTML = `<option value="">-- Select Absent Driver --</option>` + absentDAs.map(d => `<option value="${d.daId}">${d.daName}</option>`).join("");
+      const regWrap = document.getElementById("regular-batches-container");
+      regWrap.innerHTML = STATE.batches.filter(b => !b.completed && b.members.some(m => !m.sent)).map(b => `<div style="border:1px solid var(--border); border-radius:8px; padding:10px; margin-bottom:10px; background:var(--bg-primary);"><strong>Batch ${b.batchId}</strong>${b.members.filter(m => !m.sent).map(m => `<div class="da-item" style="margin-top:5px; padding:8px;"><div><input type="checkbox" class="chk reg-chk" data-id="${m.daId}" ${STATE.selectedRegSet.has(m.daId)?"checked":""}> <span style="font-size:12px;font-weight:bold;margin-left:5px;">${m.daName}</span></div></div>`).join("")}</div>`).join("");
+      regWrap.querySelectorAll(".reg-chk").forEach(c => c.onchange = (e) => { if (e.target.checked) STATE.selectedRegSet.add(e.target.dataset.id); else STATE.selectedRegSet.delete(e.target.dataset.id); });
+      
+      // Sent & Entry Lists
+      document.getElementById("pending-arrival-list").innerHTML = STATE.pendingArrivals.map(p => `<div class="da-item" style="padding:8px;"><div class="da-name">${p.daName}</div></div>`).join("");
+      document.getElementById("entry-list-container").innerHTML = STATE.receivedList.map(e => `<div class="da-item" style="padding:8px; border-left:4px solid var(--success);"><div class="da-name">${e.daName}</div><div class="da-sub">Checked-In</div></div>`).join("");
+    }
+
+    function bindFuzzySearch(inputId, suggId, onPick) {
+      const inp = document.getElementById(inputId); const box = document.getElementById(suggId);
+      inp.addEventListener("input", () => {
+        const q = inp.value.trim().toLowerCase(); if (q.length < 2) { box.style.display = "none"; return; }
+        const matches = STATE.roster.filter(r => r.daName.toLowerCase().includes(q) || r.daId.toLowerCase().includes(q)).slice(0, 5);
+        if (!matches.length) { box.style.display = "none"; return; }
+        box.innerHTML = matches.map(m => `<div class="sugg-item" data-id="${m.daId}">${m.daName} <br><span style="font-size:10px;color:var(--text-muted)">${m.daId}</span></div>`).join("");
+        box.style.display = "block"; box.querySelectorAll(".sugg-item").forEach(row => row.onclick = () => { onPick(row.getAttribute("data-id")); inp.value = ""; box.style.display = "none"; });
+      });
+      inp.addEventListener("keydown", (e) => { if (e.key === "Enter" && inp.value.trim()) { onPick(inp.value.trim()); inp.value = ""; box.style.display = "none"; } });
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      loadState(); updateSettingsUI();
+      document.querySelectorAll(".nav-item").forEach(btn => {
+        btn.onclick = () => {
+          const target = btn.getAttribute("data-target");
+          if (target === "pane-settings" && !isAdmin) { const pin = prompt("Enter Admin PIN:"); if (pin !== "1234") return showTopBanner("Access denied.", "danger"); isAdmin = true; }
+          document.querySelectorAll(".nav-item, .tab-pane").forEach(el => el.classList.remove("active"));
+          btn.classList.add("active"); document.getElementById(target).classList.add("active");
+        };
+      });
+      document.getElementById("date-tab-select").onchange = (e) => { STATE.selectedDateTab = e.target.value; STATE.batches = []; STATE.pendingArrivals = []; STATE.receivedList = []; syncWithGoogleSheets("rosterFull"); };
+      document.getElementById("btn-reset-day").onclick = () => { if(confirm("Reset the app for a new day?")) { STATE.selectedDateTab = getTodayTabString(); syncWithGoogleSheets("resetDay"); showTopBanner("Reset Success", "success"); } };
+      document.getElementById("btn-save-settings").onclick = () => { STATE.apiUrl = document.getElementById("set-api-url").value.trim(); STATE.sheetUrl = document.getElementById("set-sheet-url").value.trim(); STATE.settings.preWaveBlockMin = Number(document.getElementById("set-pre-block").value); STATE.settings.waveGraceMin = Number(document.getElementById("set-wave-grace").value); STATE.settings.batchSize = Number(document.getElementById("set-batch-size").value); saveState(); syncWithGoogleSheets("saveSettings"); showTopBanner("Global Settings Saved", "success"); };
+      
+      document.getElementById("btn-reg-send-selected").onclick = () => { 
+          let sentIds = []; 
+          STATE.batches.forEach(b => { 
+              let sentFromThisBatch = false; 
+              b.members.forEach(m => { 
+                  if(!m.sent && STATE.selectedRegSet.has(m.daId)) { 
+                      m.sent = true; sentFromThisBatch = true; 
+                      STATE.pendingArrivals.push({ daId: m.daId, daName: m.daName }); 
+                      sentIds.push(m.daId); 
+                  } 
+              }); 
+              if(sentFromThisBatch) b.hasSentMembers = true; 
+          }); 
+          STATE.selectedRegSet.clear(); renderAll(); showTopBanner("Sent to OP", "success"); 
+          if(sentIds.length > 0) syncWithGoogleSheets("logEvent", { ids: sentIds, action: "Sent to OP Waiting List" }); 
+      };
+
+      document.getElementById("btn-confirm-replacement").onclick = () => { const origId = document.getElementById("sel-absent-driver").value; const replStr = document.getElementById("inp-custom-repl").value.trim(); if (!origId || !replStr) return showTopBanner("Select DA and enter info.", "warn"); const da = STATE.roster.find(r => r.daId === origId); if(da) { da.status = "Replacement Present"; showTopBanner(`Replacement Assigned`, "success"); renderAll(); syncWithGoogleSheets("assignReplacement", { rowIndex: da.rowIndex, replacementText: replStr }); document.getElementById("inp-custom-repl").value = ""; } };
+      
+      let qrAtt = null, qrWait = null;
+      document.getElementById("btn-cam-toggle").onclick = () => { const box = document.getElementById("cam-box-att"); if (box.style.display === "block") { box.style.display = "none"; if(qrAtt) qrAtt.stop(); } else { box.style.display = "block"; qrAtt = new Html5Qrcode("qr-reader-att"); qrAtt.start({facingMode:"environment"}, {fps:10}, t => { recordDriverCheckIn(t, false); qrAtt.stop(); box.style.display="none"; }); } };
+      document.getElementById("btn-cam-waiting-toggle").onclick = () => { const box = document.getElementById("cam-box-waiting"); if (box.style.display === "block") { box.style.display = "none"; if(qrWait) qrWait.stop(); } else { box.style.display = "block"; qrWait = new Html5Qrcode("qr-reader-wait"); qrWait.start({facingMode:"environment"}, {fps:10}, t => { recordDriverCheckIn(t, true); qrWait.stop(); box.style.display="none"; }); } };
+      bindFuzzySearch("inp-checkin", "sugg-checkin", val => recordDriverCheckIn(val, false)); bindFuzzySearch("inp-requeue-da", "sugg-requeue", val => recordDriverCheckIn(val, true));
+      
+      // Ghost Overlay Logic
+      const overlayBox = document.getElementById('ghost-overlay-container');
+      const ghostInput = document.getElementById('ghost-overlay-input');
+      
+      document.getElementById('btn-launch-ghost').onclick = () => {
+          overlayBox.style.display = 'flex';
+          ghostInput.focus();
+      };
+
+      let isDragging = false, offsetX, offsetY;
+      overlayBox.addEventListener('mousedown', (e) => {
+          if (e.target === ghostInput) return;
+          isDragging = true;
+          offsetX = e.clientX - overlayBox.getBoundingClientRect().left;
+          offsetY = e.clientY - overlayBox.getBoundingClientRect().top;
+          overlayBox.style.cursor = 'grabbing';
+      });
+      document.addEventListener('mousemove', (e) => {
+          if (!isDragging) return;
+          overlayBox.style.left = (e.clientX - offsetX + 160) + 'px'; 
+          overlayBox.style.top = (e.clientY - offsetY) + 'px';
+          overlayBox.style.transform = 'none';
+      });
+      document.addEventListener('mouseup', () => {
+          isDragging = false;
+          overlayBox.style.cursor = 'grab';
+      });
+
+      ghostInput.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') {
+              e.preventDefault();
+              const daId = ghostInput.value.trim().toUpperCase();
+              if (daId.length >= 10) {
+                  // ഡാറ്റ ഷീറ്റിലേക്ക് അയക്കുന്നു
+                  syncWithGoogleSheets('queueReceived', { ids: [daId] });
+              }
+              ghostInput.value = '';
+          }
+      });
+
+      setInterval(enforceWaveTimeAutoAbsent, 30000);
+      setInterval(() => { syncWithGoogleSheets("syncOnly"); }, 3000); 
+      syncWithGoogleSheets("rosterFull"); 
+    });
+  </script>
+</body>
+</html>
