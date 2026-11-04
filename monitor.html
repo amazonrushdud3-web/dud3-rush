@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>⚡ Rush Pro Monitor — DUD3</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #0d1117;
+    color: #fff;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* === HEADER === */
+  .hdr {
+    background: linear-gradient(135deg, #1a2332 0%, #0d1922 100%);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #1e3a5f;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .hdr-left { display: flex; align-items: center; gap: 8px; }
+  .hdr-bolt { color: #f5a623; font-size: 22px; }
+  .hdr h1 { font-size: 16px; font-weight: 700; }
+  .hdr-station {
+    font-size: 10px; background: #f5a623; color: #000;
+    padding: 2px 8px; border-radius: 10px; font-weight: 700;
+  }
+  .hdr-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #4caf50; animation: blink 1.5s infinite;
+  }
+  .hdr-dot.off { background: #ef5350; animation: none; }
+  .hdr-dot.wait { background: #ffa726; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  .lm-btn {
+    background: #1a73e8; color: #fff; border: none;
+    padding: 8px 14px; border-radius: 8px; font-size: 11px;
+    font-weight: 700; cursor: pointer; text-decoration: none;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .lm-btn:hover { background: #1557b0; }
+
+  /* === STATS BAR === */
+  .stats {
+    display: flex; background: #141d2b;
+    border-bottom: 1px solid #1e3a5f;
+  }
+  .stat {
+    flex: 1; text-align: center; padding: 14px 8px;
+    border-right: 1px solid #1e3a5f;
+  }
+  .stat:last-child { border-right: none; }
+  .stat-v { font-size: 28px; font-weight: 800; }
+  .stat-v.g { color: #66bb6a; }
+  .stat-v.r { color: #ef5350; }
+  .stat-v.y { color: #ffa726; }
+  .stat-v.b { color: #42a5f5; }
+  .stat-l {
+    font-size: 9px; color: #6b8299; text-transform: uppercase;
+    letter-spacing: .8px; margin-top: 4px;
+  }
+
+  /* === BANNER NOTIFICATIONS === */
+  .ban-area { padding: 8px 12px 0; }
+  .ban {
+    padding: 12px 14px; border-radius: 10px; margin-bottom: 8px;
+    display: none; animation: slideIn .3s ease-out;
+    box-shadow: 0 3px 12px rgba(0,0,0,.3);
+  }
+  .ban.on { display: block; }
+  .ban.red { background: #d32f2f; }
+  .ban.grn { background: #2e7d32; }
+  .ban-top { display: flex; align-items: center; justify-content: space-between; }
+  .ban-ico { font-size: 17px; margin-right: 6px; }
+  .ban-ttl { font-weight: 700; font-size: 13px; }
+  .ban-cnt {
+    background: rgba(255,255,255,.2); font-size: 10px; font-weight: 700;
+    padding: 2px 7px; border-radius: 8px; margin-left: 6px;
+  }
+  .ban-msg { font-size: 11.5px; margin-top: 4px; opacity: .92; line-height: 1.45; }
+  .ban-x {
+    background: rgba(255,255,255,.15); border: none; color: #fff;
+    font-size: 13px; cursor: pointer; border-radius: 50%;
+    width: 22px; height: 22px; display: flex;
+    align-items: center; justify-content: center;
+  }
+  .ban-x:hover { background: rgba(255,255,255,.3); }
+  .ban-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+  .ban-chip {
+    background: rgba(255,255,255,.18); font-size: 10.5px;
+    font-weight: 600; padding: 3px 8px; border-radius: 8px;
+  }
+  @keyframes slideIn {
+    from { opacity:0; transform:translateY(-6px); }
+    to { opacity:1; transform:translateY(0); }
+  }
+
+  /* === TABS === */
+  .tabs {
+    display: flex; background: #141d2b;
+    border-bottom: 1px solid #1e3a5f;
+    margin-top: 4px;
+  }
+  .tab {
+    flex: 1; text-align: center; padding: 12px;
+    font-size: 12px; font-weight: 600; color: #6b8299;
+    cursor: pointer; border-bottom: 3px solid transparent;
+    transition: .2s;
+  }
+  .tab.act { color: #fff; border-bottom-color: #f5a623; }
+  .tab .tcnt {
+    background: #ef5350; color: #fff; font-size: 9px;
+    padding: 1px 5px; border-radius: 8px; margin-left: 3px;
+  }
+  .tab .tcnt.zero { background: #2e7d32; }
+
+  /* === TAB BODIES === */
+  .tbody { display: none; }
+  .tbody.act { display: block; }
+
+  /* === LIVE FEED === */
+  .feed-item {
+    padding: 12px 16px; border-bottom: 1px solid #1a2536;
+    display: flex; align-items: center; justify-content: space-between;
+    animation: fadeIn .3s ease-out;
+  }
+  .feed-item:hover { background: #141d2b; }
+  .fi-left { display: flex; align-items: center; gap: 10px; }
+  .fi-icon {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  .fi-icon.sent { background: #1a3a2a; }
+  .fi-icon.recv { background: #1a2a3a; }
+  .fi-icon.viol { background: #3a1a1a; }
+  .fi-icon.ofd { background: #2a2a1a; }
+  .fi-nm { font-weight: 600; font-size: 13px; color: #e0e0e0; }
+  .fi-sub { font-size: 10.5px; color: #6b8299; margin-top: 1px; }
+  .fi-time { font-size: 11px; color: #6b8299; white-space: nowrap; }
+  .fi-tag {
+    font-size: 9px; font-weight: 600; padding: 2px 7px;
+    border-radius: 7px; margin-top: 3px; display: inline-block;
+  }
+  .fi-tag.byp { background: #3a1a1a; color: #ef5350; }
+  .fi-tag.tmo { background: #1a1a3a; color: #7986cb; }
+  .fi-tag.ok { background: #1a3a2a; color: #66bb6a; }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+  /* === VIOLATOR LIST === */
+  .vi {
+    padding: 12px 16px; border-bottom: 1px solid #1a2536;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .vi:hover { background: #141d2b; }
+  .vi-nm { font-weight: 600; font-size: 13px; color: #e0e0e0; }
+  .vi-sub { font-size: 10.5px; color: #6b8299; margin-top: 1px; }
+  .vi-rm {
+    background: transparent; border: 1.5px solid #ef5350; color: #ef5350;
+    padding: 5px 12px; border-radius: 6px; font-size: 10px;
+    font-weight: 600; cursor: pointer; white-space: nowrap;
+  }
+  .vi-rm:hover { background: #ef5350; color: #fff; }
+
+  .empty {
+    text-align: center; padding: 50px 20px;
+    color: #4a5568; font-size: 13px;
+  }
+  .empty-ico { font-size: 40px; margin-bottom: 10px; }
+
+  /* === SETUP SCREEN === */
+  .setup {
+    padding: 30px 20px; text-align: center;
+    display: none;
+  }
+  .setup.on { display: block; }
+  .setup h2 { font-size: 18px; margin-bottom: 8px; }
+  .setup p { font-size: 12px; color: #6b8299; margin-bottom: 20px; }
+  .setup input {
+    width: 100%; padding: 12px; border-radius: 8px;
+    border: 1px solid #2a3a4a; background: #141d2b;
+    color: #fff; font-size: 13px; margin-bottom: 12px;
+  }
+  .setup-btn {
+    background: #f5a623; color: #000; border: none;
+    padding: 12px 24px; border-radius: 8px;
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    width: 100%;
+  }
+  .setup-btn:hover { background: #e09600; }
+
+  /* === FOOTER === */
+  .ftr {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: #141d2b; border-top: 1px solid #1e3a5f;
+    padding: 10px; display: flex; gap: 8px;
+  }
+  .ftr a, .ftr button {
+    flex: 1; text-align: center; padding: 10px;
+    border-radius: 8px; font-size: 11px; font-weight: 700;
+    text-decoration: none; cursor: pointer; border: none;
+  }
+  .ftr-lm { background: #1a73e8; color: #fff; }
+  .ftr-lm:hover { background: #1557b0; }
+  .ftr-rp { background: #f5a623; color: #000; }
+  .ftr-rp:hover { background: #e09600; }
+
+  /* Bottom padding for footer */
+  .content { padding-bottom: 70px; }
+
+  /* Refresh pulse */
+  .refreshing .hdr-dot { animation: pulse .5s ease-in-out; }
+  @keyframes pulse { 0%{transform:scale(1)} 50%{transform:scale(1.5)} 100%{transform:scale(1)} }
+</style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <div class="hdr-left">
+      <span class="hdr-bolt">⚡</span>
+      <div>
+        <h1>Rush Pro Monitor</h1>
+      </div>
+      <span class="hdr-station">DUD3</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="hdr-dot wait" id="dot" title="Connecting..."></div>
+      <span style="font-size:10px;color:#6b8299" id="lastUpdate">--:--</span>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-v b" id="sSent">0</div>
+      <div class="stat-l">Sent</div>
+    </div>
+    <div class="stat">
+      <div class="stat-v g" id="sRecv">0</div>
+      <div class="stat-l">Received</div>
+    </div>
+    <div class="stat">
+      <div class="stat-v y" id="sPend">0</div>
+      <div class="stat-l">Pending</div>
+    </div>
+    <div class="stat">
+      <div class="stat-v r" id="sViol">0</div>
+      <div class="stat-l">Violators</div>
+    </div>
+  </div>
+
+  <!-- BANNERS -->
+  <div class="ban-area">
+    <div class="ban red" id="banR">
+      <div class="ban-top">
+        <div style="display:flex;align-items:center">
+          <span class="ban-ico">🚨</span>
+          <span class="ban-ttl">DA Not Sent From Offyard</span>
+          <span class="ban-cnt" id="banRC">0</span>
+        </div>
+        <button class="ban-x" onclick="document.getElementById('banR').classList.remove('on')">✕</button>
+      </div>
+      <div class="ban-msg">DA(s) scanned into Rush LM Queue but <b>NOT dispatched via Rush Pro</b></div>
+      <div class="ban-chips" id="banRL"></div>
+    </div>
+
+    <div class="ban grn" id="banG">
+      <div class="ban-top">
+        <div style="display:flex;align-items:center">
+          <span class="ban-ico">✅</span>
+          <span class="ban-ttl">DA Received — Rush Pro Confirmed</span>
+        </div>
+        <button class="ban-x" onclick="document.getElementById('banG').classList.remove('on')">✕</button>
+      </div>
+      <div class="ban-msg" id="banGM"></div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab act" data-t="feed" onclick="switchTab(this)">📡 Live Feed</div>
+    <div class="tab" data-t="viol" onclick="switchTab(this)">🚫 Violators <span class="tcnt zero" id="tabVC">0</span></div>
+  </div>
+
+  <div class="content">
+    <!-- LIVE FEED -->
+    <div class="tbody act" id="tbFeed"></div>
+
+    <!-- VIOLATORS -->
+    <div class="tbody" id="tbViol"></div>
+  </div>
+
+  <!-- SETUP SCREEN (if no sheet URL saved) -->
+  <div class="setup" id="setup">
+    <div class="empty-ico">⚡</div>
+    <h2>Connect Rush Pro</h2>
+    <p>Open your Rush Pro app first, then come back here.<br>The monitor will auto-connect to your sheet.</p>
+    <a class="setup-btn" href="https://amazonrushdud3-web.github.io/dud3-rush/" target="_blank">Open Rush Pro →</a>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="ftr">
+    <a class="ftr-lm" href="https://us-east-1.quicksight.aws.amazon.com/sn/account/amazonbi/apps/8982344f-761b-4b0e-8885-37193c39c63d/view/AE-Rush-LM-Queue?sso_login=true" target="_blank">
+      📊 Rush LM Queue
+    </a>
+    <a class="ftr-rp" href="https://amazonrushdud3-web.github.io/dud3-rush/" target="_blank">
+      ⚡ Rush Pro App
+    </a>
+  </div>
+
+  <script>
+  // ============================================
+  //  CONFIG
+  // ============================================
+  var API = 'https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec';
+  var STATION = 'DUD3';
+  var POLL = 15; // seconds
+
+  // ============================================
+  //  SAFE STORAGE (sandbox-proof shim)
+  // ============================================
+  var STORE = (function() {
+    var mem = {};
+    var ok = false;
+    try {
+      var t = '__rpm_test__';
+      window.localStorage.setItem(t, '1');
+      window.localStorage.removeItem(t);
+      ok = true;
+    } catch (e) { ok = false; }
+    return {
+      getItem: function(k) {
+        if (ok) { try { return window.localStorage.getItem(k); } catch (e) {} }
+        return (k in mem) ? mem[k] : null;
+      },
+      setItem: function(k, v) {
+        if (ok) { try { window.localStorage.setItem(k, v); return; } catch (e) {} }
+        mem[k] = String(v);
+      },
+      removeItem: function(k) {
+        if (ok) { try { window.localStorage.removeItem(k); return; } catch (e) {} }
+        delete mem[k];
+      }
+    };
+  })();
+
+  // ============================================
+  //  STATE
+  // ============================================
+  var violators = JSON.parse(STORE.getItem('rpm_viol_' + STATION) || '[]');
+  var dismissed = new Set(JSON.parse(STORE.getItem('rpm_dism_' + STATION) || '[]'));
+  var lastGreenId = STORE.getItem('rpm_lastG_' + STATION) || '';
+  var feedItems = [];
+  var greenTimer = null;
+
+  // ============================================
+  //  TAB SWITCHING
+  // ============================================
+  function switchTab(el) {
+    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('act'); });
+    document.querySelectorAll('.tbody').forEach(function(b) { b.classList.remove('act'); });
+    el.classList.add('act');
+    document.getElementById('tb' + capitalize(el.getAttribute('data-t'))).classList.add('act');
+  }
+  function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+  // ============================================
+  //  POLL BACKEND
+  // ============================================
+  function poll() {
+    var dot = document.getElementById('dot');
+    dot.className = 'hdr-dot wait';
+
+    fetch(API + '?action=getFullData&station=' + STATION)
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        dot.className = 'hdr-dot';
+        dot.title = 'Connected ✓';
+        document.getElementById('lastUpdate').textContent = fmtNow();
+
+        if (d.success) {
+          if (d.message && d.message.indexOf('Open Rush Pro') > -1) {
+            document.getElementById('setup').classList.add('on');
+          } else {
+            document.getElementById('setup').classList.remove('on');
+            process(d);
+          }
+        }
+      })
+      .catch(function() {
+        dot.className = 'hdr-dot off';
+        dot.title = 'Disconnected';
+      });
+  }
+
+  // ============================================
+  //  PROCESS DATA
+  // ============================================
+  function process(d) {
+    var queue = d.queue || [];
+    var dispatched = d.dispatched || [];
+    var settings = d.settings || {};
+    var scanLimit = settings.scanLimit || 5;
+    var now = new Date();
+
+    // Categorize
+    var bypass = queue.filter(function(da) {
+      return da.scannedIn && !da.sentViaRushPro && !dismissed.has(da.daId);
+    });
+    var confirmed = queue.filter(function(da) {
+      return da.scannedIn && da.sentViaRushPro;
+    });
+    var pending = dispatched.filter(function(da) { return !da.scannedIn; });
+
+    // === STATS ===
+    document.getElementById('sSent').textContent = dispatched.length;
+    document.getElementById('sRecv').textContent = confirmed.length;
+    document.getElementById('sPend').textContent = pending.length;
+
+    // === RED BANNER ===
+    var banR = document.getElementById('banR');
+    if (bypass.length > 0) {
+      banR.classList.add('on');
+      document.getElementById('banRC').textContent = bypass.length;
+      document.getElementById('banRL').innerHTML = bypass.map(function(da) {
+        return '<span class="ban-chip">' + (da.daName || da.daId) + '</span>';
+      }).join('');
+    } else {
+      banR.classList.remove('on');
+    }
+
+    // === GREEN BANNER ===
+    if (confirmed.length > 0) {
+      var latest = confirmed[confirmed.length - 1];
+      if (latest.daId !== lastGreenId) {
+        lastGreenId = latest.daId;
+        STORE.setItem('rpm_lastG_' + STATION, lastGreenId);
+        document.getElementById('banGM').innerHTML =
+          '<b>' + (latest.daName || latest.daId) + '</b> — Offyard ➜ Rush Pro ➜ Received ✅';
+        document.getElementById('banG').classList.add('on');
+        if (greenTimer) clearTimeout(greenTimer);
+        greenTimer = setTimeout(function() {
+          document.getElementById('banG').classList.remove('on');
+        }, 5000);
+      }
+    }
+
+    // === BUILD FEED ===
+    feedItems = [];
+
+    // Confirmed DAs
+    confirmed.forEach(function(da) {
+      feedItems.push({
+        type: 'recv', icon: '✅', daName: da.daName || da.daId,
+        daId: da.daId, time: extractTime(da.scanTime),
+        sub: 'Received via Rush Pro', tag: 'ok', tagText: 'Confirmed'
+      });
+    });
+
+    // Bypass DAs
+    bypass.forEach(function(da) {
+      feedItems.push({
+        type: 'viol', icon: '🚨', daName: da.daName || da.daId,
+        daId: da.daId, time: extractTime(da.scanTime),
+        sub: 'Scanned WITHOUT Rush Pro dispatch', tag: 'byp', tagText: 'No Rush Pro'
+      });
+    });
+
+    // Pending DAs
+    pending.forEach(function(da) {
+      var elapsed = Math.round((now - new Date(da.dispatchTime)) / 60000);
+      feedItems.push({
+        type: 'sent', icon: '📤', daName: da.daName || da.daId,
+        daId: da.daId, time: extractTime(da.dispatchTime),
+        sub: 'Sent ' + elapsed + ' min ago — waiting for scan',
+        tag: elapsed >= scanLimit ? 'tmo' : '', tagText: elapsed >= scanLimit ? 'Overdue ' + elapsed + 'min' : ''
+      });
+
+      // Add to violators if overdue
+      if (elapsed >= scanLimit && !violators.find(function(v) { return v.daId === da.daId; })) {
+        violators.push({
+          daId: da.daId, daName: da.daName || da.daId,
+          time: da.dispatchTime, elapsed: elapsed, type: 'timeout'
+        });
+      }
+    });
+
+    // Sent DAs (already scanned)
+    dispatched.filter(function(da) { return da.scannedIn; }).forEach(function(da) {
+      feedItems.push({
+        type: 'sent', icon: '📤', daName: da.daName || da.daId,
+        daId: da.daId, time: extractTime(da.dispatchTime),
+        sub: 'Dispatched from Offyard', tag: 'ok', tagText: 'Done'
+      });
+    });
+
+    // Bypass violators
+    bypass.forEach(function(da) {
+      if (!violators.find(function(v) { return v.daId === da.daId; })) {
+        violators.push({
+          daId: da.daId, daName: da.daName || da.daId,
+          time: da.scanTime || new Date().toISOString(), type: 'bypass'
+        });
+      }
+    });
+
+    // Auto-clear confirmed violators
+    var confIds = {};
+    confirmed.forEach(function(da) { confIds[da.daId] = true; });
+    violators = violators.filter(function(v) { return !confIds[v.daId]; });
+
+    saveState();
+    renderFeed();
+    renderViol();
+  }
+
+  // ============================================
+  //  RENDER LIVE FEED
+  // ============================================
+  function renderFeed() {
+    var el = document.getElementById('tbFeed');
+
+    if (feedItems.length === 0) {
+      el.innerHTML = '<div class="empty"><div class="empty-ico">📡</div>No activity yet. Waiting for DAs...</div>';
+      return;
+    }
+
+    el.innerHTML = feedItems.map(function(f) {
+      var tagHtml = f.tag ? '<span class="fi-tag ' + f.tag + '">' + f.tagText + '</span>' : '';
+      return '<div class="feed-item">' +
+        '<div class="fi-left">' +
+          '<div class="fi-icon ' + f.type + '">' + f.icon + '</div>' +
+          '<div>' +
+            '<div class="fi-nm">' + f.daName + '</div>' +
+            '<div class="fi-sub">' + f.sub + '</div>' +
+            tagHtml +
+          '</div>' +
+        '</div>' +
+        '<div class="fi-time">' + f.time + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // ============================================
+  //  RENDER VIOLATORS
+  // ============================================
+  function renderViol() {
+    var el = document.getElementById('tbViol');
+    var cnt = document.getElementById('tabVC');
+    var statV = document.getElementById('sViol');
+
+    cnt.textContent = violators.length;
+    statV.textContent = violators.length;
+    cnt.className = violators.length > 0 ? 'tcnt' : 'tcnt zero';
+
+    if (violators.length === 0) {
+      el.innerHTML = '<div class="empty"><div class="empty-ico">✅</div>No violators — all DAs compliant!</div>';
+      return;
+    }
+
+    el.innerHTML = violators.map(function(v) {
+      var tag = v.type === 'bypass'
+        ? '<span class="fi-tag byp">🚨 Not via Rush Pro</span>'
+        : '<span class="fi-tag tmo">⏰ Overdue ' + (v.elapsed || '') + ' min</span>';
+      var lbl = v.type === 'bypass' ? 'Scanned' : 'Dispatched';
+
+      return '<div class="vi">' +
+        '<div>' +
+          '<div class="vi-nm">' + v.daName + '</div>' +
+          '<div class="vi-sub">' + v.daId + ' · ' + lbl + ': ' + extractTime(v.time) + '</div>' +
+          tag +
+        '</div>' +
+        '<button class="vi-rm" onclick="removeViol(\'' + v.daId + '\')">✕ Remove</button>' +
+      '</div>';
+    }).join('');
+  }
+
+  // ============================================
+  //  REMOVE VIOLATOR
+  // ============================================
+  function removeViol(daId) {
+    violators = violators.filter(function(v) { return v.daId !== daId; });
+    dismissed.add(daId);
+    saveState();
+    renderViol();
+
+    // Log to backend
+    fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'resolveEvent',
+        daId: daId,
+        station: STATION,
+        resolvedBy: 'Monitor'
+      })
+    }).catch(function() {});
+  }
+
+  // ============================================
+  //  HELPERS
+  // ============================================
+  function extractTime(iso) {
+    if (!iso) return '--:--';
+    try {
+      return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    } catch(e) { return '--:--'; }
+  }
+
+  function fmtNow() {
+    return new Date().toLocaleTimeString('en-GB', {
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+      timeZone: 'Asia/Dubai'
+    });
+  }
+
+  function saveState() {
+    STORE.setItem('rpm_viol_' + STATION, JSON.stringify(violators));
+    STORE.setItem('rpm_dism_' + STATION, JSON.stringify(Array.from(dismissed)));
+  }
+
+  // ============================================
+  //  START
+  // ============================================
+  renderFeed();
+  renderViol();
+  poll();
+  setInterval(poll, POLL * 1000);
+  </script>
+
+</body>
+</html>
