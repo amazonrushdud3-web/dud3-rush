@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>DUD3 Rush PRO Scanner</title>
+  <title>DUD3 Rush PRO v2</title>
   
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="mobile-web-app-capable" content="yes">
@@ -22,7 +22,7 @@
       --bg-dark: #0F141C; --bg-primary: #131A22; --bg-secondary: #1B2430;
       --bg-card: #232F3E; --accent-orange: #FF9900; --accent-blue: #00A8E1;
       --text-main: #FFFFFF; --text-muted: #9BA7B6;
-      --success: #00C853; --danger: #FF3B30; --warn: #FFB300;
+      --success: #00C853; --danger: #FF3B30; --warn: #FFB300; --ofd-purple: #BB86FC;
       --border: #354558; --radius: 10px; --nav-h: 66px;
       --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
@@ -30,17 +30,39 @@
     html, body { width: 100%; max-width: 100vw; overflow-x: hidden; background: var(--bg-primary); color: var(--text-main); font-family: var(--font-sans); font-size: 14px; line-height: 1.4; }
     body { min-height: 100vh; display: flex; flex-direction: column; padding-bottom: calc(var(--nav-h) + 20px); }
 
+    /* Banners & Modals */
     #top-alert-banner { position: fixed; top: 8px; left: 50%; transform: translateX(-50%) translateY(-150%); width: calc(100% - 24px); max-width: 540px; padding: 12px 16px; border-radius: 8px; font-weight: 800; font-size: 13px; display: flex; justify-content: space-between; align-items:center; z-index: 10000; box-shadow: 0 8px 24px rgba(0,0,0,0.65); transition: transform 0.28s; }
     #top-alert-banner.show { transform: translateX(-50%) translateY(0); }
     .banner-success { background: #00C853; color: #062010; }
     .banner-danger { background: #FF3B30; color: #FFFFFF; }
     .banner-warn { background: #FFB300; color: #1A1300; }
 
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 9999; align-items: center; justify-content: center; }
+    .modal-overlay.show { display: flex; }
+    .slip-card { background: #fff; color: #000; width: 320px; border-radius: 12px; padding: 20px; font-family: monospace; }
+    .slip-card h3 { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 10px; margin-bottom: 10px; }
+    .slip-row { display: flex; justify-content: space-between; font-size: 12px; padding: 3px 0; }
+    .slip-da { font-size: 13px; font-weight: bold; padding: 4px 0; border-bottom: 1px dotted #999; }
+    .slip-footer { text-align: center; margin-top: 12px; padding-top: 10px; border-top: 2px dashed #000; font-size: 10px; }
+
+    /* Ghost Overlay Box */
+    #ghost-overlay-container {
+        display: none; position: fixed; top: 150px; left: 50%; transform: translateX(-50%);
+        width: 320px; height: 50px; background: rgba(255, 153, 0, 0.1); 
+        border: 2px dashed #FF9900; border-radius: 8px; z-index: 9999999;
+        align-items: center; justify-content: center; cursor: grab; backdrop-filter: blur(2px); box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+    #ghost-overlay-input {
+        width: 90%; height: 80%; background: transparent; border: none;
+        color: #FF9900; font-weight: bold; text-align: center; outline: none; font-size: 14px;
+    }
+    #ghost-overlay-input::placeholder { color: rgba(255, 153, 0, 0.6); }
+
+    /* Basic UI */
     header { position: sticky; top: 0; z-index: 500; background: rgba(35, 47, 62, 0.96); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); padding: 10px 12px; display: flex; justify-content: space-between; align-items:center; }
-    .brand { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; }
+    .brand { display: flex; flex-direction: column; }
     .brand-text { font-size: 16px; font-weight: 900; color: #fff; letter-spacing: 0.5px; display: flex; align-items: center; gap: 4px; }
     .brand-text span { color: var(--accent-orange); }
-    
     .status-pill { padding: 4px 8px; border-radius: 12px; font-size: 10px; font-weight: 800; margin-left:6px;}
     .status-pill.online { background: rgba(0,200,83,0.18); color: var(--success); border: 1px solid var(--success); }
     .status-pill.offline { background: rgba(255,59,48,0.18); color: var(--danger); border: 1px solid var(--danger); }
@@ -65,31 +87,28 @@
     .da-list { display: flex; flex-direction: column; gap: 6px; }
     .da-item { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
     .da-name { font-weight: 700; font-size: 13px; } .da-sub { font-size: 11px; color: var(--text-muted); margin-top:3px;}
+    .status-ofd { color: var(--ofd-purple); font-weight: 800; font-size: 11px; }
+    .status-recv { color: var(--success); font-weight: 800; font-size: 11px; }
+    .status-sent { color: var(--accent-orange); font-weight: 800; font-size: 11px; }
     
     .cam-box { display: none; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 10px; width: 100%; }
     .sugg-box { background: var(--bg-dark); border: 1px solid var(--border); border-radius: 7px; margin-top: -4px; max-height: 190px; overflow-y: auto; display: none; margin-bottom: 10px;}
     .sugg-item { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; cursor:pointer;}
+    .violation-badge { background: rgba(255,59,48,0.15); border: 1px solid var(--danger); color: var(--danger); border-radius: 6px; padding: 8px 10px; margin-bottom: 6px; font-size: 11px; font-weight: 700; }
+    .violation-badge.medium { border-color: var(--warn); color: var(--warn); background: rgba(255,179,0,0.12); }
+    .rush-scan-input { width: 100%; padding: 16px; font-size: 20px; font-weight: 900; text-align: center; letter-spacing: 2px; border: 2px solid var(--success); border-radius: 10px; background: var(--bg-dark); color: var(--success); margin-bottom: 8px; }
+    .rush-scan-input::placeholder { color: rgba(0,200,83,0.4); }
 
     nav.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-h); background: var(--bg-card); border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(5, 1fr); z-index: 900; }
-    .nav-item { background: none; border: none; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 10px; font-weight: 700; cursor: pointer; }
-    .nav-item svg { width: 22px; height: 22px; fill: currentColor; }
+    .nav-item { background: none; border: none; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 9px; font-weight: 700; cursor: pointer; }
+    .nav-item svg { width: 20px; height: 20px; fill: currentColor; }
     .nav-item.active { color: var(--accent-orange); }
-
-    /* Glass Effect Overlay Box */
-    #ghost-overlay-container {
-        display: none; position: fixed; top: 150px; left: 50%; transform: translateX(-50%);
-        width: 320px; height: 50px; background: rgba(255, 153, 0, 0.1); 
-        border: 2px dashed #FF9900; border-radius: 8px; z-index: 9999999;
-        align-items: center; justify-content: center; cursor: grab; backdrop-filter: blur(2px); box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    }
-    #ghost-overlay-input {
-        width: 90%; height: 80%; background: transparent; border: none;
-        color: #FF9900; font-weight: bold; text-align: center; outline: none; font-size: 14px;
-    }
-    #ghost-overlay-input::placeholder { color: rgba(255, 153, 0, 0.6); }
   </style>
 </head>
 <body>
+
+  <!-- Top Alert -->
+  <div id="top-alert-banner"><span id="top-alert-text"></span><button style="background:none;border:none;color:#fff;font-weight:bold;font-size:18px;cursor:pointer;" onclick="hideTopBanner()">×</button></div>
 
   <!-- Ghost Scanner Overlay -->
   <div id="ghost-overlay-container">
@@ -97,13 +116,14 @@
     <input type="text" id="ghost-overlay-input" placeholder="Drag me & Scan Here..." autocomplete="off">
   </div>
 
-  <div id="top-alert-banner"><span id="top-alert-text"></span><button style="background:none;border:none;color:#fff;font-weight:bold;font-size:18px;cursor:pointer;" onclick="hideTopBanner()">×</button></div>
+  <!-- Dispatch Slip Modal -->
+  <div class="modal-overlay" id="slip-modal">
+    <div class="slip-card" id="slip-content"></div>
+  </div>
 
   <header>
-    <div class="brand">
-      <div class="brand-text">RUSH PRO <span>DUD3</span></div>
-    </div>
-    <div style="display:flex; align-items:center;">
+    <div class="brand"><div class="brand-text">RUSH PRO <span>DUD3</span> <small style="font-size:10px;color:var(--text-muted);margin-left:4px;">v2</small></div></div>
+    <div style="display:flex;align-items:center;">
       <select id="date-tab-select" class="date-select"></select>
       <span id="sync-status-pill" class="status-pill offline">OFFLINE</span>
     </div>
@@ -116,311 +136,406 @@
       <div class="kpi-box"><div class="kpi-val" id="kpi-repl" style="color:var(--accent-blue);">0</div><div class="kpi-lbl">Replaced</div></div>
       <div class="kpi-box"><div class="kpi-val" id="kpi-absent" style="color:var(--danger);">0</div><div class="kpi-lbl">Absent</div></div>
     </div>
-    <div class="kpi-wrapper" style="grid-template-columns: repeat(3, 1fr);">
-      <div class="kpi-box" style="border-color:var(--accent-orange);"><div class="kpi-val" id="kpi-waiting">0</div><div class="kpi-lbl">In Waiting List</div></div>
-      <div class="kpi-box"><div class="kpi-val" id="kpi-sent">0</div><div class="kpi-lbl">Sent (Pending)</div></div>
-      <div class="kpi-box"><div class="kpi-val" id="kpi-received" style="color:var(--success);">0</div><div class="kpi-lbl">Received Inside</div></div>
+    <div class="kpi-wrapper">
+      <div class="kpi-box" style="border-color:var(--accent-orange);"><div class="kpi-val" id="kpi-waiting">0</div><div class="kpi-lbl">Waiting</div></div>
+      <div class="kpi-box" style="border-color:var(--warn);"><div class="kpi-val" id="kpi-sent" style="color:var(--warn);">0</div><div class="kpi-lbl">Sent</div></div>
+      <div class="kpi-box" style="border-color:var(--success);"><div class="kpi-val" id="kpi-received" style="color:var(--success);">0</div><div class="kpi-lbl">Received</div></div>
+      <div class="kpi-box" style="border-color:var(--ofd-purple);"><div class="kpi-val" id="kpi-ofd" style="color:var(--ofd-purple);">0</div><div class="kpi-lbl">OFD</div></div>
     </div>
+    
+    <div id="violations-container"></div>
 
+    <!-- ATTENDANCE -->
     <section id="pane-attendance" class="tab-pane active">
       <div class="card">
-        <div class="card-title">&#x1F4F7; 1. DA Attendance Scan</div>
+        <div class="card-title">📷 1. DA Attendance Scan</div>
         <button class="btn-scan" id="btn-cam-toggle">📸 START SCANNER</button>
         <div id="cam-box-att" class="cam-box"><div id="qr-reader-att"></div></div>
         <input type="text" id="inp-checkin" class="input" placeholder="Search DA Name / ID to Check-In..." autocomplete="off">
         <div id="sugg-checkin" class="sugg-box"></div>
       </div>
-      <div class="card" style="border-color: var(--accent-blue);">
-        <div class="card-title" style="color:var(--accent-blue);">&#x1F501; 2. Replacement DA</div>
+      <div class="card" style="border-color:var(--accent-blue);">
+        <div class="card-title" style="color:var(--accent-blue);">🔁 2. Replacement DA</div>
         <select id="sel-absent-driver" class="input"><option value="">-- Select Absent Driver --</option></select>
         <input type="text" id="inp-custom-repl" class="input" placeholder="Enter Replacement (NAME - ID)">
         <button class="btn" id="btn-confirm-replacement" style="width:100%;">Assign Replacement DA</button>
       </div>
     </section>
 
+    <!-- WAITING / BATCHES -->
     <section id="pane-batches" class="tab-pane">
-      <div class="card" style="border-color: var(--success);">
+      <div class="card" style="border-color:var(--success);">
         <div class="card-title" style="color:var(--success);">📥 Add to Waiting List (Turn 2+)</div>
-        <button class="btn-scan" id="btn-cam-waiting-toggle" style="background:var(--success); color:#fff;">📸 SCAN TO WAITING</button>
+        <button class="btn-scan" id="btn-cam-waiting-toggle" style="background:var(--success);color:#fff;">📸 SCAN TO WAITING</button>
         <div id="cam-box-waiting" class="cam-box"><div id="qr-reader-wait"></div></div>
         <input type="text" id="inp-requeue-da" class="input" placeholder="Type DA ID to add..." autocomplete="off">
         <div id="sugg-requeue" class="sugg-box"></div>
       </div>
       <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
           <div class="card-title" style="margin:0;">📦 Active Batches</div>
-          <button class="btn" id="btn-reg-send-selected">Send Selected</button>
+          <div style="display:flex;gap:6px;">
+            <input type="text" id="inp-ym-name" class="input" placeholder="YM Name" style="width:100px;margin:0;padding:8px;font-size:11px;">
+            <button class="btn" id="btn-reg-send-selected" style="white-space:nowrap;">📤 Send + Slip</button>
+          </div>
         </div>
         <div id="regular-batches-container"></div>
       </div>
     </section>
 
+    <!-- SENT -->
     <section id="pane-bridge" class="tab-pane">
-      <div class="card">
-        <div class="card-title">⏱️ Sent to OP (Pending Arrival)</div>
+      <div class="card" style="border-color:var(--warn);">
+        <div class="card-title" style="color:var(--warn);">⏱️ Sent to OP — Waiting for Rush Queue Scan IN</div>
         <div id="pending-arrival-list" class="da-list"></div>
       </div>
     </section>
 
-    <!-- പുതിയ ENTRY ലിസ്റ്റ് ടാബ് -->
-    <section id="pane-entry" class="tab-pane">
-      <div class="card" style="border-color: var(--success);">
-        <div class="card-title" style="color:var(--success);">✅ ENTRY LIST (Received Inside)</div>
-        <div id="entry-list-container" class="da-list"></div>
+    <!-- RUSH QUEUE -->
+    <section id="pane-rush" class="tab-pane">
+      <div class="card" style="border-color:var(--success);">
+        <div class="card-title" style="color:var(--success);">🔗 RUSH LM QUEUE — Auto Receive &amp; OFD</div>
+        <div style="border:2px dashed var(--success);border-radius:10px;padding:16px;text-align:center;margin-bottom:12px;background:rgba(0,200,83,0.05);">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Scan DA Badge when they scan Rush LM Queue</div>
+          <input type="text" id="rush-scan-input" class="rush-scan-input" placeholder="SCAN BADGE" autocomplete="off">
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button class="btn" id="btn-rush-scanin" style="flex:1;background:var(--success);color:#fff;padding:12px;font-size:13px;font-weight:900;">✅ SCAN IN</button>
+            <button class="btn" id="btn-rush-scanout" style="flex:1;background:var(--ofd-purple);color:#fff;padding:12px;font-size:13px;font-weight:900;">🚚 SCAN OUT</button>
+          </div>
+        </div>
+        <div style="margin-top:12px;">
+          <div class="card-title">✅ Received Inside</div>
+          <div id="received-list" class="da-list"></div>
+        </div>
+        <div style="margin-top:12px;">
+          <div class="card-title" style="color:var(--ofd-purple);">🚚 Out For Delivery (OFD)</div>
+          <div id="ofd-list" class="da-list"></div>
+        </div>
       </div>
     </section>
 
+    <!-- SETTINGS -->
     <section id="pane-settings" class="tab-pane">
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
           <div class="card-title" style="margin:0;">⚙️ Admin Settings</div>
           <button class="btn btn-danger" id="btn-reset-day" style="padding:6px 10px;">RESET DAY</button>
         </div>
-        <!-- പുതിയ Ghost Scanner ബട്ടൺ -->
-        <button class="btn-scan" id="btn-launch-ghost" style="margin-bottom:15px;">Launch Ghost Scanner Overlay</button>
+        <!-- Ghost Scanner Launcher -->
+        <button class="btn-scan" id="btn-launch-ghost" style="margin-bottom:15px; border:2px dashed #000;">Launch Ghost Scanner Overlay</button>
         
-        <label style="font-size:11px; color:var(--text-muted);">Apps Script Web App URL (/exec)</label>
-        <input type="text" id="set-api-url" class="input" placeholder="https://script.google.com/macros/s/..." style="margin-bottom:10px;">
-        <label style="font-size:11px; color:var(--text-muted);">Google Sheet URL</label>
-        <input type="text" id="set-sheet-url" class="input" placeholder="https://docs.google.com/spreadsheets/d/..." style="margin-bottom:15px;">
+        <label style="font-size:11px;color:var(--text-muted);">Apps Script Web App URL</label>
+        <input type="text" id="set-api-url" class="input">
+        <label style="font-size:11px;color:var(--text-muted);">Google Sheet URL</label>
+        <input type="text" id="set-sheet-url" class="input">
         <div style="display:flex;gap:10px;margin-bottom:10px;">
-          <div style="flex:1"><label style="font-size:11px; color:var(--text-muted);">Pre-Wave Block (min)</label><input type="number" id="set-pre-block" class="input"></div>
-          <div style="flex:1"><label style="font-size:11px; color:var(--text-muted);">Wave Grace (min)</label><input type="number" id="set-wave-grace" class="input"></div>
+          <div style="flex:1"><label style="font-size:11px;color:var(--text-muted);">Pre-Wave Block (min)</label><input type="number" id="set-pre-block" class="input"></div>
+          <div style="flex:1"><label style="font-size:11px;color:var(--text-muted);">Wave Grace (min)</label><input type="number" id="set-wave-grace" class="input"></div>
         </div>
-        <div style="display:flex;gap:10px;margin-bottom:15px;">
-          <div style="flex:1"><label style="font-size:11px; color:var(--text-muted);">Batch Size</label><input type="number" id="set-batch-size" class="input"></div>
-        </div>
-        <button class="btn" id="btn-save-settings" style="width:100%; background:var(--accent-orange); color:#000;">Save Settings & Sync Globally</button>
+        <div style="margin-bottom:15px;"><label style="font-size:11px;color:var(--text-muted);">Batch Size</label><input type="number" id="set-batch-size" class="input"></div>
+        <button class="btn" id="btn-save-settings" style="width:100%;background:var(--accent-orange);color:#000;">Save Settings & Sync Globally</button>
       </div>
     </section>
   </main>
 
   <nav class="bottom-nav">
-    <button class="nav-item active" data-target="pane-attendance"><svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg><span>Attendance</span></button>
+    <button class="nav-item active" data-target="pane-attendance"><svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg><span>Attend</span></button>
     <button class="nav-item" data-target="pane-batches"><svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg><span>Waiting</span></button>
     <button class="nav-item" data-target="pane-bridge"><svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg><span>Sent</span></button>
-    <button class="nav-item" data-target="pane-entry"><svg viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg><span>Entry</span></button>
-    <button class="nav-item" id="nav-settings" data-target="pane-settings"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58z"/></svg><span>Settings</span></button>
+    <button class="nav-item" data-target="pane-rush"><svg viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg><span>Rush Q</span></button>
+    <button class="nav-item" data-target="pane-settings"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58z"/></svg><span>Settings</span></button>
   </nav>
 
-  <script>
-    const CONST_API_URL = "https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec"; 
-    const CONST_SHEET_URL = "https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit"; 
-    
-    const manifestJSON = { "name": "DUD3 Rush PRO", "short_name": "DUD3 Rush", "start_url": window.location.href, "display": "standalone", "background_color": "#131A22", "theme_color": "#FF9900", "icons": [{"src": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Barcode_scanner_icon.svg/512px-Barcode_scanner_icon.svg.png", "sizes": "512x512", "type": "image/png"}] };
-    const manifestBlob = new Blob([JSON.stringify(manifestJSON)], {type: 'application/json'});
-    document.getElementById('manifest-link').href = URL.createObjectURL(manifestBlob);
+<script>
+// ⚠️ പ്രധാനപ്പെട്ടത്: നിങ്ങളുടെ യഥാർത്ഥ ലിങ്കുകൾ (ഇത് മാറ്റരുത്) ⚠️
+var CONST_API_URL="https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec";
+var CONST_SHEET_URL="https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit";
 
-    const STORAGE_KEY = "DUD3_RUSH_PRO_FINAL";
-    let isAdmin = !(/Mobi|Android|iPhone/i.test(navigator.userAgent));
-    let STATE = { apiUrl: CONST_API_URL, sheetUrl: CONST_SHEET_URL, selectedDateTab: getTodayTabString(), availableTabs: getRecentDateTabs(), settings: { waveGraceMin: 10, preWaveBlockMin: 30, batchSize: 25 }, roster: [], batches: [], pendingArrivals: [], receivedList: [], selectedRegSet: new Set() };
+var mJSON={name:"DUD3 Rush PRO v2",short_name:"DUD3 Rush",start_url:window.location.href,display:"standalone",background_color:"#131A22",theme_color:"#FF9900",icons:[{src:"https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Barcode_scanner_icon.svg/512px-Barcode_scanner_icon.svg.png",sizes:"512x512",type:"image/png"}]};
+document.getElementById("manifest-link").href=URL.createObjectURL(new Blob([JSON.stringify(mJSON)],{type:"application/json"}));
 
-    function getTodayTabString() { const d = new Date(); const m = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]; return ("0" + d.getDate()).slice(-2) + " " + m[d.getMonth()]; }
-    function getRecentDateTabs() { const tabs = []; const m = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]; for (let offset = -2; offset <= 2; offset++) { const d = new Date(); d.setDate(d.getDate() + offset); tabs.push(("0" + d.getDate()).slice(-2) + " " + m[d.getMonth()]); } return tabs; }
-    function nowHHMM() { const d = new Date(); return ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2); }
-    function parseHHMMToMinutes(str) { if (!str) return null; const m = String(str).trim().match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i); if (!m) return null; let hr = parseInt(m[1], 10); const mn = parseInt(m[2], 10); const ap = m[3] ? m[3].toUpperCase() : null; if (ap === "PM" && hr < 12) hr += 12; if (ap === "AM" && hr === 12) hr = 0; return hr * 60 + mn; }
+var STORAGE_KEY="DUD3_RUSH_PRO_V2_DISPATCH";
+var isAdmin=!(/Mobi|Android|iPhone/i.test(navigator.userAgent));
+var STATE={apiUrl:CONST_API_URL,sheetUrl:CONST_SHEET_URL,selectedDateTab:getTodayTab(),availableTabs:getRecentTabs(),settings:{waveGraceMin:10,preWaveBlockMin:30,batchSize:25},roster:[],batches:[],pendingArrivals:[],receivedList:[],ofdList:[],selectedRegSet:new Set()};
 
-    let bannerTimer = null;
-    function showTopBanner(msg, variant = "success") { const el = document.getElementById("top-alert-banner"); document.getElementById("top-alert-text").textContent = msg; el.className = "show banner-" + variant; if (bannerTimer) clearTimeout(bannerTimer); bannerTimer = setTimeout(() => { el.className = ""; }, 4000); }
-    window.hideTopBanner = function() { document.getElementById("top-alert-banner").className = ""; };
+function getTodayTab(){var d=new Date();var m=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];return("0"+d.getDate()).slice(-2)+" "+m[d.getMonth()];}
+function getRecentTabs(){var tabs=[];var m=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];for(var o=-2;o<=2;o++){var d=new Date();d.setDate(d.getDate()+o);tabs.push(("0"+d.getDate()).slice(-2)+" "+m[d.getMonth()]);}return tabs;}
+function nowHHMM(){var d=new Date();return("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2);}
+function parseHHMM(str){if(!str)return null;var m=String(str).trim().match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);if(!m)return null;var hr=parseInt(m[1],10);var mn=parseInt(m[2],10);var ap=m[3]?m[3].toUpperCase():null;if(ap==="PM"&&hr<12)hr+=12;if(ap==="AM"&&hr===12)hr=0;return hr*60+mn;}
 
-    function saveState() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(Object.assign({}, STATE, { selectedRegSet: Array.from(STATE.selectedRegSet) }))); } catch (e) {} }
-    
-    function loadState() {
-      try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) { const parsed = JSON.parse(raw); STATE = Object.assign(STATE, parsed); STATE.selectedRegSet = new Set(parsed.selectedRegSet || []); } } catch (e) {}
-      STATE.apiUrl = CONST_API_URL; STATE.sheetUrl = CONST_SHEET_URL; 
+var bannerTimer=null;
+function showTopBanner(msg,v){var el=document.getElementById("top-alert-banner");document.getElementById("top-alert-text").textContent=msg;el.className="show banner-"+(v||"success");if(bannerTimer)clearTimeout(bannerTimer);bannerTimer=setTimeout(function(){el.className="";},4000);}
+function hideTopBanner(){document.getElementById("top-alert-banner").className="";}
+
+function saveState(){try{var o=JSON.parse(JSON.stringify(STATE));o.selectedRegSet=Array.from(STATE.selectedRegSet);localStorage.setItem(STORAGE_KEY,JSON.stringify(o));}catch(e){}}
+function loadState(){try{var raw=localStorage.getItem(STORAGE_KEY);if(raw){var p=JSON.parse(raw);for(var k in p){if(k!=="selectedRegSet")STATE[k]=p[k];}STATE.selectedRegSet=new Set(p.selectedRegSet||[]);}}catch(e){}STATE.apiUrl=CONST_API_URL;STATE.sheetUrl=CONST_SHEET_URL;}
+function updateSettingsUI(){document.getElementById("set-api-url").value=STATE.apiUrl||"";document.getElementById("set-sheet-url").value=STATE.sheetUrl||"";document.getElementById("set-pre-block").value=STATE.settings.preWaveBlockMin||30;document.getElementById("set-wave-grace").value=STATE.settings.waveGraceMin||10;document.getElementById("set-batch-size").value=STATE.settings.batchSize||25;}
+
+function rebuildListsFromRoster(){
+  STATE.pendingArrivals=[];STATE.receivedList=[];STATE.ofdList=[];
+  STATE.roster.forEach(function(da){
+    if(da.status==="Sent to OP")STATE.pendingArrivals.push({daId:da.daId,daName:da.daName,marshalName:da.marshalName||"",sentTime:da.sentTime||"",slipNumber:da.slipNumber||""});
+    if(String(da.status).indexOf("Received")>-1)STATE.receivedList.push({daId:da.daId,daName:da.daName,time:da.rushScanInTime||"",tokenNumber:da.tokenNumber||""});
+    if(da.status==="OFD")STATE.ofdList.push({daId:da.daId,daName:da.daName,time:da.ofdTime||""});
+  });
+}
+
+/* ===== API SYNC ===== */
+function syncAPI(action,payload){
+  saveState();
+  var pill=document.getElementById("sync-status-pill");
+  if(!STATE.apiUrl){pill.className="status-pill offline";pill.textContent="OFFLINE";return;}
+  if(action==="rosterFull"||action==="saveSettings"||action==="resetDay"){pill.textContent="SYNCING...";pill.className="status-pill offline";}
+  if(!payload)payload={};
+  payload.action=action;payload.sheetUrl=STATE.sheetUrl;payload.dayTab=STATE.selectedDateTab;
+  if(action==="saveSettings")payload.settings=STATE.settings;
+
+  fetch(STATE.apiUrl,{method:"POST",body:JSON.stringify(payload)})
+  .then(function(r){return r.json();})
+  .then(function(data){
+    if(!data||!data.success){
+      if(data&&data.errors)showTopBanner("⚠️ "+data.errors[0],"danger");
+      return;
     }
+    pill.className="status-pill online";pill.textContent="SYNCED";
+    if(data.settings){STATE.settings=data.settings;updateSettingsUI();}
 
-    function updateSettingsUI() {
-       document.getElementById("set-api-url").value = STATE.apiUrl || ""; document.getElementById("set-sheet-url").value = STATE.sheetUrl || "";
-       document.getElementById("set-pre-block").value = STATE.settings.preWaveBlockMin || 30; document.getElementById("set-wave-grace").value = STATE.settings.waveGraceMin || 10; document.getElementById("set-batch-size").value = STATE.settings.batchSize || 25;
+    if(action==="rosterFull"||action==="resetDay"){
+      STATE.roster=data.roster||[];
+      if(action==="resetDay"){STATE.batches=[];STATE.pendingArrivals=[];STATE.receivedList=[];STATE.ofdList=[];STATE.selectedRegSet.clear();}
+      rebuildListsFromRoster();renderAll();
     }
-
-    function syncWithGoogleSheets(action = "rosterFull", payload = {}) {
-      saveState();
-      const pill = document.getElementById("sync-status-pill");
-      if (!STATE.apiUrl) { pill.className = "status-pill offline"; pill.textContent = "OFFLINE"; return; }
-      if(action === "rosterFull" || action === "saveSettings" || action === "resetDay") { pill.textContent = "SYNCING..."; pill.className = "status-pill offline"; }
-
-      payload.action = action; payload.sheetUrl = STATE.sheetUrl; payload.dayTab = STATE.selectedDateTab;
-      if(action === "saveSettings") payload.settings = STATE.settings;
-      
-      fetch(STATE.apiUrl, { method: "POST", body: JSON.stringify(payload) })
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.success) {
-          pill.className = "status-pill online"; pill.textContent = "SYNCED";
-          if (data.settings) { STATE.settings = data.settings; updateSettingsUI(); }
-          if (action === "rosterFull" || action === "resetDay") {
-            STATE.roster = data.roster || []; if(action === "resetDay") { STATE.batches = []; STATE.pendingArrivals = []; STATE.receivedList = []; STATE.selectedRegSet.clear(); } renderAll();
-          } else if (action === "syncOnly" && data.roster) {
-             data.roster.forEach(serverDA => {
-                let localDA = STATE.roster.find(r => r.daId === serverDA.daId);
-                if(localDA && serverDA.status === "Received" && localDA.status !== "Received") { 
-                    localDA.status = "Received"; 
-                    STATE.pendingArrivals = STATE.pendingArrivals.filter(p => p.daId !== localDA.daId); 
-                    if(!STATE.receivedList.find(rl => rl.daId === localDA.daId)) STATE.receivedList.push({daId: localDA.daId, daName: localDA.daName});
-                }
-             });
-             renderAll();
-          }
-        } else if (data && data.success === false && data.errors) {
-            // സ്കാൻ ചെയ്യുമ്പോൾ 'Sent' ലിസ്റ്റിൽ ഇല്ലാത്തതിൻ്റെ എറർ (RED Notification)
-            showTopBanner("⚠️ " + data.errors[0], "danger");
+    else if(action==="syncOnly"&&data.roster){
+      data.roster.forEach(function(srv){
+        var loc=STATE.roster.find(function(r){return r.daId===srv.daId;});
+        if(!loc)return;
+        if(String(srv.status).indexOf("Received")>-1&&String(loc.status).indexOf("Received")===-1&&loc.status!=="OFD"){
+          loc.status=srv.status;
+          STATE.pendingArrivals=STATE.pendingArrivals.filter(function(p){return p.daId!==loc.daId;});
+          if(!STATE.receivedList.find(function(r){return r.daId===loc.daId;}))STATE.receivedList.push({daId:loc.daId,daName:loc.daName,time:srv.rushScanInTime||""});
         }
-      }).catch(() => { pill.className = "status-pill offline"; pill.textContent = "OFFLINE"; });
-    }
-
-    function enforceWaveTimeAutoAbsent() {
-      const now = new Date(); const curMin = now.getHours() * 60 + now.getMinutes(); const grace = Number(STATE.settings.waveGraceMin) || 10; let newlyAbsentIds = [];
-      STATE.roster.forEach(da => { if (!da.status) { const wMin = parseHHMMToMinutes(da.waveTime); if (wMin !== null && curMin > (wMin + grace)) { da.status = "Absent"; newlyAbsentIds.push(da.daId); } } });
-      if (newlyAbsentIds.length > 0) { renderAll(); syncWithGoogleSheets("markAbsent", { ids: newlyAbsentIds }); }
-    }
-
-    function recordDriverCheckIn(inputToken, isDirectToWaiting = false) {
-      const clean = String(inputToken || "").trim().toLowerCase(); if (!clean) return;
-      const da = STATE.roster.find(r => (r.daId && r.daId.toLowerCase().includes(clean)) || (r.repDaId && r.repDaId.toLowerCase().includes(clean)) || (r.daName && r.daName.toLowerCase().includes(clean)));
-      if (!da) return showTopBanner(`DA Not Found: "${inputToken}"`, "danger");
-
-      if (!da.scanTime) da.scanTime = nowHHMM();
-      let assignedStatus = "Present";
-      
-      if (!isDirectToWaiting) {
-        const wMin = parseHHMMToMinutes(da.waveTime); const curMin = (new Date()).getHours() * 60 + (new Date()).getMinutes();
-        const preBlock = Number(STATE.settings.preWaveBlockMin) || 30; const grace = Number(STATE.settings.waveGraceMin) || 10;
-        if (wMin !== null) { if (curMin < (wMin - preBlock)) return showTopBanner(`Too Early! (${da.waveTime})`, "warn"); if (curMin > (wMin + grace) || da.status === "Absent") assignedStatus = "Late Arrival"; }
-        da.status = assignedStatus;
-      }
-      
-      const bId = enqueueDriverIntoStrictBatch(da);
-      showTopBanner(`${isDirectToWaiting ? 'Waiting List' : assignedStatus}: ${da.daName} -> Batch ${bId}`, "success");
-      renderAll(); syncWithGoogleSheets("recordCheckIn", { daId: da.daId, daName: da.daName, sentStatus: assignedStatus, isWaiting: isDirectToWaiting });
-    }
-
-    function enqueueDriverIntoStrictBatch(da) {
-      const cap = Number(STATE.settings.batchSize) || 25; let targetBatchObj = null;
-      if (da.originalBatchId) targetBatchObj = STATE.batches.find(b => b.batchId === da.originalBatchId);
-      if (!targetBatchObj) targetBatchObj = STATE.batches.find(b => !b.completed && b.members.length < cap && !b.hasSentMembers);
-      if (!targetBatchObj) { targetBatchObj = { batchId: STATE.batches.length + 1, completed: false, hasSentMembers: false, members: [] }; STATE.batches.push(targetBatchObj); }
-      da.originalBatchId = targetBatchObj.batchId; const activeId = da.repDaId || da.daId;
-      if (!targetBatchObj.members.find(m => m.daId.toLowerCase() === activeId.toLowerCase())) { targetBatchObj.members.push({ daId: activeId, daName: da.daName, batchId: targetBatchObj.batchId, scanTime: da.scanTime || nowHHMM(), sent: false }); }
-      return targetBatchObj.batchId;
-    }
-
-    function renderAll() {
-      let cPresent = 0, cLate = 0, cRepl = 0, cAbsent = 0, cWait = 0, cSent = STATE.pendingArrivals.length, cRecv = 0;
-      STATE.roster.forEach(r => { if (r.status === "Present") cPresent++; if (r.status === "Late Arrival") cLate++; if (r.status === "Replacement Present") cRepl++; if (r.status === "Absent") cAbsent++; if (r.status === "Received") cRecv++; });
-      STATE.batches.forEach(b => { if(!b.completed) cWait += b.members.filter(m=>!m.sent).length; });
-
-      document.getElementById("kpi-present").textContent = cPresent; document.getElementById("kpi-late").textContent = cLate; document.getElementById("kpi-repl").textContent = cRepl; document.getElementById("kpi-absent").textContent = cAbsent; document.getElementById("kpi-waiting").textContent = cWait; document.getElementById("kpi-sent").textContent = cSent; document.getElementById("kpi-received").textContent = cRecv;
-      const sel = document.getElementById("date-tab-select"); if (!STATE.availableTabs.includes(STATE.selectedDateTab)) STATE.availableTabs.push(STATE.selectedDateTab);
-      sel.innerHTML = STATE.availableTabs.map(t => `<option value="${t}" ${t === STATE.selectedDateTab ? "selected" : ""}>${t}</option>`).join("");
-      
-      const absentDAs = STATE.roster.filter(r => r.status === "Absent");
-      document.getElementById("sel-absent-driver").innerHTML = `<option value="">-- Select Absent Driver --</option>` + absentDAs.map(d => `<option value="${d.daId}">${d.daName}</option>`).join("");
-      const regWrap = document.getElementById("regular-batches-container");
-      regWrap.innerHTML = STATE.batches.filter(b => !b.completed && b.members.some(m => !m.sent)).map(b => `<div style="border:1px solid var(--border); border-radius:8px; padding:10px; margin-bottom:10px; background:var(--bg-primary);"><strong>Batch ${b.batchId}</strong>${b.members.filter(m => !m.sent).map(m => `<div class="da-item" style="margin-top:5px; padding:8px;"><div><input type="checkbox" class="chk reg-chk" data-id="${m.daId}" ${STATE.selectedRegSet.has(m.daId)?"checked":""}> <span style="font-size:12px;font-weight:bold;margin-left:5px;">${m.daName}</span></div></div>`).join("")}</div>`).join("");
-      regWrap.querySelectorAll(".reg-chk").forEach(c => c.onchange = (e) => { if (e.target.checked) STATE.selectedRegSet.add(e.target.dataset.id); else STATE.selectedRegSet.delete(e.target.dataset.id); });
-      
-      // Sent & Entry Lists
-      document.getElementById("pending-arrival-list").innerHTML = STATE.pendingArrivals.map(p => `<div class="da-item" style="padding:8px;"><div class="da-name">${p.daName}</div></div>`).join("");
-      document.getElementById("entry-list-container").innerHTML = STATE.receivedList.map(e => `<div class="da-item" style="padding:8px; border-left:4px solid var(--success);"><div class="da-name">${e.daName}</div><div class="da-sub">Checked-In</div></div>`).join("");
-    }
-
-    function bindFuzzySearch(inputId, suggId, onPick) {
-      const inp = document.getElementById(inputId); const box = document.getElementById(suggId);
-      inp.addEventListener("input", () => {
-        const q = inp.value.trim().toLowerCase(); if (q.length < 2) { box.style.display = "none"; return; }
-        const matches = STATE.roster.filter(r => r.daName.toLowerCase().includes(q) || r.daId.toLowerCase().includes(q)).slice(0, 5);
-        if (!matches.length) { box.style.display = "none"; return; }
-        box.innerHTML = matches.map(m => `<div class="sugg-item" data-id="${m.daId}">${m.daName} <br><span style="font-size:10px;color:var(--text-muted)">${m.daId}</span></div>`).join("");
-        box.style.display = "block"; box.querySelectorAll(".sugg-item").forEach(row => row.onclick = () => { onPick(row.getAttribute("data-id")); inp.value = ""; box.style.display = "none"; });
+        if(srv.status==="OFD"&&loc.status!=="OFD"){
+          loc.status="OFD";
+          STATE.receivedList=STATE.receivedList.filter(function(r){return r.daId!==loc.daId;});
+          if(!STATE.ofdList.find(function(o){return o.daId===loc.daId;}))STATE.ofdList.push({daId:loc.daId,daName:loc.daName,time:srv.ofdTime||""});
+        }
       });
-      inp.addEventListener("keydown", (e) => { if (e.key === "Enter" && inp.value.trim()) { onPick(inp.value.trim()); inp.value = ""; box.style.display = "none"; } });
+      if(data.violations&&data.violations.length>0)renderViolations(data.violations);
+      renderAll();
     }
+    else if(action==="sendDA"&&data.slip){
+      var ids=payload.ids||[];
+      STATE.batches.forEach(function(b){b.members.forEach(function(m){if(ids.indexOf(m.daId)>-1&&!m.sent){m.sent=true;STATE.pendingArrivals.push({daId:m.daId,daName:m.daName,marshalName:data.slip.marshalName,sentTime:data.slip.sentTime,slipNumber:data.slip.slipNumber});}});if(b.members.some(function(m){return m.sent;}))b.hasSentMembers=true;});
+      STATE.selectedRegSet.clear();showSlipModal(data.slip);renderAll();
+    }
+    else if(action==="rushQueueScanIn"&&data.result){
+      var r=data.result;
+      if(r.violation)showTopBanner("⚠️ "+r.violation.message,"danger");
+      else showTopBanner("✅ "+r.daName+" → RECEIVED","success");
+      STATE.pendingArrivals=STATE.pendingArrivals.filter(function(p){return p.daId!==payload.daId;});
+      if(!STATE.receivedList.find(function(x){return x.daId===payload.daId;}))STATE.receivedList.push({daId:payload.daId,daName:r.daName,time:nowHHMM()});
+      var loc=STATE.roster.find(function(x){return x.daId===payload.daId;});
+      if(loc)loc.status=r.violation?"Received ⚠️":"Received";
+      renderAll();
+    }
+    else if(action==="rushQueueScanOut"&&data.result&&data.result.found){
+      showTopBanner("🚚 "+data.result.daName+" → OFD","success");
+      STATE.receivedList=STATE.receivedList.filter(function(x){return x.daId!==payload.daId;});
+      if(!STATE.ofdList.find(function(o){return o.daId===payload.daId;}))STATE.ofdList.push({daId:payload.daId,daName:data.result.daName,time:nowHHMM()});
+      var loc2=STATE.roster.find(function(x){return x.daId===payload.daId;});
+      if(loc2)loc2.status="OFD";
+      renderAll();
+    }
+  }).catch(function(){pill.className="status-pill offline";pill.textContent="OFFLINE";});
+}
 
-    window.addEventListener("DOMContentLoaded", () => {
-      loadState(); updateSettingsUI();
-      document.querySelectorAll(".nav-item").forEach(btn => {
-        btn.onclick = () => {
-          const target = btn.getAttribute("data-target");
-          if (target === "pane-settings" && !isAdmin) { const pin = prompt("Enter Admin PIN:"); if (pin !== "1234") return showTopBanner("Access denied.", "danger"); isAdmin = true; }
-          document.querySelectorAll(".nav-item, .tab-pane").forEach(el => el.classList.remove("active"));
-          btn.classList.add("active"); document.getElementById(target).classList.add("active");
-        };
-      });
-      document.getElementById("date-tab-select").onchange = (e) => { STATE.selectedDateTab = e.target.value; STATE.batches = []; STATE.pendingArrivals = []; STATE.receivedList = []; syncWithGoogleSheets("rosterFull"); };
-      document.getElementById("btn-reset-day").onclick = () => { if(confirm("Reset the app for a new day?")) { STATE.selectedDateTab = getTodayTabString(); syncWithGoogleSheets("resetDay"); showTopBanner("Reset Success", "success"); } };
-      document.getElementById("btn-save-settings").onclick = () => { STATE.apiUrl = document.getElementById("set-api-url").value.trim(); STATE.sheetUrl = document.getElementById("set-sheet-url").value.trim(); STATE.settings.preWaveBlockMin = Number(document.getElementById("set-pre-block").value); STATE.settings.waveGraceMin = Number(document.getElementById("set-wave-grace").value); STATE.settings.batchSize = Number(document.getElementById("set-batch-size").value); saveState(); syncWithGoogleSheets("saveSettings"); showTopBanner("Global Settings Saved", "success"); };
-      
-      document.getElementById("btn-reg-send-selected").onclick = () => { 
-          let sentIds = []; 
-          STATE.batches.forEach(b => { 
-              let sentFromThisBatch = false; 
-              b.members.forEach(m => { 
-                  if(!m.sent && STATE.selectedRegSet.has(m.daId)) { 
-                      m.sent = true; sentFromThisBatch = true; 
-                      STATE.pendingArrivals.push({ daId: m.daId, daName: m.daName }); 
-                      sentIds.push(m.daId); 
-                  } 
-              }); 
-              if(sentFromThisBatch) b.hasSentMembers = true; 
-          }); 
-          STATE.selectedRegSet.clear(); renderAll(); showTopBanner("Sent to OP", "success"); 
-          if(sentIds.length > 0) syncWithGoogleSheets("logEvent", { ids: sentIds, action: "Sent to OP Waiting List" }); 
-      };
+function enforceAbsent(){
+  var now=new Date();var curMin=now.getHours()*60+now.getMinutes();var grace=Number(STATE.settings.waveGraceMin)||10;var ids=[];
+  STATE.roster.forEach(function(da){if(!da.status){var w=parseHHMM(da.waveTime);if(w!==null&&curMin>(w+grace)){da.status="Absent";ids.push(da.daId);}}});
+  if(ids.length>0){renderAll();syncAPI("markAbsent",{ids:ids});}
+}
 
-      document.getElementById("btn-confirm-replacement").onclick = () => { const origId = document.getElementById("sel-absent-driver").value; const replStr = document.getElementById("inp-custom-repl").value.trim(); if (!origId || !replStr) return showTopBanner("Select DA and enter info.", "warn"); const da = STATE.roster.find(r => r.daId === origId); if(da) { da.status = "Replacement Present"; showTopBanner(`Replacement Assigned`, "success"); renderAll(); syncWithGoogleSheets("assignReplacement", { rowIndex: da.rowIndex, replacementText: replStr }); document.getElementById("inp-custom-repl").value = ""; } };
-      
-      let qrAtt = null, qrWait = null;
-      document.getElementById("btn-cam-toggle").onclick = () => { const box = document.getElementById("cam-box-att"); if (box.style.display === "block") { box.style.display = "none"; if(qrAtt) qrAtt.stop(); } else { box.style.display = "block"; qrAtt = new Html5Qrcode("qr-reader-att"); qrAtt.start({facingMode:"environment"}, {fps:10}, t => { recordDriverCheckIn(t, false); qrAtt.stop(); box.style.display="none"; }); } };
-      document.getElementById("btn-cam-waiting-toggle").onclick = () => { const box = document.getElementById("cam-box-waiting"); if (box.style.display === "block") { box.style.display = "none"; if(qrWait) qrWait.stop(); } else { box.style.display = "block"; qrWait = new Html5Qrcode("qr-reader-wait"); qrWait.start({facingMode:"environment"}, {fps:10}, t => { recordDriverCheckIn(t, true); qrWait.stop(); box.style.display="none"; }); } };
-      bindFuzzySearch("inp-checkin", "sugg-checkin", val => recordDriverCheckIn(val, false)); bindFuzzySearch("inp-requeue-da", "sugg-requeue", val => recordDriverCheckIn(val, true));
-      
-      // Ghost Overlay Logic
-      const overlayBox = document.getElementById('ghost-overlay-container');
-      const ghostInput = document.getElementById('ghost-overlay-input');
-      
-      document.getElementById('btn-launch-ghost').onclick = () => {
-          overlayBox.style.display = 'flex';
-          ghostInput.focus();
-      };
+function recordCheckIn(token,isWaiting){
+  var clean=String(token||"").trim().toLowerCase();if(!clean)return;
+  var da=STATE.roster.find(function(r){return(r.daId&&r.daId.toLowerCase().indexOf(clean)>-1)||(r.repDaId&&r.repDaId.toLowerCase().indexOf(clean)>-1)||(r.daName&&r.daName.toLowerCase().indexOf(clean)>-1);});
+  if(!da)return showTopBanner('DA Not Found: "'+token+'"',"danger");
+  if(!da.scanTime)da.scanTime=nowHHMM();
+  var st="Present";
+  if(!isWaiting){
+    var w=parseHHMM(da.waveTime);var cur=(new Date()).getHours()*60+(new Date()).getMinutes();
+    var pre=Number(STATE.settings.preWaveBlockMin)||30;var gr=Number(STATE.settings.waveGraceMin)||10;
+    if(w!==null){if(cur<(w-pre))return showTopBanner("Too Early! ("+da.waveTime+")","warn");if(cur>(w+gr)||da.status==="Absent")st="Late Arrival";}
+    da.status=st;
+  }
+  var bId=enqueueBatch(da);
+  showTopBanner((isWaiting?"Waiting":st)+": "+da.daName+" → Batch "+bId,"success");
+  renderAll();syncAPI("recordCheckIn",{daId:da.daId,daName:da.daName,sentStatus:st,isWaiting:isWaiting});
+}
 
-      let isDragging = false, offsetX, offsetY;
-      overlayBox.addEventListener('mousedown', (e) => {
-          if (e.target === ghostInput) return;
-          isDragging = true;
-          offsetX = e.clientX - overlayBox.getBoundingClientRect().left;
-          offsetY = e.clientY - overlayBox.getBoundingClientRect().top;
-          overlayBox.style.cursor = 'grabbing';
-      });
-      document.addEventListener('mousemove', (e) => {
-          if (!isDragging) return;
-          overlayBox.style.left = (e.clientX - offsetX + 160) + 'px'; 
-          overlayBox.style.top = (e.clientY - offsetY) + 'px';
-          overlayBox.style.transform = 'none';
-      });
-      document.addEventListener('mouseup', () => {
-          isDragging = false;
-          overlayBox.style.cursor = 'grab';
-      });
+function enqueueBatch(da){
+  var cap=Number(STATE.settings.batchSize)||25;var tgt=null;
+  if(da.originalBatchId)tgt=STATE.batches.find(function(b){return b.batchId===da.originalBatchId;});
+  if(!tgt)tgt=STATE.batches.find(function(b){return!b.completed&&b.members.length<cap&&!b.hasSentMembers;});
+  if(!tgt){tgt={batchId:STATE.batches.length+1,completed:false,hasSentMembers:false,members:[]};STATE.batches.push(tgt);}
+  da.originalBatchId=tgt.batchId;var aId=da.repDaId||da.daId;
+  if(!tgt.members.find(function(m){return m.daId.toLowerCase()===aId.toLowerCase();}))tgt.members.push({daId:aId,daName:da.daName,batchId:tgt.batchId,scanTime:da.scanTime||nowHHMM(),sent:false});
+  return tgt.batchId;
+}
 
-      ghostInput.addEventListener('keydown', function(e) {
-          if (e.key === 'Enter') {
-              e.preventDefault();
-              const daId = ghostInput.value.trim().toUpperCase();
-              if (daId.length >= 10) {
-                  // ഡാറ്റ ഷീറ്റിലേക്ക് അയക്കുന്നു
-                  syncWithGoogleSheets('queueReceived', { ids: [daId] });
-              }
-              ghostInput.value = '';
+function rushScanIn(){var b=document.getElementById("rush-scan-input").value.trim();if(!b)return showTopBanner("Scan badge first","warn");syncAPI("rushQueueScanIn",{daId:b});document.getElementById("rush-scan-input").value="";document.getElementById("rush-scan-input").focus();}
+function rushScanOut(){var b=document.getElementById("rush-scan-input").value.trim();if(!b)return showTopBanner("Scan badge first","warn");syncAPI("rushQueueScanOut",{daId:b});document.getElementById("rush-scan-input").value="";document.getElementById("rush-scan-input").focus();}
+
+function showSlipModal(slip){
+  var el=document.getElementById("slip-content");
+  var h="";slip.daList.forEach(function(d,i){h+='<div class="slip-da">'+(i+1)+". "+d.daName+' <span style="float:right;font-size:10px;color:#666;">'+d.daId+"</span></div>";});
+  el.innerHTML='<h3>📋 DISPATCH SLIP</h3><div class="slip-row"><span>Slip #</span><strong>'+slip.slipNumber+'</strong></div><div class="slip-row"><span>Yard Marshal</span><strong>'+slip.marshalName+'</strong></div><div class="slip-row"><span>Time</span><strong>'+slip.sentTime+'</strong></div><div class="slip-row"><span>DA Count</span><strong>'+slip.count+'</strong></div><div style="margin:10px 0;border-top:1px dashed #999;padding-top:8px;">'+h+'</div><div class="slip-footer">DUD3 Rush PRO v2<br><button onclick="document.getElementById(\'slip-modal\').classList.remove(\'show\')" style="margin-top:8px;padding:8px 20px;background:#232F3E;color:#fff;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">CLOSE</button></div>';
+  document.getElementById("slip-modal").classList.add("show");
+}
+
+function renderViolations(v){var c=document.getElementById("violations-container");if(!v||!v.length){c.innerHTML="";return;}c.innerHTML=v.map(function(x){return'<div class="violation-badge'+(x.severity==="MEDIUM"?" medium":"")+'">⚠️ '+x.message+"</div>";}).join("");}
+
+function renderAll(){
+  var cP=0,cL=0,cR=0,cA=0,cW=0;
+  STATE.roster.forEach(function(r){if(r.status==="Present")cP++;if(r.status==="Late Arrival")cL++;if(r.status==="Replacement Present")cR++;if(r.status==="Absent")cA++;});
+  STATE.batches.forEach(function(b){if(!b.completed)cW+=b.members.filter(function(m){return!m.sent;}).length;});
+  document.getElementById("kpi-present").textContent=cP;
+  document.getElementById("kpi-late").textContent=cL;
+  document.getElementById("kpi-repl").textContent=cR;
+  document.getElementById("kpi-absent").textContent=cA;
+  document.getElementById("kpi-waiting").textContent=cW;
+  document.getElementById("kpi-sent").textContent=STATE.pendingArrivals.length;
+  document.getElementById("kpi-received").textContent=STATE.receivedList.length;
+  document.getElementById("kpi-ofd").textContent=STATE.ofdList.length;
+
+  var sel=document.getElementById("date-tab-select");
+  if(STATE.availableTabs.indexOf(STATE.selectedDateTab)===-1)STATE.availableTabs.push(STATE.selectedDateTab);
+  sel.innerHTML=STATE.availableTabs.map(function(t){return'<option value="'+t+'"'+(t===STATE.selectedDateTab?" selected":"")+">"+t+"</option>";}).join("");
+
+  document.getElementById("sel-absent-driver").innerHTML='<option value="">-- Select Absent Driver --</option>'+STATE.roster.filter(function(r){return r.status==="Absent";}).map(function(d){return'<option value="'+d.daId+'">'+d.daName+"</option>";}).join("");
+
+  var rw=document.getElementById("regular-batches-container");
+  rw.innerHTML=STATE.batches.filter(function(b){return!b.completed&&b.members.some(function(m){return!m.sent;});}).map(function(b){return'<div style="border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:10px;background:var(--bg-primary);"><strong>Batch '+b.batchId+"</strong>"+b.members.filter(function(m){return!m.sent;}).map(function(m){return'<div class="da-item" style="margin-top:5px;padding:8px;"><div><input type="checkbox" class="reg-chk" data-id="'+m.daId+'"'+(STATE.selectedRegSet.has(m.daId)?" checked":"")+'> <span style="font-size:12px;font-weight:bold;margin-left:5px;">'+m.daName+'</span></div><div style="font-size:10px;color:var(--text-muted);">'+m.scanTime+"</div></div>";}).join("")+"</div>";}).join("");
+  rw.querySelectorAll(".reg-chk").forEach(function(c){c.onchange=function(e){if(e.target.checked)STATE.selectedRegSet.add(e.target.dataset.id);else STATE.selectedRegSet.delete(e.target.dataset.id);};});
+
+  document.getElementById("pending-arrival-list").innerHTML=STATE.pendingArrivals.length?STATE.pendingArrivals.map(function(p){return'<div class="da-item" style="padding:8px;border-left:4px solid var(--warn);"><div><div class="da-name">'+p.daName+'</div><div class="da-sub">YM: '+(p.marshalName||"—")+" · Slip: "+(p.slipNumber||"—")+" · Sent: "+(p.sentTime||"—")+'</div></div><span class="status-sent">SENT</span></div>';}).join(""):'<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:12px;">No DAs pending</div>';
+
+  document.getElementById("received-list").innerHTML=STATE.receivedList.length?STATE.receivedList.map(function(r){return'<div class="da-item" style="padding:8px;border-left:4px solid var(--success);"><div><div class="da-name">'+r.daName+'</div><div class="da-sub">Scan IN: '+(r.time||"—")+"</div></div><span class=\"status-recv\">RECEIVED</span></div>";}).join(""):'<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:12px;">No DAs received yet</div>';
+
+  document.getElementById("ofd-list").innerHTML=STATE.ofdList.length?STATE.ofdList.map(function(o){return'<div class="da-item" style="padding:8px;border-left:4px solid var(--ofd-purple);"><div><div class="da-name">'+o.daName+'</div><div class="da-sub">OFD: '+(o.time||"—")+'</div></div><span class="status-ofd">🚚 OFD</span></div>';}).join(""):'<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:12px;">No DAs dispatched yet</div>';
+  saveState();
+}
+
+function bindSearch(inpId,suggId,onPick){
+  var inp=document.getElementById(inpId);var box=document.getElementById(suggId);
+  inp.addEventListener("input",function(){
+    var q=inp.value.trim().toLowerCase();if(q.length<2){box.style.display="none";return;}
+    var matches=STATE.roster.filter(function(r){return r.daName.toLowerCase().indexOf(q)>-1||r.daId.toLowerCase().indexOf(q)>-1;}).slice(0,5);
+    if(!matches.length){box.style.display="none";return;}
+    box.innerHTML=matches.map(function(m){return'<div class="sugg-item" data-id="'+m.daId+'">'+m.daName+'<br><span style="font-size:10px;color:var(--text-muted)">'+m.daId+"</span></div>";}).join("");
+    box.style.display="block";
+    box.querySelectorAll(".sugg-item").forEach(function(row){row.onclick=function(){onPick(row.getAttribute("data-id"));inp.value="";box.style.display="none";};});
+  });
+  inp.addEventListener("keydown",function(e){if(e.key==="Enter"&&inp.value.trim()){onPick(inp.value.trim());inp.value="";box.style.display="none";}});
+}
+
+window.addEventListener("DOMContentLoaded",function(){
+  loadState();updateSettingsUI();
+
+  document.querySelectorAll(".nav-item").forEach(function(btn){
+    btn.onclick=function(){
+      var target=btn.getAttribute("data-target");
+      if(target==="pane-settings"&&!isAdmin){var pin=prompt("Enter Admin PIN:");if(pin!=="1234")return showTopBanner("Access denied.","danger");isAdmin=true;}
+      document.querySelectorAll(".nav-item,.tab-pane").forEach(function(el){el.classList.remove("active");});
+      btn.classList.add("active");document.getElementById(target).classList.add("active");
+    };
+  });
+
+  document.getElementById("date-tab-select").onchange=function(e){STATE.selectedDateTab=e.target.value;STATE.batches=[];STATE.pendingArrivals=[];STATE.receivedList=[];STATE.ofdList=[];syncAPI("rosterFull");};
+  document.getElementById("btn-reset-day").onclick=function(){if(confirm("Reset the app for a new day?")){STATE.selectedDateTab=getTodayTab();syncAPI("resetDay");showTopBanner("Reset Success","success");}};
+  document.getElementById("btn-save-settings").onclick=function(){STATE.apiUrl=document.getElementById("set-api-url").value.trim();STATE.sheetUrl=document.getElementById("set-sheet-url").value.trim();STATE.settings.preWaveBlockMin=Number(document.getElementById("set-pre-block").value);STATE.settings.waveGraceMin=Number(document.getElementById("set-wave-grace").value);STATE.settings.batchSize=Number(document.getElementById("set-batch-size").value);saveState();syncAPI("saveSettings");showTopBanner("Settings Saved","success");};
+
+  document.getElementById("btn-reg-send-selected").onclick=function(){
+    var ym=document.getElementById("inp-ym-name").value.trim();
+    if(!ym)return showTopBanner("Enter YM name first!","warn");
+    var ids=[];
+    STATE.batches.forEach(function(b){b.members.forEach(function(m){if(!m.sent&&STATE.selectedRegSet.has(m.daId))ids.push(m.daId);});});
+    if(!ids.length)return showTopBanner("Select DAs to send","warn");
+    syncAPI("sendDA",{ids:ids,marshalName:ym});
+  };
+
+  document.getElementById("btn-confirm-replacement").onclick=function(){
+    var origId=document.getElementById("sel-absent-driver").value;var replStr=document.getElementById("inp-custom-repl").value.trim();
+    if(!origId||!replStr)return showTopBanner("Select DA and enter info.","warn");
+    var da=STATE.roster.find(function(r){return r.daId===origId;});
+    if(da){da.status="Replacement Present";showTopBanner("Replacement Assigned","success");renderAll();syncAPI("assignReplacement",{rowIndex:da.rowIndex,replacementText:replStr});document.getElementById("inp-custom-repl").value="";}
+  };
+
+  document.getElementById("btn-rush-scanin").onclick=rushScanIn;
+  document.getElementById("btn-rush-scanout").onclick=rushScanOut;
+  document.getElementById("rush-scan-input").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();rushScanIn();}});
+
+  var qrAtt=null,qrWait=null;
+  document.getElementById("btn-cam-toggle").onclick=function(){
+    var box=document.getElementById("cam-box-att");
+    if(box.style.display==="block"){box.style.display="none";if(qrAtt)qrAtt.stop();}
+    else{box.style.display="block";qrAtt=new Html5Qrcode("qr-reader-att");qrAtt.start({facingMode:"environment"},{fps:10},function(t){recordCheckIn(t,false);qrAtt.stop();box.style.display="none";});}
+  };
+  document.getElementById("btn-cam-waiting-toggle").onclick=function(){
+    var box=document.getElementById("cam-box-waiting");
+    if(box.style.display==="block"){box.style.display="none";if(qrWait)qrWait.stop();}
+    else{box.style.display="block";qrWait=new Html5Qrcode("qr-reader-wait");qrWait.start({facingMode:"environment"},{fps:10},function(t){recordCheckIn(t,true);qrWait.stop();box.style.display="none";});}
+  };
+
+  bindSearch("inp-checkin","sugg-checkin",function(v){recordCheckIn(v,false);});
+  bindSearch("inp-requeue-da","sugg-requeue",function(v){recordCheckIn(v,true);});
+
+  var savedYM=localStorage.getItem("dud3_ym_name");
+  if(savedYM)document.getElementById("inp-ym-name").value=savedYM;
+  document.getElementById("inp-ym-name").addEventListener("change",function(){localStorage.setItem("dud3_ym_name",this.value);});
+
+  // Ghost Overlay Logic
+  var overlayBox = document.getElementById('ghost-overlay-container');
+  var ghostInput = document.getElementById('ghost-overlay-input');
+  
+  document.getElementById('btn-launch-ghost').onclick = function() {
+      overlayBox.style.display = 'flex';
+      ghostInput.focus();
+  };
+
+  var isDragging = false, offsetX, offsetY;
+  overlayBox.addEventListener('mousedown', function(e) {
+      if (e.target === ghostInput) return;
+      isDragging = true;
+      offsetX = e.clientX - overlayBox.getBoundingClientRect().left;
+      offsetY = e.clientY - overlayBox.getBoundingClientRect().top;
+      overlayBox.style.cursor = 'grabbing';
+  });
+  document.addEventListener('mousemove', function(e) {
+      if (!isDragging) return;
+      overlayBox.style.left = (e.clientX - offsetX + 160) + 'px'; 
+      overlayBox.style.top = (e.clientY - offsetY) + 'px';
+      overlayBox.style.transform = 'none';
+  });
+  document.addEventListener('mouseup', function() {
+      isDragging = false;
+      overlayBox.style.cursor = 'grab';
+  });
+
+  ghostInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+          e.preventDefault();
+          var daId = ghostInput.value.trim().toUpperCase();
+          if (daId.length >= 10) {
+              syncAPI('rushQueueScanIn', { daId: daId });
           }
-      });
+          ghostInput.value = '';
+      }
+  });
 
-      setInterval(enforceWaveTimeAutoAbsent, 30000);
-      setInterval(() => { syncWithGoogleSheets("syncOnly"); }, 3000); 
-      syncWithGoogleSheets("rosterFull"); 
-    });
-  </script>
+  setInterval(enforceAbsent,30000);
+  setInterval(function(){syncAPI("syncOnly");},3000);
+  syncAPI("rosterFull");
+});
+</script>
 </body>
 </html>
