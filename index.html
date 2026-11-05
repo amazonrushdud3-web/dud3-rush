@@ -4,11 +4,8 @@
   <meta charset="UTF-8">
   <title>DUD3 Rush PRO</title>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#131A22">
-  <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Barcode_scanner_icon.svg/512px-Barcode_scanner_icon.svg.png">
-  <link rel="manifest" id="manifest-link">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <style>
     :root{--bg:#131A22;--bg2:#1B2430;--card:#232F3E;--orange:#FF9900;--blue:#00A8E1;--white:#FFF;--muted:#9BA7B6;--green:#00C853;--red:#FF3B30;--warn:#FFB300;--purple:#BB86FC;--border:#354558;--r:10px;--nav:66px;}
@@ -16,6 +13,17 @@
     html,body{background:var(--bg);color:var(--white);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:14px;overflow-x:hidden;}
     body{min-height:100vh;display:flex;flex-direction:column;padding-bottom:calc(var(--nav)+20px);}
     
+    /* SPLASH SCREEN CSS */
+    #splash{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(to bottom, #0d1117, #131A22);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.6s ease;}
+    .skyline{font-size:60px;letter-spacing:-10px;margin-bottom:5px;opacity:0.6;filter:drop-shadow(0 0 15px rgba(0,168,225,0.4));}
+    #splash h2{color:#fff;font-weight:900;font-size:32px;margin-bottom:40px;letter-spacing:2px;text-shadow:0 0 10px rgba(255,153,0,0.5);}
+    #splash h2 span{color:var(--orange);}
+    .road-box{width:280px;height:6px;background:#354558;border-radius:3px;position:relative;}
+    .bar-fill{width:0%;height:100%;background:var(--orange);border-radius:3px;box-shadow:0 0 10px var(--orange);animation:load 2.5s forwards ease-in-out;}
+    .bike{position:absolute;bottom:10px;left:0%;font-size:34px;transform:translateX(-50%);animation:ride 2.5s forwards ease-in-out;}
+    @keyframes load{100%{width:100%;}}
+    @keyframes ride{100%{left:100%;}}
+
     #toast-msg{position:fixed;top:8px;left:50%;transform:translateX(-50%) translateY(-150%);width:calc(100% - 24px);max-width:540px;padding:12px 16px;border-radius:8px;font-weight:800;font-size:13px;display:flex;justify-content:space-between;align-items:center;z-index:10000;box-shadow:0 8px 24px rgba(0,0,0,0.6);transition:transform 0.3s;}
     #toast-msg.show{transform:translateX(-50%) translateY(0);}
     .b-ok{background:var(--green);color:#062010;}.b-err{background:var(--red);color:#fff;}.b-warn{background:var(--warn);color:#1A1300;}
@@ -84,6 +92,16 @@
 </head>
 <body>
 
+<!-- SPLASH SCREEN ANIMATION -->
+<div id="splash">
+  <div class="skyline">🏙️🌆🏢🏨</div>
+  <h2>RUSH PRO <span>APP</span></h2>
+  <div class="road-box">
+     <div class="bike">🛵💨</div>
+     <div class="bar-fill"></div>
+  </div>
+</div>
+
 <div id="toast-msg"><span id="b-txt"></span><button style="background:none;border:none;color:#fff;font-weight:bold;font-size:18px;cursor:pointer;" onclick="document.getElementById('toast-msg').className=''">x</button></div>
 
 <header>
@@ -95,7 +113,6 @@
 </header>
 
 <main>
-  
   <div class="kpi-row">
     <div class="kpi"><div class="kv" id="k-pres" style="color:var(--green)">0</div><div class="kl">Present</div></div>
     <div class="kpi"><div class="kv" id="k-late" style="color:var(--warn)">0</div><div class="kl">Late</div></div>
@@ -129,7 +146,7 @@
       <div class="crd-t" style="color:var(--blue)">🔁 Replacement DA</div>
       <select id="sel-abs" class="inp"><option value="">-- Select Absent DA --</option></select>
       <input type="text" id="inp-repl" class="inp" placeholder="Enter Replacement (NAME - ID)">
-      <button class="btn" id="btn-repl" style="width:100%">Assign Replacement</button>
+      <button class="btn" id="btn-repl" style="width:100%">🔁 Assign Replacement</button>
     </div>
   </section>
 
@@ -178,7 +195,7 @@
         <span class="pulse"></span>
         <span style="font-size:11px;color:var(--green);font-weight:800;">RUSH LM QUEUE LISTENER</span>
       </div>
-      <button class="btn-big" id="cam-rush-btn" style="background:var(--green);color:#fff;margin-bottom:10px;">📱 MOBILE CAMERA SCAN IN</button>
+      <button class="btn-big" id="cam-rush-btn" style="background:var(--green);color:#fff;margin-bottom:10px;">📸 MOBILE CAMERA SCAN IN</button>
       <div id="cam-rush" class="cam"><div id="qr-rush"></div></div>
       <input type="text" id="rush-inp" class="rush-inp" placeholder="✅ SCAN IN (Receive)..." autocomplete="off">
       <div style="text-align:center;font-size:10px;color:var(--muted);margin-bottom:4px;">Auto OFD applies automatically!</div>
@@ -192,7 +209,7 @@
 
     <div id="timeoutBanner" class="vio-banner timeout-ban">
       <div class="ban-hdr"><span>⏰ SLA EXCEEDED</span><button class="dismiss-btn" onclick="dismissTimeout()">✕</button></div>
-      <div class="ban-msg">DA(s) were dispatched by YM but did NOT scan in time limit. They are added to Violations List.</div>
+      <div class="ban-msg">DA(s) were dispatched by YM but did NOT scan in time limit. Added to Violations List.</div>
       <div id="timeoutList"></div>
     </div>
 
@@ -207,56 +224,60 @@
     <div class="crd">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
         <div class="crd-t" style="margin:0">⚙️ Admin Settings</div>
-        <button class="btn btn-red" id="btn-reset" style="padding:6px 10px">RESET DAY</button>
+        <button class="btn btn-red" id="btn-reset" style="padding:6px 10px">🔄 RESET DAY</button>
       </div>
-      <label style="font-size:11px;color:var(--muted)">Main Apps Script URL</label>
+      
+      <label style="font-size:11px;color:var(--muted)">🌐 Main Apps Script URL</label>
       <input type="text" id="s-api" class="inp" placeholder="Paste your MAIN App API here">
-      <label style="font-size:11px;color:var(--muted)">Google Sheet URL</label>
+      
+      <label style="font-size:11px;color:var(--muted)">📊 Google Sheet URL</label>
       <input type="text" id="s-sheet" class="inp" placeholder="Paste Google Sheet URL">
       
       <div style="display:flex;gap:10px;margin-bottom:10px;">
-        <div style="flex:1"><label style="font-size:11px;color:var(--muted)">Pre-Wave Block (m)</label><input type="number" id="s-pre" class="inp"></div>
-        <div style="flex:1"><label style="font-size:11px;color:var(--muted)">Wave Grace (m)</label><input type="number" id="s-grace" class="inp"></div>
+        <div style="flex:1"><label style="font-size:11px;color:var(--muted)">🛑 Pre-Wave Block (m)</label><input type="number" id="s-pre" class="inp"></div>
+        <div style="flex:1"><label style="font-size:11px;color:var(--muted)">⏳ Wave Grace (m)</label><input type="number" id="s-grace" class="inp"></div>
       </div>
       <div style="display:flex;gap:10px;margin-bottom:10px;">
-        <div style="flex:1"><label style="font-size:11px;color:var(--muted)">Batch Size</label><input type="number" id="s-batch" class="inp"></div>
-        <div style="flex:1"><label style="font-size:11px;color:var(--muted)">Rush Timeout SLA (m)</label><input type="number" id="s-time" class="inp"></div>
+        <div style="flex:1"><label style="font-size:11px;color:var(--muted)">📦 Batch Size</label><input type="number" id="s-batch" class="inp"></div>
+        <div style="flex:1"><label style="font-size:11px;color:var(--muted)">⏱️ Rush Timeout SLA (m)</label><input type="number" id="s-time" class="inp"></div>
       </div>
-      <div style="display:flex;gap:10px;margin-bottom:15px;">
+      <div style="display:flex;gap:10px;margin-bottom:10px;">
         <div style="flex:1">
-           <label style="font-size:11px;color:var(--muted)">Auto OFD Timer (Mins)</label>
+           <label style="font-size:11px;color:var(--muted)">🚚 Auto OFD Timer (Mins)</label>
            <input type="number" id="s-auto-ofd" class="inp" placeholder="30">
         </div>
         <div style="flex:1">
-           <label style="font-size:11px;color:var(--muted)">Waiting Lock (Mins)</label>
+           <label style="font-size:11px;color:var(--muted)">🔒 Waiting Lock (Mins)</label>
            <input type="number" id="s-wait-lock" class="inp" placeholder="30">
         </div>
       </div>
-      <button class="btn" id="btn-save" style="width:100%;background:var(--orange);color:#000;margin-bottom:10px;">Save Settings</button>
-      <button class="btn" onclick="clearMemoryAndReload()" style="width:100%;background:#354558;color:#fff;font-size:12px;">Clear Memory (Fix App Crashes)</button>
+      <div style="margin-bottom:15px;">
+           <label style="font-size:11px;color:var(--muted)">🔑 Admin PIN</label>
+           <input type="text" id="s-pin" class="inp" placeholder="e.g. 1234">
+      </div>
+      
+      <button class="btn" id="btn-save" style="width:100%;background:var(--orange);color:#000;margin-bottom:10px;">💾 Save Settings</button>
+      <button class="btn" onclick="clearMemoryAndReload()" style="width:100%;background:#354558;color:#fff;font-size:12px;">🗑️ Clear Memory (Fix App Crashes)</button>
     </div>
   </section>
 </main>
 
 <nav class="bnav">
-  <button class="ni on" data-p="p-att"><svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg><span>Attend</span></button>
-  <button class="ni" data-p="p-wait"><svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg><span>Waiting</span></button>
-  <button class="ni" data-p="p-breaks"><svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg><span>Breaks</span></button>
-  <button class="ni" data-p="p-sent"><svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg><span>Sent</span></button>
-  <button class="ni" data-p="p-rush"><svg viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg><span>Rush Q</span></button>
-  <button class="ni" data-p="p-set"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58z"/></svg><span>Admin</span></button>
+  <button class="ni on" data-p="p-att"><span>📋</span><span>Attend</span></button>
+  <button class="ni" data-p="p-wait"><span>📥</span><span>Waiting</span></button>
+  <button class="ni" data-p="p-breaks"><span>☕</span><span>Breaks</span></button>
+  <button class="ni" data-p="p-sent"><span>⏱️</span><span>Sent</span></button>
+  <button class="ni" data-p="p-rush"><span>⚡</span><span>Rush Q</span></button>
+  <button class="ni" data-p="p-set"><span>⚙️</span><span>Admin</span></button>
 </nav>
 
 <script>
-// Default URLs if localStorage is empty
-var API="https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec";
+// Default dummy URLs. The user must paste their real ones in the Admin tab.
+var API="https://script.google.com/macros/s/PASTE_YOUR_MAIN_APP_API_HERE/exec";
 var SHEET="https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit";
 
-var mj={name:"DUD3 Rush PRO",short_name:"DUD3 Rush",start_url:location.href,display:"standalone",background_color:"#131A22",theme_color:"#FF9900",icons:[{src:"https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Barcode_scanner_icon.svg/512px-Barcode_scanner_icon.svg.png",sizes:"512x512",type:"image/png"}]};
-document.getElementById("manifest-link").href=URL.createObjectURL(new Blob([JSON.stringify(mj)],{type:"application/json"}));
-
 var SK="DUD3V2_MASTER",admin=!(/Mobi|Android|iPhone/i.test(navigator.userAgent));
-var S={api:API,sheet:SHEET,day:todayTab(),tabs:recentTabs(),cfg:{waveGraceMin:10,preWaveBlockMin:30,batchSize:25,rushTimeoutMin:20,autoOfdMin:30,waitingLockMin:30},roster:[],batches:[],breaks:[],received:[],sel:new Set(),violations:[]};
+var S={api:API,sheet:SHEET,day:todayTab(),tabs:recentTabs(),cfg:{waveGraceMin:10,preWaveBlockMin:30,batchSize:25,rushTimeoutMin:20,autoOfdMin:30,waitingLockMin:30,adminPin:"1234"},roster:[],batches:[],breaks:[],received:[],sel:new Set(),violations:[]};
 
 var disBypass=new Set(), disTimeout=new Set();
 
@@ -266,10 +287,9 @@ function now(){var d=new Date();return("0"+d.getHours()).slice(-2)+":"+("0"+d.ge
 function toMin(s){if(!s)return null;var p=String(s).trim().match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);if(!p)return null;var h=parseInt(p[1]),n=parseInt(p[2]),a=p[3]?p[3].toUpperCase():null;if(a==="PM"&&h<12)h+=12;if(a==="AM"&&h===12)h=0;return h*60+n;}
 function minDiff(t1, t2) {var a = toMin(t1), b = toMin(t2); if (a === null || b === null) return 0; return Math.max(0, b - a);}
 
-// Fallback to clear corrupt local storage
 function clearMemoryAndReload() {
   localStorage.removeItem(SK);
-  alert("Memory Cleared. The app will now reload.");
+  alert("Memory Cleared. The app will now reload. Please enter your correct API in the Admin Tab.");
   window.location.reload();
 }
 
@@ -278,7 +298,18 @@ function banner(msg,v){var el=document.getElementById("toast-msg");document.getE
 
 function save(){try{var o=JSON.parse(JSON.stringify(S));o.sel=Array.from(S.sel);localStorage.setItem(SK,JSON.stringify(o));}catch(e){}}
 function load(){try{var r=localStorage.getItem(SK);if(r){var p=JSON.parse(r);for(var k in p)if(k!=="sel")S[k]=p[k];S.sel=new Set(p.sel||[]);}}catch(e){}S.api=S.api||API;S.sheet=S.sheet||SHEET;}
-function cfgUI(){document.getElementById("s-api").value=S.api;document.getElementById("s-sheet").value=S.sheet;document.getElementById("s-pre").value=S.cfg.preWaveBlockMin;document.getElementById("s-grace").value=S.cfg.waveGraceMin;document.getElementById("s-batch").value=S.cfg.batchSize;document.getElementById("s-time").value=S.cfg.rushTimeoutMin||20;document.getElementById("s-auto-ofd").value=S.cfg.autoOfdMin||30;document.getElementById("s-wait-lock").value=S.cfg.waitingLockMin||30;}
+
+function cfgUI(){
+  document.getElementById("s-api").value=S.api;
+  document.getElementById("s-sheet").value=S.sheet;
+  document.getElementById("s-pre").value=S.cfg.preWaveBlockMin;
+  document.getElementById("s-grace").value=S.cfg.waveGraceMin;
+  document.getElementById("s-batch").value=S.cfg.batchSize;
+  document.getElementById("s-time").value=S.cfg.rushTimeoutMin||20;
+  document.getElementById("s-auto-ofd").value=S.cfg.autoOfdMin||30;
+  document.getElementById("s-wait-lock").value=S.cfg.waitingLockMin||30;
+  document.getElementById("s-pin").value=S.cfg.adminPin||"1234";
+}
 
 function rebuild(){
   S.breaks=[];S.received=[];
@@ -302,21 +333,40 @@ function dismissTimeout() {
 function callApi(action,payload){
   save();
   var pill=document.getElementById("pill");
-  if(!S.api){pill.className="pill off";pill.textContent="OFFLINE";return;}
+  
+  if(!S.api || S.api.includes("PASTE_YOUR_MAIN_APP_API_HERE")){
+     pill.className="pill off";pill.textContent="API MISSING";
+     if(action==="rosterFull"){
+         var splash = document.getElementById("splash");
+         if (splash) splash.remove();
+         switchTab("p-set");
+     }
+     return;
+  }
+  
   if(action==="rosterFull"||action==="saveSettings"||action==="resetDay"){pill.textContent="...";pill.className="pill off";}
   if(!payload)payload={};
   payload.action=action;payload.sheetUrl=S.sheet;payload.dayTab=S.day;
-  if(action==="saveSettings")payload.settings=S.cfg;
-
+  
   fetch(S.api,{method:"POST",body:JSON.stringify(payload)})
   .then(function(r){
-    if (!r.ok) throw new Error("Invalid Response - Check API URL");
+    if (!r.ok) throw new Error("Network response was not ok");
     return r.json();
   })
   .then(function(d){
+    // Remove Splash screen on first successful load
+    var splash = document.getElementById("splash");
+    if (splash) {
+       splash.style.opacity = "0";
+       setTimeout(()=>splash.remove(), 600);
+    }
+
     if(!d||!d.success){if(d&&d.errors)banner(d.errors[0],"err");return;}
     pill.className="pill on";pill.textContent="SYNCED";
-    if(d.settings){S.cfg=d.settings;cfgUI();}
+    
+    // FIX: Only update settings from backend if NOT triggered by the background syncOnly loop.
+    // This stops the input fields from resetting while you type.
+    if(d.settings && action !== "syncOnly"){ S.cfg=d.settings; cfgUI(); }
     if(d.violations) S.violations = d.violations;
 
     if(action==="rosterFull"||action==="resetDay"){
@@ -361,10 +411,13 @@ function callApi(action,payload){
       if(lc)lc.status=r.violation?"Received (!)":"Received";
       render();
     }
-  }).catch(function(e){
-    pill.className="pill off";pill.textContent="OFFLINE";
-    // If it fails on initial load, show Admin tab so they can fix the URL
-    if (action==="rosterFull") switchTab("p-set");
+  }).catch(function(err){
+    pill.className="pill off";pill.textContent="API ERROR";
+    if (action==="rosterFull") {
+        var splash = document.getElementById("splash");
+        if (splash) splash.remove();
+        switchTab("p-set");
+    }
   });
 }
 
@@ -516,13 +569,30 @@ window.addEventListener("DOMContentLoaded",function(){
 
   document.querySelectorAll(".ni").forEach(function(b){b.onclick=function(){
     var p=b.getAttribute("data-p");
-    if(p==="p-set"&&!admin){var pin=prompt("Admin PIN:");if(pin!=="1234")return banner("Access denied","err");admin=true;}
+    if(p==="p-set"&&!admin){
+       var pin=prompt("🔑 Enter Admin PIN:");
+       if(pin!==String(S.cfg.adminPin || "1234")) return banner("Access denied","err");
+       admin=true;
+    }
     switchTab(p);
   }});
 
   document.getElementById("dsel").onchange=function(e){S.day=e.target.value;S.batches=[];S.breaks=[];S.received=[];callApi("rosterFull")};
   document.getElementById("btn-reset").onclick=function(){if(confirm("Reset for new day?")){S.day=todayTab();callApi("resetDay");banner("Reset done","ok")}};
-  document.getElementById("btn-save").onclick=function(){S.api=document.getElementById("s-api").value.trim();S.sheet=document.getElementById("s-sheet").value.trim();S.cfg.preWaveBlockMin=Number(document.getElementById("s-pre").value);S.cfg.waveGraceMin=Number(document.getElementById("s-grace").value);S.cfg.batchSize=Number(document.getElementById("s-batch").value);S.cfg.rushTimeoutMin=Number(document.getElementById("s-time").value);S.cfg.autoOfdMin=Number(document.getElementById("s-auto-ofd").value);S.cfg.waitingLockMin=Number(document.getElementById("s-wait-lock").value);save();callApi("saveSettings");banner("Saved","ok")};
+  document.getElementById("btn-save").onclick=function(){
+    S.api=document.getElementById("s-api").value.trim();
+    S.sheet=document.getElementById("s-sheet").value.trim();
+    S.cfg.preWaveBlockMin=Number(document.getElementById("s-pre").value);
+    S.cfg.waveGraceMin=Number(document.getElementById("s-grace").value);
+    S.cfg.batchSize=Number(document.getElementById("s-batch").value);
+    S.cfg.rushTimeoutMin=Number(document.getElementById("s-time").value);
+    S.cfg.autoOfdMin=Number(document.getElementById("s-auto-ofd").value);
+    S.cfg.waitingLockMin=Number(document.getElementById("s-wait-lock").value);
+    S.cfg.adminPin=document.getElementById("s-pin").value.trim(); // Save dynamic PIN
+    save();
+    callApi("saveSettings",{settings:S.cfg}); 
+    banner("Saved","ok");
+  };
 
   document.getElementById("btn-send").onclick=function(){
     var ym=document.getElementById("inp-ym").value.trim();
@@ -540,7 +610,6 @@ window.addEventListener("DOMContentLoaded",function(){
     if(da){da.attendanceOnlyStatus="Replacement Present";da.status="Replacement Present";banner("Replaced","ok");render();callApi("assignReplacement",{rowIndex:da.rowIndex,replacementText:rep});document.getElementById("inp-repl").value="";}
   };
 
-  // Main Rush Scanner
   document.getElementById("rush-inp").addEventListener("keydown",function(e){
     if(e.key==="Enter"){
         e.preventDefault();
@@ -562,6 +631,8 @@ window.addEventListener("DOMContentLoaded",function(){
   document.getElementById("inp-ym").addEventListener("change",function(){localStorage.setItem("ymn",this.value)});
 
   setInterval(function(){callApi("syncOnly")},3000);
+  
+  // Load initially
   callApi("rosterFull");
 });
 </script>
