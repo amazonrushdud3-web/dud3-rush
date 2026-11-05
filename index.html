@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>DUD3 Rush PRO v2 Auto-OFD</title>
+  <title>DUD3 Rush PRO v2.1</title>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -74,7 +74,6 @@
     .batch-card{border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:10px;background:var(--bg);}
     .batch-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
     .batch-name{font-size:13px;font-weight:900;color:var(--orange);}
-    .batch-count{font-size:10px;color:var(--muted);}
   </style>
 </head>
 <body>
@@ -91,16 +90,13 @@
 
 <main>
   
-  <!-- BANNERS -->
   <div id="bypassBanner" class="vio-banner bypass-ban">
-    <div class="ban-hdr"><span>🚨 DA Not Dispatched via Rush Pro</span><button class="dismiss-btn" onclick="dismissBypass()">✕</button></div>
-    <div class="ban-msg">DA(s) scanned into Rush Queue but were NOT sent by YM.</div>
+    <div class="ban-hdr"><span>🚨 DA Not Dispatched via YM</span><button class="dismiss-btn" onclick="dismissBypass()">✕</button></div>
     <div id="bypassList"></div>
   </div>
 
   <div id="timeoutBanner" class="vio-banner timeout-ban">
     <div class="ban-hdr"><span>⏰ DA Scan Overdue</span><button class="dismiss-btn" onclick="dismissTimeout()">✕</button></div>
-    <div class="ban-msg">DA(s) were dispatched by YM but did NOT scan in time limit.</div>
     <div id="timeoutList"></div>
   </div>
 
@@ -112,7 +108,7 @@
   </div>
   <div class="kpi-row">
     <div class="kpi" style="border-color:var(--orange)"><div class="kv" id="k-wait">0</div><div class="kl">Waiting</div></div>
-    <div class="kpi" style="border-color:var(--warn)"><div class="kv" id="k-sent" style="color:var(--warn)">0</div><div class="kl">Sent</div></div>
+    <div class="kpi" style="border-color:var(--red)"><div class="kv" id="k-brk" style="color:var(--red)">0</div><div class="kl">On Break</div></div>
     <div class="kpi" style="border-color:var(--green)"><div class="kv" id="k-recv" style="color:var(--green)">0</div><div class="kl">Received</div></div>
     <div class="kpi" style="border-color:var(--purple)"><div class="kv" id="k-ofd" style="color:var(--purple)">0</div><div class="kl">OFD</div></div>
   </div>
@@ -142,6 +138,7 @@
       <div id="cam-wait" class="cam"><div id="qr-wait"></div></div>
       <input type="text" id="inp-wait" class="inp" placeholder="Type DA ID to add to waiting..." autocomplete="off">
       <div id="sug-wait" class="sbox"></div>
+      <div style="font-size:10px;text-align:center;color:var(--warn);margin-top:8px;">* OFD ആയിട്ട് സെറ്റ് ചെയ്ത സമയം കഴിയാതെ വെയിറ്റിംഗ് ലിസ്റ്റിൽ കയറ്റാൻ കഴിയില്ല!</div>
     </div>
     <div class="crd">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
@@ -155,22 +152,24 @@
     </div>
   </section>
 
-  <!-- SENT -->
-  <section id="p-sent" class="pane">
-    <div class="crd" style="border-color:var(--warn)">
-      <div class="crd-t" style="color:var(--warn)">⏱️ Sent — Waiting for Rush LM Queue Scan</div>
-      <div id="sent-list" class="dlist"></div>
+  <!-- BREAKS -->
+  <section id="p-breaks" class="pane">
+    <div class="crd" style="border-color:var(--red)">
+      <div class="crd-t" style="color:var(--red)">☕ Currently on Break (Live)</div>
+      <div id="break-list" class="dlist"></div>
     </div>
   </section>
 
   <!-- RUSH QUEUE -->
   <section id="p-rush" class="pane">
     <div class="crd" style="border-color:var(--green)">
-      <!-- MAIN SCANNER (ONLY FOR RECEIVE) -->
       <div style="text-align:center;margin-bottom:10px;">
         <span class="pulse"></span>
         <span style="font-size:11px;color:var(--green);font-weight:800;">RUSH LM QUEUE LISTENER (SCAN IN)</span>
       </div>
+      
+      <button class="btn-big" id="cam-rush-btn" style="background:var(--green);color:#fff;margin-bottom:10px;">📱 MOBILE CAMERA SCAN IN</button>
+      <div id="cam-rush" class="cam"><div id="qr-rush"></div></div>
       
       <input type="text" id="rush-inp" class="rush-inp" placeholder="✅ SCAN IN (Receive)..." autocomplete="off">
       <div style="text-align:center;font-size:10px;color:var(--muted);margin-bottom:14px;">Scan OUT (OFD) is now AUTOMATIC after 30 minutes!</div>
@@ -180,19 +179,8 @@
         <div id="recv-list" class="dlist"></div>
       </div>
       <div style="margin-top:12px;">
-        <div class="crd-t" style="color:var(--purple)">🚚 OFD (<span id="oc">0</span>)</div>
+        <div class="crd-t" style="color:var(--purple)">🚚 OFD / On Road (<span id="oc">0</span>)</div>
         <div id="ofd-list" class="dlist"></div>
-      </div>
-
-      <!-- BOTTOM RETURN SCANNER (ONLY AFTER 30 MINS) -->
-      <div style="margin-top:20px; padding-top:15px; border-top:2px dashed var(--border);">
-        <div class="crd-t" style="color:var(--blue); text-align:center;">🏁 Final / Return Scan (After 30 mins)</div>
-        <input type="text" id="return-inp" class="rush-inp" style="border-color:var(--blue); color:var(--blue);" placeholder="SCAN COMPLETED DA..." autocomplete="off">
-        <div style="text-align:center;font-size:10px;color:var(--muted);margin-bottom:14px;">This scanner only accepts DAs who have completed 30 mins (On Road).</div>
-      </div>
-      <div style="margin-top:12px;">
-        <div class="crd-t" style="color:var(--blue)">🏁 Returned / Completed (<span id="retc">0</span>)</div>
-        <div id="ret-list" class="dlist"></div>
       </div>
     </div>
   </section>
@@ -217,7 +205,7 @@
         <div style="flex:1"><label style="font-size:11px;color:var(--muted)">Rush Timeout (m)</label><input type="number" id="s-time" class="inp"></div>
       </div>
       <div style="margin-bottom:15px;">
-        <label style="font-size:11px;color:var(--muted)">Auto On-Road (OFD) Timer (Mins)</label>
+        <label style="font-size:11px;color:var(--muted)">Auto On-Road (OFD) Timer / Waiting Lock (Mins)</label>
         <input type="number" id="s-auto-ofd" class="inp" placeholder="e.g. 30">
       </div>
       <button class="btn" id="btn-save" style="width:100%;background:var(--orange);color:#000">Save Settings</button>
@@ -228,7 +216,7 @@
 <nav class="bnav">
   <button class="ni on" data-p="p-att"><svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg><span>Attend</span></button>
   <button class="ni" data-p="p-wait"><svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg><span>Waiting</span></button>
-  <button class="ni" data-p="p-sent"><svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg><span>Sent</span></button>
+  <button class="ni" data-p="p-breaks"><svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg><span>Breaks</span></button>
   <button class="ni" data-p="p-rush"><svg viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg><span>Rush Q</span></button>
   <button class="ni" data-p="p-set"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58z"/></svg><span>Settings</span></button>
 </nav>
@@ -240,8 +228,8 @@ var SHEET="https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpS
 var mj={name:"DUD3 Rush PRO",short_name:"DUD3 Rush",start_url:location.href,display:"standalone",background_color:"#131A22",theme_color:"#FF9900",icons:[{src:"https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Barcode_scanner_icon.svg/512px-Barcode_scanner_icon.svg.png",sizes:"512x512",type:"image/png"}]};
 document.getElementById("manifest-link").href=URL.createObjectURL(new Blob([JSON.stringify(mj)],{type:"application/json"}));
 
-var SK="DUD3V2_AUTO_OFD",admin=!(/Mobi|Android|iPhone/i.test(navigator.userAgent));
-var S={api:API,sheet:SHEET,day:todayTab(),tabs:recentTabs(),cfg:{waveGraceMin:10,preWaveBlockMin:30,batchSize:25,rushTimeoutMin:5,autoOfdMin:30},roster:[],batches:[],pending:[],received:[],ofd:[],returned:[],sel:new Set(),violations:[]};
+var SK="DUD3V2_BREAKS",admin=!(/Mobi|Android|iPhone/i.test(navigator.userAgent));
+var S={api:API,sheet:SHEET,day:todayTab(),tabs:recentTabs(),cfg:{waveGraceMin:10,preWaveBlockMin:30,batchSize:25,rushTimeoutMin:5,autoOfdMin:30},roster:[],batches:[],breaks:[],received:[],ofd:[],sel:new Set(),violations:[]};
 
 var disBypass=new Set(), disTimeout=new Set();
 
@@ -258,25 +246,22 @@ function load(){try{var r=localStorage.getItem(SK);if(r){var p=JSON.parse(r);for
 function cfgUI(){document.getElementById("s-api").value=S.api;document.getElementById("s-sheet").value=S.sheet;document.getElementById("s-pre").value=S.cfg.preWaveBlockMin;document.getElementById("s-grace").value=S.cfg.waveGraceMin;document.getElementById("s-batch").value=S.cfg.batchSize;document.getElementById("s-time").value=S.cfg.rushTimeoutMin||5;document.getElementById("s-auto-ofd").value=S.cfg.autoOfdMin||30;}
 
 function rebuild(){
-  S.pending=[];S.received=[];S.ofd=[];S.returned=[];
+  S.breaks=[];S.received=[];S.ofd=[];
   S.roster.forEach(function(d){
-    if(d.status==="Sent to OP")S.pending.push({daId:d.daId,daName:d.daName,ym:d.marshalName||"",st:d.sentTime||"",bn:d.batchName||""});
+    if(d.isOnBreak)S.breaks.push({daId:d.daId,daName:d.daName,info:d.breakInfo||""});
     if(String(d.status).indexOf("Received")>-1)S.received.push({daId:d.daId,daName:d.daName,t:d.rushScanInTime||""});
     if(d.status==="OFD")S.ofd.push({daId:d.daId,daName:d.daName,t:d.ofdTime||""});
-    if(d.status==="Returned")S.returned.push({daId:d.daId,daName:d.daName,t:d.returnTime||""});
   });
 }
 
 function dismissBypass() {
   var chips = document.querySelectorAll('#bypassList .da-chip');
-  chips.forEach(function(c){ disBypass.add(c.getAttribute('data-id')); 
-  callApi("resolveEvent", {daId: c.getAttribute('data-id'), type: 'bypass'}); });
+  chips.forEach(function(c){ disBypass.add(c.getAttribute('data-id')); callApi("resolveEvent", {daId: c.getAttribute('data-id'), type: 'bypass'}); });
   document.getElementById('bypassBanner').classList.remove('active');
 }
 function dismissTimeout() {
   var chips = document.querySelectorAll('#timeoutList .da-chip');
-  chips.forEach(function(c){ disTimeout.add(c.getAttribute('data-id')); 
-  callApi("resolveEvent", {daId: c.getAttribute('data-id'), type: 'timeout'}); });
+  chips.forEach(function(c){ disTimeout.add(c.getAttribute('data-id')); callApi("resolveEvent", {daId: c.getAttribute('data-id'), type: 'timeout'}); });
   document.getElementById('timeoutBanner').classList.remove('active');
 }
 
@@ -299,54 +284,45 @@ function callApi(action,payload){
 
     if(action==="rosterFull"||action==="resetDay"){
       S.roster=d.roster||[];
-      if(action==="resetDay"){S.batches=[];S.pending=[];S.received=[];S.ofd=[];S.returned=[];S.sel.clear();disBypass.clear();disTimeout.clear();}
+      if(action==="resetDay"){S.batches=[];S.breaks=[];S.received=[];S.ofd=[];S.sel.clear();disBypass.clear();disTimeout.clear();}
       rebuild();render();
     }
     else if(action==="syncOnly"&&d.roster){
       d.roster.forEach(function(sv){
         var lc=S.roster.find(function(r){return r.daId===sv.daId});
         if(!lc)return;
-        // Check for Auto OFD update from backend
-        if(sv.status==="OFD"&&lc.status!=="OFD"&&lc.status!=="Returned"){
+        lc.isOnBreak = sv.isOnBreak; lc.breakInfo = sv.breakInfo;
+        
+        if(sv.status==="OFD"&&lc.status!=="OFD"){
           lc.status="OFD";S.received=S.received.filter(function(r){return r.daId!==lc.daId});
           if(!S.ofd.find(function(o){return o.daId===lc.daId}))S.ofd.push({daId:lc.daId,daName:lc.daName,t:sv.ofdTime||""});
         }
-        if(String(sv.status).indexOf("Received")>-1&&String(lc.status).indexOf("Received")===-1&&lc.status!=="OFD"&&lc.status!=="Returned"){
-          lc.status=sv.status;S.pending=S.pending.filter(function(p){return p.daId!==lc.daId});
+        if(String(sv.status).indexOf("Received")>-1&&String(lc.status).indexOf("Received")===-1&&lc.status!=="OFD"){
+          lc.status=sv.status;
           if(!S.received.find(function(r){return r.daId===lc.daId}))S.received.push({daId:lc.daId,daName:lc.daName,t:sv.rushScanInTime||""});
         }
-        if(sv.status==="Returned"&&lc.status!=="Returned"){
-          lc.status="Returned"; S.ofd=S.ofd.filter(function(r){return r.daId!==lc.daId});
-          if(!S.returned.find(function(o){return o.daId===lc.daId}))S.returned.push({daId:lc.daId,daName:lc.daName,t:sv.returnTime||""});
-        }
       });
-      render();
+      rebuild(); render();
     }
     else if(action==="sendDA"){
       var ids=payload.ids||[];
-      S.batches.forEach(function(b){b.members.forEach(function(m){if(ids.indexOf(m.daId)>-1&&!m.sent){m.sent=true;S.pending.push({daId:m.daId,daName:m.daName,ym:payload.marshalName||"",st:d.sentTime||now(),bn:b.name})}});if(b.members.every(function(m){return m.sent}))b.allSent=true});
+      S.batches.forEach(function(b){b.members.forEach(function(m){if(ids.indexOf(m.daId)>-1&&!m.sent)m.sent=true;});if(b.members.every(function(m){return m.sent}))b.allSent=true});
       S.sel.clear();banner(ids.length+" DA(s) sent by "+(payload.marshalName||"YM"),"ok");render();
     }
     else if(action==="recordCheckIn"){
       if(d.alreadyMarked){banner((d.daName||"DA")+" already marked attendance! Use Waiting tab.","warn");switchTab("p-wait");}
       render();
     }
+    else if(action==="addToWaiting"){
+      render();
+    }
     else if(action==="rushScanIn"&&d.result){
       var r=d.result;
       if(r.violation)banner(r.violation.message,"err");
       else banner(r.daName+" → RECEIVED","ok");
-      S.pending=S.pending.filter(function(p){return p.daId!==payload.daId});
       if(!S.received.find(function(x){return x.daId===payload.daId}))S.received.push({daId:payload.daId,daName:r.daName,t:now()});
       var lc=S.roster.find(function(x){return x.daId===payload.daId});
       if(lc)lc.status=r.violation?"Received (!)":"Received";
-      render();
-    }
-    else if(action==="returnScan"&&d.result&&d.result.found){
-      banner(d.result.daName+" → RETURNED","ok");
-      S.ofd=S.ofd.filter(function(x){return x.daId!==payload.daId});
-      if(!S.returned.find(function(o){return o.daId===payload.daId}))S.returned.push({daId:payload.daId,daName:d.result.daName,t:now()});
-      var lc2=S.roster.find(function(x){return x.daId===payload.daId});
-      if(lc2)lc2.status="Returned";
       render();
     }
   }).catch(function(){pill.className="pill off";pill.textContent="OFFLINE"});
@@ -364,6 +340,9 @@ function checkIn(token,isWaiting){
   var da=S.roster.find(function(r){return(r.daId&&r.daId.toLowerCase().indexOf(c)>-1)||(r.repDaId&&r.repDaId.toLowerCase().indexOf(c)>-1)||(r.daName&&r.daName.toLowerCase().indexOf(c)>-1)});
   if(!da)return banner('DA Not Found: "'+token+'"',"err");
 
+  // Break Check
+  if (da.isOnBreak) return banner("ERROR: "+da.daName+" ഇപ്പോൾ ബ്രേക്കിലാണ്! ("+da.breakInfo+")", "err");
+
   if(!isWaiting && da.attendanceOnlyStatus && da.attendanceOnlyStatus!=="Absent"){
     banner(da.daName+" already marked! Use Waiting tab.","warn"); switchTab("p-wait"); return;
   }
@@ -376,8 +355,8 @@ function checkIn(token,isWaiting){
      if(w!==null){if(cur<(w-pre))return banner("Too Early! Wave: "+da.waveTime,"warn");if(cur>(w+gr)||da.attendanceOnlyStatus==="Absent")st="Late Arrival";}
   }
   var bId=addToBatch(da);
-  banner((isWaiting?"Waiting":st)+": "+da.daName+" → "+bId,"ok");
-  render();callApi(isWaiting?"addToWaiting":"recordCheckIn",{daId:da.daId,daName:da.daName,sentStatus:st,isWaiting:isWaiting});
+  banner((isWaiting?"Processing...":st)+": "+da.daName,"ok");
+  callApi(isWaiting?"addToWaiting":"recordCheckIn",{daId:da.daId,daName:da.daName,sentStatus:st,isWaiting:isWaiting});
 }
 
 function addToBatch(da){
@@ -418,12 +397,11 @@ function render(){
   document.getElementById("k-repl").textContent=cR;
   document.getElementById("k-abs").textContent=cA;
   document.getElementById("k-wait").textContent=cW;
-  document.getElementById("k-sent").textContent=S.pending.length;
+  document.getElementById("k-brk").textContent=S.breaks.length;
   document.getElementById("k-recv").textContent=S.received.length;
   document.getElementById("k-ofd").textContent=S.ofd.length;
   document.getElementById("rc").textContent=S.received.length;
   document.getElementById("oc").textContent=S.ofd.length;
-  document.getElementById("retc").textContent=S.returned.length;
 
   var bypass=[], timeouts=[];
   if(S.violations) {
@@ -464,10 +442,9 @@ function render(){
   bb.innerHTML=html||'<div style="text-align:center;color:var(--muted);padding:20px;font-size:12px">No DAs in queue</div>';
   bb.querySelectorAll(".bchk").forEach(function(c){c.onchange=function(e){if(e.target.checked)S.sel.add(e.target.dataset.id);else S.sel.delete(e.target.dataset.id)}});
 
-  document.getElementById("sent-list").innerHTML=S.pending.length?S.pending.map(function(p){return'<div class="di" style="padding:8px;border-left:4px solid var(--warn)"><div><div class="dn">'+p.daName+'</div><div class="ds">YM: '+(p.ym||"—")+' · '+(p.bn||"")+' · Sent: '+(p.st||"—")+'</div></div><span style="color:var(--orange);font-weight:800;font-size:11px">SENT</span></div>'}).join(""):'<div style="text-align:center;color:var(--muted);padding:20px;font-size:12px;">No DAs pending</div>';
+  document.getElementById("break-list").innerHTML=S.breaks.length?S.breaks.map(function(p){return'<div class="di" style="padding:8px;border-left:4px solid var(--red)"><div><div class="dn">'+p.daName+'</div><div class="ds">Break Time: '+p.info+'</div></div><span style="color:var(--red);font-weight:800;font-size:11px">ON BREAK</span></div>'}).join(""):'<div style="text-align:center;color:var(--muted);padding:20px;font-size:12px;">No DAs currently on break</div>';
   document.getElementById("recv-list").innerHTML=S.received.length?S.received.map(function(r){return'<div class="di" style="padding:8px;border-left:4px solid var(--green)"><div><div class="dn">'+r.daName+'</div><div class="ds">Scan IN: '+(r.t||"—")+"</div></div><span style=\"color:var(--green);font-weight:800;font-size:11px\">RECEIVED</span></div>";}).join(""):'<div style="text-align:center;color:var(--muted);padding:20px;font-size:12px;">No DAs received</div>';
   document.getElementById("ofd-list").innerHTML=S.ofd.length?S.ofd.map(function(o){return'<div class="di" style="padding:8px;border-left:4px solid var(--purple)"><div><div class="dn">'+o.daName+'</div><div class="ds">OFD (Auto): '+(o.t||"—")+'</div></div><span style="color:var(--purple);font-weight:800;font-size:11px">🚚 OFD</span></div>';}).join(""):'<div style="text-align:center;color:var(--muted);padding:20px;font-size:12px;">No DAs on road</div>';
-  document.getElementById("ret-list").innerHTML=S.returned.length?S.returned.map(function(o){return'<div class="di" style="padding:8px;border-left:4px solid var(--blue)"><div><div class="dn">'+o.daName+'</div><div class="ds">Returned: '+(o.t||"—")+'</div></div><span style="color:var(--blue);font-weight:800;font-size:11px">✅ DONE</span></div>';}).join(""):'<div style="text-align:center;color:var(--muted);padding:20px;font-size:12px;">No DAs returned</div>';
   save();
 }
 
@@ -493,7 +470,7 @@ window.addEventListener("DOMContentLoaded",function(){
     switchTab(p);
   }});
 
-  document.getElementById("dsel").onchange=function(e){S.day=e.target.value;S.batches=[];S.pending=[];S.received=[];S.ofd=[];S.returned=[];callApi("rosterFull")};
+  document.getElementById("dsel").onchange=function(e){S.day=e.target.value;S.batches=[];S.breaks=[];S.received=[];S.ofd=[];callApi("rosterFull")};
   document.getElementById("btn-reset").onclick=function(){if(confirm("Reset for new day?")){S.day=todayTab();callApi("resetDay");banner("Reset done","ok")}};
   document.getElementById("btn-save").onclick=function(){S.api=document.getElementById("s-api").value.trim();S.sheet=document.getElementById("s-sheet").value.trim();S.cfg.preWaveBlockMin=Number(document.getElementById("s-pre").value);S.cfg.waveGraceMin=Number(document.getElementById("s-grace").value);S.cfg.batchSize=Number(document.getElementById("s-batch").value);S.cfg.rushTimeoutMin=Number(document.getElementById("s-time").value);S.cfg.autoOfdMin=Number(document.getElementById("s-auto-ofd").value);save();callApi("saveSettings");banner("Saved","ok")};
 
@@ -513,7 +490,7 @@ window.addEventListener("DOMContentLoaded",function(){
     if(da){da.attendanceOnlyStatus="Replacement Present";da.status="Replacement Present";banner("Replaced","ok");render();callApi("assignReplacement",{rowIndex:da.rowIndex,replacementText:rep});document.getElementById("inp-repl").value="";}
   };
 
-  // Main Top Scanner (Scan IN only)
+  // Main Rush Scanner
   document.getElementById("rush-inp").addEventListener("keydown",function(e){
     if(e.key==="Enter"){
         e.preventDefault();
@@ -523,19 +500,10 @@ window.addEventListener("DOMContentLoaded",function(){
     }
   });
 
-  // Bottom Return Scanner (Final Scan after 30 mins)
-  document.getElementById("return-inp").addEventListener("keydown",function(e){
-    if(e.key==="Enter"){
-        e.preventDefault();
-        var b=this.value.trim().toUpperCase();
-        if(b.length>=10){ callApi("returnScan",{daId:b}); }
-        this.value="";
-    }
-  });
-
-  var qA=null,qW=null;
+  var qA=null,qW=null,qR=null;
   document.getElementById("cam-att-btn").onclick=function(){var b=document.getElementById("cam-att");if(b.style.display==="block"){b.style.display="none";if(qA)qA.stop()}else{b.style.display="block";qA=new Html5Qrcode("qr-att");qA.start({facingMode:"environment"},{fps:10},function(t){checkIn(t,false);qA.stop();b.style.display="none"})}};
   document.getElementById("cam-wait-btn").onclick=function(){var b=document.getElementById("cam-wait");if(b.style.display==="block"){b.style.display="none";if(qW)qW.stop()}else{b.style.display="block";qW=new Html5Qrcode("qr-wait");qW.start({facingMode:"environment"},{fps:10},function(t){checkIn(t,true);qW.stop();b.style.display="none"})}};
+  document.getElementById("cam-rush-btn").onclick=function(){var b=document.getElementById("cam-rush");if(b.style.display==="block"){b.style.display="none";if(qR)qR.stop()}else{b.style.display="block";qR=new Html5Qrcode("qr-rush");qR.start({facingMode:"environment"},{fps:10},function(t){callApi("rushScanIn",{daId:t.trim().toUpperCase()});qR.stop();b.style.display="none"})}};
 
   fuzzy("inp-att","sug-att",function(v){checkIn(v,false)});
   fuzzy("inp-wait","sug-wait",function(v){checkIn(v,true)});
