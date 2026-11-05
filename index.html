@@ -272,8 +272,8 @@
 </nav>
 
 <script>
-// Default dummy URLs. The user must paste their real ones in the Admin tab.
-var API="https://script.google.com/macros/s/PASTE_YOUR_MAIN_APP_API_HERE/exec";
+// UPDATED WITH YOUR REAL MAIN API LINK
+var API="https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec";
 var SHEET="https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit";
 
 var SK="DUD3V2_MASTER",admin=!(/Mobi|Android|iPhone/i.test(navigator.userAgent));
@@ -289,7 +289,7 @@ function minDiff(t1, t2) {var a = toMin(t1), b = toMin(t2); if (a === null || b 
 
 function clearMemoryAndReload() {
   localStorage.removeItem(SK);
-  alert("Memory Cleared. The app will now reload. Please enter your correct API in the Admin Tab.");
+  alert("Memory Cleared. The app will now reload.");
   window.location.reload();
 }
 
@@ -334,7 +334,7 @@ function callApi(action,payload){
   save();
   var pill=document.getElementById("pill");
   
-  if(!S.api || S.api.includes("PASTE_YOUR_MAIN_APP_API_HERE")){
+  if(!S.api){
      pill.className="pill off";pill.textContent="API MISSING";
      if(action==="rosterFull"){
          var splash = document.getElementById("splash");
@@ -354,7 +354,6 @@ function callApi(action,payload){
     return r.json();
   })
   .then(function(d){
-    // Remove Splash screen on first successful load
     var splash = document.getElementById("splash");
     if (splash) {
        splash.style.opacity = "0";
@@ -364,8 +363,6 @@ function callApi(action,payload){
     if(!d||!d.success){if(d&&d.errors)banner(d.errors[0],"err");return;}
     pill.className="pill on";pill.textContent="SYNCED";
     
-    // FIX: Only update settings from backend if NOT triggered by the background syncOnly loop.
-    // This stops the input fields from resetting while you type.
     if(d.settings && action !== "syncOnly"){ S.cfg=d.settings; cfgUI(); }
     if(d.violations) S.violations = d.violations;
 
@@ -588,7 +585,7 @@ window.addEventListener("DOMContentLoaded",function(){
     S.cfg.rushTimeoutMin=Number(document.getElementById("s-time").value);
     S.cfg.autoOfdMin=Number(document.getElementById("s-auto-ofd").value);
     S.cfg.waitingLockMin=Number(document.getElementById("s-wait-lock").value);
-    S.cfg.adminPin=document.getElementById("s-pin").value.trim(); // Save dynamic PIN
+    S.cfg.adminPin=document.getElementById("s-pin").value.trim(); 
     save();
     callApi("saveSettings",{settings:S.cfg}); 
     banner("Saved","ok");
