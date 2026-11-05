@@ -81,14 +81,13 @@
 </div>
 
 <script>
-// ⚠️ REPLACE THIS WITH YOUR NEW DRIVER PORTAL API URL
-const API_URL = "https://script.google.com/macros/s/YOUR_NEW_DRIVER_API_ID/exec"; 
-// ⚠️ REPLACE WITH YOUR SPREADSHEET URL
+// ⚠️ NEW API LINK ADDED HERE
+const API_URL = "https://script.google.com/macros/s/AKfycbxBhR1jYkh32EBMHBrr1-XhonEkynaU1b04-mV_OR8q3x4pGlOysDmw20xMKwyG-Z1KjQ/exec"; 
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit";
 
 let refreshInterval = null;
 let countdownInterval = null;
-let targetTime = null; // Store target Date object for countdowns
+let targetTime = null; 
 
 function getTodayTab(){
   var d=new Date(), m=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
@@ -111,7 +110,6 @@ function login() {
   document.getElementById("login-sec").style.display = "none";
   fetchData(daId);
   
-  // Auto refresh data every 30 seconds
   if (refreshInterval) clearInterval(refreshInterval);
   refreshInterval = setInterval(() => fetchData(daId), 30000);
 }
@@ -152,7 +150,9 @@ function parseHHMM(timeStr) {
   var p = timeStr.match(/(\d{1,2}):(\d{2})/);
   if (!p) return null;
   var d = new Date();
-  d.setHours(parseInt(p[1]), parseInt(p[2]), 0, 0);
+  var h = parseInt(p[1]);
+  if (h >= 1 && h <= 7) h += 12; // 1:00 to 7:00 => 13:00 to 19:00 fix
+  d.setHours(h, parseInt(p[2]), 0, 0);
   return d;
 }
 
@@ -171,8 +171,7 @@ function updateDashboard(data, serverTimeStr) {
   const statusEl = document.getElementById("d-status");
   statusEl.textContent = data.status.toUpperCase();
   
-  // Status Colors
-  if (data.status.includes("Absent") || data.status.includes("Late")) statusEl.style.color = "var(--red)";
+  if (data.status.includes("Absent") || data.status.includes("Late") || data.status.includes("Break")) statusEl.style.color = "var(--red)";
   else if (data.status.includes("Received")) statusEl.style.color = "var(--green)";
   else if (data.status.includes("OFD")) statusEl.style.color = "var(--purple)";
   else statusEl.style.color = "var(--blue)";
@@ -195,8 +194,8 @@ function setupTimers(data) {
   if (data.status === "Not Checked In" && data.waveTime) {
     let waveD = parseHHMM(data.waveTime);
     if (waveD) {
-      let openTime = addMinutes(waveD, -data.preBlock); // 30 mins before
-      let closeTime = addMinutes(waveD, data.grace);    // 10 mins after
+      let openTime = addMinutes(waveD, -data.preBlock); 
+      let closeTime = addMinutes(waveD, data.grace);    
       
       if (now < openTime) {
         timerBox.style.display = "block";
@@ -218,7 +217,7 @@ function setupTimers(data) {
       timerBox.style.display = "block";
       timerLabel.textContent = "Auto OFD (On Road) In";
       timerLabel.style.color = "var(--green)";
-      targetTime = addMinutes(rushD, data.autoOfd); // +30 mins
+      targetTime = addMinutes(rushD, data.autoOfd); 
     }
   }
   
@@ -226,7 +225,7 @@ function setupTimers(data) {
   if (data.status.includes("OFD") && data.ofdTime) {
     let ofdD = parseHHMM(data.ofdTime);
     if (ofdD) {
-      let unlockTime = addMinutes(ofdD, data.waitLock); // +30 mins
+      let unlockTime = addMinutes(ofdD, data.waitLock); 
       if (now < unlockTime) {
         timerBox.style.display = "block";
         timerLabel.textContent = "Waiting List Unlocks In";
@@ -236,7 +235,7 @@ function setupTimers(data) {
         timerBox.style.display = "block";
         timerLabel.textContent = "Eligible for Turn 2";
         timerDisplay.textContent = "READY";
-        return; // Stop countdown
+        return; 
       }
     }
   }
@@ -250,7 +249,7 @@ function setupTimers(data) {
       if (diff <= 0) {
         timerDisplay.textContent = "00:00:00";
         clearInterval(countdownInterval);
-        fetchData(document.getElementById("da-id-input").value); // Refresh data from server
+        fetchData(document.getElementById("da-id-input").value); 
         return;
       }
       
