@@ -14,6 +14,9 @@
     header h1 { font-size: 20px; font-weight: 900; }
     header h1 span { color: var(--orange); }
     
+    #toast-msg { position: fixed; top: 10px; left: 50%; transform: translateX(-50%) translateY(-150%); width: calc(100% - 30px); max-width: 400px; padding: 12px 16px; border-radius: 8px; font-weight: 800; font-size: 13px; display: flex; justify-content: space-between; align-items: center; z-index: 10000; box-shadow: 0 8px 24px rgba(0,0,0,0.6); transition: transform 0.4s; background: var(--warn); color: #000; }
+    #toast-msg.show { transform: translateX(-50%) translateY(0); }
+
     .card { background: var(--card); padding: 16px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
     .card-title { font-size: 12px; color: var(--muted); text-transform: uppercase; font-weight: 800; margin-bottom: 10px; letter-spacing: 1px; }
     
@@ -37,6 +40,8 @@
 </head>
 <body>
 
+<div id="toast-msg"><span id="toast-txt"></span><button style="background:none;border:none;color:#000;font-weight:bold;font-size:18px;cursor:pointer;" onclick="document.getElementById('toast-msg').className=''">x</button></div>
+
 <header>
   <h1>DUD3 <span>DRIVER HUB</span></h1>
 </header>
@@ -46,6 +51,7 @@
   <div class="card-title" style="text-align:center;">Enter your DA ID</div>
   <input type="text" id="da-id-input" class="inp" placeholder="Paste or Type DA ID" autocomplete="off">
   <button class="btn" onclick="login()">Check Status</button>
+  <div style="text-align:center; font-size:10px; color:var(--muted); margin-top:10px;">Please allow notifications when prompted</div>
 </div>
 
 <div id="loader" class="loader">Fetching data... Please wait.</div>
@@ -81,13 +87,17 @@
 </div>
 
 <script>
-// ⚠️ NEW API LINK ADDED HERE
+// ⚠️ ENSURE THIS IS YOUR NEW DRIVER API LINK
 const API_URL = "https://script.google.com/macros/s/AKfycbxBhR1jYkh32EBMHBrr1-XhonEkynaU1b04-mV_OR8q3x4pGlOysDmw20xMKwyG-Z1KjQ/exec"; 
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit";
 
 let refreshInterval = null;
 let countdownInterval = null;
 let targetTime = null; 
+let isCountUp = false; // To determine if timer runs up or down
+
+// Prevent duplicate notifications in the same session
+let notifSent = { attend: false, exceed: false };
 
 function getTodayTab(){
   var d=new Date(), m=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
@@ -102,10 +112,31 @@ window.onload = function() {
   }
 };
 
+function requestNotificationPermission() {
+  if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+    Notification.requestPermission();
+  }
+}
+
+function sendAppNotification(title, body) {
+  // Show in-app banner
+  const toast = document.getElementById("toast-msg");
+  document.getElementById("toast-txt").textContent = title + ": " + body;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 6000);
+
+  // Show System Notification
+  if ("Notification" in window && Notification.permission === "granted") {
+    new Notification(title, { body: body, icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Barcode_scanner_icon.svg/512px-Barcode_scanner_icon.svg.png" });
+  }
+}
+
 function login() {
   const daId = document.getElementById("da-id-input").value.trim().toUpperCase();
   if (daId.length < 5) return alert("Please enter a valid DA ID");
   
+  requestNotificationPermission(); // Ask for notifications
+
   localStorage.setItem("dud3_driver_id", daId);
   document.getElementById("login-sec").style.display = "none";
   fetchData(daId);
@@ -118,6 +149,7 @@ function logout() {
   localStorage.removeItem("dud3_driver_id");
   if (refreshInterval) clearInterval(refreshInterval);
   if (countdownInterval) clearInterval(countdownInterval);
+  notifSent = { attend: false, exceed: false }; // reset notification states
   document.getElementById("dashboard").style.display = "none";
   document.getElementById("login-sec").style.display = "block";
   document.getElementById("da-id-input").value = "";
@@ -130,23 +162,32 @@ function fetchData(daId) {
     method: 'POST',
     body: JSON.stringify({ action: 'getDaStatus', daId: daId, sheetUrl: SHEET_URL, dayTab: getTodayTab() })
   })
-  .then(res => res.json())
+  .then(res => {
+    if (!res.ok) throw new Error("Network response was not ok");
+    return res.json();
+  })
   .then(res => {
     document.getElementById("loader").style.display = "none";
-    if (!res.success) return alert("Error: " + res.error);
-    if (!res.data.found) {
-      logout();
-      return alert("DA ID not found in today's roster or Driver Data.");
+    if (!res.success) {
+      logout(); 
+      return alert("Error: " + res.error);
     }
-    updateDashboard(res.data, res.serverTime);
+    if (!res.data.found) {
+      logout(); 
+      return alert("DA ID not found in today's roster or RushData tab.");
+    }
+    updateDashboard(res.data);
   })
   .catch(err => {
     document.getElementById("loader").style.display = "none";
-    console.error(err);
+    logout(); 
+    alert("Connection Failed! Please ensure the Driver API is deployed correctly.");
+    console.error("Fetch Error:", err);
   });
 }
 
 function parseHHMM(timeStr) {
+  if (!timeStr) return null;
   var p = timeStr.match(/(\d{1,2}):(\d{2})/);
   if (!p) return null;
   var d = new Date();
@@ -160,7 +201,7 @@ function addMinutes(dateObj, mins) {
   return new Date(dateObj.getTime() + mins * 60000);
 }
 
-function updateDashboard(data, serverTimeStr) {
+function updateDashboard(data) {
   document.getElementById("dashboard").style.display = "block";
   document.getElementById("d-name").textContent = data.daName;
   document.getElementById("d-id").textContent = data.daId;
@@ -186,17 +227,25 @@ function setupTimers(data) {
   
   if (countdownInterval) clearInterval(countdownInterval);
   targetTime = null;
+  isCountUp = false;
   timerBox.style.display = "none";
 
   const now = new Date();
 
-  // Logic 1: Time to Check-In (Attendance Window)
+  // 1. Time to Check-In (Attendance Window & 20 min reminder)
   if (data.status === "Not Checked In" && data.waveTime) {
     let waveD = parseHHMM(data.waveTime);
     if (waveD) {
       let openTime = addMinutes(waveD, -data.preBlock); 
       let closeTime = addMinutes(waveD, data.grace);    
+      let reminderTime = addMinutes(waveD, -20); // 20 mins before wave time
       
+      // Fire 20 Min Notification
+      if (now >= reminderTime && now < waveD && !notifSent.attend) {
+          sendAppNotification("Attendance Reminder", "Your wave time is approaching in less than 20 minutes!");
+          notifSent.attend = true;
+      }
+
       if (now < openTime) {
         timerBox.style.display = "block";
         timerLabel.textContent = "Check-in Opens In";
@@ -210,43 +259,67 @@ function setupTimers(data) {
     }
   }
   
-  // Logic 2: Auto OFD Countdown (Received Status)
-  if (data.status.includes("Received") && data.rushInTime && !data.ofdTime) {
+  // 2. Waiting Time Running (Count UP from check-in time if not yet sent)
+  else if ((data.status === "Present" || data.status.includes("Late")) && data.checkInTime) {
+    let checkInD = parseHHMM(data.checkInTime);
+    if (checkInD) {
+       timerBox.style.display = "block";
+       timerLabel.textContent = "Waiting Time (Running)";
+       timerLabel.style.color = "var(--orange)";
+       targetTime = checkInD;
+       isCountUp = true;
+    }
+  }
+
+  // 3. Auto OFD Countdown (Received Status & Entry Exceed Notification)
+  else if (data.status.includes("Received") && data.rushInTime && !data.ofdTime) {
     let rushD = parseHHMM(data.rushInTime);
     if (rushD) {
+      let autoOfdTime = addMinutes(rushD, data.autoOfd);
+      let warningTime = addMinutes(autoOfdTime, -5); // Warn 5 mins before OFD
+
+      // Fire 5 Min Exceed Notification
+      if (now >= warningTime && now < autoOfdTime && !notifSent.exceed) {
+          sendAppNotification("Entry Expiring", "You will be automatically marked as OFD in less than 5 minutes.");
+          notifSent.exceed = true;
+      }
+
       timerBox.style.display = "block";
       timerLabel.textContent = "Auto OFD (On Road) In";
       timerLabel.style.color = "var(--green)";
-      targetTime = addMinutes(rushD, data.autoOfd); 
+      targetTime = autoOfdTime;
     }
   }
   
-  // Logic 3: Turn 2 Waiting Lock (OFD Status)
-  if (data.status.includes("OFD") && data.ofdTime) {
+  // 4. Turn 2 Waiting Lock & Turn 2 Wait Running Time (OFD Status)
+  else if (data.status.includes("OFD") && data.ofdTime) {
     let ofdD = parseHHMM(data.ofdTime);
     if (ofdD) {
       let unlockTime = addMinutes(ofdD, data.waitLock); 
       if (now < unlockTime) {
+        // Counting down to unlock
         timerBox.style.display = "block";
         timerLabel.textContent = "Waiting List Unlocks In";
         timerLabel.style.color = "var(--purple)";
         targetTime = unlockTime;
       } else {
+        // Unlocked, so count UP from the moment it was unlocked to show "Wait Time Running"
         timerBox.style.display = "block";
-        timerLabel.textContent = "Eligible for Turn 2";
-        timerDisplay.textContent = "READY";
-        return; 
+        timerLabel.textContent = "Turn 2 Wait Time (Running)";
+        timerLabel.style.color = "var(--orange)";
+        targetTime = unlockTime;
+        isCountUp = true;
       }
     }
   }
 
-  // Start Live Countdown Loop
+  // Start Live Timer Loop (handles both Count Down and Count Up)
   if (targetTime) {
     countdownInterval = setInterval(() => {
       let curr = new Date();
-      let diff = targetTime - curr;
+      let diff = isCountUp ? (curr - targetTime) : (targetTime - curr);
       
-      if (diff <= 0) {
+      if (!isCountUp && diff <= 0) {
         timerDisplay.textContent = "00:00:00";
         clearInterval(countdownInterval);
         fetchData(document.getElementById("da-id-input").value); 
