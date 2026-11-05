@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DUD3 Driver Hub</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="theme-color" content="#131A22">
+  <style>
+    :root { --bg:#131A22; --card:#232F3E; --orange:#FF9900; --blue:#00A8E1; --green:#00C853; --red:#FF3B30; --text:#FFF; --muted:#9BA7B6; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding: 15px; }
+    
+    header { text-align: center; margin-bottom: 20px; padding: 10px; border-bottom: 2px solid var(--orange); }
+    header h1 { font-size: 20px; font-weight: 900; }
+    header h1 span { color: var(--orange); }
+    
+    .card { background: var(--card); padding: 16px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+    .card-title { font-size: 12px; color: var(--muted); text-transform: uppercase; font-weight: 800; margin-bottom: 10px; letter-spacing: 1px; }
+    
+    .inp { width: 100%; padding: 14px; border-radius: 8px; border: 2px solid #354558; background: #1B2430; color: #FFF; font-size: 16px; font-weight: bold; text-align: center; margin-bottom: 10px; }
+    .inp:focus { border-color: var(--orange); outline: none; }
+    .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; background: var(--orange); color: #000; font-size: 15px; font-weight: 900; cursor: pointer; }
+    .btn-outline { background: transparent; border: 1px solid var(--muted); color: var(--muted); padding: 8px; margin-top: 10px; }
+    
+    .profile-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #354558; padding: 8px 0; }
+    .val { font-size: 15px; font-weight: bold; color: var(--blue); }
+    
+    .status-box { background: rgba(0,168,225,0.1); border: 1px solid var(--blue); text-align: center; padding: 20px; border-radius: 10px; margin-top: 10px; }
+    .status-text { font-size: 22px; font-weight: 900; color: var(--blue); margin-bottom: 5px; }
+    
+    .timer-box { background: rgba(255,153,0,0.1); border: 1px dashed var(--orange); text-align: center; padding: 15px; border-radius: 10px; margin-top: 15px; }
+    .countdown { font-size: 24px; font-weight: 900; color: var(--orange); font-variant-numeric: tabular-nums; }
+    
+    #dashboard { display: none; }
+    .loader { text-align: center; color: var(--orange); font-weight: bold; display: none; padding: 20px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>DUD3 <span>DRIVER HUB</span></h1>
+</header>
+
+<!-- LOGIN SECTION -->
+<div id="login-sec" class="card">
+  <div class="card-title" style="text-align:center;">Enter your DA ID</div>
+  <input type="text" id="da-id-input" class="inp" placeholder="Paste or Type DA ID" autocomplete="off">
+  <button class="btn" onclick="login()">Check Status</button>
+</div>
+
+<div id="loader" class="loader">Fetching data... Please wait.</div>
+
+<!-- DASHBOARD SECTION -->
+<div id="dashboard">
+  <div class="card">
+    <div class="card-title">Driver Profile</div>
+    <div class="profile-row"><span>Name:</span> <span class="val" id="d-name">--</span></div>
+    <div class="profile-row"><span>DA ID:</span> <span class="val" id="d-id">--</span></div>
+    <div class="profile-row"><span>DSP / Alias:</span> <span class="val" id="d-dsp">--</span></div>
+    <button class="btn btn-outline" onclick="logout()">Not you? Change ID</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Live Status</div>
+    <div class="profile-row"><span>Wave Time:</span> <span class="val" style="color:var(--text);" id="d-wave">--</span></div>
+    <div class="profile-row"><span>Queue Batch:</span> <span class="val" style="color:var(--text);" id="d-batch">--</span></div>
+    
+    <div class="status-box">
+      <div class="status-text" id="d-status">Loading...</div>
+    </div>
+    
+    <div class="timer-box" id="timer-container" style="display:none;">
+      <div style="font-size:11px; color:var(--muted); text-transform:uppercase; margin-bottom:5px;" id="timer-label">Action Timer</div>
+      <div class="countdown" id="d-timer">00:00:00</div>
+    </div>
+  </div>
+  
+  <p style="text-align:center; font-size:10px; color:var(--muted); margin-top:20px;">
+    Data refreshes automatically every 30 seconds.<br>Keep this page open.
+  </p>
+</div>
+
+<script>
+// ⚠️ REPLACE THIS WITH YOUR NEW DRIVER PORTAL API URL
+const API_URL = "https://script.google.com/macros/s/YOUR_NEW_DRIVER_API_ID/exec"; 
+// ⚠️ REPLACE WITH YOUR SPREADSHEET URL
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit";
+
+let refreshInterval = null;
+let countdownInterval = null;
+let targetTime = null; // Store target Date object for countdowns
+
+function getTodayTab(){
+  var d=new Date(), m=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+  return ("0"+d.getDate()).slice(-2)+" "+m[d.getMonth()];
+}
+
+window.onload = function() {
+  const savedId = localStorage.getItem("dud3_driver_id");
+  if (savedId) {
+    document.getElementById("da-id-input").value = savedId;
+    login();
+  }
+};
+
+function login() {
+  const daId = document.getElementById("da-id-input").value.trim().toUpperCase();
+  if (daId.length < 5) return alert("Please enter a valid DA ID");
+  
+  localStorage.setItem("dud3_driver_id", daId);
+  document.getElementById("login-sec").style.display = "none";
+  fetchData(daId);
+  
+  // Auto refresh data every 30 seconds
+  if (refreshInterval) clearInterval(refreshInterval);
+  refreshInterval = setInterval(() => fetchData(daId), 30000);
+}
+
+function logout() {
+  localStorage.removeItem("dud3_driver_id");
+  if (refreshInterval) clearInterval(refreshInterval);
+  if (countdownInterval) clearInterval(countdownInterval);
+  document.getElementById("dashboard").style.display = "none";
+  document.getElementById("login-sec").style.display = "block";
+  document.getElementById("da-id-input").value = "";
+}
+
+function fetchData(daId) {
+  document.getElementById("loader").style.display = "block";
+  
+  fetch(API_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'getDaStatus', daId: daId, sheetUrl: SHEET_URL, dayTab: getTodayTab() })
+  })
+  .then(res => res.json())
+  .then(res => {
+    document.getElementById("loader").style.display = "none";
+    if (!res.success) return alert("Error: " + res.error);
+    if (!res.data.found) {
+      logout();
+      return alert("DA ID not found in today's roster or Driver Data.");
+    }
+    updateDashboard(res.data, res.serverTime);
+  })
+  .catch(err => {
+    document.getElementById("loader").style.display = "none";
+    console.error(err);
+  });
+}
+
+function parseHHMM(timeStr) {
+  var p = timeStr.match(/(\d{1,2}):(\d{2})/);
+  if (!p) return null;
+  var d = new Date();
+  d.setHours(parseInt(p[1]), parseInt(p[2]), 0, 0);
+  return d;
+}
+
+function addMinutes(dateObj, mins) {
+  return new Date(dateObj.getTime() + mins * 60000);
+}
+
+function updateDashboard(data, serverTimeStr) {
+  document.getElementById("dashboard").style.display = "block";
+  document.getElementById("d-name").textContent = data.daName;
+  document.getElementById("d-id").textContent = data.daId;
+  document.getElementById("d-dsp").textContent = data.dspName;
+  document.getElementById("d-wave").textContent = data.waveTime || "Not Assigned";
+  document.getElementById("d-batch").textContent = data.batchName || "N/A";
+  
+  const statusEl = document.getElementById("d-status");
+  statusEl.textContent = data.status.toUpperCase();
+  
+  // Status Colors
+  if (data.status.includes("Absent") || data.status.includes("Late")) statusEl.style.color = "var(--red)";
+  else if (data.status.includes("Received")) statusEl.style.color = "var(--green)";
+  else if (data.status.includes("OFD")) statusEl.style.color = "var(--purple)";
+  else statusEl.style.color = "var(--blue)";
+
+  setupTimers(data);
+}
+
+function setupTimers(data) {
+  const timerBox = document.getElementById("timer-container");
+  const timerLabel = document.getElementById("timer-label");
+  const timerDisplay = document.getElementById("d-timer");
+  
+  if (countdownInterval) clearInterval(countdownInterval);
+  targetTime = null;
+  timerBox.style.display = "none";
+
+  const now = new Date();
+
+  // Logic 1: Time to Check-In (Attendance Window)
+  if (data.status === "Not Checked In" && data.waveTime) {
+    let waveD = parseHHMM(data.waveTime);
+    if (waveD) {
+      let openTime = addMinutes(waveD, -data.preBlock); // 30 mins before
+      let closeTime = addMinutes(waveD, data.grace);    // 10 mins after
+      
+      if (now < openTime) {
+        timerBox.style.display = "block";
+        timerLabel.textContent = "Check-in Opens In";
+        targetTime = openTime;
+      } else if (now >= openTime && now <= closeTime) {
+        timerBox.style.display = "block";
+        timerLabel.textContent = "Check-in CLOSES In";
+        timerLabel.style.color = "var(--red)";
+        targetTime = closeTime;
+      }
+    }
+  }
+  
+  // Logic 2: Auto OFD Countdown (Received Status)
+  if (data.status.includes("Received") && data.rushInTime && !data.ofdTime) {
+    let rushD = parseHHMM(data.rushInTime);
+    if (rushD) {
+      timerBox.style.display = "block";
+      timerLabel.textContent = "Auto OFD (On Road) In";
+      timerLabel.style.color = "var(--green)";
+      targetTime = addMinutes(rushD, data.autoOfd); // +30 mins
+    }
+  }
+  
+  // Logic 3: Turn 2 Waiting Lock (OFD Status)
+  if (data.status.includes("OFD") && data.ofdTime) {
+    let ofdD = parseHHMM(data.ofdTime);
+    if (ofdD) {
+      let unlockTime = addMinutes(ofdD, data.waitLock); // +30 mins
+      if (now < unlockTime) {
+        timerBox.style.display = "block";
+        timerLabel.textContent = "Waiting List Unlocks In";
+        timerLabel.style.color = "var(--purple)";
+        targetTime = unlockTime;
+      } else {
+        timerBox.style.display = "block";
+        timerLabel.textContent = "Eligible for Turn 2";
+        timerDisplay.textContent = "READY";
+        return; // Stop countdown
+      }
+    }
+  }
+
+  // Start Live Countdown Loop
+  if (targetTime) {
+    countdownInterval = setInterval(() => {
+      let curr = new Date();
+      let diff = targetTime - curr;
+      
+      if (diff <= 0) {
+        timerDisplay.textContent = "00:00:00";
+        clearInterval(countdownInterval);
+        fetchData(document.getElementById("da-id-input").value); // Refresh data from server
+        return;
+      }
+      
+      let h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      let s = Math.floor((diff % (1000 * 60)) / 1000);
+      
+      timerDisplay.textContent = 
+        ("0" + h).slice(-2) + ":" + 
+        ("0" + m).slice(-2) + ":" + 
+        ("0" + s).slice(-2);
+        
+    }, 1000);
+  }
+}
+</script>
+</body>
+</html>
