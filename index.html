@@ -5,11 +5,7 @@
   <title>DUD3 Rush PRO</title>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
   <meta name="theme-color" content="#FF9900">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Rush PRO">
   <link rel="manifest" id="manifest-link">
-  <link rel="apple-touch-icon" id="apple-icon">
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <style>
     :root{--bg:#131A22;--bg2:#1B2430;--card:#232F3E;--orange:#FF9900;--blue:#00A8E1;--white:#FFF;--muted:#9BA7B6;--green:#00C853;--red:#FF3B30;--warn:#FFB300;--purple:#BB86FC;--border:#354558;--r:10px;--nav:66px;}
@@ -17,26 +13,22 @@
     html,body{background:var(--bg);color:var(--white);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:14px;overflow-x:hidden;}
     body{min-height:100vh;display:flex;flex-direction:column;padding-bottom:calc(var(--nav)+20px);}
 
-    /* ===== SPLASH / OPEN ANIMATION ===== */
+    /* ===== NEW PERFECTED BIKE & SMILE ANIMATION ===== */
     #splash{position:fixed;inset:0;width:100%;height:100%;background:radial-gradient(circle at 50% 30%, #1B2430, #0d1117 70%);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.6s ease;}
-    .skyline{font-size:58px;letter-spacing:-10px;margin-bottom:6px;opacity:0.55;filter:drop-shadow(0 0 15px rgba(0,168,225,0.4));animation:floatCity 3s ease-in-out infinite;}
-    @keyframes floatCity{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
     #splash h2{color:#fff;font-weight:900;font-size:32px;margin-bottom:6px;letter-spacing:2px;text-shadow:0 0 10px rgba(255,153,0,0.5);}
     #splash h2 span{color:var(--orange);}
-    /* Amazon smile logo below the name */
     .smile-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:34px;}
-    .smile-word{font-size:15px;font-weight:800;color:#fff;letter-spacing:1px;}
-    .smile-word b{color:var(--orange);}
     .smile-svg{width:120px;height:34px;margin-top:2px;}
-    .smile-path{stroke:var(--orange);stroke-width:7;fill:none;stroke-linecap:round;stroke-dasharray:260;stroke-dashoffset:260;animation:drawSmile 1.4s 0.3s forwards ease-out;}
-    .smile-arrow{fill:var(--orange);opacity:0;animation:popArrow 0.4s 1.5s forwards;}
+    .smile-path{stroke:var(--orange);stroke-width:7;fill:none;stroke-linecap:round;stroke-dasharray:260;stroke-dashoffset:260;animation:drawSmile 2.5s forwards ease-in-out;}
+    .smile-arrow{fill:var(--orange);opacity:0;animation:popArrow 0.2s 2.2s forwards;}
     @keyframes drawSmile{to{stroke-dashoffset:0}}
     @keyframes popArrow{to{opacity:1}}
-    .road-box{width:280px;height:6px;background:#354558;border-radius:3px;position:relative;}
-    .bar-fill{width:0%;height:100%;background:var(--orange);border-radius:3px;box-shadow:0 0 10px var(--orange);animation:load 2.5s forwards ease-in-out;}
-    .bike{position:absolute;bottom:10px;left:0%;font-size:34px;transform:translateX(-50%);animation:ride 2.5s forwards ease-in-out;}
-    @keyframes load{100%{width:100%;}}
-    @keyframes ride{100%{left:100%;}}
+    
+    .road-box{width:280px;height:4px;background:#354558;position:relative;border-radius:2px;overflow:visible;}
+    .road-lines{position:absolute;top:50%;left:0;width:100%;height:2px;background:repeating-linear-gradient(90deg, transparent, transparent 10px, #fff 10px, #fff 20px);transform:translateY(-50%);opacity:0.3;animation:moveRoad 1s linear infinite;}
+    @keyframes moveRoad{from{background-position:0 0;}to{background-position:-30px 0;}}
+    .bike{position:absolute;bottom:5px;left:-10%;font-size:38px;transform:translateX(-50%);animation:rideBike 2.5s forwards cubic-bezier(0.4, 0, 0.2, 1);}
+    @keyframes rideBike{0%{left:-10%;transform:translateX(-50%) rotate(-5deg);}50%{left:50%;transform:translateX(-50%) rotate(0deg);}100%{left:110%;transform:translateX(-50%) rotate(5deg);}}
 
     #toast-msg{position:fixed;top:8px;left:50%;transform:translateX(-50%) translateY(-150%);width:calc(100% - 24px);max-width:540px;padding:12px 16px;border-radius:8px;font-weight:800;font-size:13px;display:flex;justify-content:space-between;align-items:center;z-index:10000;box-shadow:0 8px 24px rgba(0,0,0,0.6);transition:transform 0.3s;}
     #toast-msg.show{transform:translateX(-50%) translateY(0);}
@@ -52,17 +44,14 @@
     .pill{padding:4px 8px;border-radius:12px;font-size:10px;font-weight:800;}
     .pill.on{background:rgba(0,200,83,0.18);color:var(--green);border:1px solid var(--green);}
     .pill.off{background:rgba(255,59,48,0.18);color:var(--red);border:1px solid var(--red);}
-    #install-btn{display:none;background:var(--orange);color:#000;border:none;border-radius:6px;padding:5px 9px;font-size:10px;font-weight:900;cursor:pointer;}
     .dsel{background:var(--bg);color:#fff;border:1px solid var(--border);border-radius:6px;padding:6px;font-size:12px;font-weight:700;}
 
     main{width:100%;max-width:860px;margin:0 auto;padding:12px;flex:1;}
     .pane{display:none;}.pane.on{display:block;}
-
     .sticky-card { position: sticky; top: 60px; z-index: 100; box-shadow: 0 6px 15px rgba(0,0,0,0.4); margin-bottom: 15px;}
     .scroll-list { max-height: 60vh; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-right: 4px; }
     .scroll-list::-webkit-scrollbar { width: 5px; }
     .scroll-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-
     .crd{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:12px;}
     .crd-t{font-size:12px;font-weight:800;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
 
@@ -82,7 +71,7 @@
     .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px;}
     .kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:7px 4px;text-align:center;}
     .kv{font-size:17px;font-weight:900;}.kl{font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:3px;font-weight:bold;}
-
+    
     .btn-big{background:var(--orange);color:#000;font-size:15px;font-weight:900;padding:14px;border-radius:8px;width:100%;margin-bottom:12px;border:none;cursor:pointer;box-shadow:0 4px 15px rgba(255,153,0,0.25);}
     .btn-big:active{transform:scale(0.97);}
     .inp{width:100%;background:var(--bg);color:#fff;border:1px solid var(--border);border-radius:7px;padding:12px;font-size:14px;margin-bottom:8px;}
@@ -90,19 +79,19 @@
     .btn-green{background:var(--green);color:#042012;}
     .btn-orange{background:var(--orange);color:#000;}
     .btn-red{background:rgba(255,59,48,0.18);color:var(--red);border:1px solid var(--red);}
-
+    
     .dlist{display:flex;flex-direction:column;gap:6px;}
     .di{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px;display:flex;justify-content:space-between;align-items:center;}
     .dn{font-weight:700;font-size:13px;}.ds{font-size:11px;color:var(--muted);margin-top:3px;}
-
+    
     .cam{display:none;background:#000;border-radius:8px;overflow:hidden;margin-bottom:10px;}
     .sbox{background:var(--bg);border:1px solid var(--border);border-radius:7px;margin-top:-4px;max-height:190px;overflow-y:auto;display:none;margin-bottom:10px;}
     .si{padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px;cursor:pointer;}
-
+    
     nav.bnav{position:fixed;bottom:0;left:0;right:0;height:var(--nav);background:var(--card);border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(6,1fr);z-index:900;}
     .ni{background:none;border:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:9px;font-weight:700;cursor:pointer;}
     .ni span:first-child{font-size:18px;}.ni.on{color:var(--orange);}
-
+    
     .rush-inp{width:100%;padding:16px;font-size:22px;font-weight:900;text-align:center;letter-spacing:2px;border:2px solid var(--green);border-radius:10px;background:var(--bg);color:var(--green);margin-bottom:8px;}
     .rush-inp:focus{border-color:#00E676;box-shadow:0 0 20px rgba(0,200,83,0.3);outline:none;}
     .pulse{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px;animation:pul 1.5s infinite;}
@@ -117,16 +106,14 @@
 <body>
 
 <div id="splash">
-  <div class="skyline">🏙️🌆🏢🏨</div>
   <h2>RUSH PRO <span>APP</span></h2>
   <div class="smile-wrap">
-    <div class="smile-word">DUD3 <b>amazon</b></div>
     <svg class="smile-svg" viewBox="0 0 120 34">
-      <path class="smile-path" d="M12 10 C40 32, 80 32, 104 12"/>
-      <polygon class="smile-arrow" points="104,12 92,10 100,22"/>
+      <path class="smile-path" d="M12 10 C40 32, 80 32, 104 12"></path>
+      <polygon class="smile-arrow" points="104,12 92,10 100,22"></polygon>
     </svg>
   </div>
-  <div class="road-box"><div class="bike">🛵💨</div><div class="bar-fill"></div></div>
+  <div class="road-box"><div class="road-lines"></div><div class="bike">🛵💨</div></div>
 </div>
 
 <div id="toast-msg"><span id="b-txt"></span><button style="background:none;border:none;color:#fff;font-weight:bold;font-size:18px;cursor:pointer;" onclick="document.getElementById('toast-msg').className=''">x</button></div>
@@ -134,10 +121,9 @@
 <header>
   <div class="logo">
     <div class="l-main">RUSH PRO <span>DUD3</span></div>
-    <svg class="l-smile" viewBox="0 0 60 14"><path d="M6 4 C20 14, 40 14, 52 5"/><polygon points="52,5 45,4 49,10"/></svg>
+    <svg class="l-smile" viewBox="0 0 60 14"><path d="M6 4 C20 14, 40 14, 52 5"></path><polygon points="52,5 45,4 49,10"></polygon></svg>
   </div>
   <div class="right-head">
-    <button id="install-btn">⬇ INSTALL</button>
     <select id="dsel" class="dsel"></select>
     <span id="pill" class="pill off">CONNECTING...</span>
   </div>
@@ -164,14 +150,13 @@
       <div id="cam-att" class="cam"><div id="qr-att"></div></div>
       <input type="text" id="inp-att" class="inp" placeholder="Scan or type DA Name / ID..." autocomplete="off">
       <div id="sug-att" class="sbox"></div>
+      <div style="font-size:10px;text-align:center;color:var(--warn);margin-top:4px;">First scan moves DA straight to Waiting Batch</div>
     </div>
-
     <div class="crd">
       <div class="crd-t">🕒 Recent Check-Ins (Active Wave)</div>
       <div id="recent-att-list" class="scroll-list dlist"></div>
       <div style="font-size:10px;text-align:center;color:var(--muted);margin-top:8px;">* Auto-removes after 30 minutes</div>
     </div>
-
     <div class="crd" style="border-color:var(--blue)">
       <div class="crd-t" style="color:var(--blue)">🔁 Replacement DA (From RushData)</div>
       <input type="text" id="inp-repl" class="inp" placeholder="Search DA Name / ID for Replacement" autocomplete="off">
@@ -190,10 +175,10 @@
       <div id="sug-wait" class="sbox"></div>
     </div>
     <div class="crd">
-      <div class="crd-t" style="margin-bottom:10px;">📦 Batches (FIFO)</div>
+      <div class="crd-t" style="margin-bottom:10px;">📦 Global Batches (Static FIFO)</div>
       <input type="text" id="inp-ym" class="inp" placeholder="YM Name (required to send)" style="margin-bottom:10px;">
       <div class="wait-actions">
-        <button class="btn btn-green" id="btn-send-full" style="grid-column:1 / span 2;">📤 Send Full Batch (FIFO)</button>
+        <button class="btn btn-green" id="btn-send-full" style="grid-column:1 / span 2;">📤 Send Full Batch</button>
         <button class="btn btn-orange" id="btn-send-sel">✅ Send Selected</button>
         <button class="btn btn-red" id="btn-remove-wait">🗑️ Remove Selected</button>
       </div>
@@ -203,14 +188,15 @@
 
   <section id="p-breaks" class="pane">
     <div class="crd" style="border-color:var(--red)">
-      <div class="crd-t" style="color:var(--red)">☕ Currently on Break (Live · Dubai 24h · HH:MM-HH:MM)</div>
+      <div class="crd-t" style="color:var(--red)">☕ Currently on Break (Live)</div>
       <div id="break-list" class="scroll-list dlist"></div>
+      <div style="font-size:10px;text-align:center;color:var(--muted);margin-top:8px;">Returns to Top of Waiting Batch when break ends</div>
     </div>
   </section>
 
   <section id="p-sent" class="pane">
     <div class="crd" style="border-color:var(--warn)">
-      <div class="crd-t" style="color:var(--warn)">⏱️ Sent — Waiting for Rush Queue Scan</div>
+      <div class="crd-t" style="color:var(--warn)">⏱️ Sent List (Driver Rescue view)</div>
       <div id="sent-list" class="scroll-list dlist"></div>
     </div>
   </section>
@@ -230,13 +216,11 @@
       <div class="ban-msg">DA(s) scanned into Rush Queue but were NOT sent by YM.</div>
       <div id="bypassList"></div>
     </div>
-
     <div id="timeoutBanner" class="vio-banner timeout-ban">
       <div class="ban-hdr"><span>⏰ SLA EXCEEDED</span><button class="dismiss-btn" onclick="dismissTimeout()">✕</button></div>
-      <div class="ban-msg">DA(s) were dispatched but did NOT scan in time limit. Added to Violations.</div>
+      <div class="ban-msg">DA(s) were dispatched but did NOT scan in time limit.</div>
       <div id="timeoutList"></div>
     </div>
-
     <div class="crd" style="border-color:var(--green)">
       <div class="crd-t">✅ Received (Auto-removes on OFD)</div>
       <div id="recv-list" class="scroll-list dlist"></div>
@@ -252,28 +236,26 @@
 
       <label style="font-size:11px;color:var(--muted)">🌐 Main Apps Script URL (Cloud API)</label>
       <input type="text" id="s-api" class="inp" placeholder="Paste your Apps Script /exec link...">
-
       <label style="font-size:11px;color:var(--muted)">📊 Google Sheet URL (Cloud DB)</label>
       <input type="text" id="s-sheet" class="inp" placeholder="Paste your Google Sheet link...">
 
-      <div style="font-size:10px;color:var(--green);margin-bottom:12px;">Global app settings save to the Sheet (apply to all devices). API/Sheet links save locally on this device.</div>
+      <div style="font-size:10px;color:var(--green);margin-bottom:12px;">Global app settings save to the Sheet. API/Sheet links save locally on this device.</div>
       <div style="display:flex;gap:10px;margin-bottom:10px;">
         <div style="flex:1"><label style="font-size:11px;color:var(--muted)">🛑 Pre-Wave Block (m)</label><input type="number" id="s-pre" class="inp"></div>
         <div style="flex:1"><label style="font-size:11px;color:var(--muted)">⏳ Wave Grace (m)</label><input type="number" id="s-grace" class="inp"></div>
       </div>
       <div style="display:flex;gap:10px;margin-bottom:10px;">
         <div style="flex:1"><label style="font-size:11px;color:var(--muted)">📦 Batch Size</label><input type="number" id="s-batch" class="inp"></div>
-        <div style="flex:1"><label style="font-size:11px;color:var(--muted)">⏱️ Rush Timeout SLA (m)</label><input type="number" id="s-time" class="inp"></div>
+        <div style="flex:1"><label style="font-size:11px;color:var(--muted)">⏱️ Rush Timeout (m)</label><input type="number" id="s-time" class="inp"></div>
       </div>
       <div style="display:flex;gap:10px;margin-bottom:10px;">
-        <div style="flex:1"><label style="font-size:11px;color:var(--muted)">🚚 Auto OFD Timer (Mins)</label><input type="number" id="s-auto-ofd" class="inp"></div>
-        <div style="flex:1"><label style="font-size:11px;color:var(--muted)">🔒 Waiting Lock (Mins)</label><input type="number" id="s-wait-lock" class="inp"></div>
+        <div style="flex:1"><label style="font-size:11px;color:var(--muted)">🚚 Auto OFD Timer (m)</label><input type="number" id="s-auto-ofd" class="inp"></div>
+        <div style="flex:1"><label style="font-size:11px;color:var(--muted)">🔒 Waiting Lock (m)</label><input type="number" id="s-wait-lock" class="inp"></div>
       </div>
       <div style="margin-bottom:15px;"><label style="font-size:11px;color:var(--muted)">🔑 Admin PIN</label><input type="text" id="s-pin" class="inp"></div>
-
+      
       <button class="btn" id="btn-save" style="width:100%;background:var(--orange);color:#000;margin-bottom:10px;">💾 Save Global Settings</button>
-      <button class="btn" id="btn-install-2" style="width:100%;background:var(--blue);color:#051B24;margin-bottom:10px;">⬇ Install App (PWA)</button>
-      <button class="btn" onclick="clearMemoryAndReload()" style="width:100%;background:#354558;color:#fff;font-size:12px;">🗑️ Clear Local Memory</button>
+      <button class="btn" onclick="clearMemoryAndReload()" style="width:100%;background:#354558;color:#fff;font-size:12px;">🗑️ Clear Local App Cache</button>
     </div>
   </section>
 </main>
@@ -288,45 +270,19 @@
 </nav>
 
 <script>
-// ===== PWA ICON (valid Amazon-smile base64 SVG) =====
 var ICON_B64="PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9Ijk2IiBmaWxsPSIjRkY5OTAwIi8+PHRleHQgeD0iMjU2IiB5PSIyNTAiIGZvbnQtc2l6ZT0iMTkwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjMTMxQTIyIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSI5MDAiPlI8L3RleHQ+PHBhdGggZD0iTTEyMCAzMzAgUTI1NiA0NDAgMzkyIDMzMCIgc3Ryb2tlPSIjMTMxQTIyIiBzdHJva2Utd2lkdGg9IjI2IiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cGF0aCBkPSJNMzkyIDMzMCBsLTMwIC04IGwxMiAzMCB6IiBmaWxsPSIjMTMxQTIyIi8+PC9zdmc+";
 var ICON_URI="data:image/svg+xml;base64,"+ICON_B64;
-document.getElementById("apple-icon").href=ICON_URI;
-
-if('serviceWorker' in navigator){
-  var swCode = "self.addEventListener('install',function(e){self.skipWaiting();}); self.addEventListener('fetch', function(e) { if(e.request.url.includes('script.google.com')) return; e.respondWith(fetch(e.request).catch(function() { return new Response('Offline'); })); });";
-  var blob = new Blob([swCode], {type: 'application/javascript'});
-  try { navigator.serviceWorker.register(URL.createObjectURL(blob)); } catch(e){}
-}
 
 var mj = {
   "name": "DUD3 Rush PRO", "short_name": "Rush PRO", "display": "standalone", "start_url": ".",
   "background_color": "#131A22", "theme_color": "#FF9900", "orientation": "portrait",
-  "icons": [
-    { "src": ICON_URI, "sizes": "192x192", "type": "image/svg+xml", "purpose": "any maskable" },
-    { "src": ICON_URI, "sizes": "512x512", "type": "image/svg+xml", "purpose": "any maskable" }
-  ]
+  "icons": [ { "src": ICON_URI, "sizes": "192x192", "type": "image/svg+xml", "purpose": "any maskable" }, { "src": ICON_URI, "sizes": "512x512", "type": "image/svg+xml", "purpose": "any maskable" } ]
 };
 document.getElementById("manifest-link").href=URL.createObjectURL(new Blob([JSON.stringify(mj)],{type:"application/json"}));
 
-// ===== PWA INSTALL PROMPT (mobile + desktop) =====
-var deferredPrompt=null;
-window.addEventListener('beforeinstallprompt', function(e){
-  e.preventDefault(); deferredPrompt=e;
-  document.getElementById('install-btn').style.display='inline-block';
-});
-function doInstall(){
-  if(!deferredPrompt){ banner("To install: use your browser menu → 'Add to Home Screen / Install App'.","warn"); return; }
-  deferredPrompt.prompt();
-  deferredPrompt.userChoice.then(function(){ deferredPrompt=null; document.getElementById('install-btn').style.display='none'; });
-}
-window.addEventListener('appinstalled', function(){ banner("App installed! 🎉","ok"); document.getElementById('install-btn').style.display='none'; });
-
-// ===== HARDCODED DEFAULTS =====
 const API="https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec";
 const SHEET="https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit";
 
-// ===== SAFE localStorage SHIM (sandbox/preview iframes block localStorage -> SecurityError) =====
 var LS=(function(){
   var mem={}, ok=false;
   try{ var t="__ls_test__"; window.localStorage.setItem(t,"1"); window.localStorage.removeItem(t); ok=true; }catch(e){ ok=false; }
@@ -339,7 +295,7 @@ var LS=(function(){
 
 var admin=!(/Mobi|Android|iPhone/i.test(navigator.userAgent));
 var SK="DUD3V2_MASTER";
-var S={api:API,sheet:SHEET,day:todayTab(),tabs:recentTabs(),cfg:{waveGraceMin:10,preWaveBlockMin:30,batchSize:25,rushTimeoutMin:20,autoOfdMin:30,waitingLockMin:30,adminPin:"1234",apiUrl:"",sheetUrl:""},roster:[],batches:[],breaks:[],received:[],allDAs:[],pausedWaiters:[],sel:new Set(),violations:[]};
+var S={api:API,sheet:SHEET,day:todayTab(),tabs:recentTabs(),cfg:{waveGraceMin:10,preWaveBlockMin:30,batchSize:25,rushTimeoutMin:20,autoOfdMin:30,waitingLockMin:30,adminPin:"1234",apiUrl:"",sheetUrl:""},roster:[],globalBatches:[],breaks:[],received:[],allDAs:[],sel:new Set(),violations:[]};
 
 var disBypass=new Set(), disTimeout=new Set();
 
@@ -347,14 +303,21 @@ function todayTab(){var d=new Date(),m=["JAN","FEB","MAR","APR","MAY","JUN","JUL
 function recentTabs(){var t=[],m=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];for(var o=-2;o<=2;o++){var d=new Date();d.setDate(d.getDate()+o);t.push(("0"+d.getDate()).slice(-2)+" "+m[d.getMonth()]);}return t;}
 function now(){var d=new Date();return("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2);}
 
-// Strict 24hr parsers (front-end mirror of backend)
-function toMin(s){if(!s)return null;var p=String(s).trim().match(/(\d{1,2}):(\d{2})/);if(!p)return null;var h=parseInt(p[1],10),n=parseInt(p[2],10);if(h>23||n>59)return null;return h*60+n;}
-function sheetTimeToMin(s){return toMin(s);} // wave times also strict 24hr
+function toMin(s){
+  if(!s)return null;
+  var m=String(s).trim().match(/(\d{1,2}):(\d{2})\s*(am|pm|AM|PM)?/);
+  if(!m)return null;
+  var h=parseInt(m[1],10), n=parseInt(m[2],10), a=m[3]?m[3].toUpperCase():"";
+  if (a==="PM" && h<12) h+=12;
+  if (a==="AM" && h===12) h=0;
+  if (!a && h>=1 && h<=7) h+=12; 
+  return h*60+n;
+}
 function minDiff(t1, t2) {var a = toMin(t1), b = toMin(t2); if (a === null || b === null) return 0; return Math.max(0, b - a);}
 
 function clearMemoryAndReload() {
   LS.removeItem(SK);
-  alert("Memory Cleared. The app will now reload cleanly.");
+  alert("Memory Cleared! The app will now reload.");
   window.location.reload();
 }
 
@@ -378,23 +341,25 @@ function cfgUI(){
   document.getElementById("s-sheet").value = S.cfg.sheetUrl || S.sheet;
 }
 
-function manageBreakQueues() {
-  S.batches.forEach(function(b){
-     for(var i = b.members.length - 1; i >= 0; i--) {
-        var m = b.members[i]; if(m.sent) continue;
-        var lc = S.roster.find(function(r){return r.daId === m.daId});
-        if(lc && lc.isOnBreak) S.pausedWaiters.push(b.members.splice(i, 1)[0]);
-     }
+// 🟢 STATIC BATCH RENDERER (Builds batches strictly from Cloud Data)
+function rebuildGlobalBatches() {
+  var waiters = S.roster.filter(function(r) { return r.status === "Waiting" && !r.isOnBreak; });
+  // First Come First In Sort
+  waiters.sort(function(a, b) { return toMin(a.waitTime || "23:59") - toMin(b.waitTime || "23:59"); });
+  
+  var batchMap = {};
+  S.globalBatches = [];
+  
+  waiters.forEach(function(w) {
+      var bn = w.batchName || "Batch 1"; 
+      if(!batchMap[bn]) {
+          batchMap[bn] = { id: parseInt(bn.replace("Batch ",""), 10) || 999, name: bn, members: [] };
+          S.globalBatches.push(batchMap[bn]);
+      }
+      batchMap[bn].members.push({ daId: w.daId, daName: w.daName, scanTime: w.waitTime || w.scanTime });
   });
-  for(var j = S.pausedWaiters.length - 1; j >= 0; j--) {
-     var pm = S.pausedWaiters[j], lc = S.roster.find(function(r){return r.daId === pm.daId});
-     if(lc && !lc.isOnBreak) {
-        var restored = S.pausedWaiters.splice(j, 1)[0];
-        var firstBatch = S.batches.find(function(b){return !b.allSent});
-        if(!firstBatch) { firstBatch = {id: S.batches.length+1, name: "Batch "+(S.batches.length+1), allSent: false, members: []}; S.batches.push(firstBatch); }
-        firstBatch.members.unshift(restored);
-     }
-  }
+  
+  S.globalBatches.sort(function(a, b) { return a.id - b.id; });
 }
 
 function rebuild(){
@@ -403,88 +368,50 @@ function rebuild(){
     if(d.isOnBreak)S.breaks.push({daId:d.daId,daName:d.daName,info:d.breakInfo||""});
     if(String(d.status).indexOf("Received")>-1)S.received.push({daId:d.daId,daName:d.daName,t:d.rushScanInTime||""});
   });
+  rebuildGlobalBatches();
 }
 
+// 🟢 ALL ACTIONS SYNC IMMEDIATELY VIA ROSTER RESPONSE (No fake updates)
 function callApi(action,payload){
   var pill=document.getElementById("pill");
   if(action==="rosterFull"||action==="saveSettings"||action==="resetDay"){pill.textContent="CONNECTING...";pill.className="pill off";}
 
   if(!payload)payload={}; payload.action=action;payload.sheetUrl=S.sheet;payload.dayTab=S.day;
 
-  fetch(S.api, {
-      method:"POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body:JSON.stringify(payload)
-  })
+  fetch(S.api, { method:"POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body:JSON.stringify(payload) })
   .then(function(r){if(!r.ok) throw new Error("API Fails"); return r.json();})
   .then(function(d){
     var splash = document.getElementById("splash");
     if (splash) { splash.style.opacity = "0"; setTimeout(function(){splash.remove()}, 600); }
-    if(!d||!d.success){
-        pill.className="pill off";pill.textContent="API ERROR";
-        if(d&&d.errors)banner(d.errors[0],"err");return;
-    }
+    if(!d||!d.success){ pill.className="pill off";pill.textContent="API ERROR"; if(d&&d.errors)banner(d.errors[0],"err");return; }
 
     pill.className="pill on";pill.textContent="SYNCED";
     if(d.settings && action !== "syncOnly"){ S.cfg=d.settings; cfgUI(); }
     if(d.violations) S.violations = d.violations;
     if(d.allDAs) S.allDAs = d.allDAs;
+    
+    // UNIVERSAL ROSTER SYNC (Guarantees all devices see exactly the same data)
+    if(d.roster) {
+        S.roster = d.roster;
+        if(action==="resetDay"){ S.sel.clear(); disBypass.clear(); disTimeout.clear(); }
+        rebuild(); render();
+    }
 
-    if(action==="rosterFull"||action==="resetDay"){
-      S.roster=d.roster||[];
-      if(action==="resetDay"){S.batches=[];S.breaks=[];S.received=[];S.pausedWaiters=[];S.sel.clear();disBypass.clear();disTimeout.clear();}
-      manageBreakQueues(); rebuild(); render();
+    // Notifications
+    if(action==="recordCheckIn"){
+      if(d.alreadyMarked){ banner((d.daName||"DA")+" already marked attendance! Use Waiting tab.","warn"); switchTab("p-wait"); } 
+      else { banner("Successfully Checked In!","ok"); }
     }
-    else if(action==="syncOnly"&&d.roster){
-      d.roster.forEach(function(sv){
-        var lc=S.roster.find(function(r){return r.daId===sv.daId});
-        if(!lc){ S.roster.push(sv); return; }
-        lc.isOnBreak = sv.isOnBreak; lc.breakInfo = sv.breakInfo; lc.rowIndex = sv.rowIndex;
-        lc.attendanceOnlyStatus = sv.attendanceOnlyStatus; lc.scanTime = sv.scanTime;
-        lc.sentTime = sv.sentTime; lc.marshalName = sv.marshalName; lc.batchName = sv.batchName;
-        if(sv.status==="OFD"&&lc.status!=="OFD"){ lc.status="OFD";S.received=S.received.filter(function(r){return r.daId!==lc.daId}); }
-        if(String(sv.status).indexOf("Received")>-1&&String(lc.status).indexOf("Received")===-1&&lc.status!=="OFD"){
-          lc.status=sv.status;
-          if(!S.received.find(function(r){return r.daId===lc.daId}))S.received.push({daId:lc.daId,daName:lc.daName,t:sv.rushScanInTime||""});
-        }
-        if(sv.status==="Sent to OP" && lc.status!=="Received" && lc.status!=="OFD") lc.status="Sent to OP";
-      });
-      manageBreakQueues(); rebuild(); render();
-    }
+    else if(action==="addToWaiting"){ banner("Successfully Added to Waiting!","ok"); }
     else if(action==="sendDA" || action==="removeFromWaiting"){
-      var ids=payload.ids||[];
-      S.batches.forEach(function(b){b.members.forEach(function(m){if(ids.indexOf(m.daId)>-1&&!m.sent)m.sent=true;});if(b.members.every(function(m){return m.sent}))b.allSent=true});
-      S.sel.clear(); banner(action==="sendDA" ? ids.length+" DA(s) sent" : ids.length+" DA(s) removed","ok"); render();
-    }
-    else if(action==="recordCheckIn"){
-      if(d.alreadyMarked){
-         banner((d.daName||"DA")+" already marked attendance! Use Waiting tab.","warn");
-         switchTab("p-wait");
-      } else {
-         var lc=S.roster.find(function(x){return x.daId===payload.daId});
-         if(lc) { lc.attendanceOnlyStatus = payload.sentStatus; lc.scanTime = now(); addToBatch(lc); }
-      }
-      render();
-    }
-    else if(action==="addToWaiting"){
-      var lc=S.roster.find(function(x){return x.daId===payload.daId});
-      if (lc) addToBatch(lc);
-      render();
+      S.sel.clear(); banner(action==="sendDA" ? payload.ids.length+" DA(s) sent" : payload.ids.length+" DA(s) removed","ok"); 
     }
     else if(action==="rushScanIn"&&d.result){
-      var r=d.result;
-      if(r.violation)banner(r.violation.message,"err"); else banner(r.daName+" → RECEIVED SUCCESS","ok");
-      if(!r.violation){
-        if(!S.received.find(function(x){return x.daId===payload.daId}))S.received.push({daId:payload.daId,daName:r.daName,t:now()});
-        var lc=S.roster.find(function(x){return x.daId===payload.daId});
-        if(lc)lc.status="Received";
-      }
-      render();
+      if(d.result.violation) banner(d.result.violation.message,"err"); 
+      else banner(d.result.daName+" → RECEIVED SUCCESS","ok");
     }
   }).catch(function(err){
-      pill.className="pill off";
-      pill.textContent="API ERROR";
-      banner("Connection Error. Check deployment permissions.", "err");
+      pill.className="pill off"; pill.textContent="API ERROR"; 
       var splash = document.getElementById("splash");
       if (splash) { splash.style.opacity = "0"; setTimeout(function(){splash.remove()}, 600); }
   });
@@ -502,62 +429,48 @@ function checkIn(token,isWaiting){
   var da=S.roster.find(function(r){return(r.daId&&r.daId.toLowerCase().indexOf(c)>-1)||(r.repDaId&&r.repDaId.toLowerCase().indexOf(c)>-1)||(r.daName&&r.daName.toLowerCase().indexOf(c)>-1)});
   if(!da)return banner('DA Not Found: "'+token+'"',"err");
 
+  // RULE: Block all scan excluding attendance if DA is on break
   if (da.isOnBreak && isWaiting) return banner("ERROR: DA is on break! ("+da.breakInfo+")", "err");
+  
   if(!isWaiting && da.attendanceOnlyStatus && da.attendanceOnlyStatus!=="Absent"){ banner(da.daName+" already marked! Use Waiting tab.","warn"); switchTab("p-wait"); return; }
 
   var st="Present";
   if(!isWaiting){
      var cur=(new Date()).getHours()*60+(new Date()).getMinutes();
-     var w=sheetTimeToMin(da.waveTime), pre=Number(S.cfg.preWaveBlockMin)||30,gr=Number(S.cfg.waveGraceMin)||10;
+     var w=toMin(da.waveTime), pre=Number(S.cfg.preWaveBlockMin)||30,gr=Number(S.cfg.waveGraceMin)||10;
      if(w!==null){if(cur<(w-pre))return banner("Too Early! Wave: "+da.waveTime,"warn");if(cur>(w+gr)||da.attendanceOnlyStatus==="Absent")st="Late Arrival";}
   }
 
   banner((isWaiting?"Saving...":st)+": "+da.daName,"ok");
+  // Sends to backend. Backend assigns Batch and returns updated roster for UI.
   callApi(isWaiting?"addToWaiting":"recordCheckIn",{daId:da.daId,daName:da.daName,sentStatus:st,isWaiting:isWaiting});
 }
 
-function addToBatch(da){
-  var cap=Number(S.cfg.batchSize)||25, aId=(da.repDaId||da.daId).toLowerCase(), exists=false;
-  S.batches.forEach(function(b){b.members.forEach(function(m){if(m.daId.toLowerCase()===aId&&!m.sent)exists=true})});
-  var inPaused = S.pausedWaiters.some(function(m){return m.daId.toLowerCase()===aId});
-  if(exists || inPaused) return;
-
-  var memberObj = {daId:da.repDaId||da.daId,daName:da.daName,scanTime:now(),sent:false};
-  if (da.isOnBreak) { S.pausedWaiters.push(memberObj); return; }
-
-  var tgt=null;
-  for(var i=0;i<S.batches.length;i++){ var b=S.batches[i]; if(!b.allSent&&b.members.filter(function(m){return!m.sent}).length<cap){tgt=b;break;} }
-  if(!tgt){ var num=S.batches.length+1; tgt={id:num,name:"Batch "+num,allSent:false,members:[]}; S.batches.push(tgt); }
-  tgt.members.push(memberObj);
-}
-
 function toggleBatch(bName, isChecked) {
-  var b = S.batches.find(function(x){return x.name === bName});
-  if(b) { b.members.forEach(function(m){ if(!m.sent){ if(isChecked) S.sel.add(m.daId); else S.sel.delete(m.daId); } }); render(); }
+  var b = S.globalBatches.find(function(x){return x.name === bName});
+  if(b) { b.members.forEach(function(m){ if(isChecked) S.sel.add(m.daId); else S.sel.delete(m.daId); }); render(); }
 }
 
 function getYM(){ return document.getElementById("inp-ym").value.trim(); }
 
-// Send only selected
 function sendSelected(){
   var ym=getYM(); if(!ym)return banner("Enter YM name first!","warn");
   var ids=[], batchName="";
-  S.batches.forEach(function(b){b.members.forEach(function(m){if(!m.sent&&S.sel.has(m.daId)){ids.push(m.daId);batchName=b.name;}})});
+  S.globalBatches.forEach(function(b){b.members.forEach(function(m){if(S.sel.has(m.daId)){ids.push(m.daId);batchName=b.name;}})});
   if(!ids.length)return banner("Select DAs to send","warn");
   callApi("sendDA",{ids:ids,marshalName:ym,batchName:batchName});
 }
-// Send the first (oldest, FIFO) full unsent batch
+
 function sendFullBatch(){
   var ym=getYM(); if(!ym)return banner("Enter YM name first!","warn");
-  var target=null;
-  for(var i=0;i<S.batches.length;i++){ if(S.batches[i].members.some(function(m){return !m.sent})){ target=S.batches[i]; break; } }
-  if(!target)return banner("No batch to send","warn");
-  var ids=target.members.filter(function(m){return !m.sent}).map(function(m){return m.daId});
-  if(!ids.length)return banner("Batch already sent","warn");
+  if(!S.globalBatches.length)return banner("No batch to send","warn");
+  var target = S.globalBatches[0]; // Always send the oldest batch (Batch 1)
+  var ids=target.members.map(function(m){return m.daId});
   callApi("sendDA",{ids:ids,marshalName:ym,batchName:target.name});
 }
+
 function removeSelected(){
-  var ids=[]; S.batches.forEach(function(b){b.members.forEach(function(m){if(!m.sent&&S.sel.has(m.daId)) ids.push(m.daId);})});
+  var ids=[]; S.globalBatches.forEach(function(b){b.members.forEach(function(m){if(S.sel.has(m.daId)) ids.push(m.daId);})});
   if(!ids.length)return banner("Select DAs to remove","warn");
   if(confirm("Remove "+ids.length+" DA(s) from Waiting?")) callApi("removeFromWaiting",{ids:ids});
 }
@@ -574,7 +487,7 @@ function render(){
       if(r.attendanceOnlyStatus==="Absent")cA++;
       if(r.status==="Sent to OP")cSent++;
   });
-  S.batches.forEach(function(b){cW+=b.members.filter(function(m){return!m.sent}).length});
+  S.globalBatches.forEach(function(b){cW+=b.members.length});
 
   document.getElementById("k-pres").textContent=cP; document.getElementById("k-late").textContent=cL;
   document.getElementById("k-repl").textContent=cR; document.getElementById("k-abs").textContent=cA;
@@ -598,9 +511,10 @@ function render(){
 
   document.getElementById("sel-abs").innerHTML='<option value="">-- Select Absent DA --</option>'+S.roster.filter(function(r){return r.attendanceOnlyStatus==="Absent"}).map(function(d){return'<option value="'+d.daId+'">'+d.daName+'</option>'}).join("");
 
+  // RENDER STATIC BATCHES
   var bb=document.getElementById("batch-box"), html="";
-  S.batches.forEach(function(b){
-    var unsent=b.members.filter(function(m){return!m.sent}); if(!unsent.length)return;
+  S.globalBatches.forEach(function(b){
+    var unsent=b.members;
     var allSel = unsent.every(function(m){return S.sel.has(m.daId)});
     html+='<div class="batch-card"><div class="batch-hdr"><span class="batch-name">'+b.name+'</span><div style="display:flex;align-items:center;gap:10px;"><span class="batch-count">'+unsent.length+' DA(s)</span><label style="font-size:11px;"><input type="checkbox" onchange="toggleBatch(\''+b.name+'\', this.checked)" '+(allSel?'checked':'')+'> Select All</label></div></div>';
     unsent.forEach(function(m){
@@ -612,10 +526,11 @@ function render(){
   bb.innerHTML=html||'<div style="text-align:center;color:var(--muted);padding:20px;font-size:12px">No DAs in queue</div>';
   bb.querySelectorAll(".bchk").forEach(function(c){c.onchange=function(e){if(e.target.checked)S.sel.add(e.target.dataset.id);else S.sel.delete(e.target.dataset.id); render(); }});
 
+  // SENT LIST WITH BATCH NUMBER (FOR RESCUE VIEW)
   var sentList = S.roster.filter(function(r){return r.status==="Sent to OP"});
   document.getElementById("sent-list").innerHTML=sentList.length?sentList.map(function(p){
     var waited = minDiff(p.sentTime, now());
-    return'<div class="di" style="padding:8px;border-left:4px solid var(--warn)"><div><div class="dn">'+p.daName+'</div><div class="ds">YM: '+(p.marshalName||"—")+' · '+(p.batchName||"")+'</div></div><span style="color:var(--orange);font-weight:800;font-size:11px">'+waited+'m</span></div>'}).join(""):'<div style="text-align:center;color:var(--muted);padding:20px;font-size:12px;">No DAs pending</div>';
+    return'<div class="di" style="padding:8px;border-left:4px solid var(--warn)"><div><div class="dn">'+p.daName+' <span class="pill on" style="margin-left:8px;font-size:9px;">'+(p.batchName||"")+'</span></div><div class="ds">YM: '+(p.marshalName||"—")+'</div></div><span style="color:var(--orange);font-weight:800;font-size:11px">'+waited+'m</span></div>'}).join(""):'<div style="text-align:center;color:var(--muted);padding:20px;font-size:12px;">No DAs currently sent</div>';
 
   document.getElementById("break-list").innerHTML=S.breaks.length?S.breaks.map(function(p){return'<div class="di" style="padding:8px;border-left:4px solid var(--red)"><div><div class="dn">'+p.daName+'</div><div class="ds">Break: '+p.info+'</div></div><span style="color:var(--red);font-weight:800;font-size:11px">ON BREAK</span></div>'}).join(""):'<div style="text-align:center;color:var(--muted);padding:20px;font-size:12px;">No DAs currently on break</div>';
   document.getElementById("recv-list").innerHTML=S.received.length?S.received.map(function(r){return'<div class="di" style="padding:8px;border-left:4px solid var(--green)"><div><div class="dn">'+r.daName+'</div><div class="ds">Scan IN: '+(r.t||"—")+"</div></div><span style=\"color:var(--green);font-weight:800;font-size:11px\">RECEIVED</span></div>";}).join(""):'<div style="text-align:center;color:var(--muted);padding:20px;font-size:12px;">No DAs received</div>';
@@ -642,6 +557,7 @@ window.addEventListener("DOMContentLoaded",function(){
   var ds=document.getElementById("dsel");
   if(S.tabs.indexOf(S.day)===-1)S.tabs.push(S.day);
   ds.innerHTML=S.tabs.map(function(t){return'<option value="'+t+'"'+(t===S.day?" selected":"")+'>'+t+'</option>'}).join("");
+  document.getElementById("dsel").value = S.day;
 
   var savedYM = LS.getItem("dud3_ym"); if(savedYM) document.getElementById("inp-ym").value = savedYM;
   var savedPin = LS.getItem("dud3_pin"); if(savedPin) S.cfg.adminPin = savedPin;
@@ -655,9 +571,6 @@ window.addEventListener("DOMContentLoaded",function(){
     }
     switchTab(p);
   }});
-
-  document.getElementById("install-btn").onclick=doInstall;
-  document.getElementById("btn-install-2").onclick=doInstall;
 
   document.getElementById("dsel").onchange=function(e){S.day=e.target.value;S.batches=[];S.breaks=[];S.received=[];callApi("rosterFull")};
   document.getElementById("btn-reset").onclick=function(){if(confirm("Reset for new day?")){S.day=todayTab();callApi("resetDay");banner("Reset done","ok")}};
@@ -673,11 +586,6 @@ window.addEventListener("DOMContentLoaded",function(){
     save();
     callApi("saveSettings",{settings:S.cfg}); banner("Global Settings Saved","ok");
   };
-
-  // THREE WAITING-TAB BUTTONS
-  document.getElementById("btn-send-full").onclick=sendFullBatch;
-  document.getElementById("btn-send-sel").onclick=sendSelected;
-  document.getElementById("btn-remove-wait").onclick=removeSelected;
 
   document.getElementById("btn-repl").onclick=function(){
     var oId=document.getElementById("sel-abs").value,rep=document.getElementById("inp-repl").value.trim();
@@ -695,7 +603,7 @@ window.addEventListener("DOMContentLoaded",function(){
 
   fuzzy("inp-att","sug-att", S.roster, function(id){checkIn(id,false)});
   fuzzy("inp-wait","sug-wait", S.roster, function(id){checkIn(id,true)});
-
+  
   var repInp = document.getElementById("inp-repl"), repBox = document.getElementById("sug-repl");
   repInp.addEventListener("input", function(){
       var q=repInp.value.trim().toLowerCase(); if(q.length<2){repBox.style.display="none";return;}
@@ -712,5 +620,6 @@ window.addEventListener("DOMContentLoaded",function(){
   callApi("rosterFull");
 });
 </script>
+
 </body>
 </html>
