@@ -214,14 +214,8 @@
         <div class="crd-t" style="margin:0">⚙️ Global Settings</div>
         <button class="btn btn-red" id="btn-reset" style="padding:6px 10px">🔄 RESET DAY</button>
       </div>
+      <div style="font-size:10px;color:var(--green);margin-bottom:12px;">App is now strictly connected to Cloud. Settings saved here apply instantly to all devices globally.</div>
       
-      <label style="font-size:11px;color:var(--muted)">🌐 Main Apps Script URL (Local Override)</label>
-      <input type="text" id="s-api" class="inp" placeholder="Uses hardcoded link by default...">
-      
-      <label style="font-size:11px;color:var(--muted)">📊 Google Sheet URL (Local Override)</label>
-      <input type="text" id="s-sheet" class="inp" placeholder="Uses hardcoded link by default...">
-      
-      <div style="font-size:10px;color:var(--green);margin-bottom:12px;">Settings saved here apply instantly to all devices globally. (API/Sheet links save locally).</div>
       <div style="display:flex;gap:10px;margin-bottom:10px;">
         <div style="flex:1"><label style="font-size:11px;color:var(--muted)">🛑 Pre-Wave Block (m)</label><input type="number" id="s-pre" class="inp"></div>
         <div style="flex:1"><label style="font-size:11px;color:var(--muted)">⏳ Wave Grace (m)</label><input type="number" id="s-grace" class="inp"></div>
@@ -237,7 +231,6 @@
       <div style="margin-bottom:15px;"><label style="font-size:11px;color:var(--muted)">🔑 Admin PIN</label><input type="text" id="s-pin" class="inp"></div>
       
       <button class="btn" id="btn-save" style="width:100%;background:var(--orange);color:#000;margin-bottom:10px;">💾 Save Global Settings</button>
-      <button class="btn" onclick="clearMemoryAndReload()" style="width:100%;background:#354558;color:#fff;font-size:12px;">🗑️ Clear Local Memory</button>
     </div>
   </section>
 </main>
@@ -252,7 +245,13 @@
 </nav>
 
 <script>
-// PWA Manifest Definition
+// Prevent service worker from blocking Google API requests
+if('serviceWorker' in navigator){
+  var swCode = "self.addEventListener('fetch', function(e) { if(e.request.url.includes('script.google.com')) return; e.respondWith(fetch(e.request).catch(function() { return new Response('Offline'); })); });";
+  var blob = new Blob([swCode], {type: 'application/javascript'});
+  navigator.serviceWorker.register(URL.createObjectURL(blob));
+}
+
 var mj = {
   "name": "Rush PRO", "short_name": "Rush", "display": "standalone", "start_url": ".",
   "background_color": "#131A22", "theme_color": "#FF9900",
@@ -263,16 +262,16 @@ var mj = {
 };
 document.getElementById("manifest-link").href=URL.createObjectURL(new Blob([JSON.stringify(mj)],{type:"application/json"}));
 
-// HARDCODED API - PREVENTS MOBILE CACHE ERRORS
-var API="https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec";
-var SHEET="https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit";
+// CONSTANT HARDCODED API - NEVER SAVES TO BROWSER TO PREVENT CRASHES
+const API="https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec";
+const SHEET="https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit";
 
 var admin=!(/Mobi|Android|iPhone/i.test(navigator.userAgent));
-var SK="DUD3V2_MASTER";
-var S={api:API,sheet:SHEET,day:todayTab(),tabs:recentTabs(),cfg:{waveGraceMin:10,preWaveBlockMin:30,batchSize:25,rushTimeoutMin:20,autoOfdMin:30,waitingLockMin:30,adminPin:"1234"},roster:[],batches:[],breaks:[],received:[],allDAs:[],pausedWaiters:[],sel:new Set(),violations:[]};
+
+// PURE STATELESS OBJECT - REBUILDS EVERY RELOAD
+var S={api:API,sheet:SHEET,day:"",tabs:[],cfg:{waveGraceMin:10,preWaveBlockMin:30,batchSize:25,rushTimeoutMin:20,autoOfdMin:30,waitingLockMin:30,adminPin:"1234"},roster:[],batches:[],breaks:[],received:[],allDAs:[],pausedWaiters:[],sel:new Set(),violations:[]};
 
 var disBypass=new Set(), disTimeout=new Set();
-var ymn = localStorage.getItem("dud3_ym") || ""; 
 
 function todayTab(){var d=new Date(),m=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];return("0"+d.getDate()).slice(-2)+" "+m[d.getMonth()];}
 function recentTabs(){var t=[],m=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];for(var o=-2;o<=2;o++){var d=new Date();d.setDate(d.getDate()+o);t.push(("0"+d.getDate()).slice(-2)+" "+m[d.getMonth()]);}return t;}
@@ -280,28 +279,10 @@ function now(){var d=new Date();return("0"+d.getHours()).slice(-2)+":"+("0"+d.ge
 function toMin(s){if(!s)return null;var p=String(s).trim().match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);if(!p)return null;var h=parseInt(p[1]),n=parseInt(p[2]),a=p[3]?p[3].toUpperCase():null;if(a==="PM"&&h<12)h+=12;if(a==="AM"&&h===12)h=0;return h*60+n;}
 function minDiff(t1, t2) {var a = toMin(t1), b = toMin(t2); if (a === null || b === null) return 0; return Math.max(0, b - a);}
 
-function clearMemoryAndReload() {
-  localStorage.removeItem(SK);
-  alert("Memory Cleared. The app will now reload cleanly.");
-  window.location.reload();
-}
-
 var bt=null;
 function banner(msg,v){var el=document.getElementById("toast-msg");document.getElementById("b-txt").textContent=msg;el.className="show b-"+(v||"ok");if(bt)clearTimeout(bt);bt=setTimeout(function(){el.className=""},4000);}
 
-function save(){try{var o=JSON.parse(JSON.stringify(S));o.sel=Array.from(S.sel);localStorage.setItem(SK,JSON.stringify(o));}catch(e){}}
-
-function load(){
-  try{var r=localStorage.getItem(SK);if(r){var p=JSON.parse(r);for(var k in p)if(k!=="sel")S[k]=p[k];S.sel=new Set(p.sel||[]);}}catch(e){}
-  
-  // FORCE HARDCODED LINKS IF LOCAL STORAGE IS EMPTY OR CORRUPT
-  if (!S.api) S.api = API; 
-  if (!S.sheet) S.sheet = SHEET;
-}
-
 function cfgUI(){
-  document.getElementById("s-api").value=S.api; 
-  document.getElementById("s-sheet").value=S.sheet;
   document.getElementById("s-pre").value=S.cfg.preWaveBlockMin; document.getElementById("s-grace").value=S.cfg.waveGraceMin;
   document.getElementById("s-batch").value=S.cfg.batchSize; document.getElementById("s-time").value=S.cfg.rushTimeoutMin;
   document.getElementById("s-auto-ofd").value=S.cfg.autoOfdMin; document.getElementById("s-wait-lock").value=S.cfg.waitingLockMin;
@@ -338,25 +319,17 @@ function rebuild(){
 function callApi(action,payload){
   var pill=document.getElementById("pill");
   if(action==="rosterFull"||action==="saveSettings"||action==="resetDay"){pill.textContent="CONNECTING...";pill.className="pill off";}
-  
-  if(S.api.indexOf("AKfycbxBhR1jYkh32EBMHBrr1-XhonEkynaU1b04-mV_OR8q3x4pGlOysDmw20xMKwyG-Z1KjQ") > -1) {
-      banner("ERROR: You saved the DRIVER API link here! Please clear memory in Settings.", "err");
-      pill.textContent="API ERROR";
-      return;
-  }
-  
   if(!payload)payload={}; payload.action=action;payload.sheetUrl=S.sheet;payload.dayTab=S.day;
   
-  fetch(S.api, {
-      method:"POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body:JSON.stringify(payload)
-  })
+  fetch(S.api,{method:"POST",body:JSON.stringify(payload)})
   .then(function(r){if(!r.ok) throw new Error("API Fails"); return r.json();})
   .then(function(d){
     var splash = document.getElementById("splash");
     if (splash) { splash.style.opacity = "0"; setTimeout(()=>splash.remove(), 600); }
-    if(!d||!d.success){if(d&&d.errors)banner(d.errors[0],"err");return;}
+    if(!d||!d.success){
+        pill.className="pill off";pill.textContent="API ERROR";
+        if(d&&d.errors)banner(d.errors[0],"err");return;
+    }
     
     pill.className="pill on";pill.textContent="SYNCED";
     if(d.settings && action !== "syncOnly"){ S.cfg=d.settings; cfgUI(); }
@@ -410,11 +383,9 @@ function callApi(action,payload){
       render();
     }
   }).catch(function(err){ 
-    pill.className="pill off";
-    pill.textContent="API ERROR"; 
-    banner("Connection Error. Check deployment permissions.", "err");
-    var splash = document.getElementById("splash");
-    if (splash) { splash.style.opacity = "0"; setTimeout(()=>splash.remove(), 600); }
+      pill.className="pill off";pill.textContent="API ERROR"; 
+      var splash = document.getElementById("splash");
+      if (splash) { splash.style.opacity = "0"; setTimeout(()=>splash.remove(), 600); }
   });
 }
 
@@ -496,7 +467,6 @@ function render(){
   if(timeouts.length>0) { tmtBan.classList.add("active"); document.getElementById("timeoutList").innerHTML = timeouts.map(function(v){ return '<span class="da-chip" data-id="'+v.daId+'">'+v.daName+' <b>('+v.elapsed+'m)</b></span>'; }).join(""); } else { tmtBan.classList.remove("active"); }
 
   var ds=document.getElementById("dsel");
-  // Keep the selected date value correctly populated
   ds.innerHTML=S.tabs.map(function(t){return'<option value="'+t+'"'+(t===S.day?" selected":"")+'>'+t+'</option>'}).join("");
 
   document.getElementById("sel-abs").innerHTML='<option value="">-- Select Absent DA --</option>'+S.roster.filter(function(r){return r.attendanceOnlyStatus==="Absent"}).map(function(d){return'<option value="'+d.daId+'">'+d.daName+'</option>'}).join("");
@@ -537,22 +507,21 @@ function fuzzy(iid,sid,dataArray,cb){
   inp.addEventListener("keydown",function(e){if(e.key==="Enter"&&inp.value.trim()){cb(inp.value.trim());inp.value="";box.style.display="none"}});
 }
 
-// APP INITIALIZATION
 window.addEventListener("DOMContentLoaded",function(){
-  load(); // LOAD LOCAL OVERRIDES FIRST
-  cfgUI(); 
-  
-  // Set date dropdown immediately so it's not blank
   S.day = todayTab();
+  S.tabs = recentTabs();
+  
   var ds=document.getElementById("dsel");
-  if(S.tabs.indexOf(S.day)===-1)S.tabs.push(S.day);
   ds.innerHTML=S.tabs.map(function(t){return'<option value="'+t+'"'+(t===S.day?" selected":"")+'>'+t+'</option>'}).join("");
+  
+  var savedYM = localStorage.getItem("dud3_ym"); if(savedYM) document.getElementById("inp-ym").value = savedYM;
+  var savedPin = localStorage.getItem("dud3_pin"); if(savedPin) S.cfg.adminPin = savedPin;
   
   document.querySelectorAll(".ni").forEach(function(b){b.onclick=function(){
     var p=b.getAttribute("data-p");
     if(p==="p-set"&&!admin){
        var pin=prompt("🔑 Enter Admin PIN:");
-       if(pin!==String(S.cfg.adminPin || "1234")) return banner("Access denied","err");
+       if(pin!==String(S.cfg.adminPin)) return banner("Access denied","err");
        admin=true;
     }
     switchTab(p);
@@ -561,10 +530,8 @@ window.addEventListener("DOMContentLoaded",function(){
   document.getElementById("dsel").onchange=function(e){S.day=e.target.value;S.batches=[];S.breaks=[];S.received=[];callApi("rosterFull")};
   document.getElementById("btn-reset").onclick=function(){if(confirm("Reset for new day?")){S.day=todayTab();callApi("resetDay");banner("Reset done","ok")}};
   document.getElementById("btn-save").onclick=function(){
-    S.api=document.getElementById("s-api").value.trim() || API;
-    S.sheet=document.getElementById("s-sheet").value.trim() || SHEET;
     S.cfg.preWaveBlockMin=Number(document.getElementById("s-pre").value); S.cfg.waveGraceMin=Number(document.getElementById("s-grace").value); S.cfg.batchSize=Number(document.getElementById("s-batch").value); S.cfg.rushTimeoutMin=Number(document.getElementById("s-time").value); S.cfg.autoOfdMin=Number(document.getElementById("s-auto-ofd").value); S.cfg.waitingLockMin=Number(document.getElementById("s-wait-lock").value); S.cfg.adminPin=document.getElementById("s-pin").value.trim(); 
-    save(); 
+    localStorage.setItem("dud3_pin", S.cfg.adminPin);
     callApi("saveSettings",{settings:S.cfg}); banner("Global Settings Saved","ok");
   };
 
@@ -610,7 +577,6 @@ window.addEventListener("DOMContentLoaded",function(){
       repBox.querySelectorAll(".si").forEach(function(r){r.onclick=function(){repInp.value=r.getAttribute("data-val");repBox.style.display="none"}});
   });
 
-  var sym=localStorage.getItem("dud3_ym");if(sym)document.getElementById("inp-ym").value=sym;
   document.getElementById("inp-ym").addEventListener("change",function(){localStorage.setItem("dud3_ym",this.value)});
 
   setInterval(function(){callApi("syncOnly")},3000);
