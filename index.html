@@ -91,7 +91,6 @@
 </head>
 <body>
 
-<!-- SPLASH SCREEN -->
 <div id="splash">
   <div class="skyline">🏙️🌆🏢🏨</div>
   <h2>RUSH PRO <span>APP</span></h2>
@@ -130,11 +129,13 @@
       <input type="text" id="inp-att" class="inp" placeholder="Scan or type DA Name / ID..." autocomplete="off">
       <div id="sug-att" class="sbox"></div>
     </div>
+    
     <div class="crd">
       <div class="crd-t">🕒 Recent Check-Ins (Active Wave)</div>
       <div id="recent-att-list" class="scroll-list dlist"></div>
       <div style="font-size:10px;text-align:center;color:var(--muted);margin-top:8px;">* Auto-removes after 30 minutes</div>
     </div>
+    
     <div class="crd" style="border-color:var(--blue)">
       <div class="crd-t" style="color:var(--blue)">🔁 Replacement DA (From RushData)</div>
       <input type="text" id="inp-repl" class="inp" placeholder="Search DA Name / ID for Replacement" autocomplete="off">
@@ -213,7 +214,15 @@
         <div class="crd-t" style="margin:0">⚙️ Global Settings</div>
         <button class="btn btn-red" id="btn-reset" style="padding:6px 10px">🔄 RESET DAY</button>
       </div>
-      <div style="font-size:10px;color:var(--green);margin-bottom:12px;">Settings saved here apply instantly to all devices globally.</div>
+      
+      <!-- RE-ADDED FOR LOCAL OVERRIDE -->
+      <label style="font-size:11px;color:var(--muted)">🌐 Main Apps Script URL (Local Override)</label>
+      <input type="text" id="s-api" class="inp" placeholder="Uses hardcoded link by default...">
+      
+      <label style="font-size:11px;color:var(--muted)">📊 Google Sheet URL (Local Override)</label>
+      <input type="text" id="s-sheet" class="inp" placeholder="Uses hardcoded link by default...">
+      
+      <div style="font-size:10px;color:var(--green);margin-bottom:12px;">Settings saved here apply instantly to all devices globally. (API/Sheet links save locally).</div>
       <div style="display:flex;gap:10px;margin-bottom:10px;">
         <div style="flex:1"><label style="font-size:11px;color:var(--muted)">🛑 Pre-Wave Block (m)</label><input type="number" id="s-pre" class="inp"></div>
         <div style="flex:1"><label style="font-size:11px;color:var(--muted)">⏳ Wave Grace (m)</label><input type="number" id="s-grace" class="inp"></div>
@@ -244,14 +253,12 @@
 </nav>
 
 <script>
-// PWA Registration
 if('serviceWorker' in navigator){
   var swCode = "self.addEventListener('fetch', function(e) { e.respondWith(fetch(e.request).catch(function() { return new Response('Offline'); })); });";
   var blob = new Blob([swCode], {type: 'application/javascript'});
   navigator.serviceWorker.register(URL.createObjectURL(blob));
 }
 
-// PWA Manifest Definition
 var mj = {
   "name": "Rush PRO", "short_name": "Rush", "display": "standalone", "start_url": ".",
   "background_color": "#131A22", "theme_color": "#FF9900",
@@ -262,7 +269,7 @@ var mj = {
 };
 document.getElementById("manifest-link").href=URL.createObjectURL(new Blob([JSON.stringify(mj)],{type:"application/json"}));
 
-// CLOUD DIRECT CONNECTION - HARDCODED URLs
+// HARDCODED DEFAULTS (Ensures the app always works even if inputs are empty)
 var API="https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec";
 var SHEET="https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit";
 
@@ -290,14 +297,16 @@ function banner(msg,v){var el=document.getElementById("toast-msg");document.getE
 
 function save(){try{var o=JSON.parse(JSON.stringify(S));o.sel=Array.from(S.sel);localStorage.setItem(SK,JSON.stringify(o));}catch(e){}}
 
-// FORCE API LOAD FROM HARDCODE TO PREVENT BROWSER CACHE ERRORS
+// LOAD LOCAL OVERRIDES IF THEY EXIST
 function load(){
   try{var r=localStorage.getItem(SK);if(r){var p=JSON.parse(r);for(var k in p)if(k!=="sel")S[k]=p[k];S.sel=new Set(p.sel||[]);}}catch(e){}
-  S.api = API; 
-  S.sheet = SHEET;
+  if(!S.api) S.api = API; 
+  if(!S.sheet) S.sheet = SHEET;
 }
 
 function cfgUI(){
+  document.getElementById("s-api").value=S.api; 
+  document.getElementById("s-sheet").value=S.sheet;
   document.getElementById("s-pre").value=S.cfg.preWaveBlockMin; document.getElementById("s-grace").value=S.cfg.waveGraceMin;
   document.getElementById("s-batch").value=S.cfg.batchSize; document.getElementById("s-time").value=S.cfg.rushTimeoutMin;
   document.getElementById("s-auto-ofd").value=S.cfg.autoOfdMin; document.getElementById("s-wait-lock").value=S.cfg.waitingLockMin;
@@ -367,7 +376,6 @@ function callApi(action,payload){
       manageBreakQueues(); rebuild(); render();
     }
     
-    // UPDATE UI ONLY AFTER SUCCESSFUL CLOUD SYNC
     else if(action==="sendDA" || action==="removeFromWaiting"){
       var ids=payload.ids||[];
       S.batches.forEach(function(b){b.members.forEach(function(m){if(ids.indexOf(m.daId)>-1&&!m.sent)m.sent=true;});if(b.members.every(function(m){return m.sent}))b.allSent=true});
@@ -425,7 +433,6 @@ function checkIn(token,isWaiting){
      if(w!==null){if(cur<(w-pre))return banner("Too Early! Wave: "+da.waveTime,"warn");if(cur>(w+gr)||da.attendanceOnlyStatus==="Absent")st="Late Arrival";}
   }
 
-  // CALL API TO CLOUD FIRST - PREVENTS FAKE UI UPDATE
   banner((isWaiting?"Saving...":st)+": "+da.daName,"ok");
   callApi(isWaiting?"addToWaiting":"recordCheckIn",{daId:da.daId,daName:da.daName,sentStatus:st,isWaiting:isWaiting});
 }
@@ -437,7 +444,6 @@ function addToBatch(da){
   if(exists || inPaused) return;
 
   var memberObj = {daId:da.repDaId||da.daId,daName:da.daName,scanTime:now(),sent:false};
-
   if (da.isOnBreak) { S.pausedWaiters.push(memberObj); return; }
 
   var tgt=null;
@@ -483,7 +489,6 @@ function render(){
   if(timeouts.length>0) { tmtBan.classList.add("active"); document.getElementById("timeoutList").innerHTML = timeouts.map(function(v){ return '<span class="da-chip" data-id="'+v.daId+'">'+v.daName+' <b>('+v.elapsed+'m)</b></span>'; }).join(""); } else { tmtBan.classList.remove("active"); }
 
   var ds=document.getElementById("dsel");
-  // Keep the selected value explicitly matching S.day
   ds.innerHTML=S.tabs.map(function(t){return'<option value="'+t+'"'+(t===S.day?" selected":"")+'>'+t+'</option>'}).join("");
 
   document.getElementById("sel-abs").innerHTML='<option value="">-- Select Absent DA --</option>'+S.roster.filter(function(r){return r.attendanceOnlyStatus==="Absent"}).map(function(d){return'<option value="'+d.daId+'">'+d.daName+'</option>'}).join("");
@@ -526,13 +531,8 @@ function fuzzy(iid,sid,dataArray,cb){
 
 // APP INITIALIZATION
 window.addEventListener("DOMContentLoaded",function(){
-  load(); // MUST BE CALLED FIRST TO GET API LINK
-  cfgUI(); // LOAD GLOBAL SETTINGS
-  
-  // IMMEDIATELY POPULATE DATE TO AVOID EMPTY SELECT BOX
-  var ds=document.getElementById("dsel");
-  if(S.tabs.indexOf(S.day)===-1)S.tabs.push(S.day);
-  ds.innerHTML=S.tabs.map(function(t){return'<option value="'+t+'"'+(t===S.day?" selected":"")+'>'+t+'</option>'}).join("");
+  load(); // LOAD LOCAL OVERRIDES FIRST
+  cfgUI(); 
   
   document.querySelectorAll(".ni").forEach(function(b){b.onclick=function(){
     var p=b.getAttribute("data-p");
@@ -547,9 +547,11 @@ window.addEventListener("DOMContentLoaded",function(){
   document.getElementById("dsel").onchange=function(e){S.day=e.target.value;S.batches=[];S.breaks=[];S.received=[];callApi("rosterFull")};
   document.getElementById("btn-reset").onclick=function(){if(confirm("Reset for new day?")){S.day=todayTab();callApi("resetDay");banner("Reset done","ok")}};
   document.getElementById("btn-save").onclick=function(){
+    S.api=document.getElementById("s-api").value.trim() || API;
+    S.sheet=document.getElementById("s-sheet").value.trim() || SHEET;
     S.cfg.preWaveBlockMin=Number(document.getElementById("s-pre").value); S.cfg.waveGraceMin=Number(document.getElementById("s-grace").value); S.cfg.batchSize=Number(document.getElementById("s-batch").value); S.cfg.rushTimeoutMin=Number(document.getElementById("s-time").value); S.cfg.autoOfdMin=Number(document.getElementById("s-auto-ofd").value); S.cfg.waitingLockMin=Number(document.getElementById("s-wait-lock").value); S.cfg.adminPin=document.getElementById("s-pin").value.trim(); 
-    save(); // Don't save API/Sheet to local to avoid corruption
-    callApi("saveSettings",{settings:S.cfg}); banner("Global Settings Saved","ok");
+    save(); // SAVES THE LOCAL OVERRIDES (API/SHEET) TO DEVICE MEMORY
+    callApi("saveSettings",{settings:S.cfg}); banner("Settings Saved","ok");
   };
 
   document.getElementById("btn-send").onclick=function(){
