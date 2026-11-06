@@ -1,587 +1,311 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>DUD3 Rush PRO</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-  <meta name="theme-color" content="#FF9900">
-  <link rel="manifest" id="manifest-link">
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-  <style>
-    :root{--bg:#131A22;--bg2:#1B2430;--card:#232F3E;--orange:#FF9900;--blue:#00A8E1;--white:#FFF;--muted:#9BA7B6;--green:#00C853;--red:#FF3B30;--warn:#FFB300;--purple:#BB86FC;--border:#354558;--r:10px;--nav:66px;}
-    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-    html,body{background:var(--bg);color:var(--white);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:14px;overflow-x:hidden;}
-    body{min-height:100vh;display:flex;flex-direction:column;padding-bottom:calc(var(--nav)+20px);}
+// ============================================================
+// DUD3 RUSH PRO v5.2 — FULL CLOUD (STATELESS)
+// Adds API and Sheet URL to Google Sheets App Settings Tab
+// ============================================================
+
+function doGet(e) { return ContentService.createTextOutput("DUD3 Rush PRO API Online (Cloud Direct)."); }
+
+function doPost(e) {
+  try {
+    var payload = JSON.parse(e.postData.contents);
+    var action = payload.action, sheetUrl = payload.sheetUrl, dayTab = payload.dayTab; 
+
+    if (!sheetUrl) return jsonResponse({ success: false, errors: ["URL missing"] });
+    var ss;
+    try { ss = SpreadsheetApp.openByUrl(sheetUrl); } catch(err) { return jsonResponse({ success: false, errors: ["Invalid Sheet URL"] }); }
     
-    #splash{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(to bottom, #0d1117, #131A22);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.6s ease;}
-    .skyline{font-size:60px;letter-spacing:-10px;margin-bottom:5px;opacity:0.6;filter:drop-shadow(0 0 15px rgba(0,168,225,0.4));}
-    #splash h2{color:#fff;font-weight:900;font-size:32px;margin-bottom:40px;letter-spacing:2px;text-shadow:0 0 10px rgba(255,153,0,0.5);}
-    #splash h2 span{color:var(--orange);}
-    .road-box{width:280px;height:6px;background:#354558;border-radius:3px;position:relative;}
-    .bar-fill{width:0%;height:100%;background:var(--orange);border-radius:3px;box-shadow:0 0 10px var(--orange);animation:load 2.5s forwards ease-in-out;}
-    .bike{position:absolute;bottom:10px;left:0%;font-size:34px;transform:translateX(-50%);animation:ride 2.5s forwards ease-in-out;}
-    @keyframes load{100%{width:100%;}}
-    @keyframes ride{100%{left:100%;}}
-
-    #toast-msg{position:fixed;top:8px;left:50%;transform:translateX(-50%) translateY(-150%);width:calc(100% - 24px);max-width:540px;padding:12px 16px;border-radius:8px;font-weight:800;font-size:13px;display:flex;justify-content:space-between;align-items:center;z-index:10000;box-shadow:0 8px 24px rgba(0,0,0,0.6);transition:transform 0.3s;}
-    #toast-msg.show{transform:translateX(-50%) translateY(0);}
-    .b-ok{background:var(--green);color:#062010;}.b-err{background:var(--red);color:#fff;}.b-warn{background:var(--warn);color:#1A1300;}
+    var settings = getSettings(ss, payload.settings, action === "saveSettings");
+    var sheet = findDaySheet(ss, dayTab);
     
-    header{position:sticky;top:0;z-index:500;background:rgba(35,47,62,0.96);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:10px 12px;display:flex;justify-content:space-between;align-items:center;}
-    .logo{font-size:16px;font-weight:900;}.logo span{color:var(--orange);}
-    .pill{padding:4px 8px;border-radius:12px;font-size:10px;font-weight:800;margin-left:6px;}
-    .pill.on{background:rgba(0,200,83,0.18);color:var(--green);border:1px solid var(--green);}
-    .pill.off{background:rgba(255,59,48,0.18);color:var(--red);border:1px solid var(--red);}
-    .dsel{background:var(--bg);color:#fff;border:1px solid var(--border);border-radius:6px;padding:6px;font-size:12px;font-weight:700;}
-    
-    main{width:100%;max-width:860px;margin:0 auto;padding:12px;flex:1;}
-    .pane{display:none;}.pane.on{display:block;}
-    
-    .sticky-card { position: sticky; top: 60px; z-index: 100; box-shadow: 0 6px 15px rgba(0,0,0,0.4); margin-bottom: 15px;}
-    .scroll-list { max-height: 380px; overflow-y: auto; padding-right: 4px; }
-    .scroll-list::-webkit-scrollbar { width: 4px; }
-    .scroll-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-    
-    .crd{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:12px;}
-    .crd-t{font-size:12px;font-weight:800;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
-    
-    .vio-banner { display: none; padding: 12px; margin-bottom: 12px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-    .vio-banner.active { display: block; }
-    .bypass-ban { background: rgba(255, 152, 0, 0.15); border-left: 4px solid var(--orange); }
-    .timeout-ban { background: rgba(255, 59, 48, 0.15); border-left: 4px solid var(--red); }
-    .ban-hdr { display: flex; justify-content: space-between; align-items: center; font-weight: 900; margin-bottom: 6px; font-size: 13px; }
-    .bypass-ban .ban-hdr { color: var(--orange); }
-    .timeout-ban .ban-hdr { color: var(--red); }
-    .ban-msg { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
-    .da-chip { display: inline-block; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; margin: 2px; }
-    .bypass-ban .da-chip { background: rgba(255, 152, 0, 0.2); color: var(--orange); }
-    .timeout-ban .da-chip { background: rgba(255, 59, 48, 0.2); color: var(--red); }
-    .dismiss-btn { background: none; border: none; font-size: 16px; cursor: pointer; color: var(--muted); }
-    
-    .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;}
-    .kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 4px;text-align:center;}
-    .kv{font-size:17px;font-weight:900;}.kl{font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:4px;font-weight:bold;}
-    
-    .btn-big{background:var(--orange);color:#000;font-size:15px;font-weight:900;padding:14px;border-radius:8px;width:100%;margin-bottom:12px;border:none;cursor:pointer;box-shadow:0 4px 15px rgba(255,153,0,0.25);}
-    .btn-big:active{transform:scale(0.97);}
-    .inp{width:100%;background:var(--bg);color:#fff;border:1px solid var(--border);border-radius:7px;padding:12px;font-size:14px;margin-bottom:8px;}
-    .btn{background:var(--blue);color:#051B24;border:none;border-radius:7px;padding:10px 14px;font-size:12px;font-weight:800;cursor:pointer;}
-    .btn-red{background:rgba(255,59,48,0.18);color:var(--red);border:1px solid var(--red);}
-    
-    .dlist{display:flex;flex-direction:column;gap:6px;}
-    .di{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;justify-content:space-between;align-items:center;}
-    .dn{font-weight:700;font-size:13px;}.ds{font-size:11px;color:var(--muted);margin-top:3px;}
-    
-    .cam{display:none;background:#000;border-radius:8px;overflow:hidden;margin-bottom:10px;}
-    .sbox{background:var(--bg);border:1px solid var(--border);border-radius:7px;margin-top:-4px;max-height:190px;overflow-y:auto;display:none;margin-bottom:10px;}
-    .si{padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px;cursor:pointer;}
-    
-    nav.bnav{position:fixed;bottom:0;left:0;right:0;height:var(--nav);background:var(--card);border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(6,1fr);z-index:900;}
-    .ni{background:none;border:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:9px;font-weight:700;cursor:pointer;}
-    .ni svg{width:20px;height:20px;fill:currentColor;}.ni.on{color:var(--orange);}
-    
-    .rush-inp{width:100%;padding:16px;font-size:22px;font-weight:900;text-align:center;letter-spacing:2px;border:2px solid var(--green);border-radius:10px;background:var(--bg);color:var(--green);margin-bottom:8px;}
-    .rush-inp:focus{border-color:#00E676;box-shadow:0 0 20px rgba(0,200,83,0.3);outline:none;}
-    .pulse{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px;animation:pul 1.5s infinite;}
-    @keyframes pul{0%,100%{opacity:1;}50%{opacity:0.3;}}
-    .batch-card{border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:10px;background:var(--bg);}
-    .batch-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
-    .batch-name{font-size:13px;font-weight:900;color:var(--orange);}
-  </style>
-</head>
-<body>
-
-<div id="splash">
-  <div class="skyline">🏙️🌆🏢🏨</div>
-  <h2>RUSH PRO <span>APP</span></h2>
-  <div class="road-box"><div class="bike">🛵💨</div><div class="bar-fill"></div></div>
-</div>
-
-<div id="toast-msg"><span id="b-txt"></span><button style="background:none;border:none;color:#fff;font-weight:bold;font-size:18px;cursor:pointer;" onclick="document.getElementById('toast-msg').className=''">x</button></div>
-
-<header>
-  <div class="logo">RUSH PRO <span>DUD3</span></div>
-  <div style="display:flex;align-items:center;">
-    <select id="dsel" class="dsel"></select>
-    <span id="pill" class="pill off">CONNECTING...</span>
-  </div>
-</header>
-
-<main>
-  <div class="kpi-row">
-    <div class="kpi"><div class="kv" id="k-pres" style="color:var(--green)">0</div><div class="kl">Present</div></div>
-    <div class="kpi"><div class="kv" id="k-late" style="color:var(--warn)">0</div><div class="kl">Late</div></div>
-    <div class="kpi"><div class="kv" id="k-repl" style="color:var(--blue)">0</div><div class="kl">Replaced</div></div>
-    <div class="kpi"><div class="kv" id="k-abs" style="color:var(--red)">0</div><div class="kl">Absent</div></div>
-  </div>
-  <div class="kpi-row">
-    <div class="kpi" style="border-color:var(--orange)"><div class="kv" id="k-wait">0</div><div class="kl">Waiting</div></div>
-    <div class="kpi" style="border-color:var(--red)"><div class="kv" id="k-brk" style="color:var(--red)">0</div><div class="kl">On Break</div></div>
-    <div class="kpi" style="border-color:var(--warn)"><div class="kv" id="k-sent" style="color:var(--warn)">0</div><div class="kl">Sent</div></div>
-    <div class="kpi" style="border-color:var(--green)"><div class="kv" id="k-recv" style="color:var(--green)">0</div><div class="kl">Received</div></div>
-  </div>
-
-  <section id="p-att" class="pane on">
-    <div class="crd sticky-card">
-      <div class="crd-t">📷 DA Attendance Scan</div>
-      <button class="btn-big" id="cam-att-btn">📸 START SCANNER</button>
-      <div id="cam-att" class="cam"><div id="qr-att"></div></div>
-      <input type="text" id="inp-att" class="inp" placeholder="Scan or type DA Name / ID..." autocomplete="off">
-      <div id="sug-att" class="sbox"></div>
-    </div>
-    
-    <div class="crd">
-      <div class="crd-t">🕒 Recent Check-Ins (Active Wave)</div>
-      <div id="recent-att-list" class="scroll-list dlist"></div>
-      <div style="font-size:10px;text-align:center;color:var(--muted);margin-top:8px;">* Auto-removes after 30 minutes</div>
-    </div>
-    
-    <div class="crd" style="border-color:var(--blue)">
-      <div class="crd-t" style="color:var(--blue)">🔁 Replacement DA (From RushData)</div>
-      <input type="text" id="inp-repl" class="inp" placeholder="Search DA Name / ID for Replacement" autocomplete="off">
-      <div id="sug-repl" class="sbox"></div>
-      <select id="sel-abs" class="inp" style="margin-top:10px;"><option value="">-- Select Absent DA to Replace --</option></select>
-      <button class="btn" id="btn-repl" style="width:100%;margin-top:5px;">🔁 Assign Replacement</button>
-    </div>
-  </section>
-
-  <section id="p-wait" class="pane">
-    <div class="crd sticky-card" style="border-color:var(--green)">
-      <div class="crd-t" style="color:var(--green)">📥 Add to Waiting (Turn 2+)</div>
-      <button class="btn-big" id="cam-wait-btn" style="background:var(--green);color:#fff">📸 SCAN TO WAITING</button>
-      <div id="cam-wait" class="cam"><div id="qr-wait"></div></div>
-      <input type="text" id="inp-wait" class="inp" placeholder="Type DA ID to add to waiting..." autocomplete="off">
-      <div id="sug-wait" class="sbox"></div>
-    </div>
-    <div class="crd">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <div class="crd-t" style="margin:0">📦 Batches (FIFO)</div>
-      </div>
-      <div style="display:flex;gap:6px;margin-bottom:10px;">
-        <input type="text" id="inp-ym" class="inp" placeholder="YM Name" style="flex:1;margin:0;padding:8px;font-size:12px;">
-        <button class="btn" id="btn-send" style="white-space:nowrap;">📤 Send</button>
-        <button class="btn btn-red" id="btn-remove-wait" style="white-space:nowrap;">🗑️ Remove</button>
-      </div>
-      <div id="batch-box" class="scroll-list"></div>
-    </div>
-  </section>
-
-  <section id="p-breaks" class="pane">
-    <div class="crd" style="border-color:var(--red)">
-      <div class="crd-t" style="color:var(--red)">☕ Currently on Break (Live)</div>
-      <div id="break-list" class="scroll-list dlist"></div>
-    </div>
-  </section>
-  
-  <section id="p-sent" class="pane">
-    <div class="crd" style="border-color:var(--warn)">
-      <div class="crd-t" style="color:var(--warn)">⏱️ Sent — Waiting for Rush Queue Scan</div>
-      <div id="sent-list" class="scroll-list dlist"></div>
-    </div>
-  </section>
-
-  <section id="p-rush" class="pane">
-    <div class="crd sticky-card" style="border-color:var(--green)">
-      <div style="text-align:center;margin-bottom:10px;">
-        <span class="pulse"></span><span style="font-size:11px;color:var(--green);font-weight:800;">RUSH LM QUEUE LISTENER</span>
-      </div>
-      <button class="btn-big" id="cam-rush-btn" style="background:var(--green);color:#fff;margin-bottom:10px;">📸 MOBILE CAMERA SCAN IN</button>
-      <div id="cam-rush" class="cam"><div id="qr-rush"></div></div>
-      <input type="text" id="rush-inp" class="rush-inp" placeholder="✅ SCAN IN (Receive)..." autocomplete="off">
-    </div>
-    
-    <div id="bypassBanner" class="vio-banner bypass-ban">
-      <div class="ban-hdr"><span>🚨 DA Not Dispatched via YM</span><button class="dismiss-btn" onclick="dismissBypass()">✕</button></div>
-      <div class="ban-msg">DA(s) scanned into Rush Queue but were NOT sent by YM.</div>
-      <div id="bypassList"></div>
-    </div>
-
-    <div id="timeoutBanner" class="vio-banner timeout-ban">
-      <div class="ban-hdr"><span>⏰ SLA EXCEEDED</span><button class="dismiss-btn" onclick="dismissTimeout()">✕</button></div>
-      <div class="ban-msg">DA(s) were dispatched but did NOT scan in time limit. Added to Violations.</div>
-      <div id="timeoutList"></div>
-    </div>
-
-    <div class="crd" style="border-color:var(--green)">
-      <div class="crd-t">✅ Received (Auto-removes on OFD)</div>
-      <div id="recv-list" class="scroll-list dlist"></div>
-    </div>
-  </section>
-
-  <section id="p-set" class="pane">
-    <div class="crd">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-        <div class="crd-t" style="margin:0">⚙️ Global Settings</div>
-        <button class="btn btn-red" id="btn-reset" style="padding:6px 10px">🔄 RESET DAY</button>
-      </div>
-      <div style="font-size:10px;color:var(--green);margin-bottom:12px;">App is now strictly connected to Cloud. Settings saved here apply instantly to all devices globally.</div>
-      
-      <div style="display:flex;gap:10px;margin-bottom:10px;">
-        <div style="flex:1"><label style="font-size:11px;color:var(--muted)">🛑 Pre-Wave Block (m)</label><input type="number" id="s-pre" class="inp"></div>
-        <div style="flex:1"><label style="font-size:11px;color:var(--muted)">⏳ Wave Grace (m)</label><input type="number" id="s-grace" class="inp"></div>
-      </div>
-      <div style="display:flex;gap:10px;margin-bottom:10px;">
-        <div style="flex:1"><label style="font-size:11px;color:var(--muted)">📦 Batch Size</label><input type="number" id="s-batch" class="inp"></div>
-        <div style="flex:1"><label style="font-size:11px;color:var(--muted)">⏱️ Rush Timeout SLA (m)</label><input type="number" id="s-time" class="inp"></div>
-      </div>
-      <div style="display:flex;gap:10px;margin-bottom:10px;">
-        <div style="flex:1"><label style="font-size:11px;color:var(--muted)">🚚 Auto OFD Timer (Mins)</label><input type="number" id="s-auto-ofd" class="inp"></div>
-        <div style="flex:1"><label style="font-size:11px;color:var(--muted)">🔒 Waiting Lock (Mins)</label><input type="number" id="s-wait-lock" class="inp"></div>
-      </div>
-      <div style="margin-bottom:15px;"><label style="font-size:11px;color:var(--muted)">🔑 Admin PIN</label><input type="text" id="s-pin" class="inp"></div>
-      
-      <button class="btn" id="btn-save" style="width:100%;background:var(--orange);color:#000;margin-bottom:10px;">💾 Save Global Settings</button>
-    </div>
-  </section>
-</main>
-
-<nav class="bnav">
-  <button class="ni on" data-p="p-att"><span>📋</span><span>Attend</span></button>
-  <button class="ni" data-p="p-wait"><span>📥</span><span>Waiting</span></button>
-  <button class="ni" data-p="p-breaks"><span>☕</span><span>Breaks</span></button>
-  <button class="ni" data-p="p-sent"><span>⏱️</span><span>Sent</span></button>
-  <button class="ni" data-p="p-rush"><span>⚡</span><span>Rush Q</span></button>
-  <button class="ni" data-p="p-set"><span>⚙️</span><span>Admin</span></button>
-</nav>
-
-<script>
-// Prevent service worker from blocking Google API requests
-if('serviceWorker' in navigator){
-  var swCode = "self.addEventListener('fetch', function(e) { if(e.request.url.includes('script.google.com')) return; e.respondWith(fetch(e.request).catch(function() { return new Response('Offline'); })); });";
-  var blob = new Blob([swCode], {type: 'application/javascript'});
-  navigator.serviceWorker.register(URL.createObjectURL(blob));
-}
-
-var mj = {
-  "name": "Rush PRO", "short_name": "Rush", "display": "standalone", "start_url": ".",
-  "background_color": "#131A22", "theme_color": "#FF9900",
-  "icons": [
-    { "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI0ZGOTkwMCIvPjx0ZXh0IHg9IjUwIiB5PSI2MCIgZm9udC1zaXplPSI1MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzAwMCI+8J+TpjwvRleHQ+PC9zdmc+", "sizes": "192x192", "type": "image/svg+xml" },
-    { "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI0ZGOTkwMCIvPjx0ZXh0IHg9IjUwIiB5PSI2MCIgZm9udC1zaXplPSI1MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzAwMCI+8J+TpjwvRleHQ+PC9zdmc+", "sizes": "512x512", "type": "image/svg+xml" }
-  ]
-};
-document.getElementById("manifest-link").href=URL.createObjectURL(new Blob([JSON.stringify(mj)],{type:"application/json"}));
-
-// CONSTANT HARDCODED API - NEVER SAVES TO BROWSER TO PREVENT CRASHES
-const API="https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec";
-const SHEET="https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit";
-
-var admin=!(/Mobi|Android|iPhone/i.test(navigator.userAgent));
-
-// PURE STATELESS OBJECT - REBUILDS EVERY RELOAD
-var S={api:API,sheet:SHEET,day:"",tabs:[],cfg:{waveGraceMin:10,preWaveBlockMin:30,batchSize:25,rushTimeoutMin:20,autoOfdMin:30,waitingLockMin:30,adminPin:"1234"},roster:[],batches:[],breaks:[],received:[],allDAs:[],pausedWaiters:[],sel:new Set(),violations:[]};
-
-var disBypass=new Set(), disTimeout=new Set();
-
-function todayTab(){var d=new Date(),m=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];return("0"+d.getDate()).slice(-2)+" "+m[d.getMonth()];}
-function recentTabs(){var t=[],m=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];for(var o=-2;o<=2;o++){var d=new Date();d.setDate(d.getDate()+o);t.push(("0"+d.getDate()).slice(-2)+" "+m[d.getMonth()]);}return t;}
-function now(){var d=new Date();return("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2);}
-function toMin(s){if(!s)return null;var p=String(s).trim().match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);if(!p)return null;var h=parseInt(p[1]),n=parseInt(p[2]),a=p[3]?p[3].toUpperCase():null;if(a==="PM"&&h<12)h+=12;if(a==="AM"&&h===12)h=0;return h*60+n;}
-function minDiff(t1, t2) {var a = toMin(t1), b = toMin(t2); if (a === null || b === null) return 0; return Math.max(0, b - a);}
-
-var bt=null;
-function banner(msg,v){var el=document.getElementById("toast-msg");document.getElementById("b-txt").textContent=msg;el.className="show b-"+(v||"ok");if(bt)clearTimeout(bt);bt=setTimeout(function(){el.className=""},4000);}
-
-function cfgUI(){
-  document.getElementById("s-pre").value=S.cfg.preWaveBlockMin; document.getElementById("s-grace").value=S.cfg.waveGraceMin;
-  document.getElementById("s-batch").value=S.cfg.batchSize; document.getElementById("s-time").value=S.cfg.rushTimeoutMin;
-  document.getElementById("s-auto-ofd").value=S.cfg.autoOfdMin; document.getElementById("s-wait-lock").value=S.cfg.waitingLockMin;
-  document.getElementById("s-pin").value=S.cfg.adminPin;
-}
-
-function manageBreakQueues() {
-  S.batches.forEach(b => {
-     for(var i = b.members.length - 1; i >= 0; i--) {
-        var m = b.members[i]; if(m.sent) continue;
-        var lc = S.roster.find(r => r.daId === m.daId);
-        if(lc && lc.isOnBreak) S.pausedWaiters.push(b.members.splice(i, 1)[0]);
-     }
-  });
-  for(var j = S.pausedWaiters.length - 1; j >= 0; j--) {
-     var pm = S.pausedWaiters[j], lc = S.roster.find(r => r.daId === pm.daId);
-     if(lc && !lc.isOnBreak) {
-        var restored = S.pausedWaiters.splice(j, 1)[0];
-        var firstBatch = S.batches.find(b => !b.allSent);
-        if(!firstBatch) { firstBatch = {id: S.batches.length+1, name: "Batch "+(S.batches.length+1), allSent: false, members: []}; S.batches.push(firstBatch); }
-        firstBatch.members.unshift(restored);
-     }
-  }
-}
-
-function rebuild(){
-  S.breaks=[];S.received=[];
-  S.roster.forEach(function(d){
-    if(d.isOnBreak)S.breaks.push({daId:d.daId,daName:d.daName,info:d.breakInfo||""});
-    if(String(d.status).indexOf("Received")>-1)S.received.push({daId:d.daId,daName:d.daName,t:d.rushScanInTime||""});
-  });
-}
-
-function callApi(action,payload){
-  var pill=document.getElementById("pill");
-  if(action==="rosterFull"||action==="saveSettings"||action==="resetDay"){pill.textContent="CONNECTING...";pill.className="pill off";}
-  if(!payload)payload={}; payload.action=action;payload.sheetUrl=S.sheet;payload.dayTab=S.day;
-  
-  fetch(S.api,{method:"POST",body:JSON.stringify(payload)})
-  .then(function(r){if(!r.ok) throw new Error("API Fails"); return r.json();})
-  .then(function(d){
-    var splash = document.getElementById("splash");
-    if (splash) { splash.style.opacity = "0"; setTimeout(()=>splash.remove(), 600); }
-    if(!d||!d.success){
-        pill.className="pill off";pill.textContent="API ERROR";
-        if(d&&d.errors)banner(d.errors[0],"err");return;
+    var allDAs = [];
+    if (action === "rosterFull") {
+        var rd = ss.getSheetByName("RushData");
+        if (rd) {
+            var rdVals = rd.getDataRange().getDisplayValues();
+            for(var x=1; x<rdVals.length; x++) { if(rdVals[x][0]) allDAs.push({id: rdVals[x][0].trim(), name: rdVals[x][1] || ""}); }
+        }
     }
-    
-    pill.className="pill on";pill.textContent="SYNCED";
-    if(d.settings && action !== "syncOnly"){ S.cfg=d.settings; cfgUI(); }
-    if(d.violations) S.violations = d.violations;
-    if(d.allDAs) S.allDAs = d.allDAs; 
 
-    if(action==="rosterFull"||action==="resetDay"){
-      S.roster=d.roster||[];
-      if(action==="resetDay"){S.batches=[];S.breaks=[];S.received=[];S.pausedWaiters=[];S.sel.clear();disBypass.clear();disTimeout.clear();}
-      manageBreakQueues(); rebuild();render();
+    if (!sheet && action === "rosterFull") return jsonResponse({ success: true, roster: [], settings: settings, allDAs: allDAs });
+    if (!sheet) return jsonResponse({ success: false, errors: ["Day tab not found"] });
+
+    var dSheet = getMasterDispatchSheet(ss);
+    var timeNow = getDubaiTime();
+
+    if (action === "rosterFull" || action === "syncOnly") {
+      var roster = getRoster(ss, sheet, dSheet, settings, dayTab); 
+      var violations = (action === "syncOnly") ? detectViolationsAndLog(ss, roster, settings, timeNow) : [];
+      return jsonResponse({ success: true, roster: roster, settings: settings, violations: violations, allDAs: allDAs });
     }
-    else if(action==="syncOnly"&&d.roster){
-      d.roster.forEach(function(sv){
-        var lc=S.roster.find(function(r){return r.daId===sv.daId});
-        if(!lc)return;
-        lc.isOnBreak = sv.isOnBreak; lc.breakInfo = sv.breakInfo;
-        if(sv.status==="OFD"&&lc.status!=="OFD"){ lc.status="OFD";S.received=S.received.filter(function(r){return r.daId!==lc.daId}); }
-        if(String(sv.status).indexOf("Received")>-1&&String(lc.status).indexOf("Received")===-1&&lc.status!=="OFD"){
-          lc.status=sv.status;
-          if(!S.received.find(function(r){return r.daId===lc.daId}))S.received.push({daId:lc.daId,daName:lc.daName,t:sv.rushScanInTime||""});
+
+    else if (action === "recordCheckIn") {
+      var alreadyMarked = false, foundName = "";
+      updateDA(sheet, payload.daId, function(row, data) {
+        foundName = data[1];
+        var existing = String(sheet.getRange(row, 7).getValue()).trim();
+        if (existing && existing !== "Absent" && !payload.isWaiting) { alreadyMarked = true; return; }
+        if (!payload.isWaiting) {
+          sheet.getRange(row, 8).setValue(timeNow);
+          if (existing !== "Replacement Present") sheet.getRange(row, 7).setValue(payload.sentStatus || "Present");
         }
       });
-      manageBreakQueues(); rebuild(); render();
+      if (alreadyMarked) return jsonResponse({ success: true, alreadyMarked: true, daName: foundName || payload.daName });
+      logEvent(ss, payload.daId, payload.daName, payload.isWaiting ? "Added to Waiting" : "Check-In", timeNow);
+      return jsonResponse({ success: true, alreadyMarked: false, settings: settings });
     }
-    else if(action==="sendDA" || action==="removeFromWaiting"){
-      var ids=payload.ids||[];
-      S.batches.forEach(function(b){b.members.forEach(function(m){if(ids.indexOf(m.daId)>-1&&!m.sent)m.sent=true;});if(b.members.every(function(m){return m.sent}))b.allSent=true});
-      S.sel.clear(); banner(action==="sendDA" ? ids.length+" DA(s) sent" : ids.length+" DA(s) removed","ok"); render();
+
+    else if (action === "addToWaiting") {
+      var waitResult = { success: true, error: null };
+      updateDA(sheet, payload.daId, function(row, data) {
+         var b1 = String(data[8] || "").trim(), b2 = String(data[9] || "").trim(); 
+         if (checkBreakStatus(b1, b2, timeNow)) { waitResult = { success: false, error: data[1] + " is on BREAK!" }; return; }
+
+         updateDispatchRow(dSheet, payload.daId, data[1], dayTab, function(dIdx, dRow) {
+            var sentTime = String(dRow[5]).trim(), ofdTime = String(dRow[8]).trim(); 
+            if (sentTime && !ofdTime) { waitResult = { success: false, error: data[1] + " is not OFD yet!" }; return; }
+            if (ofdTime) {
+               var limit = settings.waitingLockMin || 30, diff = minDiff(ofdTime, timeNow);
+               if (diff < limit) { waitResult = { success: false, error: data[1] + " must wait " + limit + " mins!" }; return; }
+            }
+            dSheet.getRange(dIdx, 4, 1, 7).clearContent(); 
+         });
+      });
+      if (!waitResult.success) return jsonResponse({ success: false, errors: [waitResult.error] });
+      logEvent(ss, payload.daId, payload.daName, "Added to Waiting (Turn 2+)", timeNow);
+      return jsonResponse({ success: true });
     }
-    else if(action==="recordCheckIn"){
-      if(d.alreadyMarked){
-         banner((d.daName||"DA")+" already marked attendance! Use Waiting tab.","warn");
-         switchTab("p-wait");
-      } else {
-         var lc=S.roster.find(function(x){return x.daId===payload.daId});
-         if(lc) { lc.attendanceOnlyStatus = payload.sentStatus; lc.scanTime = now(); addToBatch(lc); }
+    
+    else if (action === "removeFromWaiting") {
+      var rIds = payload.ids || [];
+      for (var r = 0; r < rIds.length; r++) {
+         updateDispatchRow(dSheet, rIds[r], "", dayTab, function(dIdx, dRow) { dSheet.getRange(dIdx, 4, 1, 7).clearContent(); });
+         logEvent(ss, rIds[r], "DA", "Removed from Waiting Queue", timeNow);
       }
-      render();
+      return jsonResponse({ success: true });
     }
-    else if(action==="addToWaiting"){
-      var lc=S.roster.find(function(x){return x.daId===payload.daId});
-      if (lc) addToBatch(lc);
-      render(); 
+
+    else if (action === "markAbsent") {
+      var ids = payload.ids || [];
+      for (var i = 0; i < ids.length; i++) { updateDA(sheet, ids[i], function(row) { if (!sheet.getRange(row, 8).getValue()) sheet.getRange(row, 7).setValue("Absent"); }); }
+      return jsonResponse({ success: true });
     }
-    else if(action==="rushScanIn"&&d.result){
-      var r=d.result;
-      if(r.violation)banner(r.violation.message,"err"); else banner(r.daName+" → RECEIVED SUCCESS","ok");
-      if(!S.received.find(function(x){return x.daId===payload.daId}))S.received.push({daId:payload.daId,daName:r.daName,t:now()});
-      var lc=S.roster.find(function(x){return x.daId===payload.daId});
-      if(lc)lc.status=r.violation?"Received (!)":"Received";
-      render();
+
+    else if (action === "assignReplacement") {
+      var rIdx = payload.rowIndex, replText = payload.replacementText, repName = replText.split("-")[0] ? replText.split("-")[0].trim() : "";
+      var origName = sheet.getRange(rIdx, 2).getValue().toString().split("\u{1F501}")[0].trim();
+      sheet.getRange(rIdx, 12).setValue(replText); sheet.getRange(rIdx, 7).setValue("Replacement Present"); sheet.getRange(rIdx, 2).setValue(origName + " \u{1F501} " + repName);
+      logEvent(ss, "N/A", origName, "Replacement: " + repName, timeNow);
+      return jsonResponse({ success: true });
     }
-  }).catch(function(err){ 
-      pill.className="pill off";pill.textContent="API ERROR"; 
-      var splash = document.getElementById("splash");
-      if (splash) { splash.style.opacity = "0"; setTimeout(()=>splash.remove(), 600); }
-  });
+
+    else if (action === "sendDA") {
+      var sentIds = payload.ids || [], ymName = payload.marshalName || "YM", batchName = payload.batchName || "";
+      for (var j = 0; j < sentIds.length; j++) {
+        updateDA(sheet, sentIds[j], function(row, data) {
+          logEvent(ss, sentIds[j], data[1], "Sent by " + ymName, timeNow);
+          updateDispatchRow(dSheet, sentIds[j], data[1], dayTab, function(dIdx, dRow) {
+             dSheet.getRange(dIdx, 4).setValue(ymName); dSheet.getRange(dIdx, 5).setValue(batchName); dSheet.getRange(dIdx, 6).setValue(timeNow);
+          });
+        });
+      }
+      return jsonResponse({ success: true, sentCount: sentIds.length, sentTime: timeNow });
+    }
+
+    else if (action === "rushScanIn") {
+      var scanId = payload.daId, result = { found: false, daName: "", violation: null };
+      updateDA(sheet, scanId, function(row, data) {
+        result.found = true; result.daName = data[1];
+        var b1 = String(data[8] || "").trim(), b2 = String(data[9] || "").trim(); 
+        if (checkBreakStatus(b1, b2, timeNow)) {
+           result.violation = { type: "ON_BREAK", message: data[1] + " is on BREAK!" };
+           logEvent(ss, scanId, data[1], "VIOLATION: Break Scan", timeNow); return;
+        }
+        updateDispatchRow(dSheet, scanId, data[1], dayTab, function(dIdx, dRow) {
+           var sentTime = String(dRow[5]).trim(), rushIn = String(dRow[6]).trim();
+           if (rushIn) { result.violation = { type: "ALREADY_IN", message: data[1] + " already scanned IN!" }; return; }
+           if (!sentTime) { result.violation = { type: "NOT_SENT", message: data[1] + " NOT sent by YM!" }; logEvent(ss, scanId, data[1], "VIOLATION: No Sent Time", timeNow); }
+           dSheet.getRange(dIdx, 7).setValue(timeNow);
+           if (sentTime) dSheet.getRange(dIdx, 8).setValue(minDiff(sentTime, timeNow));
+           resolveViolationInSheet(ss, scanId, timeNow); 
+        });
+        if(!result.violation) logEvent(ss, scanId, data[1], "Rush Scan IN", timeNow);
+      });
+      if (!result.found) return jsonResponse({ success: false, errors: ["DA " + scanId + " not in roster!"] });
+      return jsonResponse({ success: true, result: result });
+    }
+
+    else if (action === "resolveEvent") {
+      resolveViolationInSheet(ss, payload.daId, timeNow);
+      return jsonResponse({ success: true });
+    }
+    else if (action === "saveSettings") { return jsonResponse({ success: true, settings: settings }); }
+    else if (action === "resetDay") { return jsonResponse({ success: true, roster: getRoster(ss, sheet, dSheet, settings, dayTab), settings: settings }); }
+
+    return jsonResponse({ success: true });
+  } catch (err) { return jsonResponse({ success: false, errors: [err.toString()] }); }
 }
 
-function switchTab(id){
-  document.querySelectorAll(".ni,.pane").forEach(function(el){el.classList.remove("on")});
-  document.getElementById(id).classList.add("on");
-  document.querySelectorAll(".ni").forEach(function(b){if(b.getAttribute("data-p")===id)b.classList.add("on")});
-  if(id==="p-rush")setTimeout(function(){document.getElementById("rush-inp").focus()},100);
-}
-
-function checkIn(token,isWaiting){
-  var c=String(token||"").trim().toLowerCase();if(!c)return;
-  var da=S.roster.find(function(r){return(r.daId&&r.daId.toLowerCase().indexOf(c)>-1)||(r.repDaId&&r.repDaId.toLowerCase().indexOf(c)>-1)||(r.daName&&r.daName.toLowerCase().indexOf(c)>-1)});
-  if(!da)return banner('DA Not Found: "'+token+'"',"err");
-
-  if (da.isOnBreak && isWaiting) return banner("ERROR: DA is on break! ("+da.breakInfo+")", "err");
-  if(!isWaiting && da.attendanceOnlyStatus && da.attendanceOnlyStatus!=="Absent"){ banner(da.daName+" already marked! Use Waiting tab.","warn"); switchTab("p-wait"); return; }
-
-  var st="Present";
-  if(!isWaiting){
-     var cur=(new Date()).getHours()*60+(new Date()).getMinutes();
-     var w=toMin(da.waveTime), pre=Number(S.cfg.preWaveBlockMin)||30,gr=Number(S.cfg.waveGraceMin)||10;
-     if(w!==null){if(cur<(w-pre))return banner("Too Early! Wave: "+da.waveTime,"warn");if(cur>(w+gr)||da.attendanceOnlyStatus==="Absent")st="Late Arrival";}
+function findDaySheet(ss, dayTab) { var all = ss.getSheets(); for (var s = 0; s < all.length; s++) { if (all[s].getName().toLowerCase() === dayTab.toLowerCase()) return all[s]; } return null; }
+function getMasterDispatchSheet(ss) {
+  var dSheet = ss.getSheetByName("Master_Dispatch");
+  if (!dSheet) {
+    dSheet = ss.insertSheet("Master_Dispatch");
+    dSheet.appendRow(["Date", "DA ID", "DA Name", "YM Name", "Batch Name", "Sent Time", "Rush Scan IN", "Min to Scan IN", "OFD Time", "Dwell Min"]);
+    dSheet.getRange("A1:J1").setFontWeight("bold").setBackground("#BB86FC").setFontColor("#FFFFFF"); dSheet.setFrozenRows(1);
   }
-
-  banner((isWaiting?"Saving...":st)+": "+da.daName,"ok");
-  callApi(isWaiting?"addToWaiting":"recordCheckIn",{daId:da.daId,daName:da.daName,sentStatus:st,isWaiting:isWaiting});
+  return dSheet;
+}
+function updateDispatchRow(dSheet, daId, daName, dateStr, callback) {
+  var data = dSheet.getDataRange().getDisplayValues();
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][0]).trim() === dateStr && String(data[i][1]).trim().toLowerCase() === String(daId).toLowerCase()) { callback(i + 1, data[i]); return; }
+  }
+  dSheet.appendRow([dateStr, daId, daName, "", "", "", "", "", "", ""]);
+  callback(dSheet.getLastRow(), dSheet.getRange(dSheet.getLastRow(), 1, 1, 10).getDisplayValues()[0]);
 }
 
-function addToBatch(da){
-  var cap=Number(S.cfg.batchSize)||25, aId=(da.repDaId||da.daId).toLowerCase(), exists=false;
-  S.batches.forEach(function(b){b.members.forEach(function(m){if(m.daId.toLowerCase()===aId&&!m.sent)exists=true})});
-  var inPaused = S.pausedWaiters.some(function(m){return m.daId.toLowerCase()===aId});
-  if(exists || inPaused) return;
-
-  var memberObj = {daId:da.repDaId||da.daId,daName:da.daName,scanTime:now(),sent:false};
-  if (da.isOnBreak) { S.pausedWaiters.push(memberObj); return; }
-
-  var tgt=null;
-  for(var i=0;i<S.batches.length;i++){ var b=S.batches[i]; if(!b.allSent&&b.members.filter(function(m){return!m.sent}).length<cap){tgt=b;break;} }
-  if(!tgt){ var num=S.batches.length+1; tgt={id:num,name:"Batch "+num,allSent:false,members:[]}; S.batches.push(tgt); }
-  tgt.members.push(memberObj);
-}
-
-function toggleBatch(bName, isChecked) {
-  var b = S.batches.find(function(x){return x.name === bName});
-  if(b) { b.members.forEach(function(m){ if(!m.sent){ if(isChecked) S.sel.add(m.daId); else S.sel.delete(m.daId); } }); render(); }
-}
-
-function dismissBypass() { var chips = document.querySelectorAll('#bypassList .da-chip'); chips.forEach(function(c){ disBypass.add(c.getAttribute('data-id')); callApi("resolveEvent", {daId: c.getAttribute('data-id'), type: 'bypass'}); }); document.getElementById('bypassBanner').classList.remove('active'); }
-function dismissTimeout() { var chips = document.querySelectorAll('#timeoutList .da-chip'); chips.forEach(function(c){ disTimeout.add(c.getAttribute('data-id')); callApi("resolveEvent", {daId: c.getAttribute('data-id'), type: 'timeout'}); }); document.getElementById('timeoutBanner').classList.remove('active'); }
-
-function render(){
-  var cP=0,cL=0,cR=0,cA=0,cW=0, cSent=0;
-  S.roster.forEach(function(r){
-      if(r.attendanceOnlyStatus==="Present")cP++;
-      if(r.attendanceOnlyStatus==="Late Arrival")cL++;
-      if(r.attendanceOnlyStatus==="Replacement Present")cR++;
-      if(r.attendanceOnlyStatus==="Absent")cA++;
-      if(r.status==="Sent to OP")cSent++;
-  });
-  S.batches.forEach(function(b){cW+=b.members.filter(function(m){return!m.sent}).length});
-  
-  document.getElementById("k-pres").textContent=cP; document.getElementById("k-late").textContent=cL;
-  document.getElementById("k-repl").textContent=cR; document.getElementById("k-abs").textContent=cA;
-  document.getElementById("k-wait").textContent=cW; document.getElementById("k-brk").textContent=S.breaks.length;
-  document.getElementById("k-sent").textContent=cSent; document.getElementById("k-recv").textContent=S.received.length;
-
-  var recentAtt = S.roster.filter(function(r){ return r.scanTime && minDiff(r.scanTime, now()) <= 30 && r.attendanceOnlyStatus !== "Absent"; });
-  document.getElementById("recent-att-list").innerHTML = recentAtt.length ? recentAtt.map(function(p){
-      return '<div class="di" style="padding:8px;border-left:4px solid var(--green)"><div><div class="dn">'+p.daName+'</div><div class="ds">Wave: '+p.waveTime+' · In: '+p.scanTime+'</div></div><span style="color:var(--green);font-weight:800;font-size:11px">'+p.attendanceOnlyStatus+'</span></div>';
-  }).join("") : '<div style="text-align:center;color:var(--muted);padding:20px;font-size:12px">No recent check-ins</div>';
-
-  var bypass=[], timeouts=[];
-  if(S.violations) { S.violations.forEach(function(v){ if(v.type==="BYPASS" && !disBypass.has(v.daId)) bypass.push(v); if(v.type==="TIMEOUT" && !disTimeout.has(v.daId)) timeouts.push(v); }); }
-  
-  var bypBan=document.getElementById("bypassBanner"), tmtBan=document.getElementById("timeoutBanner");
-  if(bypass.length>0) { bypBan.classList.add("active"); document.getElementById("bypassList").innerHTML = bypass.map(function(v){ return '<span class="da-chip" data-id="'+v.daId+'">'+v.daName+'</span>'; }).join(""); } else { bypBan.classList.remove("active"); }
-  if(timeouts.length>0) { tmtBan.classList.add("active"); document.getElementById("timeoutList").innerHTML = timeouts.map(function(v){ return '<span class="da-chip" data-id="'+v.daId+'">'+v.daName+' <b>('+v.elapsed+'m)</b></span>'; }).join(""); } else { tmtBan.classList.remove("active"); }
-
-  var ds=document.getElementById("dsel");
-  ds.innerHTML=S.tabs.map(function(t){return'<option value="'+t+'"'+(t===S.day?" selected":"")+'>'+t+'</option>'}).join("");
-
-  document.getElementById("sel-abs").innerHTML='<option value="">-- Select Absent DA --</option>'+S.roster.filter(function(r){return r.attendanceOnlyStatus==="Absent"}).map(function(d){return'<option value="'+d.daId+'">'+d.daName+'</option>'}).join("");
-
-  var bb=document.getElementById("batch-box"), html="";
-  S.batches.forEach(function(b){
-    var unsent=b.members.filter(function(m){return!m.sent}); if(!unsent.length)return;
-    var allSel = unsent.every(function(m){return S.sel.has(m.daId)});
-    html+='<div class="batch-card"><div class="batch-hdr"><span class="batch-name">'+b.name+'</span><div style="display:flex;align-items:center;gap:10px;"><span class="batch-count">'+unsent.length+' DA(s)</span><label style="font-size:11px;"><input type="checkbox" onchange="toggleBatch(\''+b.name+'\', this.checked)" '+(allSel?'checked':'')+'> Select All</label></div></div>';
-    unsent.forEach(function(m){
-      var waited = minDiff(m.scanTime, now());
-      html+='<div class="di" style="margin-top:5px;padding:8px"><div><input type="checkbox" class="bchk" data-id="'+m.daId+'"'+(S.sel.has(m.daId)?' checked':'')+'> <span style="font-size:12px;font-weight:bold;margin-left:5px">'+m.daName+'</span></div><div style="font-size:10px;color:var(--muted)">Waited: '+waited+'m</div></div>';
-    });
-    html+='</div>';
-  });
-  bb.innerHTML=html||'<div style="text-align:center;color:var(--muted);padding:20px;font-size:12px">No DAs in queue</div>';
-  bb.querySelectorAll(".bchk").forEach(function(c){c.onchange=function(e){if(e.target.checked)S.sel.add(e.target.dataset.id);else S.sel.delete(e.target.dataset.id); render(); }});
-
-  var sentList = S.roster.filter(function(r){return r.status==="Sent to OP"});
-  document.getElementById("sent-list").innerHTML=sentList.length?sentList.map(function(p){
-    var waited = minDiff(p.sentTime, now());
-    return'<div class="di" style="padding:8px;border-left:4px solid var(--warn)"><div><div class="dn">'+p.daName+'</div><div class="ds">YM: '+(p.marshalName||"—")+' · '+(p.batchName||"")+'</div></div><span style="color:var(--orange);font-weight:800;font-size:11px">'+waited+'m</span></div>'}).join(""):'<div style="text-align:center;color:var(--muted);padding:20px;font-size:12px;">No DAs pending</div>';
-  
-  document.getElementById("break-list").innerHTML=S.breaks.length?S.breaks.map(function(p){return'<div class="di" style="padding:8px;border-left:4px solid var(--red)"><div><div class="dn">'+p.daName+'</div><div class="ds">Break Time: '+p.info+'</div></div><span style="color:var(--red);font-weight:800;font-size:11px">ON BREAK</span></div>'}).join(""):'<div style="text-align:center;color:var(--muted);padding:20px;font-size:12px;">No DAs currently on break</div>';
-  document.getElementById("recv-list").innerHTML=S.received.length?S.received.map(function(r){return'<div class="di" style="padding:8px;border-left:4px solid var(--green)"><div><div class="dn">'+r.daName+'</div><div class="ds">Scan IN: '+(r.t||"—")+"</div></div><span style=\"color:var(--green);font-weight:800;font-size:11px\">RECEIVED</span></div>";}).join(""):'<div style="text-align:center;color:var(--muted);padding:20px;font-size:12px;">No DAs received</div>';
-}
-
-function fuzzy(iid,sid,dataArray,cb){
-  var inp=document.getElementById(iid),box=document.getElementById(sid);
-  inp.addEventListener("input",function(){
-    var q=inp.value.trim().toLowerCase();if(q.length<2){box.style.display="none";return;}
-    var m=dataArray.filter(function(r){var nm=(r.name||r.daName||"").toLowerCase(), id=(r.id||r.daId||"").toLowerCase(); return nm.indexOf(q)>-1||id.indexOf(q)>-1}).slice(0,5);
-    if(!m.length){box.style.display="none";return;}
-    box.innerHTML=m.map(function(x){return'<div class="si" data-id="'+(x.id||x.daId)+'" data-name="'+(x.name||x.daName)+'">'+(x.name||x.daName)+'<br><span style="font-size:10px;color:var(--muted)">'+(x.id||x.daId)+"</span></div>"}).join("");
-    box.style.display="block";
-    box.querySelectorAll(".si").forEach(function(r){r.onclick=function(){cb(r.getAttribute("data-id"), r.getAttribute("data-name"));inp.value="";box.style.display="none"}});
-  });
-  inp.addEventListener("keydown",function(e){if(e.key==="Enter"&&inp.value.trim()){cb(inp.value.trim());inp.value="";box.style.display="none"}});
-}
-
-window.addEventListener("DOMContentLoaded",function(){
-  S.day = todayTab();
-  S.tabs = recentTabs();
-  
-  var ds=document.getElementById("dsel");
-  ds.innerHTML=S.tabs.map(function(t){return'<option value="'+t+'"'+(t===S.day?" selected":"")+'>'+t+'</option>'}).join("");
-  
-  var savedYM = localStorage.getItem("dud3_ym"); if(savedYM) document.getElementById("inp-ym").value = savedYM;
-  var savedPin = localStorage.getItem("dud3_pin"); if(savedPin) S.cfg.adminPin = savedPin;
-  
-  document.querySelectorAll(".ni").forEach(function(b){b.onclick=function(){
-    var p=b.getAttribute("data-p");
-    if(p==="p-set"&&!admin){
-       var pin=prompt("🔑 Enter Admin PIN:");
-       if(pin!==String(S.cfg.adminPin)) return banner("Access denied","err");
-       admin=true;
+function getSettings(ss, newSettings, isUpdating) {
+  var sh = ss.getSheetByName("App Settings");
+  if (!sh) {
+    sh = ss.insertSheet("App Settings");
+    sh.appendRow(["Setting Name", "Value"]);
+    sh.appendRow(["preWaveBlockMin", "30"]); sh.appendRow(["waveGraceMin", "10"]); sh.appendRow(["batchSize", "25"]);
+    sh.appendRow(["rushTimeoutMin", "20"]); sh.appendRow(["autoOfdMin", "30"]); sh.appendRow(["waitingLockMin", "30"]); 
+    sh.appendRow(["adminPin", "1234"]); sh.appendRow(["apiUrl", ""]); sh.appendRow(["sheetUrl", ""]);
+    sh.getRange("A1:B1").setFontWeight("bold").setBackground("#00A8E1");
+  }
+  if (isUpdating && newSettings) {
+    var toUpdate = { 
+        preWaveBlockMin: newSettings.preWaveBlockMin, waveGraceMin: newSettings.waveGraceMin, batchSize: newSettings.batchSize, 
+        rushTimeoutMin: newSettings.rushTimeoutMin || 20, autoOfdMin: newSettings.autoOfdMin || 30, waitingLockMin: newSettings.waitingLockMin || 30, 
+        adminPin: newSettings.adminPin || "1234", apiUrl: newSettings.apiUrl || "", sheetUrl: newSettings.sheetUrl || "" 
+    };
+    var lastRow = sh.getLastRow();
+    for(var r=2; r<=lastRow; r++){
+        var k = sh.getRange(r,1).getValue();
+        if(toUpdate[k] !== undefined) { sh.getRange(r,2).setValue(toUpdate[k]); delete toUpdate[k]; }
     }
-    switchTab(p);
-  }});
+    for(var key in toUpdate) { if(toUpdate[key] !== undefined) sh.appendRow([key, toUpdate[key]]); }
+  }
+  var settings = { preWaveBlockMin: 30, waveGraceMin: 10, batchSize: 25, rushTimeoutMin: 20, autoOfdMin: 30, waitingLockMin: 30, adminPin: "1234", apiUrl: "", sheetUrl: "" };
+  var data = sh.getDataRange().getValues();
+  for(var k=1; k<data.length; k++){ 
+      if(settings.hasOwnProperty(data[k][0])) { 
+          if(data[k][0]==="adminPin" || data[k][0]==="apiUrl" || data[k][0]==="sheetUrl") settings[data[k][0]] = String(data[k][1]); 
+          else settings[data[k][0]] = Number(data[k][1]); 
+      } 
+  }
+  return settings;
+}
 
-  document.getElementById("dsel").onchange=function(e){S.day=e.target.value;S.batches=[];S.breaks=[];S.received=[];callApi("rosterFull")};
-  document.getElementById("btn-reset").onclick=function(){if(confirm("Reset for new day?")){S.day=todayTab();callApi("resetDay");banner("Reset done","ok")}};
-  document.getElementById("btn-save").onclick=function(){
-    S.cfg.preWaveBlockMin=Number(document.getElementById("s-pre").value); S.cfg.waveGraceMin=Number(document.getElementById("s-grace").value); S.cfg.batchSize=Number(document.getElementById("s-batch").value); S.cfg.rushTimeoutMin=Number(document.getElementById("s-time").value); S.cfg.autoOfdMin=Number(document.getElementById("s-auto-ofd").value); S.cfg.waitingLockMin=Number(document.getElementById("s-wait-lock").value); S.cfg.adminPin=document.getElementById("s-pin").value.trim(); 
-    localStorage.setItem("dud3_pin", S.cfg.adminPin);
-    callApi("saveSettings",{settings:S.cfg}); banner("Global Settings Saved","ok");
-  };
+function checkBreakStatus(b1, b2, nowStr) {
+  var nowMin = hhmmToMin(nowStr); if (nowMin === null) return false;
+  return isTimeInBreak(b1, nowMin) || isTimeInBreak(b2, nowMin);
+}
+function isTimeInBreak(bStr, nowMin) {
+  if (!bStr) return false;
+  var parts = bStr.toLowerCase().split(/to|-/);
+  if (parts.length === 2) {
+     var start = parseSmartTime(parts[0].trim()), end = parseSmartTime(parts[1].trim());
+     if (start !== null && end !== null && nowMin >= start && nowMin < end) return true;
+  }
+  return false;
+}
+function parseSmartTime(str) {
+  var m = str.match(/(\d{1,2}):(\d{2})/); if(!m) return null;
+  var h = parseInt(m[1]), min = parseInt(m[2]);
+  if (h >= 1 && h <= 7) h += 12; return (h * 60) + min;
+}
+function hhmmToMin(s) { if (!s) return null; var m = parseSmartTime(s); return m !== null ? m : null; }
+function minDiff(t1, t2) { var a = hhmmToMin(t1), b = hhmmToMin(t2); return (a === null || b === null) ? 0 : Math.max(0, b - a); }
+function addMinsToHHMM(timeStr, mins) {
+  var m = hhmmToMin(timeStr); if (m === null) return timeStr;
+  m += parseInt(mins); var h = Math.floor(m / 60) % 24, mn = m % 60;
+  return ("0" + h).slice(-2) + ":" + ("0" + mn).slice(-2);
+}
 
-  document.getElementById("btn-send").onclick=function(){
-    var ym=document.getElementById("inp-ym").value.trim();
-    if(!ym)return banner("Enter YM name first!","warn");
-    var ids=[];var batchName="";
-    S.batches.forEach(function(b){b.members.forEach(function(m){if(!m.sent&&S.sel.has(m.daId)){ids.push(m.daId);batchName=b.name;}})});
-    if(!ids.length)return banner("Select DAs to send","warn");
-    callApi("sendDA",{ids:ids,marshalName:ym,batchName:batchName});
-  };
+function detectViolationsAndLog(ss, roster, settings, timeNow) {
+  var v = [], nowMin = hhmmToMin(timeNow), limit = settings.rushTimeoutMin || 20;
+  for (var i = 0; i < roster.length; i++) {
+    var da = roster[i];
+    if (da.status === "Sent to OP" && da.sentTime) {
+      var sm = hhmmToMin(da.sentTime);
+      if (sm !== null && nowMin !== null) {
+         var elapsed = nowMin - sm;
+         if (elapsed >= limit) { v.push({ type: "TIMEOUT", daId: da.daId, daName: da.daName, elapsed: elapsed }); logToViolationsSheet(ss, da.daId, da.daName, elapsed, timeNow); }
+      }
+    }
+  }
+  return v;
+}
+function logToViolationsSheet(ss, daId, daName, elapsedMins, timeNow) {
+  var vSheet = ss.getSheetByName("Violations_List");
+  if (!vSheet) { vSheet = ss.insertSheet("Violations_List"); vSheet.appendRow(["Date", "Time Logged", "DA ID", "DA Name", "Status", "Exceeded By (Mins)"]); vSheet.getRange("A1:F1").setFontWeight("bold").setBackground("#FF3B30").setFontColor("#FFFFFF"); }
+  var today = Utilities.formatDate(new Date(), "Asia/Dubai", "yyyy-MM-dd");
+  var data = vSheet.getDataRange().getValues();
+  for (var i = 1; i < data.length; i++) { if (data[i][0] === today && String(data[i][2]).toLowerCase() === daId.toLowerCase() && data[i][4] === "Active") return; }
+  vSheet.appendRow([today, timeNow, daId, daName, "Active", elapsedMins]);
+}
+function resolveViolationInSheet(ss, daId, timeNow) {
+  var vSheet = ss.getSheetByName("Violations_List"); if (!vSheet) return;
+  var today = Utilities.formatDate(new Date(), "Asia/Dubai", "yyyy-MM-dd");
+  var data = vSheet.getDataRange().getValues();
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][0] === today && String(data[i][2]).toLowerCase() === String(daId).toLowerCase() && data[i][4] === "Active") vSheet.getRange(i + 1, 5).setValue("Resolved (" + timeNow + ")");
+  }
+}
+function logEvent(ss, daId, daName, action, timeStr) {
+  var lg = ss.getSheetByName("Scan Log");
+  if (!lg) { lg = ss.insertSheet("Scan Log"); lg.appendRow(["Date", "Time", "DA ID", "DA Name", "Action"]); lg.getRange("A1:E1").setFontWeight("bold").setBackground("#FF9900"); }
+  lg.appendRow([Utilities.formatDate(new Date(), "Asia/Dubai", "yyyy-MM-dd"), timeStr, daId, daName, action]);
+}
+function updateDA(sheet, searchId, callback) {
+  var data = sheet.getDataRange().getDisplayValues();
+  for (var i = 1; i < data.length; i++) {
+    var rid = String(data[i][0]).trim(), colL = String(data[i][11]).trim(), repId = colL.indexOf("-") > 0 ? colL.split("-")[1].trim() : "";
+    if (rid.toLowerCase() === String(searchId).toLowerCase() || repId.toLowerCase() === String(searchId).toLowerCase()) { callback(i + 1, data[i]); break; }
+  }
+}
 
-  document.getElementById("btn-remove-wait").onclick=function(){
-    var ids=[]; S.batches.forEach(function(b){b.members.forEach(function(m){if(!m.sent&&S.sel.has(m.daId)) ids.push(m.daId);})});
-    if(!ids.length)return banner("Select DAs to remove","warn");
-    if(confirm("Remove "+ids.length+" DA(s) from Waiting?")) callApi("removeFromWaiting",{ids:ids});
-  };
-
-  document.getElementById("btn-repl").onclick=function(){
-    var oId=document.getElementById("sel-abs").value,rep=document.getElementById("inp-repl").value.trim();
-    if(!oId||!rep)return banner("Select DA and enter info","warn");
-    var da=S.roster.find(function(r){return r.daId===oId});
-    if(da){da.attendanceOnlyStatus="Replacement Present";da.status="Replacement Present";banner("Replaced","ok");render();callApi("assignReplacement",{rowIndex:da.rowIndex,replacementText:rep});document.getElementById("inp-repl").value="";}
-  };
-
-  document.getElementById("rush-inp").addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); var b=this.value.trim().toUpperCase(); if(b.length>=10){ callApi("rushScanIn",{daId:b}); } this.value=""; } });
-
-  var qA=null,qW=null,qR=null;
-  document.getElementById("cam-att-btn").onclick=function(){var b=document.getElementById("cam-att");if(b.style.display==="block"){b.style.display="none";if(qA)qA.stop()}else{b.style.display="block";qA=new Html5Qrcode("qr-att");qA.start({facingMode:"environment"},{fps:10},function(t){checkIn(t,false);qA.stop();b.style.display="none"})}};
-  document.getElementById("cam-wait-btn").onclick=function(){var b=document.getElementById("cam-wait");if(b.style.display==="block"){b.style.display="none";if(qW)qW.stop()}else{b.style.display="block";qW=new Html5Qrcode("qr-wait");qW.start({facingMode:"environment"},{fps:10},function(t){checkIn(t,true);qW.stop();b.style.display="none"})}};
-  document.getElementById("cam-rush-btn").onclick=function(){var b=document.getElementById("cam-rush");if(b.style.display==="block"){b.style.display="none";if(qR)qR.stop()}else{b.style.display="block";qR=new Html5Qrcode("qr-rush");qR.start({facingMode:"environment"},{fps:10},function(t){callApi("rushScanIn",{daId:t.trim().toUpperCase()});qR.stop();b.style.display="none"})}};
-
-  fuzzy("inp-att","sug-att", S.roster, function(id){checkIn(id,false)});
-  fuzzy("inp-wait","sug-wait", S.roster, function(id){checkIn(id,true)});
-  
-  var repInp = document.getElementById("inp-repl"), repBox = document.getElementById("sug-repl");
-  repInp.addEventListener("input", function(){
-      var q=repInp.value.trim().toLowerCase(); if(q.length<2){repBox.style.display="none";return;}
-      var m=S.allDAs.filter(function(r){return r.name.toLowerCase().indexOf(q)>-1 || r.id.toLowerCase().indexOf(q)>-1}).slice(0,5);
-      if(!m.length){repBox.style.display="none";return;}
-      repBox.innerHTML=m.map(function(x){return'<div class="si" data-val="'+x.name+' - '+x.id+'">'+x.name+'<br><span style="font-size:10px;color:var(--muted)">'+x.id+"</span></div>"}).join("");
-      repBox.style.display="block";
-      repBox.querySelectorAll(".si").forEach(function(r){r.onclick=function(){repInp.value=r.getAttribute("data-val");repBox.style.display="none"}});
-  });
-
-  document.getElementById("inp-ym").addEventListener("change",function(){localStorage.setItem("dud3_ym",this.value)});
-
-  setInterval(function(){callApi("syncOnly")},3000);
-  callApi("rosterFull");
-});
-</script>
-</body>
-</html>
+function getRoster(ss, sheet, dSheet, settings, dateStr) {
+  if (!sheet) return [];
+  var data = sheet.getDataRange().getDisplayValues(), dispatchMap = {};
+  if (dSheet) {
+    var dData = dSheet.getDataRange().getDisplayValues();
+    for(var d = 1; d < dData.length; d++) {
+       if (String(dData[d][0]).trim() === dateStr) {
+           dispatchMap[String(dData[d][1]).trim().toLowerCase()] = {
+              dRowIndex: d + 1, ymName: dData[d][3] || "", batchName: dData[d][4] || "",
+              sentTime: dData[d][5] || "", rushInTime: dData[d][6] || "", ofdTime: dData[d][8] || ""
+           };
+       }
+    }
+  }
+  var roster = [], timeNow = getDubaiTime(), nowMin = hhmmToMin(timeNow), autoOfdMin = settings.autoOfdMin || 30;
+  for (var i = 1; i < data.length; i++) {
+    var r = data[i]; if (!r[0] && !r[1]) continue;
+    var rowDaId = String(r[0]).trim(), mapped = dispatchMap[rowDaId.toLowerCase()] || {};
+    if (mapped.rushInTime && !mapped.ofdTime) {
+       var inMin = hhmmToMin(mapped.rushInTime);
+       if (inMin !== null && nowMin !== null && (nowMin - inMin) >= autoOfdMin) {
+          var calcOfd = addMinsToHHMM(mapped.rushInTime, autoOfdMin);
+          dSheet.getRange(mapped.dRowIndex, 9).setValue(calcOfd); dSheet.getRange(mapped.dRowIndex, 10).setValue(autoOfdMin);
+          mapped.ofdTime = calcOfd; logEvent(ss, rowDaId, r[1], "Auto OFD", calcOfd);
+       }
+    }
+    var att = String(r[6] || "").trim(), comp = att, isOnBreak = checkBreakStatus(String(r[8] || ""), String(r[9] || ""), timeNow);
+    if (isOnBreak) comp = "On Break";
+    else if (mapped.ofdTime) comp = "OFD";
+    else if (mapped.rushInTime) comp = "Received";
+    else if (mapped.sentTime) comp = "Sent to OP";
+    roster.push({
+      daId: rowDaId, daName: r[1] || "", waveTime: r[3] || "", status: comp, attendanceOnlyStatus: att,
+      isOnBreak: isOnBreak, breakInfo: String(r[8]||"") + (String(r[9]||"") ? " & " + String(r[9]||"") : ""), scanTime: r[7] || "", 
+      colLReplacement: String(r[11]||""), marshalName: mapped.ymName || "", sentTime: mapped.sentTime || "",
+      batchName: mapped.batchName || "", rushScanInTime: mapped.rushInTime || "", ofdTime: mapped.ofdTime || ""
+    });
+  }
+  return roster;
+}
+function getDubaiTime() { return Utilities.formatDate(new Date(), "Asia/Dubai", "HH:mm"); }
+function jsonResponse(obj) { return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON); }
