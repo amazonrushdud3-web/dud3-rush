@@ -91,6 +91,7 @@
 </head>
 <body>
 
+<!-- SPLASH SCREEN -->
 <div id="splash">
   <div class="skyline">🏙️🌆🏢🏨</div>
   <h2>RUSH PRO <span>APP</span></h2>
@@ -129,13 +130,11 @@
       <input type="text" id="inp-att" class="inp" placeholder="Scan or type DA Name / ID..." autocomplete="off">
       <div id="sug-att" class="sbox"></div>
     </div>
-    
     <div class="crd">
       <div class="crd-t">🕒 Recent Check-Ins (Active Wave)</div>
       <div id="recent-att-list" class="scroll-list dlist"></div>
       <div style="font-size:10px;text-align:center;color:var(--muted);margin-top:8px;">* Auto-removes after 30 minutes</div>
     </div>
-    
     <div class="crd" style="border-color:var(--blue)">
       <div class="crd-t" style="color:var(--blue)">🔁 Replacement DA (From RushData)</div>
       <input type="text" id="inp-repl" class="inp" placeholder="Search DA Name / ID for Replacement" autocomplete="off">
@@ -230,7 +229,7 @@
       <div style="margin-bottom:15px;"><label style="font-size:11px;color:var(--muted)">🔑 Admin PIN</label><input type="text" id="s-pin" class="inp"></div>
       
       <button class="btn" id="btn-save" style="width:100%;background:var(--orange);color:#000;margin-bottom:10px;">💾 Save Global Settings</button>
-      <button class="btn" onclick="window.location.reload(true)" style="width:100%;background:#354558;color:#fff;font-size:12px;">🔄 Force Refresh App</button>
+      <button class="btn" onclick="clearMemoryAndReload()" style="width:100%;background:#354558;color:#fff;font-size:12px;">🗑️ Clear Local Memory</button>
     </div>
   </section>
 </main>
@@ -245,12 +244,14 @@
 </nav>
 
 <script>
+// PWA Registration
 if('serviceWorker' in navigator){
   var swCode = "self.addEventListener('fetch', function(e) { e.respondWith(fetch(e.request).catch(function() { return new Response('Offline'); })); });";
   var blob = new Blob([swCode], {type: 'application/javascript'});
   navigator.serviceWorker.register(URL.createObjectURL(blob));
 }
 
+// PWA Manifest Definition
 var mj = {
   "name": "Rush PRO", "short_name": "Rush", "display": "standalone", "start_url": ".",
   "background_color": "#131A22", "theme_color": "#FF9900",
@@ -261,11 +262,12 @@ var mj = {
 };
 document.getElementById("manifest-link").href=URL.createObjectURL(new Blob([JSON.stringify(mj)],{type:"application/json"}));
 
-// REPLACE THIS API LINK WITH YOUR MAIN APP API
+// CLOUD DIRECT CONNECTION - HARDCODED URLs
 var API="https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec";
 var SHEET="https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit";
 
 var admin=!(/Mobi|Android|iPhone/i.test(navigator.userAgent));
+var SK="DUD3V2_MASTER";
 var S={api:API,sheet:SHEET,day:todayTab(),tabs:recentTabs(),cfg:{waveGraceMin:10,preWaveBlockMin:30,batchSize:25,rushTimeoutMin:20,autoOfdMin:30,waitingLockMin:30,adminPin:"1234"},roster:[],batches:[],breaks:[],received:[],allDAs:[],pausedWaiters:[],sel:new Set(),violations:[]};
 
 var disBypass=new Set(), disTimeout=new Set();
@@ -277,8 +279,23 @@ function now(){var d=new Date();return("0"+d.getHours()).slice(-2)+":"+("0"+d.ge
 function toMin(s){if(!s)return null;var p=String(s).trim().match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);if(!p)return null;var h=parseInt(p[1]),n=parseInt(p[2]),a=p[3]?p[3].toUpperCase():null;if(a==="PM"&&h<12)h+=12;if(a==="AM"&&h===12)h=0;return h*60+n;}
 function minDiff(t1, t2) {var a = toMin(t1), b = toMin(t2); if (a === null || b === null) return 0; return Math.max(0, b - a);}
 
+function clearMemoryAndReload() {
+  localStorage.removeItem(SK);
+  alert("Memory Cleared. The app will now reload.");
+  window.location.reload();
+}
+
 var bt=null;
 function banner(msg,v){var el=document.getElementById("toast-msg");document.getElementById("b-txt").textContent=msg;el.className="show b-"+(v||"ok");if(bt)clearTimeout(bt);bt=setTimeout(function(){el.className=""},4000);}
+
+function save(){try{var o=JSON.parse(JSON.stringify(S));o.sel=Array.from(S.sel);localStorage.setItem(SK,JSON.stringify(o));}catch(e){}}
+
+// FORCE API LOAD FROM HARDCODE TO PREVENT BROWSER CACHE ERRORS
+function load(){
+  try{var r=localStorage.getItem(SK);if(r){var p=JSON.parse(r);for(var k in p)if(k!=="sel")S[k]=p[k];S.sel=new Set(p.sel||[]);}}catch(e){}
+  S.api = API; 
+  S.sheet = SHEET;
+}
 
 function cfgUI(){
   document.getElementById("s-pre").value=S.cfg.preWaveBlockMin; document.getElementById("s-grace").value=S.cfg.waveGraceMin;
@@ -350,7 +367,7 @@ function callApi(action,payload){
       manageBreakQueues(); rebuild(); render();
     }
     
-    // FIX FAKE UI UPDATES: Update UI ONLY after API succeeds
+    // UPDATE UI ONLY AFTER SUCCESSFUL CLOUD SYNC
     else if(action==="sendDA" || action==="removeFromWaiting"){
       var ids=payload.ids||[];
       S.batches.forEach(function(b){b.members.forEach(function(m){if(ids.indexOf(m.daId)>-1&&!m.sent)m.sent=true;});if(b.members.every(function(m){return m.sent}))b.allSent=true});
@@ -364,7 +381,7 @@ function callApi(action,payload){
          var lc=S.roster.find(function(x){return x.daId===payload.daId});
          if(lc) {
              lc.attendanceOnlyStatus = payload.sentStatus;
-             lc.scanTime = now(); // Update local UI check-in time
+             lc.scanTime = now(); 
              addToBatch(lc);
          }
       }
@@ -408,7 +425,7 @@ function checkIn(token,isWaiting){
      if(w!==null){if(cur<(w-pre))return banner("Too Early! Wave: "+da.waveTime,"warn");if(cur>(w+gr)||da.attendanceOnlyStatus==="Absent")st="Late Arrival";}
   }
 
-  // ONLY CALL API - DO NOT ADD TO UI YET
+  // CALL API TO CLOUD FIRST - PREVENTS FAKE UI UPDATE
   banner((isWaiting?"Saving...":st)+": "+da.daName,"ok");
   callApi(isWaiting?"addToWaiting":"recordCheckIn",{daId:da.daId,daName:da.daName,sentStatus:st,isWaiting:isWaiting});
 }
@@ -466,7 +483,7 @@ function render(){
   if(timeouts.length>0) { tmtBan.classList.add("active"); document.getElementById("timeoutList").innerHTML = timeouts.map(function(v){ return '<span class="da-chip" data-id="'+v.daId+'">'+v.daName+' <b>('+v.elapsed+'m)</b></span>'; }).join(""); } else { tmtBan.classList.remove("active"); }
 
   var ds=document.getElementById("dsel");
-  if(S.tabs.indexOf(S.day)===-1)S.tabs.push(S.day);
+  // Keep the selected value explicitly matching S.day
   ds.innerHTML=S.tabs.map(function(t){return'<option value="'+t+'"'+(t===S.day?" selected":"")+'>'+t+'</option>'}).join("");
 
   document.getElementById("sel-abs").innerHTML='<option value="">-- Select Absent DA --</option>'+S.roster.filter(function(r){return r.attendanceOnlyStatus==="Absent"}).map(function(d){return'<option value="'+d.daId+'">'+d.daName+'</option>'}).join("");
@@ -507,8 +524,15 @@ function fuzzy(iid,sid,dataArray,cb){
   inp.addEventListener("keydown",function(e){if(e.key==="Enter"&&inp.value.trim()){cb(inp.value.trim());inp.value="";box.style.display="none"}});
 }
 
+// APP INITIALIZATION
 window.addEventListener("DOMContentLoaded",function(){
-  document.getElementById("dsel").value = todayTab(); 
+  load(); // MUST BE CALLED FIRST TO GET API LINK
+  cfgUI(); // LOAD GLOBAL SETTINGS
+  
+  // IMMEDIATELY POPULATE DATE TO AVOID EMPTY SELECT BOX
+  var ds=document.getElementById("dsel");
+  if(S.tabs.indexOf(S.day)===-1)S.tabs.push(S.day);
+  ds.innerHTML=S.tabs.map(function(t){return'<option value="'+t+'"'+(t===S.day?" selected":"")+'>'+t+'</option>'}).join("");
   
   document.querySelectorAll(".ni").forEach(function(b){b.onclick=function(){
     var p=b.getAttribute("data-p");
@@ -524,6 +548,7 @@ window.addEventListener("DOMContentLoaded",function(){
   document.getElementById("btn-reset").onclick=function(){if(confirm("Reset for new day?")){S.day=todayTab();callApi("resetDay");banner("Reset done","ok")}};
   document.getElementById("btn-save").onclick=function(){
     S.cfg.preWaveBlockMin=Number(document.getElementById("s-pre").value); S.cfg.waveGraceMin=Number(document.getElementById("s-grace").value); S.cfg.batchSize=Number(document.getElementById("s-batch").value); S.cfg.rushTimeoutMin=Number(document.getElementById("s-time").value); S.cfg.autoOfdMin=Number(document.getElementById("s-auto-ofd").value); S.cfg.waitingLockMin=Number(document.getElementById("s-wait-lock").value); S.cfg.adminPin=document.getElementById("s-pin").value.trim(); 
+    save(); // Don't save API/Sheet to local to avoid corruption
     callApi("saveSettings",{settings:S.cfg}); banner("Global Settings Saved","ok");
   };
 
