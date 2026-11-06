@@ -5,6 +5,7 @@
   <title>DUD3 Driver Hub</title>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
   <meta name="theme-color" content="#131A22">
+  <link rel="manifest" id="manifest-link">
   <style>
     :root { --bg:#131A22; --card:#232F3E; --orange:#FF9900; --blue:#00A8E1; --green:#00C853; --red:#FF3B30; --text:#FFF; --muted:#9BA7B6; }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -85,36 +86,43 @@
 </div>
 
 <script>
-// UPDATED WITH YOUR REAL DRIVER API LINK
+if('serviceWorker' in navigator){
+  var swCode = "self.addEventListener('fetch', function(e) { if(e.request.url.includes('script.google.com')) return; e.respondWith(fetch(e.request).catch(function() { return new Response('Offline'); })); });";
+  var blob = new Blob([swCode], {type: 'application/javascript'});
+  navigator.serviceWorker.register(URL.createObjectURL(blob));
+}
+
+var mj = {
+  "name": "DUD3 Driver Hub", "short_name": "Driver", "display": "standalone", "start_url": ".",
+  "background_color": "#131A22", "theme_color": "#FF9900",
+  "icons": [
+    { "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI0ZGOTkwMCIvPjx0ZXh0IHg9IjUwIiB5PSI2MCIgZm9udC1zaXplPSI1MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzAwMCI+8J+ahzwvRleHQ+PC9zdmc+", "sizes": "192x192", "type": "image/svg+xml" },
+    { "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI0ZGOTkwMCIvPjx0ZXh0IHg9IjUwIiB5PSI2MCIgZm9udC1zaXplPSI1MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzAwMCI+8J+ahzwvRleHQ+PC9zdmc+", "sizes": "512x512", "type": "image/svg+xml" }
+  ]
+};
+document.getElementById("manifest-link").href=URL.createObjectURL(new Blob([JSON.stringify(mj)],{type:"application/json"}));
+
+// DRIVER APP API
 const API_URL = "https://script.google.com/macros/s/AKfycbxBhR1jYkh32EBMHBrr1-XhonEkynaU1b04-mV_OR8q3x4pGlOysDmw20xMKwyG-Z1KjQ/exec"; 
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit";
 
 let refreshInterval = null, countdownInterval = null, targetTime = null, isCountUp = false;
 let notifSent = { attend: false, exceed: false };
 
-function getTodayTab(){
-  var d=new Date(), m=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
-  return ("0"+d.getDate()).slice(-2)+" "+m[d.getMonth()];
-}
+function getTodayTab(){ var d=new Date(), m=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]; return ("0"+d.getDate()).slice(-2)+" "+m[d.getMonth()]; }
 
 window.onload = function() {
   const savedId = localStorage.getItem("dud3_driver_id");
   if (savedId) { document.getElementById("da-id-input").value = savedId; login(); }
 };
 
-function requestNotificationPermission() {
-  if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
-    Notification.requestPermission();
-  }
-}
+function requestNotificationPermission() { if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") { Notification.requestPermission(); } }
 
 function sendAppNotification(title, body) {
   const toast = document.getElementById("toast-msg");
   document.getElementById("toast-txt").textContent = title + ": " + body;
   toast.classList.add("show"); setTimeout(() => toast.classList.remove("show"), 6000);
-  if ("Notification" in window && Notification.permission === "granted") {
-    new Notification(title, { body: body, icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Barcode_scanner_icon.svg/512px-Barcode_scanner_icon.svg.png" });
-  }
+  if ("Notification" in window && Notification.permission === "granted") { new Notification(title, { body: body }); }
 }
 
 function login() {
@@ -141,14 +149,13 @@ function logout() {
 function fetchData(daId) {
   document.getElementById("loader").style.display = "block";
   fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getDaStatus', daId: daId, sheetUrl: SHEET_URL, dayTab: getTodayTab() }) })
-  .then(res => { if (!res.ok) throw new Error("Network response was not ok"); return res.json(); })
+  .then(res => { if (!res.ok) throw new Error("Network error"); return res.json(); })
   .then(res => {
     document.getElementById("loader").style.display = "none";
-    if (!res.success) { logout(); return alert("Error: " + res.error); }
+    if (!res.success) { logout(); return alert("Error: " + (res.errors ? res.errors[0] : "Failed")); }
     if (!res.data.found) { logout(); return alert("DA ID not found in today's roster."); }
     updateDashboard(res.data);
-  })
-  .catch(err => { document.getElementById("loader").style.display = "none"; logout(); alert("Connection Failed! Please ensure the Driver API is deployed correctly."); });
+  }).catch(err => { document.getElementById("loader").style.display = "none"; });
 }
 
 function parseHHMM(timeStr) {
@@ -170,79 +177,52 @@ function updateDashboard(data) {
   
   const statusEl = document.getElementById("d-status");
   statusEl.textContent = data.status.toUpperCase();
-  
   if (data.status.includes("Absent") || data.status.includes("Late") || data.status.includes("Break") || data.status.includes("Violation")) statusEl.style.color = "var(--red)";
   else if (data.status.includes("Received")) statusEl.style.color = "var(--green)";
   else if (data.status.includes("OFD")) statusEl.style.color = "var(--purple)";
   else statusEl.style.color = "var(--blue)";
-
   setupTimers(data);
 }
 
 function setupTimers(data) {
   const timerBox = document.getElementById("timer-container"), timerLabel = document.getElementById("timer-label"), timerDisplay = document.getElementById("d-timer");
-  if (countdownInterval) clearInterval(countdownInterval);
-  targetTime = null; isCountUp = false; timerBox.style.display = "none";
+  if (countdownInterval) clearInterval(countdownInterval); targetTime = null; isCountUp = false; timerBox.style.display = "none";
   const now = new Date();
 
-  // 1. Time to Check-In
   if (data.status === "Not Checked In" && data.waveTime) {
     let waveD = parseHHMM(data.waveTime);
     if (waveD) {
       let openTime = addMinutes(waveD, -data.preBlock), closeTime = addMinutes(waveD, data.grace), reminderTime = addMinutes(waveD, -20); 
-      if (now >= reminderTime && now < waveD && !notifSent.attend) { sendAppNotification("Attendance Reminder", "Your wave time is approaching!"); notifSent.attend = true; }
+      if (now >= reminderTime && now < waveD && !notifSent.attend) { sendAppNotification("Attendance", "Wave time is approaching!"); notifSent.attend = true; }
       if (now < openTime) { timerBox.style.display = "block"; timerLabel.textContent = "Check-in Opens In"; targetTime = openTime; } 
       else if (now >= openTime && now <= closeTime) { timerBox.style.display = "block"; timerLabel.textContent = "Check-in CLOSES In"; timerLabel.style.color = "var(--red)"; targetTime = closeTime; }
     }
   }
-  // 2. Sent to Received SLA (Entry Timer)
   else if (data.status === "Sent to OP" && data.sentTime) {
     let sentD = parseHHMM(data.sentTime);
     if (sentD) {
-       let deadline = addMinutes(sentD, data.rushTimeout);
-       timerBox.style.display = "block";
-       if (now > deadline) {
-           timerLabel.textContent = "SLA Exceeded / Violation";
-           timerLabel.style.color = "var(--red)";
-           timerDisplay.style.color = "var(--red)";
-           timerDisplay.textContent = "TIME UP";
-       } else {
-           timerLabel.textContent = "Entry Deadline ("+data.rushTimeout+"m)";
-           timerLabel.style.color = "var(--orange)";
-           targetTime = deadline;
-       }
+       let deadline = addMinutes(sentD, data.rushTimeout); timerBox.style.display = "block";
+       if (now > deadline) { timerLabel.textContent = "SLA Exceeded"; timerLabel.style.color = "var(--red)"; timerDisplay.style.color = "var(--red)"; timerDisplay.textContent = "TIME UP"; } 
+       else { timerLabel.textContent = "Entry Deadline ("+data.rushTimeout+"m)"; timerLabel.style.color = "var(--orange)"; targetTime = deadline; }
     }
   }
-  // 3. Waiting Time Running (Minutes Waited)
   else if ((data.status === "Present" || data.status.includes("Late")) && data.checkInTime) {
     let checkInD = parseHHMM(data.checkInTime);
-    if (checkInD) {
-       timerBox.style.display = "block"; timerLabel.textContent = "Waiting Duration (Mins)"; timerLabel.style.color = "var(--orange)";
-       targetTime = checkInD; isCountUp = true;
-    }
+    if (checkInD) { timerBox.style.display = "block"; timerLabel.textContent = "Waiting Duration"; timerLabel.style.color = "var(--orange)"; targetTime = checkInD; isCountUp = true; }
   }
-  // 4. Auto OFD Countdown
   else if (data.status.includes("Received") && data.rushInTime && !data.ofdTime) {
     let rushD = parseHHMM(data.rushInTime);
-    if (rushD) {
-      timerBox.style.display = "block"; timerLabel.textContent = "Auto OFD (On Road) In"; timerLabel.style.color = "var(--green)";
-      targetTime = addMinutes(rushD, data.autoOfd); 
-    }
+    if (rushD) { timerBox.style.display = "block"; timerLabel.textContent = "Auto OFD In"; timerLabel.style.color = "var(--green)"; targetTime = addMinutes(rushD, data.autoOfd); }
   }
 
-  // Timer Execution
   if (targetTime) {
     countdownInterval = setInterval(() => {
       let curr = new Date(), diff = isCountUp ? (curr - targetTime) : (targetTime - curr);
       if (!isCountUp && diff <= 0) { timerDisplay.textContent = "00:00:00"; clearInterval(countdownInterval); fetchData(document.getElementById("da-id-input").value); return; }
-      
       let h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       let s = Math.floor((diff % (1000 * 60)) / 1000);
-      
-      timerDisplay.textContent = (isCountUp && h > 0) 
-        ? h + "h " + ("0" + m).slice(-2) + "m"
-        : ("0" + (isCountUp ? m : h)).slice(-2) + ":" + ("0" + (isCountUp ? s : m)).slice(-2) + (!isCountUp ? ":" + ("0" + s).slice(-2) : "");
+      timerDisplay.textContent = (isCountUp && h > 0) ? h + "h " + ("0" + m).slice(-2) + "m" : ("0" + (isCountUp ? m : h)).slice(-2) + ":" + ("0" + (isCountUp ? s : m)).slice(-2) + (!isCountUp ? ":" + ("0" + s).slice(-2) : "");
     }, 1000);
   }
 }
