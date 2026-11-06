@@ -103,7 +103,7 @@
   <div class="logo">RUSH PRO <span>DUD3</span></div>
   <div style="display:flex;align-items:center;">
     <select id="dsel" class="dsel"></select>
-    <span id="pill" class="pill off">OFFLINE</span>
+    <span id="pill" class="pill off">CONNECTING...</span>
   </div>
 </header>
 
@@ -215,7 +215,6 @@
         <button class="btn btn-red" id="btn-reset" style="padding:6px 10px">🔄 RESET DAY</button>
       </div>
       
-      <!-- RE-ADDED FOR LOCAL OVERRIDE -->
       <label style="font-size:11px;color:var(--muted)">🌐 Main Apps Script URL (Local Override)</label>
       <input type="text" id="s-api" class="inp" placeholder="Uses hardcoded link by default...">
       
@@ -253,12 +252,7 @@
 </nav>
 
 <script>
-if('serviceWorker' in navigator){
-  var swCode = "self.addEventListener('fetch', function(e) { e.respondWith(fetch(e.request).catch(function() { return new Response('Offline'); })); });";
-  var blob = new Blob([swCode], {type: 'application/javascript'});
-  navigator.serviceWorker.register(URL.createObjectURL(blob));
-}
-
+// PWA Manifest Definition
 var mj = {
   "name": "Rush PRO", "short_name": "Rush", "display": "standalone", "start_url": ".",
   "background_color": "#131A22", "theme_color": "#FF9900",
@@ -269,7 +263,7 @@ var mj = {
 };
 document.getElementById("manifest-link").href=URL.createObjectURL(new Blob([JSON.stringify(mj)],{type:"application/json"}));
 
-// HARDCODED DEFAULTS (Ensures the app always works even if inputs are empty)
+// HARDCODED API - PREVENTS MOBILE CACHE ERRORS
 var API="https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec";
 var SHEET="https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit";
 
@@ -288,7 +282,7 @@ function minDiff(t1, t2) {var a = toMin(t1), b = toMin(t2); if (a === null || b 
 
 function clearMemoryAndReload() {
   localStorage.removeItem(SK);
-  alert("Memory Cleared. The app will now reload.");
+  alert("Memory Cleared. The app will now reload cleanly.");
   window.location.reload();
 }
 
@@ -297,11 +291,12 @@ function banner(msg,v){var el=document.getElementById("toast-msg");document.getE
 
 function save(){try{var o=JSON.parse(JSON.stringify(S));o.sel=Array.from(S.sel);localStorage.setItem(SK,JSON.stringify(o));}catch(e){}}
 
-// LOAD LOCAL OVERRIDES IF THEY EXIST
 function load(){
   try{var r=localStorage.getItem(SK);if(r){var p=JSON.parse(r);for(var k in p)if(k!=="sel")S[k]=p[k];S.sel=new Set(p.sel||[]);}}catch(e){}
-  if(!S.api) S.api = API; 
-  if(!S.sheet) S.sheet = SHEET;
+  
+  // FORCE HARDCODED LINKS IF LOCAL STORAGE IS EMPTY OR CORRUPT
+  if (!S.api) S.api = API; 
+  if (!S.sheet) S.sheet = SHEET;
 }
 
 function cfgUI(){
@@ -342,10 +337,21 @@ function rebuild(){
 
 function callApi(action,payload){
   var pill=document.getElementById("pill");
-  if(action==="rosterFull"||action==="saveSettings"||action==="resetDay"){pill.textContent="...";pill.className="pill off";}
+  if(action==="rosterFull"||action==="saveSettings"||action==="resetDay"){pill.textContent="CONNECTING...";pill.className="pill off";}
+  
+  if(S.api.indexOf("AKfycbxBhR1jYkh32EBMHBrr1-XhonEkynaU1b04-mV_OR8q3x4pGlOysDmw20xMKwyG-Z1KjQ") > -1) {
+      banner("ERROR: You saved the DRIVER API link here! Please clear memory in Settings.", "err");
+      pill.textContent="API ERROR";
+      return;
+  }
+  
   if(!payload)payload={}; payload.action=action;payload.sheetUrl=S.sheet;payload.dayTab=S.day;
   
-  fetch(S.api,{method:"POST",body:JSON.stringify(payload)})
+  fetch(S.api, {
+      method:"POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body:JSON.stringify(payload)
+  })
   .then(function(r){if(!r.ok) throw new Error("API Fails"); return r.json();})
   .then(function(d){
     var splash = document.getElementById("splash");
@@ -375,7 +381,6 @@ function callApi(action,payload){
       });
       manageBreakQueues(); rebuild(); render();
     }
-    
     else if(action==="sendDA" || action==="removeFromWaiting"){
       var ids=payload.ids||[];
       S.batches.forEach(function(b){b.members.forEach(function(m){if(ids.indexOf(m.daId)>-1&&!m.sent)m.sent=true;});if(b.members.every(function(m){return m.sent}))b.allSent=true});
@@ -387,11 +392,7 @@ function callApi(action,payload){
          switchTab("p-wait");
       } else {
          var lc=S.roster.find(function(x){return x.daId===payload.daId});
-         if(lc) {
-             lc.attendanceOnlyStatus = payload.sentStatus;
-             lc.scanTime = now(); 
-             addToBatch(lc);
-         }
+         if(lc) { lc.attendanceOnlyStatus = payload.sentStatus; lc.scanTime = now(); addToBatch(lc); }
       }
       render();
     }
@@ -408,7 +409,13 @@ function callApi(action,payload){
       if(lc)lc.status=r.violation?"Received (!)":"Received";
       render();
     }
-  }).catch(function(err){ pill.className="pill off";pill.textContent="API ERROR"; });
+  }).catch(function(err){ 
+    pill.className="pill off";
+    pill.textContent="API ERROR"; 
+    banner("Connection Error. Check deployment permissions.", "err");
+    var splash = document.getElementById("splash");
+    if (splash) { splash.style.opacity = "0"; setTimeout(()=>splash.remove(), 600); }
+  });
 }
 
 function switchTab(id){
@@ -489,6 +496,7 @@ function render(){
   if(timeouts.length>0) { tmtBan.classList.add("active"); document.getElementById("timeoutList").innerHTML = timeouts.map(function(v){ return '<span class="da-chip" data-id="'+v.daId+'">'+v.daName+' <b>('+v.elapsed+'m)</b></span>'; }).join(""); } else { tmtBan.classList.remove("active"); }
 
   var ds=document.getElementById("dsel");
+  // Keep the selected date value correctly populated
   ds.innerHTML=S.tabs.map(function(t){return'<option value="'+t+'"'+(t===S.day?" selected":"")+'>'+t+'</option>'}).join("");
 
   document.getElementById("sel-abs").innerHTML='<option value="">-- Select Absent DA --</option>'+S.roster.filter(function(r){return r.attendanceOnlyStatus==="Absent"}).map(function(d){return'<option value="'+d.daId+'">'+d.daName+'</option>'}).join("");
@@ -534,6 +542,12 @@ window.addEventListener("DOMContentLoaded",function(){
   load(); // LOAD LOCAL OVERRIDES FIRST
   cfgUI(); 
   
+  // Set date dropdown immediately so it's not blank
+  S.day = todayTab();
+  var ds=document.getElementById("dsel");
+  if(S.tabs.indexOf(S.day)===-1)S.tabs.push(S.day);
+  ds.innerHTML=S.tabs.map(function(t){return'<option value="'+t+'"'+(t===S.day?" selected":"")+'>'+t+'</option>'}).join("");
+  
   document.querySelectorAll(".ni").forEach(function(b){b.onclick=function(){
     var p=b.getAttribute("data-p");
     if(p==="p-set"&&!admin){
@@ -550,8 +564,8 @@ window.addEventListener("DOMContentLoaded",function(){
     S.api=document.getElementById("s-api").value.trim() || API;
     S.sheet=document.getElementById("s-sheet").value.trim() || SHEET;
     S.cfg.preWaveBlockMin=Number(document.getElementById("s-pre").value); S.cfg.waveGraceMin=Number(document.getElementById("s-grace").value); S.cfg.batchSize=Number(document.getElementById("s-batch").value); S.cfg.rushTimeoutMin=Number(document.getElementById("s-time").value); S.cfg.autoOfdMin=Number(document.getElementById("s-auto-ofd").value); S.cfg.waitingLockMin=Number(document.getElementById("s-wait-lock").value); S.cfg.adminPin=document.getElementById("s-pin").value.trim(); 
-    save(); // SAVES THE LOCAL OVERRIDES (API/SHEET) TO DEVICE MEMORY
-    callApi("saveSettings",{settings:S.cfg}); banner("Settings Saved","ok");
+    save(); 
+    callApi("saveSettings",{settings:S.cfg}); banner("Global Settings Saved","ok");
   };
 
   document.getElementById("btn-send").onclick=function(){
