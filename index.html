@@ -17,18 +17,23 @@
     #splash{position:fixed;inset:0;width:100%;height:100%;background:radial-gradient(circle at 50% 30%, #1B2430, #0d1117 70%);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.6s ease;}
     #splash h2{color:#fff;font-weight:900;font-size:32px;margin-bottom:6px;letter-spacing:2px;text-shadow:0 0 10px rgba(255,153,0,0.5);}
     #splash h2 span{color:var(--orange);}
-    .smile-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:34px;}
-    .smile-svg{width:120px;height:34px;margin-top:2px;}
-    .smile-path{stroke:var(--orange);stroke-width:7;fill:none;stroke-linecap:round;stroke-dasharray:260;stroke-dashoffset:260;animation:drawSmile 2.5s forwards ease-in-out;}
-    .smile-arrow{fill:var(--orange);opacity:0;animation:popArrow 0.2s 2.2s forwards;}
+    
+    .smile-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:40px;}
+    .smile-svg{width:140px;height:40px;margin-top:2px;}
+    .smile-path{stroke:var(--orange);stroke-width:6;fill:none;stroke-linecap:round;stroke-dasharray:260;stroke-dashoffset:260;animation:drawSmile 1.5s forwards ease-in-out;}
+    .smile-arrow{fill:var(--orange);opacity:0;animation:popArrow 0.2s 1.3s forwards;}
     @keyframes drawSmile{to{stroke-dashoffset:0}}
     @keyframes popArrow{to{opacity:1}}
     
-    .road-box{width:280px;height:4px;background:#354558;position:relative;border-radius:2px;overflow:visible;}
-    .road-lines{position:absolute;top:50%;left:0;width:100%;height:2px;background:repeating-linear-gradient(90deg, transparent, transparent 10px, #fff 10px, #fff 20px);transform:translateY(-50%);opacity:0.3;animation:moveRoad 1s linear infinite;}
+    .road-box{width:100%;max-width:320px;height:4px;background:#354558;position:relative;border-radius:2px;overflow:visible;}
+    .road-lines{position:absolute;top:50%;left:0;width:100%;height:2px;background:repeating-linear-gradient(90deg, transparent, transparent 10px, #fff 10px, #fff 20px);transform:translateY(-50%);opacity:0.3;animation:moveRoad 0.5s linear infinite;}
     @keyframes moveRoad{from{background-position:0 0;}to{background-position:-30px 0;}}
-    .bike{position:absolute;bottom:5px;left:-10%;font-size:38px;transform:translateX(-50%);animation:rideBike 2.5s forwards cubic-bezier(0.4, 0, 0.2, 1);}
-    @keyframes rideBike{0%{left:-10%;transform:translateX(-50%) rotate(-5deg);}50%{left:50%;transform:translateX(-50%) rotate(0deg);}100%{left:110%;transform:translateX(-50%) rotate(5deg);}}
+    
+    /* Box Bike Animation */
+    .bike-container{position:absolute;bottom:0px;left:-20%;transform:translateX(-50%);animation:rideBike 1.5s forwards cubic-bezier(0.4, 0, 0.2, 1); display:flex;align-items:center;}
+    .bike-icon{font-size:42px;}
+    .bike-box{font-size:20px;margin-bottom:15px;margin-right:-8px;z-index:2;}
+    @keyframes rideBike{0%{left:-20%;transform:translateX(-50%) rotate(-5deg);}50%{left:50%;transform:translateX(-50%) rotate(0deg);}100%{left:120%;transform:translateX(-50%) rotate(5deg);}}
 
     #toast-msg{position:fixed;top:8px;left:50%;transform:translateX(-50%) translateY(-150%);width:calc(100% - 24px);max-width:540px;padding:12px 16px;border-radius:8px;font-weight:800;font-size:13px;display:flex;justify-content:space-between;align-items:center;z-index:10000;box-shadow:0 8px 24px rgba(0,0,0,0.6);transition:transform 0.3s;}
     #toast-msg.show{transform:translateX(-50%) translateY(0);}
@@ -54,24 +59,11 @@
     .scroll-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
     .crd{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:12px;}
     .crd-t{font-size:12px;font-weight:800;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
-
-    .vio-banner { display: none; padding: 12px; margin-bottom: 12px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-    .vio-banner.active { display: block; }
-    .bypass-ban { background: rgba(255, 152, 0, 0.15); border-left: 4px solid var(--orange); }
-    .timeout-ban { background: rgba(255, 59, 48, 0.15); border-left: 4px solid var(--red); }
-    .ban-hdr { display: flex; justify-content: space-between; align-items: center; font-weight: 900; margin-bottom: 6px; font-size: 13px; }
-    .bypass-ban .ban-hdr { color: var(--orange); }
-    .timeout-ban .ban-hdr { color: var(--red); }
-    .ban-msg { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
-    .da-chip { display: inline-block; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; margin: 2px; }
-    .bypass-ban .da-chip { background: rgba(255, 152, 0, 0.2); color: var(--orange); }
-    .timeout-ban .da-chip { background: rgba(255, 59, 48, 0.2); color: var(--red); }
-    .dismiss-btn { background: none; border: none; font-size: 16px; cursor: pointer; color: var(--muted); }
-
+    
     .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px;}
     .kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:7px 4px;text-align:center;}
     .kv{font-size:17px;font-weight:900;}.kl{font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:3px;font-weight:bold;}
-    
+
     .btn-big{background:var(--orange);color:#000;font-size:15px;font-weight:900;padding:14px;border-radius:8px;width:100%;margin-bottom:12px;border:none;cursor:pointer;box-shadow:0 4px 15px rgba(255,153,0,0.25);}
     .btn-big:active{transform:scale(0.97);}
     .inp{width:100%;background:var(--bg);color:#fff;border:1px solid var(--border);border-radius:7px;padding:12px;font-size:14px;margin-bottom:8px;}
@@ -79,28 +71,30 @@
     .btn-green{background:var(--green);color:#042012;}
     .btn-orange{background:var(--orange);color:#000;}
     .btn-red{background:rgba(255,59,48,0.18);color:var(--red);border:1px solid var(--red);}
-    
+
     .dlist{display:flex;flex-direction:column;gap:6px;}
     .di{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px;display:flex;justify-content:space-between;align-items:center;}
-    .dn{font-weight:700;font-size:13px;}.ds{font-size:11px;color:var(--muted);margin-top:3px;}
-    
+    .dn{font-weight:700;font-size:13px;}
+    .ds{font-size:11px;color:var(--muted);margin-top:3px;}
+
     .cam{display:none;background:#000;border-radius:8px;overflow:hidden;margin-bottom:10px;}
     .sbox{background:var(--bg);border:1px solid var(--border);border-radius:7px;margin-top:-4px;max-height:190px;overflow-y:auto;display:none;margin-bottom:10px;}
     .si{padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px;cursor:pointer;}
-    
+
     nav.bnav{position:fixed;bottom:0;left:0;right:0;height:var(--nav);background:var(--card);border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(6,1fr);z-index:900;}
     .ni{background:none;border:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:9px;font-weight:700;cursor:pointer;}
     .ni span:first-child{font-size:18px;}.ni.on{color:var(--orange);}
-    
+
     .rush-inp{width:100%;padding:16px;font-size:22px;font-weight:900;text-align:center;letter-spacing:2px;border:2px solid var(--green);border-radius:10px;background:var(--bg);color:var(--green);margin-bottom:8px;}
     .rush-inp:focus{border-color:#00E676;box-shadow:0 0 20px rgba(0,200,83,0.3);outline:none;}
-    .pulse{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px;animation:pul 1.5s infinite;}
-    @keyframes pul{0%,100%{opacity:1;}50%{opacity:0.3;}}
+    
     .batch-card{border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:10px;background:var(--bg);}
     .batch-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
     .batch-name{font-size:13px;font-weight:900;color:var(--orange);}
     .wait-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;}
     .wait-actions .btn{width:100%;}
+    
+    .to-early-ban{background:rgba(255,179,0,0.15);border-left:4px solid var(--warn);padding:12px;border-radius:8px;margin-bottom:12px;display:none;justify-content:space-between;align-items:center;}
   </style>
 </head>
 <body>
@@ -108,12 +102,9 @@
 <div id="splash">
   <h2>RUSH PRO <span>APP</span></h2>
   <div class="smile-wrap">
-    <svg class="smile-svg" viewBox="0 0 120 34">
-      <path class="smile-path" d="M12 10 C40 32, 80 32, 104 12"></path>
-      <polygon class="smile-arrow" points="104,12 92,10 100,22"></polygon>
-    </svg>
+    <svg class="smile-svg" viewBox="0 0 120 34"><path class="smile-path" d="M12 10 C40 32, 80 32, 104 12"></path><polygon class="smile-arrow" points="104,12 92,10 100,22"></polygon></svg>
   </div>
-  <div class="road-box"><div class="road-lines"></div><div class="bike">🛵💨</div></div>
+  <div class="road-box"><div class="road-lines"></div><div class="bike-container"><div class="bike-box">📦</div><div class="bike-icon">🏍️</div></div></div>
 </div>
 
 <div id="toast-msg"><span id="b-txt"></span><button style="background:none;border:none;color:#fff;font-weight:bold;font-size:18px;cursor:pointer;" onclick="document.getElementById('toast-msg').className=''">x</button></div>
@@ -146,17 +137,20 @@
   <section id="p-att" class="pane on">
     <div class="crd sticky-card">
       <div class="crd-t">📷 DA Attendance Scan</div>
+      <div id="early-ban" class="to-early-ban"><div><b style="color:var(--warn)">Too Early!</b> <span id="early-txt" style="font-size:11px;color:var(--white);"></span></div><button onclick="document.getElementById('early-ban').style.display='none'" style="background:none;border:none;color:#fff;font-size:16px;">✕</button></div>
       <button class="btn-big" id="cam-att-btn">📸 START SCANNER</button>
       <div id="cam-att" class="cam"><div id="qr-att"></div></div>
       <input type="text" id="inp-att" class="inp" placeholder="Scan or type DA Name / ID..." autocomplete="off">
       <div id="sug-att" class="sbox"></div>
       <div style="font-size:10px;text-align:center;color:var(--warn);margin-top:4px;">First scan moves DA straight to Waiting Batch</div>
     </div>
+    
     <div class="crd">
       <div class="crd-t">🕒 Recent Check-Ins (Active Wave)</div>
       <div id="recent-att-list" class="scroll-list dlist"></div>
       <div style="font-size:10px;text-align:center;color:var(--muted);margin-top:8px;">* Auto-removes after 30 minutes</div>
     </div>
+    
     <div class="crd" style="border-color:var(--blue)">
       <div class="crd-t" style="color:var(--blue)">🔁 Replacement DA (From RushData)</div>
       <input type="text" id="inp-repl" class="inp" placeholder="Search DA Name / ID for Replacement" autocomplete="off">
@@ -203,23 +197,10 @@
 
   <section id="p-rush" class="pane">
     <div class="crd sticky-card" style="border-color:var(--green)">
-      <div style="text-align:center;margin-bottom:10px;">
-        <span class="pulse"></span><span style="font-size:11px;color:var(--green);font-weight:800;">RUSH LM QUEUE LISTENER</span>
-      </div>
+      <div style="text-align:center;margin-bottom:10px;"><span style="font-size:11px;color:var(--green);font-weight:800;">RUSH LM QUEUE LISTENER</span></div>
       <button class="btn-big" id="cam-rush-btn" style="background:var(--green);color:#fff;margin-bottom:10px;">📸 MOBILE CAMERA SCAN IN</button>
       <div id="cam-rush" class="cam"><div id="qr-rush"></div></div>
       <input type="text" id="rush-inp" class="rush-inp" placeholder="✅ SCAN IN (Receive)..." autocomplete="off">
-    </div>
-
-    <div id="bypassBanner" class="vio-banner bypass-ban">
-      <div class="ban-hdr"><span>🚨 DA Not Dispatched via YM</span><button class="dismiss-btn" onclick="dismissBypass()">✕</button></div>
-      <div class="ban-msg">DA(s) scanned into Rush Queue but were NOT sent by YM.</div>
-      <div id="bypassList"></div>
-    </div>
-    <div id="timeoutBanner" class="vio-banner timeout-ban">
-      <div class="ban-hdr"><span>⏰ SLA EXCEEDED</span><button class="dismiss-btn" onclick="dismissTimeout()">✕</button></div>
-      <div class="ban-msg">DA(s) were dispatched but did NOT scan in time limit.</div>
-      <div id="timeoutList"></div>
     </div>
     <div class="crd" style="border-color:var(--green)">
       <div class="crd-t">✅ Received (Auto-removes on OFD)</div>
@@ -233,13 +214,7 @@
         <div class="crd-t" style="margin:0">⚙️ Global Settings</div>
         <button class="btn btn-red" id="btn-reset" style="padding:6px 10px">🔄 RESET DAY</button>
       </div>
-
-      <label style="font-size:11px;color:var(--muted)">🌐 Main Apps Script URL (Cloud API)</label>
-      <input type="text" id="s-api" class="inp" placeholder="Paste your Apps Script /exec link...">
-      <label style="font-size:11px;color:var(--muted)">📊 Google Sheet URL (Cloud DB)</label>
-      <input type="text" id="s-sheet" class="inp" placeholder="Paste your Google Sheet link...">
-
-      <div style="font-size:10px;color:var(--green);margin-bottom:12px;">Global app settings save to the Sheet. API/Sheet links save locally on this device.</div>
+      <div style="font-size:10px;color:var(--green);margin-bottom:12px;">Global app settings save to Cloud.</div>
       <div style="display:flex;gap:10px;margin-bottom:10px;">
         <div style="flex:1"><label style="font-size:11px;color:var(--muted)">🛑 Pre-Wave Block (m)</label><input type="number" id="s-pre" class="inp"></div>
         <div style="flex:1"><label style="font-size:11px;color:var(--muted)">⏳ Wave Grace (m)</label><input type="number" id="s-grace" class="inp"></div>
@@ -253,9 +228,7 @@
         <div style="flex:1"><label style="font-size:11px;color:var(--muted)">🔒 Waiting Lock (m)</label><input type="number" id="s-wait-lock" class="inp"></div>
       </div>
       <div style="margin-bottom:15px;"><label style="font-size:11px;color:var(--muted)">🔑 Admin PIN</label><input type="text" id="s-pin" class="inp"></div>
-      
       <button class="btn" id="btn-save" style="width:100%;background:var(--orange);color:#000;margin-bottom:10px;">💾 Save Global Settings</button>
-      <button class="btn" onclick="clearMemoryAndReload()" style="width:100%;background:#354558;color:#fff;font-size:12px;">🗑️ Clear Local App Cache</button>
     </div>
   </section>
 </main>
@@ -280,6 +253,12 @@ var mj = {
 };
 document.getElementById("manifest-link").href=URL.createObjectURL(new Blob([JSON.stringify(mj)],{type:"application/json"}));
 
+if('serviceWorker' in navigator){
+  var swCode = "self.addEventListener('install',function(e){self.skipWaiting();}); self.addEventListener('fetch', function(e) { if(e.request.url.includes('script.google.com')) return; e.respondWith(fetch(e.request).catch(function() { return new Response('Offline'); })); });";
+  var blob = new Blob([swCode], {type: 'application/javascript'});
+  try { navigator.serviceWorker.register(URL.createObjectURL(blob)); } catch(e){}
+}
+
 const API="https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec";
 const SHEET="https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit";
 
@@ -295,9 +274,7 @@ var LS=(function(){
 
 var admin=!(/Mobi|Android|iPhone/i.test(navigator.userAgent));
 var SK="DUD3V2_MASTER";
-var S={api:API,sheet:SHEET,day:todayTab(),tabs:recentTabs(),cfg:{waveGraceMin:10,preWaveBlockMin:30,batchSize:25,rushTimeoutMin:20,autoOfdMin:30,waitingLockMin:30,adminPin:"1234",apiUrl:"",sheetUrl:""},roster:[],globalBatches:[],breaks:[],received:[],allDAs:[],sel:new Set(),violations:[]};
-
-var disBypass=new Set(), disTimeout=new Set();
+var S={api:API,sheet:SHEET,day:todayTab(),tabs:recentTabs(),cfg:{waveGraceMin:10,preWaveBlockMin:30,batchSize:25,rushTimeoutMin:20,autoOfdMin:30,waitingLockMin:30,adminPin:"1234"},roster:[],globalBatches:[],breaks:[],received:[],allDAs:[],sel:new Set(),violations:[]};
 
 function todayTab(){var d=new Date(),m=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];return("0"+d.getDate()).slice(-2)+" "+m[d.getMonth()];}
 function recentTabs(){var t=[],m=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];for(var o=-2;o<=2;o++){var d=new Date();d.setDate(d.getDate()+o);t.push(("0"+d.getDate()).slice(-2)+" "+m[d.getMonth()]);}return t;}
@@ -313,23 +290,16 @@ function toMin(s){
   if (!a && h>=1 && h<=7) h+=12; 
   return h*60+n;
 }
+function sheetTimeToMin(s){return toMin(s);} 
 function minDiff(t1, t2) {var a = toMin(t1), b = toMin(t2); if (a === null || b === null) return 0; return Math.max(0, b - a);}
-
-function clearMemoryAndReload() {
-  LS.removeItem(SK);
-  alert("Memory Cleared! The app will now reload.");
-  window.location.reload();
-}
 
 var bt=null;
 function banner(msg,v){var el=document.getElementById("toast-msg");document.getElementById("b-txt").textContent=msg;el.className="show b-"+(v||"ok");if(bt)clearTimeout(bt);bt=setTimeout(function(){el.className=""},4000);}
 
-function save(){try{var o=JSON.parse(JSON.stringify(S));o.sel=Array.from(S.sel);LS.setItem(SK,JSON.stringify(o));}catch(e){}}
-
 function load(){
-  try{var r=LS.getItem(SK);if(r){var p=JSON.parse(r);for(var k in p)if(k!=="sel")S[k]=p[k];S.sel=new Set(p.sel||[]);}}catch(e){}
-  if (!S.api || S.api === "") S.api = API;
-  if (!S.sheet || S.sheet === "") S.sheet = SHEET;
+  S.api = API; S.sheet = SHEET;
+  var savedPin = LS.getItem("dud3_pin"); if(savedPin) S.cfg.adminPin = savedPin;
+  var savedYM = LS.getItem("dud3_ym"); if(savedYM) document.getElementById("inp-ym").value = savedYM;
 }
 
 function cfgUI(){
@@ -337,18 +307,14 @@ function cfgUI(){
   document.getElementById("s-batch").value=S.cfg.batchSize; document.getElementById("s-time").value=S.cfg.rushTimeoutMin;
   document.getElementById("s-auto-ofd").value=S.cfg.autoOfdMin; document.getElementById("s-wait-lock").value=S.cfg.waitingLockMin;
   document.getElementById("s-pin").value=S.cfg.adminPin;
-  document.getElementById("s-api").value = S.cfg.apiUrl || S.api;
-  document.getElementById("s-sheet").value = S.cfg.sheetUrl || S.sheet;
 }
 
-// 🟢 STATIC BATCH RENDERER (Builds batches strictly from Cloud Data)
+// 🟢 STATIC GLOBAL BATCH LOGIC
 function rebuildGlobalBatches() {
   var waiters = S.roster.filter(function(r) { return r.status === "Waiting" && !r.isOnBreak; });
-  // First Come First In Sort
   waiters.sort(function(a, b) { return toMin(a.waitTime || "23:59") - toMin(b.waitTime || "23:59"); });
   
-  var batchMap = {};
-  S.globalBatches = [];
+  var batchMap = {}; S.globalBatches = [];
   
   waiters.forEach(function(w) {
       var bn = w.batchName || "Batch 1"; 
@@ -371,7 +337,6 @@ function rebuild(){
   rebuildGlobalBatches();
 }
 
-// 🟢 ALL ACTIONS SYNC IMMEDIATELY VIA ROSTER RESPONSE (No fake updates)
 function callApi(action,payload){
   var pill=document.getElementById("pill");
   if(action==="rosterFull"||action==="saveSettings"||action==="resetDay"){pill.textContent="CONNECTING...";pill.className="pill off";}
@@ -382,7 +347,7 @@ function callApi(action,payload){
   .then(function(r){if(!r.ok) throw new Error("API Fails"); return r.json();})
   .then(function(d){
     var splash = document.getElementById("splash");
-    if (splash) { splash.style.opacity = "0"; setTimeout(function(){splash.remove()}, 600); }
+    if (splash) { setTimeout(function(){splash.style.opacity = "0"; setTimeout(function(){splash.remove()},600)}, 2500); }
     if(!d||!d.success){ pill.className="pill off";pill.textContent="API ERROR"; if(d&&d.errors)banner(d.errors[0],"err");return; }
 
     pill.className="pill on";pill.textContent="SYNCED";
@@ -390,25 +355,26 @@ function callApi(action,payload){
     if(d.violations) S.violations = d.violations;
     if(d.allDAs) S.allDAs = d.allDAs;
     
-    // UNIVERSAL ROSTER SYNC (Guarantees all devices see exactly the same data)
+    // UNIVERSAL ROSTER SYNC
     if(d.roster) {
         S.roster = d.roster;
-        if(action==="resetDay"){ S.sel.clear(); disBypass.clear(); disTimeout.clear(); }
+        if(action==="resetDay"){ S.sel.clear(); }
         rebuild(); render();
     }
 
-    // Notifications
     if(action==="recordCheckIn"){
       if(d.alreadyMarked){ banner((d.daName||"DA")+" already marked attendance! Use Waiting tab.","warn"); switchTab("p-wait"); } 
-      else { banner("Successfully Checked In!","ok"); }
+      else { banner("Successfully Checked In & Queued!","ok"); callApi("syncOnly"); }
     }
-    else if(action==="addToWaiting"){ banner("Successfully Added to Waiting!","ok"); }
+    else if(action==="addToWaiting"){ banner("Successfully Added to Waiting!","ok"); callApi("syncOnly"); }
     else if(action==="sendDA" || action==="removeFromWaiting"){
       S.sel.clear(); banner(action==="sendDA" ? payload.ids.length+" DA(s) sent" : payload.ids.length+" DA(s) removed","ok"); 
+      callApi("syncOnly");
     }
     else if(action==="rushScanIn"&&d.result){
       if(d.result.violation) banner(d.result.violation.message,"err"); 
       else banner(d.result.daName+" → RECEIVED SUCCESS","ok");
+      callApi("syncOnly");
     }
   }).catch(function(err){
       pill.className="pill off"; pill.textContent="API ERROR"; 
@@ -429,7 +395,7 @@ function checkIn(token,isWaiting){
   var da=S.roster.find(function(r){return(r.daId&&r.daId.toLowerCase().indexOf(c)>-1)||(r.repDaId&&r.repDaId.toLowerCase().indexOf(c)>-1)||(r.daName&&r.daName.toLowerCase().indexOf(c)>-1)});
   if(!da)return banner('DA Not Found: "'+token+'"',"err");
 
-  // RULE: Block all scan excluding attendance if DA is on break
+  // Block ALL scans except attendance during break
   if (da.isOnBreak && isWaiting) return banner("ERROR: DA is on break! ("+da.breakInfo+")", "err");
   
   if(!isWaiting && da.attendanceOnlyStatus && da.attendanceOnlyStatus!=="Absent"){ banner(da.daName+" already marked! Use Waiting tab.","warn"); switchTab("p-wait"); return; }
@@ -437,12 +403,20 @@ function checkIn(token,isWaiting){
   var st="Present";
   if(!isWaiting){
      var cur=(new Date()).getHours()*60+(new Date()).getMinutes();
-     var w=toMin(da.waveTime), pre=Number(S.cfg.preWaveBlockMin)||30,gr=Number(S.cfg.waveGraceMin)||10;
-     if(w!==null){if(cur<(w-pre))return banner("Too Early! Wave: "+da.waveTime,"warn");if(cur>(w+gr)||da.attendanceOnlyStatus==="Absent")st="Late Arrival";}
+     var w=sheetTimeToMin(da.waveTime), pre=Number(S.cfg.preWaveBlockMin)||30,gr=Number(S.cfg.waveGraceMin)||10;
+     if(w!==null){
+         if(cur<(w-pre)){
+             document.getElementById('early-txt').textContent = "Wave is at " + da.waveTime;
+             var eBan = document.getElementById('early-ban');
+             eBan.style.display="flex";
+             setTimeout(function(){eBan.style.display="none"}, 8000);
+             return;
+         }
+         if(cur>(w+gr)||da.attendanceOnlyStatus==="Absent") st="Late Arrival";
+     }
   }
 
-  banner((isWaiting?"Saving...":st)+": "+da.daName,"ok");
-  // Sends to backend. Backend assigns Batch and returns updated roster for UI.
+  banner("Saving...: "+da.daName,"ok");
   callApi(isWaiting?"addToWaiting":"recordCheckIn",{daId:da.daId,daName:da.daName,sentStatus:st,isWaiting:isWaiting});
 }
 
@@ -464,7 +438,7 @@ function sendSelected(){
 function sendFullBatch(){
   var ym=getYM(); if(!ym)return banner("Enter YM name first!","warn");
   if(!S.globalBatches.length)return banner("No batch to send","warn");
-  var target = S.globalBatches[0]; // Always send the oldest batch (Batch 1)
+  var target = S.globalBatches[0]; // Always send Batch 1
   var ids=target.members.map(function(m){return m.daId});
   callApi("sendDA",{ids:ids,marshalName:ym,batchName:target.name});
 }
@@ -474,9 +448,6 @@ function removeSelected(){
   if(!ids.length)return banner("Select DAs to remove","warn");
   if(confirm("Remove "+ids.length+" DA(s) from Waiting?")) callApi("removeFromWaiting",{ids:ids});
 }
-
-function dismissBypass() { var chips = document.querySelectorAll('#bypassList .da-chip'); chips.forEach(function(c){ disBypass.add(c.getAttribute('data-id')); callApi("resolveEvent", {daId: c.getAttribute('data-id'), type: 'bypass'}); }); document.getElementById('bypassBanner').classList.remove('active'); }
-function dismissTimeout() { var chips = document.querySelectorAll('#timeoutList .da-chip'); chips.forEach(function(c){ disTimeout.add(c.getAttribute('data-id')); callApi("resolveEvent", {daId: c.getAttribute('data-id'), type: 'timeout'}); }); document.getElementById('timeoutBanner').classList.remove('active'); }
 
 function render(){
   var cP=0,cL=0,cR=0,cA=0,cW=0, cSent=0;
@@ -498,13 +469,6 @@ function render(){
   document.getElementById("recent-att-list").innerHTML = recentAtt.length ? recentAtt.map(function(p){
       return '<div class="di" style="padding:8px;border-left:4px solid var(--green)"><div><div class="dn">'+p.daName+'</div><div class="ds">Wave: '+p.waveTime+' · In: '+p.scanTime+'</div></div><span style="color:var(--green);font-weight:800;font-size:11px">'+p.attendanceOnlyStatus+'</span></div>';
   }).join("") : '<div style="text-align:center;color:var(--muted);padding:20px;font-size:12px">No recent check-ins</div>';
-
-  var bypass=[], timeouts=[];
-  if(S.violations) { S.violations.forEach(function(v){ if(v.type==="BYPASS" && !disBypass.has(v.daId)) bypass.push(v); if(v.type==="TIMEOUT" && !disTimeout.has(v.daId)) timeouts.push(v); }); }
-
-  var bypBan=document.getElementById("bypassBanner"), tmtBan=document.getElementById("timeoutBanner");
-  if(bypass.length>0) { bypBan.classList.add("active"); document.getElementById("bypassList").innerHTML = bypass.map(function(v){ return '<span class="da-chip" data-id="'+v.daId+'">'+v.daName+'</span>'; }).join(""); } else { bypBan.classList.remove("active"); }
-  if(timeouts.length>0) { tmtBan.classList.add("active"); document.getElementById("timeoutList").innerHTML = timeouts.map(function(v){ return '<span class="da-chip" data-id="'+v.daId+'">'+v.daName+' <b>('+v.elapsed+'m)</b></span>'; }).join(""); } else { tmtBan.classList.remove("active"); }
 
   var ds=document.getElementById("dsel");
   ds.innerHTML=S.tabs.map(function(t){return'<option value="'+t+'"'+(t===S.day?" selected":"")+'>'+t+'</option>'}).join("");
@@ -559,9 +523,6 @@ window.addEventListener("DOMContentLoaded",function(){
   ds.innerHTML=S.tabs.map(function(t){return'<option value="'+t+'"'+(t===S.day?" selected":"")+'>'+t+'</option>'}).join("");
   document.getElementById("dsel").value = S.day;
 
-  var savedYM = LS.getItem("dud3_ym"); if(savedYM) document.getElementById("inp-ym").value = savedYM;
-  var savedPin = LS.getItem("dud3_pin"); if(savedPin) S.cfg.adminPin = savedPin;
-
   document.querySelectorAll(".ni").forEach(function(b){b.onclick=function(){
     var p=b.getAttribute("data-p");
     if(p==="p-set"&&!admin){
@@ -575,17 +536,14 @@ window.addEventListener("DOMContentLoaded",function(){
   document.getElementById("dsel").onchange=function(e){S.day=e.target.value;S.batches=[];S.breaks=[];S.received=[];callApi("rosterFull")};
   document.getElementById("btn-reset").onclick=function(){if(confirm("Reset for new day?")){S.day=todayTab();callApi("resetDay");banner("Reset done","ok")}};
   document.getElementById("btn-save").onclick=function(){
-    var newApi = document.getElementById("s-api").value.trim();
-    var newSheet = document.getElementById("s-sheet").value.trim();
-
     S.cfg.preWaveBlockMin=Number(document.getElementById("s-pre").value); S.cfg.waveGraceMin=Number(document.getElementById("s-grace").value); S.cfg.batchSize=Number(document.getElementById("s-batch").value); S.cfg.rushTimeoutMin=Number(document.getElementById("s-time").value); S.cfg.autoOfdMin=Number(document.getElementById("s-auto-ofd").value); S.cfg.waitingLockMin=Number(document.getElementById("s-wait-lock").value); S.cfg.adminPin=document.getElementById("s-pin").value.trim();
-
-    S.cfg.apiUrl = newApi; S.cfg.sheetUrl = newSheet;
-    S.api = newApi || API; S.sheet = newSheet || SHEET;
-
-    save();
+    LS.setItem("dud3_pin", S.cfg.adminPin);
     callApi("saveSettings",{settings:S.cfg}); banner("Global Settings Saved","ok");
   };
+
+  document.getElementById("btn-send-full").onclick=sendFullBatch;
+  document.getElementById("btn-send-sel").onclick=sendSelected;
+  document.getElementById("btn-remove-wait").onclick=removeSelected;
 
   document.getElementById("btn-repl").onclick=function(){
     var oId=document.getElementById("sel-abs").value,rep=document.getElementById("inp-repl").value.trim();
