@@ -204,13 +204,21 @@
     </div>
   </section>
 
+  <!-- GLOBAL ADMIN SETTINGS TAB WITH SHEET & API FIELDS -->
   <section id="p-set" class="pane">
     <div class="crd">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
         <div class="crd-t" style="margin:0">⚙️ Global Settings</div>
         <button class="btn btn-red" id="btn-reset" style="padding:6px 10px">🔄 RESET DAY</button>
       </div>
-      <div style="font-size:10px;color:var(--green);margin-bottom:12px;">Global app settings save to Cloud.</div>
+      <div style="font-size:10px;color:var(--green);margin-bottom:12px;">Updating the Google Sheet URL here switches the active monthly sheet for ALL devices globally.</div>
+      
+      <label style="font-size:11px;color:var(--muted)">📊 Active Monthly Google Sheet URL (Global Cloud DB)</label>
+      <input type="text" id="s-sheet" class="inp" placeholder="Paste new month Google Sheet URL here...">
+
+      <label style="font-size:11px;color:var(--muted)">🌐 Main Apps Script API URL</label>
+      <input type="text" id="s-api" class="inp" placeholder="Paste Apps Script /exec link...">
+
       <div style="display:flex;gap:10px;margin-bottom:10px;">
         <div style="flex:1"><label style="font-size:11px;color:var(--muted)">🛑 Pre-Wave Block (m)</label><input type="number" id="s-pre" class="inp"></div>
         <div style="flex:1"><label style="font-size:11px;color:var(--muted)">⏳ Wave Grace (m)</label><input type="number" id="s-grace" class="inp"></div>
@@ -224,7 +232,7 @@
         <div style="flex:1"><label style="font-size:11px;color:var(--muted)">🔒 Waiting Lock (m)</label><input type="number" id="s-wait-lock" class="inp"></div>
       </div>
       <div style="margin-bottom:15px;"><label style="font-size:11px;color:var(--muted)">🔑 Admin PIN</label><input type="text" id="s-pin" class="inp"></div>
-      <button class="btn" id="btn-save" style="width:100%;background:var(--orange);color:#000;margin-bottom:10px;">💾 Save Global Settings</button>
+      <button class="btn" id="btn-save" style="width:100%;background:var(--orange);color:#000;margin-bottom:10px;">💾 Save Global Settings & Sheet Link</button>
     </div>
   </section>
 </main>
@@ -269,8 +277,7 @@ var LS=(function(){
 })();
 
 var admin=!(/Mobi|Android|iPhone/i.test(navigator.userAgent));
-var SK="DUD3V2_MASTER";
-var S={api:API,sheet:SHEET,day:todayTab(),tabs:recentTabs(),cfg:{waveGraceMin:10,preWaveBlockMin:30,batchSize:25,rushTimeoutMin:20,autoOfdMin:30,waitingLockMin:30,adminPin:"1234"},roster:[],globalBatches:[],breaks:[],received:[],allDAs:[],sel:new Set(),violations:[]};
+var S={api:API,sheet:SHEET,day:todayTab(),tabs:recentTabs(),cfg:{waveGraceMin:10,preWaveBlockMin:30,batchSize:25,rushTimeoutMin:20,autoOfdMin:30,waitingLockMin:30,adminPin:"1234",apiUrl:API,sheetUrl:SHEET},roster:[],globalBatches:[],breaks:[],received:[],allDAs:[],sel:new Set(),violations:[]};
 
 function todayTab(){var d=new Date(),m=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];return("0"+d.getDate()).slice(-2)+" "+m[d.getMonth()];}
 function recentTabs(){var t=[],m=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];for(var o=-2;o<=2;o++){var d=new Date();d.setDate(d.getDate()+o);t.push(("0"+d.getDate()).slice(-2)+" "+m[d.getMonth()]);}return t;}
@@ -293,16 +300,22 @@ var bt=null;
 function banner(msg,v){var el=document.getElementById("toast-msg");document.getElementById("b-txt").textContent=msg;el.className="show b-"+(v||"ok");if(bt)clearTimeout(bt);bt=setTimeout(function(){el.className=""},4000);}
 
 function load(){
-  S.api = API; S.sheet = SHEET;
-  var savedPin = LS.getItem("dud3_pin"); if(savedPin) S.cfg.adminPin = savedPin;
+  var savedApi = LS.getItem("dud3_api");
+  S.api = (savedApi && savedApi.indexOf("script.google.com") > -1) ? savedApi : API;
+  S.sheet = SHEET;
   var savedYM = LS.getItem("dud3_ym"); if(savedYM) document.getElementById("inp-ym").value = savedYM;
 }
 
 function cfgUI(){
-  document.getElementById("s-pre").value=S.cfg.preWaveBlockMin; document.getElementById("s-grace").value=S.cfg.waveGraceMin;
-  document.getElementById("s-batch").value=S.cfg.batchSize; document.getElementById("s-time").value=S.cfg.rushTimeoutMin;
-  document.getElementById("s-auto-ofd").value=S.cfg.autoOfdMin; document.getElementById("s-wait-lock").value=S.cfg.waitingLockMin;
-  document.getElementById("s-pin").value=S.cfg.adminPin;
+  document.getElementById("s-sheet").value=S.cfg.sheetUrl || S.sheet;
+  document.getElementById("s-api").value=S.cfg.apiUrl || S.api;
+  document.getElementById("s-pre").value=S.cfg.preWaveBlockMin;
+  document.getElementById("s-grace").value=S.cfg.waveGraceMin;
+  document.getElementById("s-batch").value=S.cfg.batchSize;
+  document.getElementById("s-time").value=S.cfg.rushTimeoutMin;
+  document.getElementById("s-auto-ofd").value=S.cfg.autoOfdMin;
+  document.getElementById("s-wait-lock").value=S.cfg.waitingLockMin;
+  document.getElementById("s-pin").value=S.cfg.adminPin || "1234";
 }
 
 function rebuildGlobalBatches() {
@@ -342,11 +355,15 @@ function callApi(action,payload){
   .then(function(r){if(!r.ok) throw new Error("API Fails"); return r.json();})
   .then(function(d){
     var splash = document.getElementById("splash");
-    if (splash) { setTimeout(function(){splash.style.opacity = "0"; setTimeout(function(){splash.remove()},600)}, 2500); }
+    if (splash) { setTimeout(function(){splash.style.opacity = "0"; setTimeout(function(){splash.remove()},600)}, 1500); }
     if(!d||!d.success){ pill.className="pill off";pill.textContent="API ERROR"; if(d&&d.errors)banner(d.errors[0],"err");return; }
 
     pill.className="pill on";pill.textContent="SYNCED";
-    if(d.settings && action !== "syncOnly"){ S.cfg=d.settings; cfgUI(); }
+    if(d.settings){
+      S.cfg=d.settings;
+      if(d.settings.sheetUrl) S.sheet=d.settings.sheetUrl;
+      if(action!=="syncOnly") cfgUI();
+    }
     if(d.violations) S.violations = d.violations;
     if(d.allDAs) S.allDAs = d.allDAs;
     
@@ -371,7 +388,7 @@ function callApi(action,payload){
       callApi("syncOnly");
     }
   }).catch(function(err){
-      pill.className="pill off"; pill.textContent="API ERROR"; banner("Connection Error. Check deployment permissions.", "err");
+      pill.className="pill off"; pill.textContent="API ERROR";
       var splash = document.getElementById("splash");
       if (splash) { splash.style.opacity = "0"; setTimeout(function(){splash.remove()}, 600); }
   });
@@ -441,9 +458,6 @@ function removeSelected(){
   if(confirm("Remove "+ids.length+" DA(s) from Waiting?")) callApi("removeFromWaiting",{ids:ids});
 }
 
-function dismissBypass() { var chips = document.querySelectorAll('#bypassList .da-chip'); chips.forEach(function(c){ disBypass.add(c.getAttribute('data-id')); callApi("resolveEvent", {daId: c.getAttribute('data-id'), type: 'bypass'}); }); document.getElementById('bypassBanner').classList.remove('active'); }
-function dismissTimeout() { var chips = document.querySelectorAll('#timeoutList .da-chip'); chips.forEach(function(c){ disTimeout.add(c.getAttribute('data-id')); callApi("resolveEvent", {daId: c.getAttribute('data-id'), type: 'timeout'}); }); document.getElementById('timeoutBanner').classList.remove('active'); }
-
 function render(){
   var cP=0,cL=0,cR=0,cA=0,cW=0, cSent=0;
   S.roster.forEach(function(r){
@@ -508,6 +522,7 @@ function fuzzy(iid,sid,dataArray,cb){
 
 window.addEventListener("DOMContentLoaded",function(){
   load();
+  cfgUI();
 
   S.day = todayTab();
   var ds=document.getElementById("dsel");
@@ -525,12 +540,29 @@ window.addEventListener("DOMContentLoaded",function(){
     switchTab(p);
   }});
 
-  document.getElementById("dsel").onchange=function(e){S.day=e.target.value;S.batches=[];S.breaks=[];S.received=[];callApi("rosterFull")};
+  document.getElementById("dsel").onchange=function(e){S.day=e.target.value;S.globalBatches=[];S.breaks=[];S.received=[];callApi("rosterFull")};
   document.getElementById("btn-reset").onclick=function(){if(confirm("Reset for new day?")){S.day=todayTab();callApi("resetDay");banner("Reset done","ok")}};
+  
   document.getElementById("btn-save").onclick=function(){
-    S.cfg.preWaveBlockMin=Number(document.getElementById("s-pre").value); S.cfg.waveGraceMin=Number(document.getElementById("s-grace").value); S.cfg.batchSize=Number(document.getElementById("s-batch").value); S.cfg.rushTimeoutMin=Number(document.getElementById("s-time").value); S.cfg.autoOfdMin=Number(document.getElementById("s-auto-ofd").value); S.cfg.waitingLockMin=Number(document.getElementById("s-wait-lock").value); S.cfg.adminPin=document.getElementById("s-pin").value.trim();
-    LS.setItem("dud3_pin", S.cfg.adminPin);
-    callApi("saveSettings",{settings:S.cfg}); banner("Global Settings Saved","ok");
+    var newSheet = document.getElementById("s-sheet").value.trim() || SHEET;
+    var newApi   = document.getElementById("s-api").value.trim()   || API;
+    
+    S.sheet = newSheet;
+    S.api   = newApi;
+    LS.setItem("dud3_api", newApi);
+
+    S.cfg.sheetUrl        = newSheet;
+    S.cfg.apiUrl          = newApi;
+    S.cfg.preWaveBlockMin = Number(document.getElementById("s-pre").value);
+    S.cfg.waveGraceMin    = Number(document.getElementById("s-grace").value);
+    S.cfg.batchSize       = Number(document.getElementById("s-batch").value);
+    S.cfg.rushTimeoutMin  = Number(document.getElementById("s-time").value);
+    S.cfg.autoOfdMin      = Number(document.getElementById("s-auto-ofd").value);
+    S.cfg.waitingLockMin  = Number(document.getElementById("s-wait-lock").value);
+    S.cfg.adminPin        = document.getElementById("s-pin").value.trim() || "1234";
+
+    callApi("saveSettings",{settings:S.cfg});
+    banner("Global Settings & Monthly Sheet Saved!","ok");
   };
 
   document.getElementById("btn-send-full").onclick=sendFullBatch;
