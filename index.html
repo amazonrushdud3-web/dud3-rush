@@ -13,7 +13,6 @@
     html,body{background:var(--bg);color:var(--white);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:14px;overflow-x:hidden;}
     body{min-height:100vh;display:flex;flex-direction:column;padding-bottom:calc(var(--nav)+20px);}
 
-    /* ===== NEW PERFECTED BIKE & SMILE ANIMATION ===== */
     #splash{position:fixed;inset:0;width:100%;height:100%;background:radial-gradient(circle at 50% 30%, #1B2430, #0d1117 70%);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.6s ease;}
     #splash h2{color:#fff;font-weight:900;font-size:32px;margin-bottom:6px;letter-spacing:2px;text-shadow:0 0 10px rgba(255,153,0,0.5);}
     #splash h2 span{color:var(--orange);}
@@ -28,8 +27,6 @@
     .road-box{width:100%;max-width:320px;height:4px;background:#354558;position:relative;border-radius:2px;overflow:visible;}
     .road-lines{position:absolute;top:50%;left:0;width:100%;height:2px;background:repeating-linear-gradient(90deg, transparent, transparent 10px, #fff 10px, #fff 20px);transform:translateY(-50%);opacity:0.3;animation:moveRoad 0.5s linear infinite;}
     @keyframes moveRoad{from{background-position:0 0;}to{background-position:-30px 0;}}
-    
-    /* Box Bike Animation */
     .bike-container{position:absolute;bottom:0px;left:-20%;transform:translateX(-50%);animation:rideBike 1.5s forwards cubic-bezier(0.4, 0, 0.2, 1); display:flex;align-items:center;}
     .bike-icon{font-size:42px;}
     .bike-box{font-size:20px;margin-bottom:15px;margin-right:-8px;z-index:2;}
@@ -74,8 +71,7 @@
 
     .dlist{display:flex;flex-direction:column;gap:6px;}
     .di{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px;display:flex;justify-content:space-between;align-items:center;}
-    .dn{font-weight:700;font-size:13px;}
-    .ds{font-size:11px;color:var(--muted);margin-top:3px;}
+    .dn{font-weight:700;font-size:13px;}.ds{font-size:11px;color:var(--muted);margin-top:3px;}
 
     .cam{display:none;background:#000;border-radius:8px;overflow:hidden;margin-bottom:10px;}
     .sbox{background:var(--bg);border:1px solid var(--border);border-radius:7px;margin-top:-4px;max-height:190px;overflow-y:auto;display:none;margin-bottom:10px;}
@@ -309,7 +305,6 @@ function cfgUI(){
   document.getElementById("s-pin").value=S.cfg.adminPin;
 }
 
-// 🟢 STATIC GLOBAL BATCH LOGIC
 function rebuildGlobalBatches() {
   var waiters = S.roster.filter(function(r) { return r.status === "Waiting" && !r.isOnBreak; });
   waiters.sort(function(a, b) { return toMin(a.waitTime || "23:59") - toMin(b.waitTime || "23:59"); });
@@ -355,7 +350,6 @@ function callApi(action,payload){
     if(d.violations) S.violations = d.violations;
     if(d.allDAs) S.allDAs = d.allDAs;
     
-    // UNIVERSAL ROSTER SYNC
     if(d.roster) {
         S.roster = d.roster;
         if(action==="resetDay"){ S.sel.clear(); }
@@ -364,7 +358,7 @@ function callApi(action,payload){
 
     if(action==="recordCheckIn"){
       if(d.alreadyMarked){ banner((d.daName||"DA")+" already marked attendance! Use Waiting tab.","warn"); switchTab("p-wait"); } 
-      else { banner("Successfully Checked In & Queued!","ok"); callApi("syncOnly"); }
+      else { banner("Successfully Checked In & Queued!","ok"); }
     }
     else if(action==="addToWaiting"){ banner("Successfully Added to Waiting!","ok"); callApi("syncOnly"); }
     else if(action==="sendDA" || action==="removeFromWaiting"){
@@ -377,7 +371,7 @@ function callApi(action,payload){
       callApi("syncOnly");
     }
   }).catch(function(err){
-      pill.className="pill off"; pill.textContent="API ERROR"; 
+      pill.className="pill off"; pill.textContent="API ERROR"; banner("Connection Error. Check deployment permissions.", "err");
       var splash = document.getElementById("splash");
       if (splash) { splash.style.opacity = "0"; setTimeout(function(){splash.remove()}, 600); }
   });
@@ -395,9 +389,7 @@ function checkIn(token,isWaiting){
   var da=S.roster.find(function(r){return(r.daId&&r.daId.toLowerCase().indexOf(c)>-1)||(r.repDaId&&r.repDaId.toLowerCase().indexOf(c)>-1)||(r.daName&&r.daName.toLowerCase().indexOf(c)>-1)});
   if(!da)return banner('DA Not Found: "'+token+'"',"err");
 
-  // Block ALL scans except attendance during break
   if (da.isOnBreak && isWaiting) return banner("ERROR: DA is on break! ("+da.breakInfo+")", "err");
-  
   if(!isWaiting && da.attendanceOnlyStatus && da.attendanceOnlyStatus!=="Absent"){ banner(da.daName+" already marked! Use Waiting tab.","warn"); switchTab("p-wait"); return; }
 
   var st="Present";
@@ -438,7 +430,7 @@ function sendSelected(){
 function sendFullBatch(){
   var ym=getYM(); if(!ym)return banner("Enter YM name first!","warn");
   if(!S.globalBatches.length)return banner("No batch to send","warn");
-  var target = S.globalBatches[0]; // Always send Batch 1
+  var target = S.globalBatches[0]; 
   var ids=target.members.map(function(m){return m.daId});
   callApi("sendDA",{ids:ids,marshalName:ym,batchName:target.name});
 }
@@ -448,6 +440,9 @@ function removeSelected(){
   if(!ids.length)return banner("Select DAs to remove","warn");
   if(confirm("Remove "+ids.length+" DA(s) from Waiting?")) callApi("removeFromWaiting",{ids:ids});
 }
+
+function dismissBypass() { var chips = document.querySelectorAll('#bypassList .da-chip'); chips.forEach(function(c){ disBypass.add(c.getAttribute('data-id')); callApi("resolveEvent", {daId: c.getAttribute('data-id'), type: 'bypass'}); }); document.getElementById('bypassBanner').classList.remove('active'); }
+function dismissTimeout() { var chips = document.querySelectorAll('#timeoutList .da-chip'); chips.forEach(function(c){ disTimeout.add(c.getAttribute('data-id')); callApi("resolveEvent", {daId: c.getAttribute('data-id'), type: 'timeout'}); }); document.getElementById('timeoutBanner').classList.remove('active'); }
 
 function render(){
   var cP=0,cL=0,cR=0,cA=0,cW=0, cSent=0;
@@ -475,7 +470,6 @@ function render(){
 
   document.getElementById("sel-abs").innerHTML='<option value="">-- Select Absent DA --</option>'+S.roster.filter(function(r){return r.attendanceOnlyStatus==="Absent"}).map(function(d){return'<option value="'+d.daId+'">'+d.daName+'</option>'}).join("");
 
-  // RENDER STATIC BATCHES
   var bb=document.getElementById("batch-box"), html="";
   S.globalBatches.forEach(function(b){
     var unsent=b.members;
@@ -490,7 +484,6 @@ function render(){
   bb.innerHTML=html||'<div style="text-align:center;color:var(--muted);padding:20px;font-size:12px">No DAs in queue</div>';
   bb.querySelectorAll(".bchk").forEach(function(c){c.onchange=function(e){if(e.target.checked)S.sel.add(e.target.dataset.id);else S.sel.delete(e.target.dataset.id); render(); }});
 
-  // SENT LIST WITH BATCH NUMBER (FOR RESCUE VIEW)
   var sentList = S.roster.filter(function(r){return r.status==="Sent to OP"});
   document.getElementById("sent-list").innerHTML=sentList.length?sentList.map(function(p){
     var waited = minDiff(p.sentTime, now());
@@ -516,7 +509,6 @@ function fuzzy(iid,sid,dataArray,cb){
 window.addEventListener("DOMContentLoaded",function(){
   load();
 
-  // AUTO DATE SELECTION
   S.day = todayTab();
   var ds=document.getElementById("dsel");
   if(S.tabs.indexOf(S.day)===-1)S.tabs.push(S.day);
