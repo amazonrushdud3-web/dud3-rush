@@ -85,7 +85,7 @@
     .logo .l-smile path{stroke:var(--orange);stroke-width:5;fill:none;stroke-linecap:round;}
     .logo .l-smile polygon{fill:var(--orange);}
     .right-head{display:flex;align-items:center;gap:6px;}
-    .pill{padding:4px 8px;border-radius:12px;font-size:10px;font-weight:800;}
+    .pill{padding:4px 8px;border-radius:12px;font-size:10px;font-weight:800;cursor:pointer;}
     .pill.on{background:rgba(0,230,118,0.16);color:var(--green);border:1px solid var(--green);}
     .pill.off{background:rgba(255,59,48,0.16);color:var(--red);border:1px solid var(--red);}
     #install-btn{display:none;background:var(--orange);color:#000;border:none;border-radius:8px;padding:6px 10px;font-size:10px;font-weight:900;cursor:pointer;}
@@ -218,7 +218,7 @@
   <div class="right-head">
     <button id="install-btn">⬇ APP</button>
     <select id="dsel" class="dsel"></select>
-    <span id="pill" class="pill off">SYNCING</span>
+    <span id="pill" class="pill off" onclick="callApi('rosterFull')" title="Tap to reconnect">SYNCING</span>
   </div>
 </header>
 
@@ -352,6 +352,8 @@
       <label style="font-size:11px;color:var(--muted)">🌐 Main Apps Script API URL</label>
       <input type="text" id="s-api" class="inp" placeholder="Paste Apps Script /exec link...">
 
+      <div id="conn-diag" style="display:none;padding:10px;border-radius:8px;margin-bottom:10px;font-size:11px;background:#141D28;border:1px solid var(--border);word-break:break-all;"></div>
+
       <div style="display:flex;gap:10px;margin-bottom:10px;">
         <div style="flex:1"><label style="font-size:11px;color:var(--muted)">🛑 Pre-Wave Block (m)</label><input type="number" id="s-pre" class="inp"></div>
         <div style="flex:1"><label style="font-size:11px;color:var(--muted)">⏳ Wave Grace (m)</label><input type="number" id="s-grace" class="inp"></div>
@@ -365,8 +367,9 @@
         <div style="flex:1"><label style="font-size:11px;color:var(--muted)">🔒 Waiting Lock (m)</label><input type="number" id="s-wait-lock" class="inp"></div>
       </div>
       <div style="margin-bottom:15px;"><label style="font-size:11px;color:var(--muted)">🔑 Admin PIN</label><input type="text" id="s-pin" class="inp"></div>
-      <button class="btn" id="btn-save" style="width:100%;background:var(--orange);color:#000;margin-bottom:10px;">💾 Save Global Settings & Sheet Link</button>
-      <button class="btn" id="btn-install-2" style="width:100%;background:var(--blue);color:#051B24;margin-bottom:10px;">⬇ Install App (PWA)</button>
+      <button class="btn" id="btn-save" style="width:100%;background:var(--orange);color:#000;margin-bottom:8px;">💾 Save Global Settings & Sheet Link</button>
+      <button class="btn" onclick="testConnectionNow()" style="width:100%;background:var(--green);color:#042012;margin-bottom:8px;">🔌 Test API Connection Now</button>
+      <button class="btn" id="btn-install-2" style="width:100%;background:var(--blue);color:#051B24;margin-bottom:8px;">⬇ Install App (PWA)</button>
       <button class="btn" onclick="resetApiAndPurge()" style="width:100%;background:#354558;color:#fff;font-size:12px;">🗑️ Reset API Link & Clear Cache</button>
     </div>
   </section>
@@ -460,10 +463,12 @@ function autoPurgeBrowserCache(forceReload) {
   try {
     var keepYm  = LS.getItem("dud3_ym");
     var keepApi = LS.getItem("dud3_api");
+    var keepSh  = LS.getItem("dud3_sheet");
     if (window.localStorage) window.localStorage.clear();
     if (window.sessionStorage) window.sessionStorage.clear();
     if (keepYm)  LS.setItem("dud3_ym", keepYm);
     if (keepApi) LS.setItem("dud3_api", keepApi);
+    if (keepSh)  LS.setItem("dud3_sheet", keepSh);
     if ('caches' in window) {
       caches.keys().then(function(names) { for (let name of names) caches.delete(name); });
     }
@@ -478,6 +483,7 @@ function autoPurgeBrowserCache(forceReload) {
 
 function resetApiAndPurge() {
   LS.removeItem("dud3_api");
+  LS.removeItem("dud3_sheet");
   S.api = API;
   S.sheet = SHEET;
   autoPurgeBrowserCache(true);
@@ -523,8 +529,9 @@ function banner(msg,v){
 function load(){
   autoPurgeBrowserCache(false);
   var savedApi = LS.getItem("dud3_api");
-  S.api = (savedApi && savedApi.indexOf("script.google.com") > -1 && savedApi.indexOf("/exec") > -1) ? savedApi : API;
-  S.sheet = SHEET;
+  var savedSh  = LS.getItem("dud3_sheet");
+  S.api   = (savedApi && savedApi.indexOf("script.google.com") > -1) ? savedApi : API;
+  S.sheet = (savedSh && savedSh.indexOf("docs.google.com/spreadsheets") > -1) ? savedSh : SHEET;
   var savedYM = LS.getItem("dud3_ym"); if(savedYM) document.getElementById("inp-ym").value = savedYM;
 }
 
@@ -575,7 +582,54 @@ function rebuild(){
   rebuildGlobalBatches();
 }
 
-// 🟢 RELIABLE FETCH WITH REDIRECT FOLLOW & AUTO-FALLBACK
+// 🟢 DUAL-PROTOCOL TRANSPORT: Tries POST first; if blocked by browser/CORS, automatically uses GET!
+function sendCloudRequest(apiUrl, payloadObj) {
+  var bodyStr = JSON.stringify(payloadObj);
+  return fetch(apiUrl, {
+    method: "POST",
+    body: bodyStr
+  })
+  .then(function(r) {
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  })
+  .catch(function(postErr) {
+    // Automatic GET Fallback (bypasses POST redirect CORS blocks)
+    var sep = apiUrl.indexOf("?") > -1 ? "&" : "?";
+    var getUrl = apiUrl + sep + "payload=" + encodeURIComponent(bodyStr) + "&_t=" + Date.now();
+    return fetch(getUrl, { method: "GET" }).then(function(r2) {
+      if (!r2.ok) throw new Error("HTTP " + r2.status);
+      return r2.json();
+    });
+  });
+}
+
+function testConnectionNow() {
+  var diag = document.getElementById("conn-diag");
+  diag.style.display = "block";
+  diag.style.color = "var(--warn)";
+  diag.textContent = "Testing connection to Apps Script...";
+  var testApi = document.getElementById("s-api").value.trim() || S.api;
+  var testSh  = document.getElementById("s-sheet").value.trim() || S.sheet;
+
+  sendCloudRequest(testApi, { action: "rosterFull", sheetUrl: testSh, dayTab: S.day })
+  .then(function(d) {
+    if (d && d.success) {
+      diag.style.color = "var(--green)";
+      diag.textContent = "✅ CONNECTED! Loaded " + (d.roster ? d.roster.length : 0) + " DAs from tab '" + S.day + "'.";
+      S.api = testApi; S.sheet = testSh;
+      callApi("rosterFull");
+    } else {
+      diag.style.color = "var(--red)";
+      diag.textContent = "❌ Server responded with error: " + (d && d.errors ? d.errors[0] : "Unknown error");
+    }
+  })
+  .catch(function(err) {
+    diag.style.color = "var(--red)";
+    diag.textContent = "❌ Connection Failed (" + err.message + "). Make sure Code.gs is deployed with 'Who has access: Anyone' and the /exec link is correct.";
+  });
+}
+
 function callApi(action,payload,isRetry){
   if(action === "syncOnly" && inflightMutations > 0) return;
 
@@ -592,21 +646,7 @@ function callApi(action,payload,isRetry){
   if(!payload)payload={};
   payload.action=action; payload.sheetUrl=S.sheet; payload.dayTab=S.day;
 
-  fetch(S.api, {
-    method:"POST",
-    redirect:"follow",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body:JSON.stringify(payload)
-  })
-  .then(function(r){
-    return r.text().then(function(txt){
-      try {
-        return JSON.parse(txt);
-      } catch(parseErr) {
-        throw new Error("Script not authorized or access not set to Anyone.");
-      }
-    });
-  })
+  sendCloudRequest(S.api, payload)
   .then(function(d){
     if (isMutation) inflightMutations = Math.max(0, inflightMutations - 1);
 
@@ -651,7 +691,6 @@ function callApi(action,payload,isRetry){
       else { banner(d.result.daName+" ("+(d.result.batchName||"Sent")+") → RECEIVED IN!","ok"); }
     }
   }).catch(function(err){
-    // If a custom API link was saved in localStorage and failed, automatically fall back to the default API
     if (!isRetry && S.api !== API) {
       LS.removeItem("dud3_api");
       S.api = API;
@@ -660,9 +699,6 @@ function callApi(action,payload,isRetry){
     }
     if (isMutation) inflightMutations = Math.max(0, inflightMutations - 1);
     pill.className="pill off"; pill.textContent="OFFLINE";
-    if (action === "rosterFull") {
-      banner("Connection blocked: Run 'authorizeScript' in Apps Script & set Deploy Access to 'Anyone'.", "err");
-    }
     var splash = document.getElementById("splash");
     if (splash) { splash.style.opacity = "0"; setTimeout(function(){if(splash.parentNode)splash.remove()}, 400); }
   });
@@ -1038,6 +1074,7 @@ window.addEventListener("DOMContentLoaded",function(){
     var newApi   = document.getElementById("s-api").value.trim()   || API;
     S.sheet = newSheet; S.api = newApi;
     LS.setItem("dud3_api", newApi);
+    LS.setItem("dud3_sheet", newSheet);
 
     S.cfg.sheetUrl        = newSheet;
     S.cfg.apiUrl          = newApi;
