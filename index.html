@@ -367,7 +367,7 @@
       <div style="margin-bottom:15px;"><label style="font-size:11px;color:var(--muted)">🔑 Admin PIN</label><input type="text" id="s-pin" class="inp"></div>
       <button class="btn" id="btn-save" style="width:100%;background:var(--orange);color:#000;margin-bottom:10px;">💾 Save Global Settings & Sheet Link</button>
       <button class="btn" id="btn-install-2" style="width:100%;background:var(--blue);color:#051B24;margin-bottom:10px;">⬇ Install App (PWA)</button>
-      <button class="btn" onclick="autoPurgeBrowserCache(true)" style="width:100%;background:#354558;color:#fff;font-size:12px;">🗑️ Clear Cache & Reload</button>
+      <button class="btn" onclick="resetApiAndPurge()" style="width:100%;background:#354558;color:#fff;font-size:12px;">🗑️ Reset API Link & Clear Cache</button>
     </div>
   </section>
 </main>
@@ -456,7 +456,6 @@ var LS=(function(){
   };
 })();
 
-// AUTOMATIC CACHE & STORAGE PURGE AFTER EVERY GOOGLE SHEET SAVE
 function autoPurgeBrowserCache(forceReload) {
   try {
     var keepYm  = LS.getItem("dud3_ym");
@@ -475,6 +474,13 @@ function autoPurgeBrowserCache(forceReload) {
     }
   } catch (e) {}
   if (forceReload) window.location.reload(true);
+}
+
+function resetApiAndPurge() {
+  LS.removeItem("dud3_api");
+  S.api = API;
+  S.sheet = SHEET;
+  autoPurgeBrowserCache(true);
 }
 
 var admin=!(/Mobi|Android|iPhone/i.test(navigator.userAgent));
@@ -511,13 +517,13 @@ function banner(msg,v){
   document.getElementById("b-txt").textContent=msg;
   el.className="show b-"+(v||"ok");
   if(bt)clearTimeout(bt);
-  bt=setTimeout(function(){el.className=""},3500);
+  bt=setTimeout(function(){el.className=""},4000);
 }
 
 function load(){
   autoPurgeBrowserCache(false);
   var savedApi = LS.getItem("dud3_api");
-  S.api = (savedApi && savedApi.indexOf("script.google.com") > -1) ? savedApi : API;
+  S.api = (savedApi && savedApi.indexOf("script.google.com") > -1 && savedApi.indexOf("/exec") > -1) ? savedApi : API;
   S.sheet = SHEET;
   var savedYM = LS.getItem("dud3_ym"); if(savedYM) document.getElementById("inp-ym").value = savedYM;
 }
@@ -569,11 +575,12 @@ function rebuild(){
   rebuildGlobalBatches();
 }
 
-function callApi(action,payload){
+// 🟢 RELIABLE FETCH WITH REDIRECT FOLLOW & AUTO-FALLBACK
+function callApi(action,payload,isRetry){
   if(action === "syncOnly" && inflightMutations > 0) return;
 
   var isMutation = (action !== "syncOnly" && action !== "rosterFull");
-  if (isMutation) {
+  if (isMutation && !isRetry) {
     inflightMutations++;
     mutationVersion++;
   }
@@ -587,11 +594,19 @@ function callApi(action,payload){
 
   fetch(S.api, {
     method:"POST",
+    redirect:"follow",
     headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body:JSON.stringify(payload),
-    cache:"no-store"
+    body:JSON.stringify(payload)
   })
-  .then(function(r){if(!r.ok) throw new Error("API Fails"); return r.json();})
+  .then(function(r){
+    return r.text().then(function(txt){
+      try {
+        return JSON.parse(txt);
+      } catch(parseErr) {
+        throw new Error("Script not authorized or access not set to Anyone.");
+      }
+    });
+  })
   .then(function(d){
     if (isMutation) inflightMutations = Math.max(0, inflightMutations - 1);
 
@@ -636,8 +651,18 @@ function callApi(action,payload){
       else { banner(d.result.daName+" ("+(d.result.batchName||"Sent")+") → RECEIVED IN!","ok"); }
     }
   }).catch(function(err){
+    // If a custom API link was saved in localStorage and failed, automatically fall back to the default API
+    if (!isRetry && S.api !== API) {
+      LS.removeItem("dud3_api");
+      S.api = API;
+      callApi(action, payload, true);
+      return;
+    }
     if (isMutation) inflightMutations = Math.max(0, inflightMutations - 1);
     pill.className="pill off"; pill.textContent="OFFLINE";
+    if (action === "rosterFull") {
+      banner("Connection blocked: Run 'authorizeScript' in Apps Script & set Deploy Access to 'Anyone'.", "err");
+    }
     var splash = document.getElementById("splash");
     if (splash) { splash.style.opacity = "0"; setTimeout(function(){if(splash.parentNode)splash.remove()}, 400); }
   });
@@ -728,7 +753,6 @@ function checkIn(token,isWaiting){
   callApi(isWaiting?"addToWaiting":"recordCheckIn",{daId:da.daId,daName:da.daName,sentStatus:st,isWaiting:isWaiting});
 }
 
-// INSTANT RUSH Q RECEIVE (Immediately removes DA from Pending Sent list & moves to Received)
 function triggerRushReceive(daIdInput) {
   var c = String(daIdInput || "").trim();
   if (!c) return;
@@ -874,7 +898,7 @@ function render(){
   bb.innerHTML=html||'<div style="text-align:center;color:var(--muted);padding:18px;font-size:12px">No DAs waiting in queue</div>';
   bb.querySelectorAll(".bchk").forEach(function(c){c.onchange=function(e){if(e.target.checked)S.sel.add(e.target.dataset.id);else S.sel.delete(e.target.dataset.id); render(); }});
 
-  // MERGED SENT LIST IN RUSH Q TAB (Strictly excludes any DA with rushScanInTime)
+  // MERGED SENT LIST IN RUSH Q TAB
   var sentList = S.roster.filter(function(r){ return r.status==="Sent to OP" && !r.rushScanInTime; });
   var sentByBatch = {};
   sentList.forEach(function(p){
