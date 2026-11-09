@@ -218,7 +218,7 @@
   <div class="right-head">
     <button id="install-btn">⬇ APP</button>
     <select id="dsel" class="dsel"></select>
-    <span id="pill" class="pill off" onclick="callApi('rosterFull')" title="Tap to reconnect">SYNCING</span>
+    <span id="pill" class="pill off" onclick="callApi('rosterFull')" title="Tap to force sync">SYNCING</span>
   </div>
 </header>
 
@@ -499,6 +499,8 @@ var disBypass=new Set(), disTimeout=new Set();
 
 var inflightMutations = 0;
 var mutationVersion = 0;
+var syncInFlight = false;
+var syncTimer = null;
 
 function todayTab(){var d=new Date(),m=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];return("0"+d.getDate()).slice(-2)+" "+m[d.getMonth()];}
 function recentTabs(){var t=[],m=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];for(var o=-3;o<=2;o++){var d=new Date();d.setDate(d.getDate()+o);t.push(("0"+d.getDate()).slice(-2)+" "+m[d.getMonth()]);}return t;}
@@ -530,7 +532,7 @@ function load(){
   autoPurgeBrowserCache(false);
   var savedApi = LS.getItem("dud3_api");
   var savedSh  = LS.getItem("dud3_sheet");
-  S.api   = (savedApi && savedApi.indexOf("script.google.com") > -1) ? savedApi : API;
+  S.api   = (savedApi && savedApi.indexOf("script.google.com") > -1 && savedApi.indexOf("/exec") > -1) ? savedApi : API;
   S.sheet = (savedSh && savedSh.indexOf("docs.google.com/spreadsheets") > -1) ? savedSh : SHEET;
   var savedYM = LS.getItem("dud3_ym"); if(savedYM) document.getElementById("inp-ym").value = savedYM;
 }
@@ -582,25 +584,14 @@ function rebuild(){
   rebuildGlobalBatches();
 }
 
-// 🟢 DUAL-PROTOCOL TRANSPORT: Tries POST first; if blocked by browser/CORS, automatically uses GET!
+// 🟢 PURE CORS-SAFE POST REQUEST (No custom headers = zero preflight block)
 function sendCloudRequest(apiUrl, payloadObj) {
-  var bodyStr = JSON.stringify(payloadObj);
   return fetch(apiUrl, {
     method: "POST",
-    body: bodyStr
-  })
-  .then(function(r) {
+    body: JSON.stringify(payloadObj)
+  }).then(function(r) {
     if (!r.ok) throw new Error("HTTP " + r.status);
     return r.json();
-  })
-  .catch(function(postErr) {
-    // Automatic GET Fallback (bypasses POST redirect CORS blocks)
-    var sep = apiUrl.indexOf("?") > -1 ? "&" : "?";
-    var getUrl = apiUrl + sep + "payload=" + encodeURIComponent(bodyStr) + "&_t=" + Date.now();
-    return fetch(getUrl, { method: "GET" }).then(function(r2) {
-      if (!r2.ok) throw new Error("HTTP " + r2.status);
-      return r2.json();
-    });
   });
 }
 
@@ -621,17 +612,35 @@ function testConnectionNow() {
       callApi("rosterFull");
     } else {
       diag.style.color = "var(--red)";
-      diag.textContent = "❌ Server responded with error: " + (d && d.errors ? d.errors[0] : "Unknown error");
+      diag.textContent = "❌ Server Error: " + (d && d.errors ? d.errors[0] : "Unknown error");
     }
   })
   .catch(function(err) {
     diag.style.color = "var(--red)";
-    diag.textContent = "❌ Connection Failed (" + err.message + "). Make sure Code.gs is deployed with 'Who has access: Anyone' and the /exec link is correct.";
+    diag.textContent = "❌ Connection Failed (" + err.message + "). Check that Code.gs is deployed as 'Anyone' and /exec URL is valid.";
   });
 }
 
+// 🟢 NON-OVERLAPPING MULTI-DEVICE POLLING LOOP
+function scheduleNextSync(delayMs) {
+  if (syncTimer) clearTimeout(syncTimer);
+  syncTimer = setTimeout(function() {
+    if (!document.hidden && inflightMutations === 0 && !syncInFlight) {
+      callApi("syncOnly");
+    } else {
+      scheduleNextSync(1500);
+    }
+  }, delayMs || 2000);
+}
+
 function callApi(action,payload,isRetry){
-  if(action === "syncOnly" && inflightMutations > 0) return;
+  if (action === "syncOnly") {
+    if (inflightMutations > 0 || syncInFlight) {
+      scheduleNextSync(1500);
+      return;
+    }
+    syncInFlight = true;
+  }
 
   var isMutation = (action !== "syncOnly" && action !== "rosterFull");
   if (isMutation && !isRetry) {
@@ -648,12 +657,14 @@ function callApi(action,payload,isRetry){
 
   sendCloudRequest(S.api, payload)
   .then(function(d){
+    if (action === "syncOnly") syncInFlight = false;
     if (isMutation) inflightMutations = Math.max(0, inflightMutations - 1);
 
     var splash = document.getElementById("splash");
     if (splash) { splash.style.opacity = "0"; setTimeout(function(){if(splash.parentNode)splash.remove()}, 400); }
 
     if (action === "syncOnly" && (inflightMutations > 0 || reqVersion !== mutationVersion)) {
+      scheduleNextSync(1500);
       return;
     }
 
@@ -661,6 +672,7 @@ function callApi(action,payload,isRetry){
       pill.className="pill off"; pill.textContent="ERROR";
       if(d&&d.errors) { playScanSound("err"); banner(d.errors[0],"err"); }
       if(isMutation) callApi("rosterFull");
+      scheduleNextSync(2500);
       return;
     }
 
@@ -690,7 +702,10 @@ function callApi(action,payload,isRetry){
       if(d.result.violation) { playScanSound("err"); banner(d.result.violation.message,"err"); }
       else { banner(d.result.daName+" ("+(d.result.batchName||"Sent")+") → RECEIVED IN!","ok"); }
     }
+
+    scheduleNextSync(2000);
   }).catch(function(err){
+    if (action === "syncOnly") syncInFlight = false;
     if (!isRetry && S.api !== API) {
       LS.removeItem("dud3_api");
       S.api = API;
@@ -701,6 +716,7 @@ function callApi(action,payload,isRetry){
     pill.className="pill off"; pill.textContent="OFFLINE";
     var splash = document.getElementById("splash");
     if (splash) { splash.style.opacity = "0"; setTimeout(function(){if(splash.parentNode)splash.remove()}, 400); }
+    scheduleNextSync(3000);
   });
 }
 
@@ -1128,7 +1144,11 @@ window.addEventListener("DOMContentLoaded",function(){
 
   document.getElementById("inp-ym").addEventListener("change",function(){LS.setItem("dud3_ym",this.value)});
 
-  setInterval(function(){callApi("syncOnly")},2500);
+  // Immediately sync when user switches back to the app on their phone
+  document.addEventListener("visibilitychange", function() {
+    if (!document.hidden) callApi("syncOnly");
+  });
+
   callApi("rosterFull");
 });
 </script>
