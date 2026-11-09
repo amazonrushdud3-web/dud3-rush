@@ -3,271 +3,267 @@
 <head>
   <meta charset="UTF-8">
   <title>DUD3 Driver Hub</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-  <meta name="theme-color" content="#131A22">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <link rel="manifest" id="manifest-link">
-  <link rel="apple-touch-icon" id="apple-icon">
-  <!-- QR code generator -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#0F151C">
   <style>
-    :root { --bg:#131A22; --card:#232F3E; --orange:#FF9900; --blue:#00A8E1; --green:#00C853; --red:#FF3B30; --purple:#BB86FC; --warn:#FFB300; --text:#FFF; --muted:#9BA7B6; --border:#354558; }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color:transparent; }
-    body { background: var(--bg); color: var(--text); padding: 15px; max-width:480px; margin:0 auto; }
+    :root { --bg:#0F151C; --card:#1F2B3A; --orange:#FF9900; --blue:#00A8E1; --green:#00E676; --red:#FF3B30; --purple:#BB86FC; --text:#FFF; --muted:#8FA0B3; --border:#2E3E52; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background: var(--bg); color: var(--text); padding: 15px; max-width: 480px; margin: 0 auto; }
 
     header { text-align: center; margin-bottom: 18px; padding: 10px; border-bottom: 2px solid var(--orange); }
-    header h1 { font-size: 20px; font-weight: 900; }
+    header h1 { font-size: 20px; font-weight: 900; letter-spacing: 1px; }
     header h1 span { color: var(--orange); }
 
-    #toast-msg { position: fixed; top: 10px; left: 50%; transform: translateX(-50%) translateY(-150%); width: calc(100% - 30px); max-width: 440px; padding: 12px 16px; border-radius: 8px; font-weight: 800; font-size: 13px; display: flex; justify-content: space-between; align-items: center; z-index: 10000; box-shadow: 0 8px 24px rgba(0,0,0,0.6); transition: transform 0.4s; background: var(--warn); color: #000; }
+    #toast-msg { position: fixed; top: 12px; left: 50%; transform: translateX(-50%) translateY(-200%); width: calc(100% - 30px); max-width: 400px; padding: 12px 16px; border-radius: 10px; font-weight: 800; font-size: 13px; display: flex; justify-content: space-between; align-items: center; z-index: 10000; box-shadow: 0 8px 24px rgba(0,0,0,0.6); transition: transform 0.3s; background: var(--orange); color: #000; }
     #toast-msg.show { transform: translateX(-50%) translateY(0); }
 
-    .card { background: var(--card); padding: 16px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-    .card-title { font-size: 12px; color: var(--muted); text-transform: uppercase; font-weight: 800; margin-bottom: 10px; letter-spacing: 1px; }
+    .card { background: var(--card); border: 1px solid var(--border); padding: 16px; border-radius: 14px; margin-bottom: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    .card-title { font-size: 11px; color: var(--muted); text-transform: uppercase; font-weight: 800; margin-bottom: 10px; letter-spacing: 0.8px; }
 
-    .inp { width: 100%; padding: 14px; border-radius: 8px; border: 2px solid var(--border); background: #1B2430; color: #FFF; font-size: 16px; font-weight: bold; text-align: center; margin-bottom: 10px; }
+    .inp { width: 100%; padding: 14px; border-radius: 10px; border: 2px solid var(--border); background: #141D28; color: #FFF; font-size: 16px; font-weight: bold; text-align: center; margin-bottom: 10px; }
     .inp:focus { border-color: var(--orange); outline: none; }
-    .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; background: var(--orange); color: #000; font-size: 15px; font-weight: 900; cursor: pointer; }
-    .btn:active{transform:scale(0.98);}
-    .btn-outline { background: transparent; border: 1px solid var(--muted); color: var(--muted); padding: 8px; margin-top: 12px; }
+    .btn { width: 100%; padding: 14px; border-radius: 10px; border: none; background: var(--orange); color: #000; font-size: 15px; font-weight: 900; cursor: pointer; }
+    .btn-outline { background: transparent; border: 1px solid var(--muted); color: var(--muted); padding: 9px; margin-top: 10px; font-size: 12px; }
 
-    /* QR identity card (matches badge picture) */
-    .qr-card { text-align:center; }
-    #qrcode { display:inline-block; background:#fff; padding:12px; border-radius:12px; margin-bottom:12px; }
-    #qrcode img, #qrcode canvas { display:block; }
-    .alias-big { font-size: 30px; font-weight: 900; letter-spacing:1px; color: var(--text); }
-    .id-mid { font-size: 15px; font-weight: 700; color: var(--orange); margin-top:4px; word-break:break-all; }
-    .dsp-sub { font-size: 13px; font-weight: 700; color: var(--blue); margin-top:4px; }
+    .profile-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding: 9px 0; font-size: 14px; }
+    .profile-row:last-of-type { border-bottom: none; }
+    .val { font-size: 14px; font-weight: 800; color: var(--blue); }
 
-    .profile-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding: 9px 0; }
-    .profile-row:last-child { border-bottom: none; }
-    .val { font-size: 15px; font-weight: bold; color: var(--text); }
+    .batch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    .batch-pill { background: #141D28; border: 1px solid var(--border); border-radius: 10px; padding: 12px 8px; text-align: center; }
+    .bp-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; font-weight: 800; margin-bottom: 4px; }
+    .bp-val { font-size: 20px; font-weight: 900; color: var(--orange); }
 
-    .status-box { text-align: center; padding: 20px; border-radius: 10px; margin-top: 12px; border:1px solid var(--blue); background: rgba(0,168,225,0.1); }
-    .status-text { font-size: 24px; font-weight: 900; color: var(--blue); }
+    .status-box { background: rgba(0,168,225,0.1); border: 1px solid var(--blue); text-align: center; padding: 18px; border-radius: 12px; margin-top: 12px; }
+    .status-text { font-size: 22px; font-weight: 900; color: var(--blue); }
 
-    .chips { display:flex; gap:8px; margin-top:12px; }
-    .chip { flex:1; text-align:center; background:#1B2430; border:1px solid var(--border); border-radius:10px; padding:10px 6px; }
-    .chip .cv { font-size:20px; font-weight:900; color:var(--orange); }
-    .chip .cl { font-size:9px; color:var(--muted); text-transform:uppercase; margin-top:3px; font-weight:bold; }
-
-    .timer-box { text-align: center; padding: 15px; border-radius: 10px; margin-top: 14px; border: 1px dashed var(--orange); background: rgba(255,153,0,0.1); display:none; }
-    .countdown { font-size: 24px; font-weight: 900; color: var(--orange); font-variant-numeric: tabular-nums; }
-    .timer-label{font-size:11px; color:var(--muted); text-transform:uppercase; margin-bottom:5px;}
+    .timer-box { background: rgba(255,153,0,0.12); border: 1px dashed var(--orange); text-align: center; padding: 15px; border-radius: 12px; margin-top: 12px; }
+    .countdown { font-size: 26px; font-weight: 900; color: var(--orange); font-variant-numeric: tabular-nums; letter-spacing: 1px; }
 
     #dashboard { display: none; }
-    .loader { text-align: center; color: var(--orange); font-weight: bold; display: none; padding: 20px; }
+    .loader { text-align: center; color: var(--orange); font-weight: bold; display: none; padding: 16px; }
   </style>
 </head>
 <body>
 
-<div id="toast-msg"><span id="toast-txt"></span><button style="background:none;border:none;color:#000;font-weight:bold;font-size:18px;cursor:pointer;" onclick="document.getElementById('toast-msg').className=''">x</button></div>
+<div id="toast-msg"><span id="toast-txt"></span><button style="background:none;border:none;color:#000;font-weight:bold;font-size:18px;cursor:pointer;" onclick="document.getElementById('toast-msg').className=''">✕</button></div>
 
-<header><h1>DUD3 <span>DRIVER HUB</span></h1></header>
+<header>
+  <h1>DUD3 <span>DRIVER HUB</span></h1>
+</header>
 
 <div id="login-sec" class="card">
-  <div class="card-title" style="text-align:center;">Enter your DA ID</div>
+  <div class="card-title" style="text-align:center;">Enter Your Transporter / DA ID</div>
   <input type="text" id="da-id-input" class="inp" placeholder="Paste or Type DA ID" autocomplete="off">
-  <button class="btn" id="login-btn">Check Status</button>
-  <div style="text-align:center; font-size:10px; color:var(--muted); margin-top:10px;">Please allow notifications when prompted</div>
+  <button class="btn" onclick="login()">Check Live Status</button>
 </div>
 
-<div id="loader" class="loader">Fetching data… Please wait.</div>
+<div id="loader" class="loader">Syncing live status...</div>
 
 <div id="dashboard">
-  <!-- QR + identity (Alias big -> DA ID -> DSP) -->
-  <div class="card qr-card">
-    <div id="qrcode"></div>
-    <div class="alias-big" id="d-alias">--</div>
-    <div class="id-mid" id="d-id">--</div>
-    <div class="dsp-sub" id="d-dsp">--</div>
-    <button class="btn btn-outline" id="logout-btn">Not you? Change ID</button>
+  <div class="card">
+    <div class="card-title">Driver Profile</div>
+    <div class="profile-row"><span>Name:</span> <span class="val" id="d-name">--</span></div>
+    <div class="profile-row"><span>DA ID:</span> <span class="val" id="d-id">--</span></div>
+    <div class="profile-row"><span>DSP:</span> <span class="val" id="d-dsp">--</span></div>
+    <div class="profile-row"><span>Wave Time:</span> <span class="val" style="color:var(--text);" id="d-wave">--</span></div>
+    <button class="btn btn-outline" onclick="logout()">Change Driver ID</button>
   </div>
 
   <div class="card">
-    <div class="card-title">Live Status</div>
-    <div class="profile-row"><span>Wave Time:</span> <span class="val" id="d-wave">--</span></div>
-    <div class="profile-row"><span>Break:</span> <span class="val" id="d-break">--</span></div>
+    <div class="card-title">Live Queue & Batch Status</div>
+
+    <div class="batch-grid">
+      <div class="batch-pill">
+        <div class="bp-lbl">Assigned Batch</div>
+        <div class="bp-val" id="d-batch">--</div>
+      </div>
+      <div class="batch-pill">
+        <div class="bp-lbl">Waiting Number</div>
+        <div class="bp-val" id="d-wait-num" style="color:var(--green)">--</div>
+      </div>
+    </div>
 
     <div class="status-box">
-      <div class="status-text" id="d-status">Loading…</div>
+      <div class="status-text" id="d-status">LOADING...</div>
     </div>
 
-    <div class="chips">
-      <div class="chip"><div class="cv" id="d-wait">--</div><div class="cl">Waiting #</div></div>
-      <div class="chip"><div class="cv" id="d-batch">--</div><div class="cl">Batch</div></div>
-    </div>
-
-    <div class="timer-box" id="timer-container">
-      <div class="timer-label" id="timer-label">Action Timer</div>
+    <div class="timer-box" id="timer-container" style="display:none;">
+      <div style="font-size:11px; color:var(--muted); text-transform:uppercase; font-weight:800; margin-bottom:5px;" id="timer-label">Timer</div>
       <div class="countdown" id="d-timer">00:00:00</div>
     </div>
   </div>
 
-  <p style="text-align:center; font-size:10px; color:var(--muted); margin-top:16px;">Data refreshes automatically every 30 seconds.</p>
+  <p style="text-align:center; font-size:11px; color:var(--muted); margin-top:12px;">
+    Auto-refreshes every 10 seconds · <a href="javascript:void(0)" onclick="fetchData(currentDaId)" style="color:var(--orange);font-weight:bold;">Refresh Now</a>
+  </p>
 </div>
 
 <script>
-// ===== safe localStorage shim (sandbox/preview blocks localStorage) =====
-var LS=(function(){
-  var mem={}, ok=false;
-  try{ var t="__t__"; window.localStorage.setItem(t,"1"); window.localStorage.removeItem(t); ok=true; }catch(e){ ok=false; }
-  return {
-    getItem:function(k){ try{ return ok?window.localStorage.getItem(k):(mem.hasOwnProperty(k)?mem[k]:null);}catch(e){return mem.hasOwnProperty(k)?mem[k]:null;} },
-    setItem:function(k,v){ try{ if(ok){window.localStorage.setItem(k,v);}else{mem[k]=String(v);} }catch(e){mem[k]=String(v);} },
-    removeItem:function(k){ try{ if(ok){window.localStorage.removeItem(k);}else{delete mem[k];} }catch(e){delete mem[k];} }
-  };
-})();
+const API_URL = "[https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec](https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec)";
+const SHEET_URL = "[https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit](https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit)";
 
-// ===== PWA icon + manifest =====
-var ICON_B64="PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9Ijk2IiBmaWxsPSIjRkY5OTAwIi8+PHRleHQgeD0iMjU2IiB5PSIyNTAiIGZvbnQtc2l6ZT0iMTkwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjMTMxQTIyIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSI5MDAiPlI8L3RleHQ+PHBhdGggZD0iTTEyMCAzMzAgUTI1NiA0NDAgMzkyIDMzMCIgc3Ryb2tlPSIjMTMxQTIyIiBzdHJva2Utd2lkdGg9IjI2IiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cGF0aCBkPSJNMzkyIDMzMCBsLTMwIC04IGwxMiAzMCB6IiBmaWxsPSIjMTMxQTIyIi8+PC9zdmc+";
-var ICON_URI="data:image/svg+xml;base64,"+ICON_B64;
-document.getElementById("apple-icon").href=ICON_URI;
-if('serviceWorker' in navigator){ try{ var swCode="self.addEventListener('fetch',function(e){ if(e.request.url.includes('script.google.com')) return; e.respondWith(fetch(e.request).catch(function(){return new Response('Offline');})); });"; navigator.serviceWorker.register(URL.createObjectURL(new Blob([swCode],{type:'application/javascript'}))); }catch(e){} }
-var mj={ "name":"DUD3 Driver Hub","short_name":"Driver","display":"standalone","start_url":".","background_color":"#131A22","theme_color":"#FF9900","icons":[{ "src":ICON_URI,"sizes":"192x192","type":"image/svg+xml","purpose":"any maskable"},{ "src":ICON_URI,"sizes":"512x512","type":"image/svg+xml","purpose":"any maskable"}]};
-document.getElementById("manifest-link").href=URL.createObjectURL(new Blob([JSON.stringify(mj)],{type:"application/json"}));
+let currentDaId = "";
+let refreshInterval = null, countdownInterval = null;
+let timerMode = null; // "COUNTUP" or "COUNTDOWN"
+let baseStartSec = 0;
 
-// ===== config =====
-const API_URL = "https://script.google.com/macros/s/AKfycbxBhR1jYkh32EBMHBrr1-XhonEkynaU1b04-mV_OR8q3x4pGlOysDmw20xMKwyG-Z1KjQ/exec";
-const SHEET_URL = "https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit";
-
-var refreshInterval=null, countdownInterval=null, targetTime=null, isCountUp=false;
-var notifSent={attend:false, exceed:false};
-var qr=null, qrLastValue="";
-
-function getTodayTab(){ var d=new Date(), m=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]; return ("0"+d.getDate()).slice(-2)+" "+m[d.getMonth()]; }
-
-function toast(title, body){
-  var t=document.getElementById("toast-msg");
-  document.getElementById("toast-txt").textContent=title+": "+body;
-  t.classList.add("show"); setTimeout(function(){t.classList.remove("show")},6000);
-  if("Notification" in window && Notification.permission==="granted"){ try{ new Notification(title,{body:body}); }catch(e){} }
+function getTodayTab(){
+  var d=new Date(), m=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+  return ("0"+d.getDate()).slice(-2)+" "+m[d.getMonth()];
 }
-function reqNotif(){ if("Notification" in window && Notification.permission!=="granted" && Notification.permission!=="denied"){ try{ Notification.requestPermission(); }catch(e){} } }
 
-function login(){
-  var daId=document.getElementById("da-id-input").value.trim().toUpperCase();
-  if(daId.length<5){ toast("Invalid","Please enter a valid DA ID"); return; }
-  reqNotif();
-  LS.setItem("dud3_driver_id", daId);
-  document.getElementById("login-sec").style.display="none";
+window.onload = function() {
+  try {
+    const savedId = localStorage.getItem("dud3_driver_id");
+    if (savedId) { document.getElementById("da-id-input").value = savedId; login(); }
+  } catch (e) {}
+};
+
+function login() {
+  const daId = document.getElementById("da-id-input").value.trim().toUpperCase();
+  if (daId.length < 3) return alert("Please enter a valid DA ID");
+  currentDaId = daId;
+  try { localStorage.setItem("dud3_driver_id", daId); } catch(e){}
+  document.getElementById("login-sec").style.display = "none";
   fetchData(daId);
-  if(refreshInterval) clearInterval(refreshInterval);
-  refreshInterval=setInterval(function(){fetchData(daId)},30000);
-}
-function logout(){
-  LS.removeItem("dud3_driver_id");
-  if(refreshInterval) clearInterval(refreshInterval);
-  if(countdownInterval) clearInterval(countdownInterval);
-  notifSent={attend:false,exceed:false};
-  document.getElementById("dashboard").style.display="none";
-  document.getElementById("login-sec").style.display="block";
-  document.getElementById("da-id-input").value="";
+  if (refreshInterval) clearInterval(refreshInterval);
+  refreshInterval = setInterval(() => fetchData(daId), 10000);
 }
 
-function fetchData(daId){
-  document.getElementById("loader").style.display="block";
-  fetch(API_URL,{ method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({action:"getDaStatus", daId:daId, sheetUrl:SHEET_URL, dayTab:getTodayTab()}) })
-  .then(function(res){ if(!res.ok) throw new Error("Network"); return res.json(); })
-  .then(function(res){
-    document.getElementById("loader").style.display="none";
-    if(!res.success){ toast("Error", res.errors?res.errors[0]:"Failed"); return; }
-    if(!res.data || !res.data.found){ toast("Not Found","DA ID not in today's roster / RushData."); logout(); return; }
-    updateDashboard(res.data);
+function logout() {
+  try { localStorage.removeItem("dud3_driver_id"); } catch(e){}
+  if (refreshInterval) clearInterval(refreshInterval);
+  if (countdownInterval) clearInterval(countdownInterval);
+  document.getElementById("dashboard").style.display = "none";
+  document.getElementById("login-sec").style.display = "block";
+  document.getElementById("da-id-input").value = "";
+}
+
+function fetchData(daId) {
+  document.getElementById("loader").style.display = "block";
+  fetch(API_URL, {
+    method: 'POST',
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ action: 'getDaStatus', daId: daId, sheetUrl: SHEET_URL, dayTab: getTodayTab() }),
+    cache: 'no-store'
   })
-  .catch(function(){ document.getElementById("loader").style.display="none"; toast("Connection","Check deployment permissions."); });
+  .then(res => res.json())
+  .then(res => {
+    document.getElementById("loader").style.display = "none";
+    if (!res.success) { return alert("Error: " + (res.errors ? res.errors[0] : "Failed")); }
+    if (!res.data || !res.data.found) { logout(); return alert("DA ID not found in today's roster."); }
+    updateDashboard(res.data);
+  }).catch(err => {
+    document.getElementById("loader").style.display = "none";
+  });
 }
 
-function parseHHMM(timeStr){ // strict 24hr
-  if(!timeStr) return null;
-  var p=String(timeStr).match(/(\d{1,2}):(\d{2})/); if(!p) return null;
-  var h=parseInt(p[1],10), mn=parseInt(p[2],10); if(h>23||mn>59) return null;
-  var d=new Date(); d.setHours(h,mn,0,0); return d;
-}
-function addMinutes(dateObj,mins){ return new Date(dateObj.getTime()+mins*60000); }
-
-function renderQR(daId){
-  if(daId===qrLastValue) return;
-  qrLastValue=daId;
-  var box=document.getElementById("qrcode"); box.innerHTML="";
-  try{
-    qr=new QRCode(box,{ text:daId, width:160, height:160, colorDark:"#000000", colorLight:"#ffffff", correctLevel:QRCode.CorrectLevel.M });
-  }catch(e){ box.textContent=daId; }
+// Strict 24-hour HH:MM to seconds since midnight
+function hhmmToSec(str) {
+  if (!str) return null;
+  var m = String(str).trim().match(/(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)?/);
+  if (!m) return null;
+  var h = parseInt(m[1], 10), min = parseInt(m[2], 10), a = m[3] ? m[3].toUpperCase() : "";
+  if (a === "PM" && h < 12) h += 12;
+  if (a === "AM" && h === 12) h = 0;
+  return (h * 3600) + (min * 60);
 }
 
-function updateDashboard(data){
-  document.getElementById("dashboard").style.display="block";
-  renderQR(data.daId);
-  document.getElementById("d-alias").textContent = data.alias || "(no alias)";
-  document.getElementById("d-id").textContent = data.daId;
-  document.getElementById("d-dsp").textContent = data.dspName || "—";
+function nowSec() {
+  var d = new Date();
+  return d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds();
+}
+
+function formatHMS(totalSec) {
+  totalSec = Math.max(0, Math.floor(totalSec));
+  var h = Math.floor(totalSec / 3600);
+  var m = Math.floor((totalSec % 3600) / 60);
+  var s = totalSec % 60;
+  return ("0" + h).slice(-2) + ":" + ("0" + m).slice(-2) + ":" + ("0" + s).slice(-2);
+}
+
+function updateDashboard(data) {
+  document.getElementById("dashboard").style.display = "block";
+  document.getElementById("d-name").textContent = data.daName || "--";
+  document.getElementById("d-id").textContent = data.daId || "--";
+  document.getElementById("d-dsp").textContent = data.dspName || "DUD3";
   document.getElementById("d-wave").textContent = data.waveTime || "Not Assigned";
-  document.getElementById("d-break").textContent = data.breakInfo || "—";
-  document.getElementById("d-wait").textContent = data.waitNumber ? (data.waitNumber + (data.waitTotal? "/"+data.waitTotal : "")) : "—";
-  document.getElementById("d-batch").textContent = data.batchName || "—";
 
-  var st=document.getElementById("d-status");
-  st.textContent=(data.status||"").toUpperCase();
-  var s=data.status||"";
-  if(s.indexOf("Absent")>-1 || s.indexOf("Late")>-1 || s.indexOf("Break")>-1 || s.indexOf("Violation")>-1) st.style.color="var(--red)";
-  else if(s.indexOf("Received")>-1) st.style.color="var(--green)";
-  else if(s.indexOf("OFD")>-1) st.style.color="var(--purple)";
-  else if(s.indexOf("Sent")>-1) st.style.color="var(--warn)";
-  else st.style.color="var(--blue)";
+  // Batch & Waiting Position Display
+  document.getElementById("d-batch").textContent = data.batchName || "Not Queued";
+  if (data.status === "Waiting" && data.batchPosition > 0) {
+    document.getElementById("d-wait-num").textContent = "#" + data.batchPosition + " of " + data.batchTotal;
+  } else if (data.status === "Sent to OP") {
+    document.getElementById("d-wait-num").textContent = "DISPATCHED";
+  } else if (data.status === "Received") {
+    document.getElementById("d-wait-num").textContent = "IN STATION";
+  } else {
+    document.getElementById("d-wait-num").textContent = "--";
+  }
+
+  const statusEl = document.getElementById("d-status");
+  statusEl.textContent = (data.status || "Not Checked In").toUpperCase();
+  if (data.status.includes("Absent") || data.status.includes("Break")) statusEl.style.color = "var(--red)";
+  else if (data.status.includes("Received")) statusEl.style.color = "var(--green)";
+  else if (data.status.includes("Sent")) statusEl.style.color = "var(--orange)";
+  else if (data.status.includes("Waiting")) statusEl.style.color = "var(--blue)";
+  else statusEl.style.color = "var(--text)";
 
   setupTimers(data);
 }
 
-function setupTimers(data){
-  var box=document.getElementById("timer-container"), label=document.getElementById("timer-label"), disp=document.getElementById("d-timer");
-  if(countdownInterval) clearInterval(countdownInterval);
-  targetTime=null; isCountUp=false; box.style.display="none"; label.style.color="var(--muted)"; disp.style.color="var(--orange)";
-  var now=new Date();
+function setupTimers(data) {
+  const timerBox = document.getElementById("timer-container");
+  const timerLabel = document.getElementById("timer-label");
+  const timerDisplay = document.getElementById("d-timer");
+  if (countdownInterval) clearInterval(countdownInterval);
+  timerBox.style.display = "none";
 
-  if(data.status==="Not Checked In" && data.waveTime){
-    var waveD=parseHHMM(data.waveTime);
-    if(waveD){
-      var openT=addMinutes(waveD,-data.preBlock), closeT=addMinutes(waveD,data.grace), remindT=addMinutes(waveD,-20);
-      if(now>=remindT && now<waveD && !notifSent.attend){ toast("Attendance","Wave time is approaching!"); notifSent.attend=true; }
-      if(now<openT){ box.style.display="block"; label.textContent="Check-in Opens In"; targetTime=openT; }
-      else if(now>=openT && now<=closeT){ box.style.display="block"; label.textContent="Check-in CLOSES In"; label.style.color="var(--red)"; targetTime=closeT; }
-    }
-  }
-  else if(data.status==="Sent to OP" && data.sentTime){
-    var sentD=parseHHMM(data.sentTime);
-    if(sentD){
-      var dl=addMinutes(sentD,data.rushTimeout); box.style.display="block";
-      if(now>dl){ label.textContent="SLA Exceeded"; label.style.color="var(--red)"; disp.style.color="var(--red)"; disp.textContent="TIME UP";
-        if(!notifSent.exceed){ toast("SLA","Entry deadline exceeded!"); notifSent.exceed=true; } }
-      else { label.textContent="Entry Deadline ("+data.rushTimeout+"m)"; label.style.color="var(--orange)"; targetTime=dl; }
-    }
-  }
-  else if((data.status==="Present" || data.status.indexOf("Late")>-1) && data.checkInTime){
-    var ci=parseHHMM(data.checkInTime);
-    if(ci){ box.style.display="block"; label.textContent="Waiting Duration"; label.style.color="var(--orange)"; targetTime=ci; isCountUp=true; }
-  }
-  else if(data.status.indexOf("Received")>-1 && data.rushInTime && !data.ofdTime){
-    var rd=parseHHMM(data.rushInTime);
-    if(rd){ box.style.display="block"; label.textContent="Auto OFD In"; label.style.color="var(--green)"; targetTime=addMinutes(rd,data.autoOfd); }
-  }
+  var startRef = hhmmToSec(data.waitTime || data.checkInTime);
+  var sentRef  = hhmmToSec(data.sentTime);
+  var rushRef  = hhmmToSec(data.rushInTime);
 
-  if(targetTime){
-    countdownInterval=setInterval(function(){
-      var cur=new Date(), diff=isCountUp?(cur-targetTime):(targetTime-cur);
-      if(!isCountUp && diff<=0){ disp.textContent="00:00:00"; clearInterval(countdownInterval); fetchData(LS.getItem("dud3_driver_id")); return; }
-      var h=Math.floor((diff%(864e5))/(36e5)), m=Math.floor((diff%(36e5))/(6e4)), s=Math.floor((diff%(6e4))/1000);
-      disp.textContent=(isCountUp && h>0)? (h+"h "+("0"+m).slice(-2)+"m") : (("0"+(isCountUp?m:h)).slice(-2)+":"+("0"+(isCountUp?s:m)).slice(-2)+(!isCountUp?(":"+("0"+s).slice(-2)):""));
-    },1000);
+  // 1. WAITING TIMER (Counts UP from WaitTime / CheckInTime)
+  if ((data.status === "Waiting" || data.status === "Present" || data.status.includes("Late") || data.status.includes("Replacement")) && startRef !== null) {
+    timerBox.style.display = "block";
+    timerLabel.textContent = "⏳ Waiting Time in " + (data.batchName || "Queue");
+    timerLabel.style.color = "var(--orange)";
+    timerDisplay.style.color = "var(--orange)";
+    countdownInterval = setInterval(() => {
+      var elapsed = Math.max(0, nowSec() - startRef);
+      timerDisplay.textContent = formatHMS(elapsed);
+    }, 1000);
+    timerDisplay.textContent = formatHMS(Math.max(0, nowSec() - startRef));
+  }
+  // 2. SENT TO RUSH QUEUE DEADLINE (Counts DOWN from SentTime + RushTimeout)
+  else if (data.status === "Sent to OP" && sentRef !== null) {
+    var deadlineSec = sentRef + ((Number(data.rushTimeout) || 20) * 60);
+    timerBox.style.display = "block";
+    timerLabel.textContent = "🚨 Proceed to Rush Queue — Entry Deadline";
+    countdownInterval = setInterval(() => {
+      var rem = deadlineSec - nowSec();
+      if (rem <= 0) {
+        timerDisplay.style.color = "var(--red)";
+        timerDisplay.textContent = "SLA EXCEEDED";
+      } else {
+        timerDisplay.style.color = "var(--green)";
+        timerDisplay.textContent = formatHMS(rem);
+      }
+    }, 1000);
+  }
+  // 3. RECEIVED INSIDE -> AUTO OFD COUNTDOWN
+  else if (data.status === "Received" && rushRef !== null && !data.ofdTime) {
+    var ofdDeadline = rushRef + ((Number(data.autoOfd) || 30) * 60);
+    timerBox.style.display = "block";
+    timerLabel.textContent = "🚚 Inside Station — Auto OFD In";
+    timerDisplay.style.color = "var(--green)";
+    countdownInterval = setInterval(() => {
+      var rem = Math.max(0, ofdDeadline - nowSec());
+      timerDisplay.textContent = formatHMS(rem);
+    }, 1000);
   }
 }
-
-window.addEventListener("DOMContentLoaded",function(){
-  document.getElementById("login-btn").onclick=login;
-  document.getElementById("logout-btn").onclick=logout;
-  document.getElementById("da-id-input").addEventListener("keydown",function(e){ if(e.key==="Enter") login(); });
-  var saved=LS.getItem("dud3_driver_id");
-  if(saved){ document.getElementById("da-id-input").value=saved; login(); }
-});
 </script>
 </body>
 </html>
