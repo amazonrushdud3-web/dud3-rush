@@ -100,13 +100,12 @@
 </div>
 
 <script>
-const API_URL = "[https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec](https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec)";
-const SHEET_URL = "[https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit](https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit)";
+const API_URL = "https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec";
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit";
 
 let currentDaId = "";
 let refreshInterval = null, countdownInterval = null;
-let timerMode = null; // "COUNTUP" or "COUNTDOWN"
-let baseStartSec = 0;
+let serverOffsetSec = 0;
 
 function getTodayTab(){
   var d=new Date(), m=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
@@ -159,10 +158,9 @@ function fetchData(daId) {
   });
 }
 
-// Strict 24-hour HH:MM to seconds since midnight
 function hhmmToSec(str) {
   if (!str) return null;
-  var m = String(str).trim().match(/(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)?/);
+  var m = String(str).replace(/^'+/, "").trim().match(/(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)?/);
   if (!m) return null;
   var h = parseInt(m[1], 10), min = parseInt(m[2], 10), a = m[3] ? m[3].toUpperCase() : "";
   if (a === "PM" && h < 12) h += 12;
@@ -170,9 +168,13 @@ function hhmmToSec(str) {
   return (h * 3600) + (min * 60);
 }
 
-function nowSec() {
+function localNowSec() {
   var d = new Date();
   return d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds();
+}
+
+function dubaiNowSec() {
+  return localNowSec() + serverOffsetSec;
 }
 
 function formatHMS(totalSec) {
@@ -184,13 +186,20 @@ function formatHMS(totalSec) {
 }
 
 function updateDashboard(data) {
+  if (data.serverTime) {
+    var srvSec = hhmmToSec(data.serverTime);
+    if (srvSec !== null) {
+      var d = new Date();
+      serverOffsetSec = (srvSec + d.getSeconds()) - localNowSec();
+    }
+  }
+
   document.getElementById("dashboard").style.display = "block";
   document.getElementById("d-name").textContent = data.daName || "--";
   document.getElementById("d-id").textContent = data.daId || "--";
   document.getElementById("d-dsp").textContent = data.dspName || "DUD3";
   document.getElementById("d-wave").textContent = data.waveTime || "Not Assigned";
 
-  // Batch & Waiting Position Display
   document.getElementById("d-batch").textContent = data.batchName || "Not Queued";
   if (data.status === "Waiting" && data.batchPosition > 0) {
     document.getElementById("d-wait-num").textContent = "#" + data.batchPosition + " of " + data.batchTotal;
@@ -230,19 +239,20 @@ function setupTimers(data) {
     timerLabel.textContent = "⏳ Waiting Time in " + (data.batchName || "Queue");
     timerLabel.style.color = "var(--orange)";
     timerDisplay.style.color = "var(--orange)";
-    countdownInterval = setInterval(() => {
-      var elapsed = Math.max(0, nowSec() - startRef);
+    var tickWait = function() {
+      var elapsed = Math.max(0, dubaiNowSec() - startRef);
       timerDisplay.textContent = formatHMS(elapsed);
-    }, 1000);
-    timerDisplay.textContent = formatHMS(Math.max(0, nowSec() - startRef));
+    };
+    tickWait();
+    countdownInterval = setInterval(tickWait, 1000);
   }
   // 2. SENT TO RUSH QUEUE DEADLINE (Counts DOWN from SentTime + RushTimeout)
   else if (data.status === "Sent to OP" && sentRef !== null) {
     var deadlineSec = sentRef + ((Number(data.rushTimeout) || 20) * 60);
     timerBox.style.display = "block";
     timerLabel.textContent = "🚨 Proceed to Rush Queue — Entry Deadline";
-    countdownInterval = setInterval(() => {
-      var rem = deadlineSec - nowSec();
+    var tickSent = function() {
+      var rem = deadlineSec - dubaiNowSec();
       if (rem <= 0) {
         timerDisplay.style.color = "var(--red)";
         timerDisplay.textContent = "SLA EXCEEDED";
@@ -250,7 +260,9 @@ function setupTimers(data) {
         timerDisplay.style.color = "var(--green)";
         timerDisplay.textContent = formatHMS(rem);
       }
-    }, 1000);
+    };
+    tickSent();
+    countdownInterval = setInterval(tickSent, 1000);
   }
   // 3. RECEIVED INSIDE -> AUTO OFD COUNTDOWN
   else if (data.status === "Received" && rushRef !== null && !data.ofdTime) {
@@ -258,10 +270,12 @@ function setupTimers(data) {
     timerBox.style.display = "block";
     timerLabel.textContent = "🚚 Inside Station — Auto OFD In";
     timerDisplay.style.color = "var(--green)";
-    countdownInterval = setInterval(() => {
-      var rem = Math.max(0, ofdDeadline - nowSec());
+    var tickRcv = function() {
+      var rem = Math.max(0, ofdDeadline - dubaiNowSec());
       timerDisplay.textContent = formatHMS(rem);
-    }, 1000);
+    };
+    tickRcv();
+    countdownInterval = setInterval(tickRcv, 1000);
   }
 }
 </script>
