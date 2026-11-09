@@ -28,10 +28,9 @@
       font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif;
       font-size:14px;-webkit-font-smoothing:antialiased;
     }
-    /* Native Mobile App Shell Layout */
     body{display:flex;flex-direction:column;height:100dvh;}
 
-    /* ===== NEW OPENING ANIMATION: RADAR PULSE + 3D RUSH CUBE ===== */
+    /* ===== OPENING ANIMATION: RADAR PULSE + 3D RUSH CUBE ===== */
     #splash{
       position:fixed;inset:0;width:100%;height:100%;
       background:radial-gradient(circle at 50% 40%, #1F2B3A 0%, #0B0F14 75%);
@@ -65,7 +64,6 @@
     @keyframes drawSmile{to{stroke-dashoffset:0}}
     @keyframes popArrow{to{opacity:1}}
 
-    /* Toast Notification */
     #toast-msg{
       position:fixed;top:calc(var(--safe-top) + 10px);left:50%;
       transform:translateX(-50%) translateY(-200%);
@@ -76,7 +74,6 @@
     #toast-msg.show{transform:translateX(-50%) translateY(0);}
     .b-ok{background:var(--green);color:#042012;}.b-err{background:var(--red);color:#fff;}.b-warn{background:var(--warn);color:#1A1300;}
 
-    /* App Top Bar */
     header{
       padding:calc(var(--safe-top) + 10px) 14px 10px;
       background:rgba(24,33,44,0.98);border-bottom:1px solid var(--border);
@@ -94,7 +91,6 @@
     #install-btn{display:none;background:var(--orange);color:#000;border:none;border-radius:8px;padding:6px 10px;font-size:10px;font-weight:900;cursor:pointer;}
     .dsel{background:var(--bg);color:#fff;border:1px solid var(--border);border-radius:8px;padding:6px 8px;font-size:12px;font-weight:800;}
 
-    /* Scrollable App Content Area */
     main{
       flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
       width:100%;max-width:720px;margin:0 auto;
@@ -172,7 +168,6 @@
     .si{padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
     .si:hover,.si:active{background:rgba(255,153,0,0.2);}
 
-    /* 5-Tab Bottom App Dock (Sent merged into Rush Q) */
     nav.bnav{
       position:fixed;bottom:0;left:0;right:0;
       height:calc(var(--nav) + var(--safe-bot));padding-bottom:var(--safe-bot);
@@ -199,7 +194,6 @@
 </head>
 <body>
 
-<!-- NEW RADAR PULSE + 3D RUSH BOX OPENING ANIMATION -->
 <div id="splash">
   <div class="radar-wrap">
     <div class="radar-ring"></div>
@@ -378,7 +372,6 @@
   </section>
 </main>
 
-<!-- 5-TAB NATIVE BOTTOM BAR (Sent merged into Rush Q) -->
 <nav class="bnav">
   <button class="ni on" data-p="p-att"><span>📋</span><span>Attend</span></button>
   <button class="ni" data-p="p-wait"><span>📥</span><span>Waiting</span></button>
@@ -388,7 +381,7 @@
 </nav>
 
 <script>
-// ===== WEB AUDIO SCAN BEEP ENGINE (Zero external files needed) =====
+// ===== WEB AUDIO SCAN BEEP ENGINE =====
 var audioCtx = null;
 function playScanSound(type) {
   try {
@@ -398,7 +391,6 @@ function playScanSound(type) {
     if (audioCtx.state === "suspended") audioCtx.resume();
 
     if (type === "err") {
-      // Double low buzz for error / break block
       [0, 0.16].forEach(function(delay) {
         var o = audioCtx.createOscillator(), g = audioCtx.createGain();
         o.type = "sawtooth";
@@ -410,7 +402,6 @@ function playScanSound(type) {
         o.stop(audioCtx.currentTime + delay + 0.14);
       });
     } else {
-      // Crisp high barcode scanner beep
       var osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
       osc.type = "sine";
       osc.frequency.setValueAtTime(1850, audioCtx.currentTime);
@@ -465,6 +456,7 @@ var LS=(function(){
   };
 })();
 
+// 🟢 AUTOMATIC CACHE & STORAGE PURGE AFTER EVERY GOOGLE SHEET SAVE
 function autoPurgeBrowserCache(forceReload) {
   try {
     var keepYm  = LS.getItem("dud3_ym");
@@ -475,6 +467,11 @@ function autoPurgeBrowserCache(forceReload) {
     if (keepApi) LS.setItem("dud3_api", keepApi);
     if ('caches' in window) {
       caches.keys().then(function(names) { for (let name of names) caches.delete(name); });
+    }
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(regs) {
+        for (let reg of regs) reg.unregister();
+      });
     }
   } catch (e) {}
   if (forceReload) window.location.reload(true);
@@ -488,7 +485,6 @@ var S={
 };
 var disBypass=new Set(), disTimeout=new Set();
 
-// 🟢 RACE-CONDITION PROTECTION LOCK
 var inflightMutations = 0;
 var mutationVersion = 0;
 
@@ -538,7 +534,6 @@ function cfgUI(){
   document.getElementById("s-pin").value=S.cfg.adminPin || "1234";
 }
 
-// 🟢 STATIC BATCH BUILDER (Never shifts Batch 2 -> Batch 1)
 function rebuildGlobalBatches() {
   var waiters = S.roster.filter(function(r) {
     return (r.status === "Waiting" || r.isWaiting) && !r.isOnBreak && !r.sentTime && !r.rushScanInTime && !r.ofdTime;
@@ -567,14 +562,14 @@ function rebuild(){
   S.breaks=[]; S.received=[];
   S.roster.forEach(function(d){
     if(d.isOnBreak) S.breaks.push({daId:d.daId,daName:d.daName,info:d.breakInfo||""});
-    if(String(d.status).indexOf("Received")>-1) S.received.push({daId:d.daId,daName:d.daName,t:d.rushScanInTime||"",batchName:d.batchName||""});
+    if((String(d.status).indexOf("Received")>-1 || d.rushScanInTime) && !d.ofdTime) {
+      S.received.push({daId:d.daId,daName:d.daName,t:d.rushScanInTime||"",batchName:d.batchName||""});
+    }
   });
   rebuildGlobalBatches();
 }
 
-// 🟢 RACE-FREE API ENGINE
 function callApi(action,payload){
-  // Skip background sync if a user scan/send mutation is currently in flight
   if(action === "syncOnly" && inflightMutations > 0) return;
 
   var isMutation = (action !== "syncOnly" && action !== "rosterFull");
@@ -603,7 +598,6 @@ function callApi(action,payload){
     var splash = document.getElementById("splash");
     if (splash) { splash.style.opacity = "0"; setTimeout(function(){if(splash.parentNode)splash.remove()}, 400); }
 
-    // Discard stale syncOnly responses that started before a user scan/send
     if (action === "syncOnly" && (inflightMutations > 0 || reqVersion !== mutationVersion)) {
       return;
     }
@@ -611,7 +605,7 @@ function callApi(action,payload){
     if(!d||!d.success){
       pill.className="pill off"; pill.textContent="ERROR";
       if(d&&d.errors) { playScanSound("err"); banner(d.errors[0],"err"); }
-      if(isMutation) callApi("rosterFull"); // Re-sync truth on error
+      if(isMutation) callApi("rosterFull");
       return;
     }
 
@@ -630,6 +624,7 @@ function callApi(action,payload){
       rebuild(); render();
     }
 
+    // Automatically purge browser cache & storage after data is saved to Google Sheet
     if(action !== "syncOnly") autoPurgeBrowserCache(false);
 
     if(action==="recordCheckIn" && d.alreadyMarked){
@@ -656,7 +651,6 @@ function switchTab(id){
   if(id==="p-rush")setTimeout(function(){document.getElementById("rush-inp").focus()},80);
 }
 
-// Next Static Batch helper for optimistic 0ms UI update
 function getOptimisticNextBatch() {
   var cap = Number(S.cfg.batchSize) || 25;
   var maxNum = 0, counts = {};
@@ -674,7 +668,6 @@ function getOptimisticNextBatch() {
   return "Batch " + maxNum;
 }
 
-// 🟢 INSTANT ZERO-DELAY ATTENDANCE & WAITING SCAN
 function checkIn(token,isWaiting){
   var c=String(token||"").trim().toLowerCase(); if(!c)return;
   var da=S.roster.find(function(r){
@@ -686,7 +679,6 @@ function checkIn(token,isWaiting){
   });
   if(!da) { playScanSound("err"); return banner('DA Not Found in Roster: "'+token+'"',"err"); }
 
-  // Block all scans except Attendance when DA is on break
   if (da.isOnBreak && isWaiting) {
     playScanSound("err");
     return banner("BLOCKED: "+da.daName+" is ON BREAK! ("+da.breakInfo+")", "err");
@@ -718,7 +710,6 @@ function checkIn(token,isWaiting){
 
   playScanSound("ok");
 
-  // Instant 0ms Optimistic Update
   var tNow = now();
   var assignedBatch = getOptimisticNextBatch();
   if(!isWaiting){
@@ -738,7 +729,7 @@ function checkIn(token,isWaiting){
   callApi(isWaiting?"addToWaiting":"recordCheckIn",{daId:da.daId,daName:da.daName,sentStatus:st,isWaiting:isWaiting});
 }
 
-// 🟢 INSTANT ZERO-DELAY RUSH Q RECEIVE
+// 🟢 INSTANT RUSH Q RECEIVE (Immediately removes DA from Pending Sent list & moves to Received)
 function triggerRushReceive(daIdInput) {
   var c = String(daIdInput || "").trim();
   if (!c) return;
@@ -746,17 +737,20 @@ function triggerRushReceive(daIdInput) {
   var da = S.roster.find(function(r){
     return (r.daId&&r.daId.toLowerCase()===q) ||
            (r.repDaId&&r.repDaId.toLowerCase()===q) ||
-           (r.daName&&r.daName.toLowerCase()===q);
+           (r.daName&&r.daName.toLowerCase()===q) ||
+           (r.daId&&r.daId.toLowerCase().indexOf(q)>-1) ||
+           (r.daName&&r.daName.toLowerCase().indexOf(q)>-1);
   });
   if (da && da.isOnBreak) {
     playScanSound("err");
     return banner("BLOCKED: " + da.daName + " is ON BREAK!", "err");
   }
   playScanSound("ok");
-  if (da && da.sentTime && !da.rushScanInTime) {
-    da.rushScanInTime = now();
+  if (da) {
+    da.rushScanInTime = da.rushScanInTime || now();
     da.status = "Received";
     da.isWaiting = false;
+    da.waitTime = "";
     rebuild(); render();
     banner(da.daName + " (" + (da.batchName || "Sent") + ") → RECEIVED IN!", "ok");
   }
@@ -770,7 +764,6 @@ function toggleBatch(bName, isChecked) {
 
 function getYM(){ return document.getElementById("inp-ym").value.trim(); }
 
-// 🟢 INSTANT OPTIMISTIC SEND (Immediately moves DAs from Waiting -> Sent in Rush Q)
 function executeBatchSend(idsToSend, batchLabel) {
   var ym = getYM();
   if (!ym) { playScanSound("err"); return banner("Enter YM Name first!", "warn"); }
@@ -785,6 +778,8 @@ function executeBatchSend(idsToSend, batchLabel) {
       r.status = "Sent to OP";
       r.isWaiting = false;
       r.waitTime = "";
+      r.rushScanInTime = "";
+      r.ofdTime = "";
       r.sentTime = tNow;
       r.marshalName = ym;
       if (!r.batchName) r.batchName = batchLabel || "Batch 1";
@@ -804,7 +799,7 @@ function sendSelected(){
 
 function sendFullBatch(){
   if(!S.globalBatches.length){ playScanSound("err"); return banner("No waiting batch to send","warn"); }
-  var target = S.globalBatches[0]; // Oldest active batch (e.g., Batch 1, then Batch 2)
+  var target = S.globalBatches[0];
   var ids = target.members.map(function(m){return m.daId});
   executeBatchSend(ids, target.name);
 }
@@ -840,7 +835,7 @@ function render(){
     if(r.attendanceOnlyStatus==="Late Arrival")cL++;
     if(r.attendanceOnlyStatus==="Replacement Present")cR++;
     if(r.attendanceOnlyStatus==="Absent")cA++;
-    if(r.status==="Sent to OP")cSent++;
+    if(r.status==="Sent to OP" && !r.rushScanInTime)cSent++;
   });
   S.globalBatches.forEach(function(b){cW+=b.members.length});
 
@@ -880,8 +875,8 @@ function render(){
   bb.innerHTML=html||'<div style="text-align:center;color:var(--muted);padding:18px;font-size:12px">No DAs waiting in queue</div>';
   bb.querySelectorAll(".bchk").forEach(function(c){c.onchange=function(e){if(e.target.checked)S.sel.add(e.target.dataset.id);else S.sel.delete(e.target.dataset.id); render(); }});
 
-  // MERGED SENT LIST IN RUSH Q TAB (Grouped by Batch + 1-Tap Receive Button)
-  var sentList = S.roster.filter(function(r){return r.status==="Sent to OP"});
+  // MERGED SENT LIST IN RUSH Q TAB (Strictly excludes any DA with rushScanInTime)
+  var sentList = S.roster.filter(function(r){ return r.status==="Sent to OP" && !r.rushScanInTime; });
   var sentByBatch = {};
   sentList.forEach(function(p){
     var bn = p.batchName || "Individual / Unbatched";
@@ -904,7 +899,6 @@ function render(){
   document.getElementById("recv-list").innerHTML=S.received.length?S.received.map(function(r){return'<div class="di" style="padding:8px;border-left:4px solid var(--green)"><div><div class="dn">'+r.daName+' <span class="pill on" style="font-size:9px;">'+(r.batchName||"")+'</span></div><div class="ds">Scan IN: '+(r.t||"—")+'</div></div><span style="color:var(--green);font-weight:800;font-size:11px">RECEIVED</span></div>';}).join(""):'<div style="text-align:center;color:var(--muted);padding:18px;font-size:12px;">No DAs received</div>';
 }
 
-// 🟢 COMPACT SQUARE FAST QR SCANNER HELPER
 var activeScanners = {};
 function toggleSquareScanner(btnId, camBoxId, qrDivId, onScanSuccess) {
   var b = document.getElementById(camBoxId);
@@ -938,7 +932,6 @@ function toggleSquareScanner(btnId, camBoxId, qrDivId, onScanSuccess) {
   }
 }
 
-// 🟢 LIVE SEARCH DROPDOWN
 function bindLiveSearch(inputId, boxId, getSourceList, onSelectCallback) {
   var inp = document.getElementById(inputId);
   var box = document.getElementById(boxId);
@@ -1028,59 +1021,4 @@ window.addEventListener("DOMContentLoaded",function(){
     S.cfg.preWaveBlockMin = Number(document.getElementById("s-pre").value);
     S.cfg.waveGraceMin    = Number(document.getElementById("s-grace").value);
     S.cfg.batchSize       = Number(document.getElementById("s-batch").value);
-    S.cfg.rushTimeoutMin  = Number(document.getElementById("s-time").value);
-    S.cfg.autoOfdMin      = Number(document.getElementById("s-auto-ofd").value);
-    S.cfg.waitingLockMin  = Number(document.getElementById("s-wait-lock").value);
-    S.cfg.adminPin        = document.getElementById("s-pin").value.trim() || "1234";
-
-    playScanSound("ok");
-    callApi("saveSettings",{settings:S.cfg});
-    banner("Global Settings & Sheet Saved!","ok");
-  };
-
-  document.getElementById("btn-send-full").onclick=sendFullBatch;
-  document.getElementById("btn-send-sel").onclick=sendSelected;
-  document.getElementById("btn-remove-wait").onclick=removeSelected;
-
-  document.getElementById("btn-repl").onclick=function(){
-    var oId=document.getElementById("sel-abs").value, rep=document.getElementById("inp-repl").value.trim();
-    if(!oId||!rep)return banner("Select Absent DA and Replacement DA","warn");
-    var da=S.roster.find(function(r){return r.daId===oId});
-    if(da){
-      playScanSound("ok");
-      da.attendanceOnlyStatus="Replacement Present"; da.status="Waiting"; da.isWaiting=true; da.batchName=getOptimisticNextBatch();
-      banner("Replacement Assigned & Queued","ok");
-      rebuild(); render();
-      callApi("assignReplacement",{rowIndex:da.rowIndex,replacementText:rep});
-      document.getElementById("inp-repl").value="";
-    }
-  };
-
-  // Square QR Scanners with Laser Line + Beep Sound
-  document.getElementById("cam-att-btn").onclick=function(){
-    toggleSquareScanner("cam-att-btn","cam-att","qr-att",function(t){checkIn(t,false);});
-  };
-  document.getElementById("cam-wait-btn").onclick=function(){
-    toggleSquareScanner("cam-wait-btn","cam-wait","qr-wait",function(t){checkIn(t,true);});
-  };
-  document.getElementById("cam-rush-btn").onclick=function(){
-    toggleSquareScanner("cam-rush-btn","cam-rush","qr-rush",function(t){triggerRushReceive(t);});
-  };
-
-  // Live Dropdown Search Bars
-  bindLiveSearch("inp-att", "sug-att", function(){ return S.roster; }, function(id){ checkIn(id, false); });
-  bindLiveSearch("inp-wait", "sug-wait", function(){ return S.roster; }, function(id){ checkIn(id, true); });
-  bindLiveSearch("rush-inp", "sug-rush", function(){ return S.roster; }, function(id){ triggerRushReceive(id); });
-  bindLiveSearch("inp-repl", "sug-repl", function(){ return (S.allDAs && S.allDAs.length) ? S.allDAs : S.roster; }, function(id, name){
-    document.getElementById("inp-repl").value = name + " - " + id;
-  });
-
-  document.getElementById("inp-ym").addEventListener("change",function(){LS.setItem("dud3_ym",this.value)});
-
-  setInterval(function(){callApi("syncOnly")},2500);
-  callApi("rosterFull");
-});
-</script>
-
-</body>
-</html>
+    S.cfg.rushTimeoutMin  = Number(document.getElementById("s-time").value
