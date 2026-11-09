@@ -324,7 +324,7 @@
       <div id="timeoutList"></div>
     </div>
 
-    <!-- MERGED SENT LIST (Directly visible inside Rush Q tab) -->
+    <!-- MERGED SENT LIST -->
     <div class="crd" style="border-color:var(--warn)">
       <div class="crd-t" style="color:var(--warn)">⏱️ Sent from Waiting — Awaiting Rush Q Scan (Grouped by Batch)</div>
       <div id="sent-list" class="scroll-list dlist"></div>
@@ -456,7 +456,7 @@ var LS=(function(){
   };
 })();
 
-// 🟢 AUTOMATIC CACHE & STORAGE PURGE AFTER EVERY GOOGLE SHEET SAVE
+// AUTOMATIC CACHE & STORAGE PURGE AFTER EVERY GOOGLE SHEET SAVE
 function autoPurgeBrowserCache(forceReload) {
   try {
     var keepYm  = LS.getItem("dud3_ym");
@@ -624,7 +624,6 @@ function callApi(action,payload){
       rebuild(); render();
     }
 
-    // Automatically purge browser cache & storage after data is saved to Google Sheet
     if(action !== "syncOnly") autoPurgeBrowserCache(false);
 
     if(action==="recordCheckIn" && d.alreadyMarked){
@@ -729,7 +728,7 @@ function checkIn(token,isWaiting){
   callApi(isWaiting?"addToWaiting":"recordCheckIn",{daId:da.daId,daName:da.daName,sentStatus:st,isWaiting:isWaiting});
 }
 
-// 🟢 INSTANT RUSH Q RECEIVE (Immediately removes DA from Pending Sent list & moves to Received)
+// INSTANT RUSH Q RECEIVE (Immediately removes DA from Pending Sent list & moves to Received)
 function triggerRushReceive(daIdInput) {
   var c = String(daIdInput || "").trim();
   if (!c) return;
@@ -1021,4 +1020,57 @@ window.addEventListener("DOMContentLoaded",function(){
     S.cfg.preWaveBlockMin = Number(document.getElementById("s-pre").value);
     S.cfg.waveGraceMin    = Number(document.getElementById("s-grace").value);
     S.cfg.batchSize       = Number(document.getElementById("s-batch").value);
-    S.cfg.rushTimeoutMin  = Number(document.getElementById("s-time").value
+    S.cfg.rushTimeoutMin  = Number(document.getElementById("s-time").value);
+    S.cfg.autoOfdMin      = Number(document.getElementById("s-auto-ofd").value);
+    S.cfg.waitingLockMin  = Number(document.getElementById("s-wait-lock").value);
+    S.cfg.adminPin        = document.getElementById("s-pin").value.trim() || "1234";
+
+    playScanSound("ok");
+    callApi("saveSettings",{settings:S.cfg});
+    banner("Global Settings & Sheet Saved!","ok");
+  };
+
+  document.getElementById("btn-send-full").onclick=sendFullBatch;
+  document.getElementById("btn-send-sel").onclick=sendSelected;
+  document.getElementById("btn-remove-wait").onclick=removeSelected;
+
+  document.getElementById("btn-repl").onclick=function(){
+    var oId=document.getElementById("sel-abs").value, rep=document.getElementById("inp-repl").value.trim();
+    if(!oId||!rep)return banner("Select Absent DA and Replacement DA","warn");
+    var da=S.roster.find(function(r){return r.daId===oId});
+    if(da){
+      playScanSound("ok");
+      da.attendanceOnlyStatus="Replacement Present"; da.status="Waiting"; da.isWaiting=true; da.batchName=getOptimisticNextBatch();
+      banner("Replacement Assigned & Queued","ok");
+      rebuild(); render();
+      callApi("assignReplacement",{rowIndex:da.rowIndex,replacementText:rep});
+      document.getElementById("inp-repl").value="";
+    }
+  };
+
+  document.getElementById("cam-att-btn").onclick=function(){
+    toggleSquareScanner("cam-att-btn","cam-att","qr-att",function(t){checkIn(t,false);});
+  };
+  document.getElementById("cam-wait-btn").onclick=function(){
+    toggleSquareScanner("cam-wait-btn","cam-wait","qr-wait",function(t){checkIn(t,true);});
+  };
+  document.getElementById("cam-rush-btn").onclick=function(){
+    toggleSquareScanner("cam-rush-btn","cam-rush","qr-rush",function(t){triggerRushReceive(t);});
+  };
+
+  bindLiveSearch("inp-att", "sug-att", function(){ return S.roster; }, function(id){ checkIn(id, false); });
+  bindLiveSearch("inp-wait", "sug-wait", function(){ return S.roster; }, function(id){ checkIn(id, true); });
+  bindLiveSearch("rush-inp", "sug-rush", function(){ return S.roster; }, function(id){ triggerRushReceive(id); });
+  bindLiveSearch("inp-repl", "sug-repl", function(){ return (S.allDAs && S.allDAs.length) ? S.allDAs : S.roster; }, function(id, name){
+    document.getElementById("inp-repl").value = name + " - " + id;
+  });
+
+  document.getElementById("inp-ym").addEventListener("change",function(){LS.setItem("dud3_ym",this.value)});
+
+  setInterval(function(){callApi("syncOnly")},2500);
+  callApi("rosterFull");
+});
+</script>
+
+</body>
+</html>
