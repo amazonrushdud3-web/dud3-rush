@@ -11,17 +11,30 @@
 
   <style>
     :root {
-      --bg: #0F151C;
-      --card: #1F2B3A;
-      --card-alt: #16222F;
-      --border: #2A3B4E;
+      --bg: #0B1118;
+      --bg-grad: radial-gradient(1200px 600px at 100% -10%, rgba(255,153,0,0.08), transparent 55%),
+                 radial-gradient(900px 500px at -10% 110%, rgba(35,131,226,0.10), transparent 55%),
+                 #0B1118;
+      --card: #16202C;
+      --card-alt: #111B25;
+      --card-hi: #1C2938;
+      --border: #273645;
+      --border-soft: #1E2A37;
       --orange: #FF9900;
-      --orange-glow: rgba(255, 153, 0, 0.25);
-      --green: #00E676;
-      --red: #FF3B30;
-      --yellow: #FFD600;
-      --text: #FFFFFF;
-      --text-dim: #94A3B8;
+      --orange-2: #FF7A00;
+      --orange-glow: rgba(255, 153, 0, 0.28);
+      --blue: #2383E2;
+      --green: #16C784;
+      --green-soft: #0C3A2A;
+      --red: #FF4D4F;
+      --red-soft: #3A1416;
+      --yellow: #FFC53D;
+      --text: #F3F6FA;
+      --text-dim: #8FA0B4;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --shadow: 0 8px 28px rgba(0,0,0,0.42);
+      --shadow-soft: 0 4px 16px rgba(0,0,0,0.28);
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
@@ -36,7 +49,8 @@
     }
 
     body {
-      background-color: var(--bg);
+      background: var(--bg-grad);
+      background-attachment: fixed;
       color: var(--text);
       height: 100dvh;
       overflow: hidden;
@@ -229,11 +243,15 @@
 
     nav {
       position: fixed; bottom: 0; left: 0; right: 0;
-      height: calc(var(--safe-bottom) + 58px); background: #141D27;
-      border-top: 1px solid var(--border); display: grid;
-      grid-template-columns: repeat(5, 1fr); z-index: 100; padding-bottom: var(--safe-bottom);
+      height: calc(var(--safe-bottom) + 58px);
+      background: linear-gradient(180deg, rgba(20,29,39,0.96), rgba(13,20,28,0.98));
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border-top: 1px solid var(--border-soft); display: grid;
+      grid-template-columns: repeat(6, 1fr); z-index: 100; padding-bottom: var(--safe-bottom);
     }
     .nav-item {
+      min-width: 0;
+      font-size: 10px;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       gap: 4px; color: var(--text-dim); cursor: pointer; font-size: 11px;
       font-weight: 700; border: none; background: transparent; outline: none;
@@ -268,6 +286,184 @@
     }
     .splash-text { margin-top: 16px; font-size: 18px; font-weight: 900; letter-spacing: 2px; color: #FFF; }
     .splash-sub { font-size: 11px; color: var(--orange); font-weight: 700; letter-spacing: 1.5px; margin-top: 4px; }
+  
+    /* ============== MODERN UI OVERRIDES (additive, non-breaking) ============== */
+    header {
+      background: linear-gradient(180deg, rgba(22,32,44,0.96), rgba(17,27,37,0.92));
+      backdrop-filter: saturate(140%) blur(8px);
+      -webkit-backdrop-filter: saturate(140%) blur(8px);
+      border-bottom: 1px solid var(--border-soft);
+    }
+    .brand-logo {
+      background: linear-gradient(135deg, #FF9900, #FF6A00);
+      border-radius: 10px;
+      box-shadow: 0 4px 14px var(--orange-glow);
+    }
+    .brand-title { letter-spacing: 0.4px; }
+    .sync-badge { border-radius: 999px; backdrop-filter: blur(4px); }
+    .clock-display { border-radius: 8px; background: var(--card-hi); }
+
+    main { scroll-behavior: smooth; }
+
+    .scanner-card, .batch-card, .replacement-box, .metric-box {
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-soft);
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+    .batch-card { background: linear-gradient(180deg, var(--card), var(--card-alt)); }
+    .batch-card:hover { border-color: #31485E; box-shadow: var(--shadow); }
+
+    .metric-box {
+      background: linear-gradient(180deg, var(--card-hi), var(--card-alt));
+      padding: 12px 8px;
+    }
+    .metric-val { font-size: 20px; letter-spacing: -0.5px; }
+    .metric-lbl { letter-spacing: 0.6px; }
+
+    .btn {
+      background: linear-gradient(180deg, #FFAD1F, #FF8F00);
+      border-radius: var(--radius-sm);
+      box-shadow: 0 4px 12px rgba(255,153,0,0.22);
+      transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease, filter .12s ease;
+      letter-spacing: 0.2px;
+    }
+    .btn:hover { filter: brightness(1.05); }
+    .btn:active { transform: translateY(1px) scale(0.98); box-shadow: 0 2px 6px rgba(255,153,0,0.18); }
+    .btn-green { background: linear-gradient(180deg, #1ED48C, #10B478); color: #052015; box-shadow: 0 4px 12px rgba(22,199,132,0.22); }
+    .btn-card { background: var(--card-hi); border: 1px solid #334760; box-shadow: none; }
+    .btn-card:hover { background: #223042; }
+    .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); box-shadow: none; }
+    .btn-danger { background: linear-gradient(180deg, #FF5A5C, #E03234); color: #fff; box-shadow: 0 4px 12px rgba(255,77,79,0.22); }
+
+    .text-input { border-radius: var(--radius-sm); transition: border-color .15s ease, box-shadow .15s ease; }
+
+    .wave-pill { border-radius: 999px; transition: all .15s ease; }
+    .wave-pill.active { box-shadow: 0 4px 12px var(--orange-glow); }
+
+    .batch-badge { border-radius: 999px; }
+    .da-row { transition: background .12s ease; }
+    .da-row:hover { background: rgba(255,255,255,0.03); }
+
+    /* Scanner viewport: responsive + idle poster */
+    .scanner-viewport-wrap {
+      width: 100%; max-width: 320px; height: auto; aspect-ratio: 1 / 1;
+      border-radius: 14px; border: 2px solid #2B3E52;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03), var(--shadow-soft);
+    }
+    .scanner-idle {
+      position: absolute; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 8px; z-index: 12;
+      color: var(--text-dim); text-align: center; padding: 16px;
+      background: radial-gradient(120px 120px at 50% 42%, rgba(255,153,0,0.06), transparent 70%), #05090D;
+    }
+    .scanner-idle svg { width: 46px; height: 46px; fill: var(--orange); opacity: 0.9; }
+    .scanner-idle .idle-title { font-size: 13px; font-weight: 800; color: var(--text); letter-spacing: .3px; }
+    .scanner-idle .idle-sub { font-size: 11px; font-weight: 600; }
+    .scanner-wrap-active .scanner-idle { display: none; }
+    .scanner-wrap-active .laser-line, .scanner-wrap-active .corner-bracket { display: block; }
+    .laser-line, .corner-bracket { display: none; }
+
+    .scanner-controls {
+      display: flex; gap: 8px; width: 100%; max-width: 320px; margin-top: 10px;
+    }
+    .scanner-controls .btn { flex: 1; padding: 11px 10px; font-size: 13px; }
+    .scan-status-chip {
+      display: inline-flex; align-items: center; gap: 6px; margin-top: 8px;
+      font-size: 11px; font-weight: 700; color: var(--text-dim);
+      padding: 4px 10px; border-radius: 999px; background: var(--card-alt); border: 1px solid var(--border);
+    }
+    .scan-status-chip .dot { width: 7px; height: 7px; border-radius: 50%; background: #55697E; }
+    .scan-status-chip.live { color: var(--green); border-color: #1E5030; }
+    .scan-status-chip.live .dot { background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulseDot 1.1s infinite; }
+    @keyframes pulseDot { 0%,100%{opacity:1;} 50%{opacity:.35;} }
+
+    /* Violator tab */
+    .violator-banner {
+      background: linear-gradient(135deg, #E03234, #B21F21);
+      color: #fff; border-radius: var(--radius); padding: 14px 16px;
+      font-weight: 800; font-size: 13px; display: flex; gap: 10px; align-items: center;
+      box-shadow: 0 6px 18px rgba(255,77,79,0.28); border: 1px solid #FF6668;
+    }
+    .violator-banner svg { width: 24px; height: 24px; fill: #fff; flex-shrink: 0; }
+    .tag-violator { color: var(--red); border-color: var(--red) !important; background: var(--red-soft) !important; }
+    .tag-breakret { color: var(--green); border-color: var(--green) !important; background: var(--green-soft) !important; }
+
+    /* Break return batch highlight */
+    .batch-card.break-return { border-color: #1E5030; box-shadow: 0 6px 18px rgba(22,199,132,0.18); }
+    .batch-card.break-return .batch-header { background: linear-gradient(90deg, #0E2B20, #12201A); }
+
+    /* ============== RESPONSIVE: tablet & desktop (REQ 5) ============== */
+    @media (min-width: 760px) {
+      main { padding-left: 24px; padding-right: 24px; }
+      .tab-content { max-width: 1180px; margin: 0 auto; width: 100%; }
+      /* Scanner tabs become a two-column layout: scanner left, lists right */
+      #tab-attend.active, #tab-waiting.active, #tab-rush.active {
+        display: grid; grid-template-columns: 360px 1fr; gap: 18px; align-items: start;
+      }
+      #tab-attend .scanner-card, #tab-waiting .scanner-card, #tab-rush .scanner-card { position: sticky; top: 8px; }
+      #tab-attend .replacement-box { grid-column: 1 / -1; }
+      #tab-attend .wave-bar, #tab-attend .metric-row, #tab-attend .batch-card,
+      #tab-waiting .metric-row, #tab-waiting #waiting-batches-container,
+      #tab-rush .batch-card { grid-column: 2; }
+      #tab-attend .scanner-card { grid-row: span 3; }
+      .metric-val { font-size: 24px; }
+    }
+    @media (min-width: 1024px) {
+      nav { max-width: 1180px; left: 50%; transform: translateX(-50%); border-radius: 18px 18px 0 0; }
+    }
+    @media (min-width: 760px) {
+      nav { gap: 6px; }
+      .nav-item { border-radius: 10px; }
+      .nav-item:hover { background: rgba(255,255,255,0.04); }
+    }
+
+  
+    /* ============== MODERN SPLASH (REQ 3, lightweight) ============== */
+    #splash-screen {
+      background: radial-gradient(600px 400px at 50% 38%, rgba(255,153,0,0.10), transparent 60%), #070B0F;
+    }
+    .radar-circle {
+      box-shadow: 0 0 40px var(--orange-glow), inset 0 0 20px rgba(255,153,0,0.08);
+      animation: pulseRadar 1.6s infinite ease-out;
+    }
+    .radar-circle::after {
+      content: ""; position: absolute; width: 150%; height: 150%;
+      border-radius: 50%; border: 1px solid rgba(255,153,0,0.25);
+      animation: radarRing 1.6s infinite ease-out;
+    }
+    @keyframes radarRing {
+      0% { transform: scale(0.55); opacity: 0.9; }
+      100% { transform: scale(1.15); opacity: 0; }
+    }
+    .splash-text {
+      background: linear-gradient(90deg, #fff, #FFD79A, #fff);
+      background-size: 200% 100%;
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      animation: shimmer 2.2s linear infinite;
+    }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .splash-smile {
+      margin-top: 18px; width: 120px; height: 20px; position: relative; overflow: visible;
+    }
+    .splash-smile svg { width: 120px; height: 20px; }
+    .splash-smile path {
+      fill: none; stroke: var(--orange); stroke-width: 4; stroke-linecap: round;
+      stroke-dasharray: 160; stroke-dashoffset: 160;
+      animation: drawSmile 1.1s ease-out forwards 0.25s;
+    }
+    @keyframes drawSmile { to { stroke-dashoffset: 0; } }
+    .splash-bar {
+      margin-top: 16px; width: 150px; height: 4px; border-radius: 4px;
+      background: #1A2430; overflow: hidden; position: relative;
+    }
+    .splash-bar::after {
+      content: ""; position: absolute; left: -40%; top: 0; height: 100%; width: 40%;
+      background: linear-gradient(90deg, transparent, var(--orange), transparent);
+      animation: loadSlide 1.1s infinite ease-in-out;
+    }
+    @keyframes loadSlide { 0% { left: -40%; } 100% { left: 110%; } }
+
   </style>
 </head>
 <body>
@@ -281,6 +477,8 @@
     <div class="splash-curve"></div>
     <div class="splash-text">RUSH PRO DUD3</div>
     <div class="splash-sub">INSTANT DISPATCH ENGINE</div>
+    <div class="splash-smile"><svg viewBox="0 0 120 20"><path d="M6 4 C 35 24, 85 24, 114 4"/></svg></div>
+    <div class="splash-bar"></div>
   </div>
 
   <header>
@@ -309,13 +507,22 @@
       <div class="scanner-card">
         <div class="scanner-viewport-wrap">
           <div id="qr-reader-attend"></div>
+          <div class="scanner-idle" id="idle-attend">
+            <svg viewBox="0 0 24 24"><path d="M9.5 6.5v3h-3v-3h3M11 5H5v6h6V5zm-1.5 9.5v3h-3v-3h3M11 13H5v6h6v-6zm6.5-6.5v3h-3v-3h3M19 5h-6v6h6V5zm-6 8h1.5v1.5H13V13zm1.5 1.5H16V16h-1.5v-1.5zM16 13h1.5v1.5H16V13zm-3 3h1.5v1.5H13V16zm1.5 1.5H16V19h-1.5v-1.5zM16 16h1.5v1.5H16V16zm1.5-1.5H19V16h-1.5v-1.5zm0 3H19V19h-1.5v-1.5z"/></svg>
+            <div class="idle-title">Scanner is Off</div>
+            <div class="idle-sub">Tap “Start Scanner” to activate the camera</div>
+          </div>
           <div class="laser-line"></div>
           <div class="corner-bracket cb-tl"></div>
           <div class="corner-bracket cb-tr"></div>
           <div class="corner-bracket cb-bl"></div>
           <div class="corner-bracket cb-br"></div>
         </div>
-        <div class="scanner-input-bar">
+        <div class="scanner-controls">
+          <button class="btn btn-green" id="btn-start-attend" onclick="startScanner('tab-attend')">▶ Start Scanner</button>
+          <button class="btn btn-ghost" id="btn-stop-attend" onclick="stopScanner('tab-attend')" style="display:none;">■ Stop Scanner</button>
+        </div>
+        <div class="scan-status-chip" id="scanchip-attend"><span class="dot"></span><span id="scantext-attend">Camera Off</span></div><div class="scanner-input-bar">
           <input type="text" id="attend-inp" class="text-input" placeholder="Instant Scan or Search DA ID / Name..." autocomplete="off">
           <button class="btn" id="btn-attend-checkin">Check In</button>
           <div class="search-results-dropdown" id="attend-search-results"></div>
@@ -370,13 +577,22 @@
       <div class="scanner-card">
         <div class="scanner-viewport-wrap">
           <div id="qr-reader-waiting"></div>
+          <div class="scanner-idle" id="idle-waiting">
+            <svg viewBox="0 0 24 24"><path d="M9.5 6.5v3h-3v-3h3M11 5H5v6h6V5zm-1.5 9.5v3h-3v-3h3M11 13H5v6h6v-6zm6.5-6.5v3h-3v-3h3M19 5h-6v6h6V5zm-6 8h1.5v1.5H13V13zm1.5 1.5H16V16h-1.5v-1.5zM16 13h1.5v1.5H16V13zm-3 3h1.5v1.5H13V16zm1.5 1.5H16V19h-1.5v-1.5zM16 16h1.5v1.5H16V16zm1.5-1.5H19V16h-1.5v-1.5zm0 3H19V19h-1.5v-1.5z"/></svg>
+            <div class="idle-title">Scanner is Off</div>
+            <div class="idle-sub">Tap “Start Scanner” to activate the camera</div>
+          </div>
           <div class="laser-line"></div>
           <div class="corner-bracket cb-tl"></div>
           <div class="corner-bracket cb-tr"></div>
           <div class="corner-bracket cb-bl"></div>
           <div class="corner-bracket cb-br"></div>
         </div>
-        <div class="scanner-input-bar">
+        <div class="scanner-controls">
+          <button class="btn btn-green" id="btn-start-waiting" onclick="startScanner('tab-waiting')">▶ Start Scanner</button>
+          <button class="btn btn-ghost" id="btn-stop-waiting" onclick="stopScanner('tab-waiting')" style="display:none;">■ Stop Scanner</button>
+        </div>
+        <div class="scan-status-chip" id="scanchip-waiting"><span class="dot"></span><span id="scantext-waiting">Camera Off</span></div><div class="scanner-input-bar">
           <input type="text" id="waiting-inp" class="text-input" placeholder="Scan or Search DA to Add to Waiting Batch..." autocomplete="off">
           <button class="btn btn-green" id="btn-waiting-enqueue">+ Add to Batch</button>
           <div class="search-results-dropdown" id="waiting-search-results"></div>
@@ -394,12 +610,47 @@
 
     <!-- ================= TAB 3: BREAKS ================= -->
     <div class="tab-content" id="tab-breaks">
+      <!-- Mark a DA on/off break -->
+      <div class="replacement-box">
+        <div style="font-size:13px; font-weight:800; color:var(--orange);">☕ Break Control (Yard Marshal)</div>
+        <div class="scanner-input-bar" style="margin-top:0; position:relative;">
+          <input type="text" id="break-inp" class="text-input" placeholder="Scan or search DA to send on Break..." autocomplete="off">
+          <button class="btn" id="btn-start-break" style="background:linear-gradient(180deg,#FBBF24,#F59E0B); color:#201400;">Send on Break</button>
+          <div class="search-results-dropdown" id="break-search-results"></div>
+        </div>
+      </div>
+
+      <!-- Currently on break (scheduled + action) -->
       <div class="batch-card">
         <div class="batch-header">
-          <div class="batch-title"><span>☕ Currently on Scheduled Break</span></div>
+          <div class="batch-title"><span>☕ Currently on Break</span></div>
           <span class="batch-badge" id="break-badge-count" style="background:#FBBF24; color:#000;">0 DAs</span>
         </div>
         <div class="da-list" id="breaks-da-list"></div>
+      </div>
+
+      <!-- Ready to return — the dedicated priority batch (REQ 8B/8C) -->
+      <div class="batch-card break-return">
+        <div class="batch-header">
+          <div class="batch-title"><span>🔄 DA's from Break — Ready to Dispatch</span></div>
+          <span class="batch-badge" id="breakret-badge-count" style="background:var(--green); color:#032015;">0</span>
+        </div>
+        <div class="da-list" id="breakret-da-list"></div>
+      </div>
+    </div>
+
+    <!-- ================= TAB: VIOLATORS ================= -->
+    <div class="tab-content" id="tab-violators">
+      <div class="violator-banner">
+        <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+        <span>Violators must be sent back to the OFF-YARD. Receive IN is blocked for every DA listed here.</span>
+      </div>
+      <div class="batch-card">
+        <div class="batch-header">
+          <div class="batch-title"><span>🚫 Active Violators</span></div>
+          <span class="batch-badge" id="violator-badge-count" style="background:var(--red); color:#fff;">0</span>
+        </div>
+        <div class="da-list" id="violators-da-list"></div>
       </div>
     </div>
 
@@ -408,13 +659,22 @@
       <div class="scanner-card">
         <div class="scanner-viewport-wrap">
           <div id="qr-reader-rush"></div>
+          <div class="scanner-idle" id="idle-rush">
+            <svg viewBox="0 0 24 24"><path d="M9.5 6.5v3h-3v-3h3M11 5H5v6h6V5zm-1.5 9.5v3h-3v-3h3M11 13H5v6h6v-6zm6.5-6.5v3h-3v-3h3M19 5h-6v6h6V5zm-6 8h1.5v1.5H13V13zm1.5 1.5H16V16h-1.5v-1.5zM16 13h1.5v1.5H16V13zm-3 3h1.5v1.5H13V16zm1.5 1.5H16V19h-1.5v-1.5zM16 16h1.5v1.5H16V16zm1.5-1.5H19V16h-1.5v-1.5zm0 3H19V19h-1.5v-1.5z"/></svg>
+            <div class="idle-title">Scanner is Off</div>
+            <div class="idle-sub">Tap “Start Scanner” to activate the camera</div>
+          </div>
           <div class="laser-line"></div>
           <div class="corner-bracket cb-tl"></div>
           <div class="corner-bracket cb-tr"></div>
           <div class="corner-bracket cb-bl"></div>
           <div class="corner-bracket cb-br"></div>
         </div>
-        <div class="scanner-input-bar">
+        <div class="scanner-controls">
+          <button class="btn btn-green" id="btn-start-rush" onclick="startScanner('tab-rush')">▶ Start Scanner</button>
+          <button class="btn btn-ghost" id="btn-stop-rush" onclick="stopScanner('tab-rush')" style="display:none;">■ Stop Scanner</button>
+        </div>
+        <div class="scan-status-chip" id="scanchip-rush"><span class="dot"></span><span id="scantext-rush">Camera Off</span></div><div class="scanner-input-bar">
           <input type="text" id="rush-inp" class="text-input" placeholder="Scan Barcode at Rush Q Entrance..." autocomplete="off">
           <button class="btn btn-green" id="btn-rush-scanin">Scan IN</button>
           <div class="search-results-dropdown" id="rush-search-results"></div>
@@ -461,6 +721,7 @@
           <div><label class="metric-lbl">Waiting Lock (Min)</label><input type="number" id="cfg-waiting-lock" class="text-input" style="width:100%; margin-top:4px;" value="30"></div>
           <div><label class="metric-lbl">Pre-Wave Block (Min)</label><input type="number" id="cfg-prewave" class="text-input" style="width:100%; margin-top:4px;" value="30"></div>
           <div><label class="metric-lbl">Wave Grace Period (Min)</label><input type="number" id="cfg-grace" class="text-input" style="width:100%; margin-top:4px;" value="10"></div>
+          <div><label class="metric-lbl">Entry Violation (Min)</label><input type="number" id="cfg-entry-violation" class="text-input" style="width:100%; margin-top:4px;" value="20"></div>
         </div>
         <div>
           <label class="metric-lbl">Admin PIN</label>
@@ -488,6 +749,10 @@
       <svg viewBox="0 0 24 24"><path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 5h-2V5h2v3zM4 19h16v2H4z"/></svg>
       <span>Breaks</span>
     </button>
+    <button class="nav-item" data-tab="tab-violators">
+      <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+      <span>Violators</span>
+    </button>
     <button class="nav-item" data-tab="tab-rush">
       <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14h-2v-2h2v2zm0-4h-2V7h2v5z"/></svg>
       <span>Rush Q</span>
@@ -499,13 +764,41 @@
   </nav>
 
   <script>
+    // --- Safe storage shim: sandboxed preview iframes can throw SecurityError on
+    // localStorage access, crashing the whole script at init. Feature-test once and
+    // fall back to an in-memory store. All get/set/remove route through SAFE_STORE. ---
+    var SAFE_STORE = (function() {
+      var mem = {};
+      var ok = false;
+      try {
+        var tk = "__dud3_test__";
+        window.localStorage.setItem(tk, "1");
+        window.localStorage.removeItem(tk);
+        ok = true;
+      } catch (e) { ok = false; }
+      return {
+        getItem: function(k) {
+          if (ok) { try { return window.localStorage.getItem(k); } catch (e) {} }
+          return (k in mem) ? mem[k] : null;
+        },
+        setItem: function(k, v) {
+          if (ok) { try { window.localStorage.setItem(k, v); return; } catch (e) {} }
+          mem[k] = String(v);
+        },
+        removeItem: function(k) {
+          if (ok) { try { window.localStorage.removeItem(k); return; } catch (e) {} }
+          delete mem[k];
+        }
+      };
+    })();
+
     var DEFAULT_API = "https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec";
     var DEFAULT_SHEET = "https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit";
 
     var S = {
-      api: localStorage.getItem("dud3_api") || DEFAULT_API,
-      sheetUrl: localStorage.getItem("dud3_sheet") || DEFAULT_SHEET,
-      ymName: localStorage.getItem("dud3_ym") || "YM-1",
+      api: SAFE_STORE.getItem("dud3_api") || DEFAULT_API,
+      sheetUrl: SAFE_STORE.getItem("dud3_sheet") || DEFAULT_SHEET,
+      ymName: SAFE_STORE.getItem("dud3_ym") || "YM-1",
       activeTab: "tab-attend",
       selectedWave: null,
       roster: [],
@@ -513,14 +806,18 @@
       sentList: [],
       receivedList: [],
       rushData: [],
-      settings: { batchSize: 25, rushTimeoutMin: 20, autoOfdMin: 30, waitingLockMin: 30, preWaveBlockMin: 30, waveGraceMin: 10 },
+      settings: { batchSize: 25, rushTimeoutMin: 20, autoOfdMin: 30, waitingLockMin: 30, preWaveBlockMin: 30, waveGraceMin: 10, entryViolationMin: 20 },
       selectedAbsentDa: null,
       selectedReplacementDa: null,
       inflightMutations: 0,
       mutationVersion: 0,
       pollTimer: null,
       scanners: {},
-      scanCooldownMap: {}
+      scannerActive: {},
+      scanCooldownMap: {},
+      violators: [],
+      breaksActive: [],
+      selectedBreakDa: null
     };
 
     var audioCtx = null;
@@ -578,8 +875,12 @@
       return parseInt(p[0], 10) * 60 + parseInt(p[1], 10);
     }
 
+    var BREAK_RETURN_BATCH = "DA's from Break";
     function getSortedBatchKeys(batchesObj) {
       return Object.keys(batchesObj || {}).sort(function(a, b) {
+        // REQ 8B: the "DA's from Break" batch is always first (top priority).
+        if (a === BREAK_RETURN_BATCH && b !== BREAK_RETURN_BATCH) return -1;
+        if (b === BREAK_RETURN_BATCH && a !== BREAK_RETURN_BATCH) return 1;
         var na = parseInt((a.match(/\d+/) || [999])[0], 10);
         var nb = parseInt((b.match(/\d+/) || [999])[0], 10);
         return na - nb;
@@ -587,7 +888,7 @@
     }
 
     function getNextBatchNameOptimistic() {
-      var keys = getSortedBatchKeys(S.waitingBatches);
+      var keys = getSortedBatchKeys(S.waitingBatches).filter(function(k) { return k !== BREAK_RETURN_BATCH; });
       if (keys.length === 0) return "Batch 1";
       var lastBatch = keys[keys.length - 1];
       var countInLast = (S.waitingBatches[lastBatch] || []).length;
@@ -620,10 +921,12 @@
 
     function showBanner(text, type, timeoutSecs) {
       var holder = document.getElementById("banner-holder");
+      if (!holder) return;
       var b = document.createElement("div");
       b.className = "banner banner-" + (type || "warning");
       b.innerHTML = '<span>' + text + '</span><span class="banner-close">&times;</span>';
-      b.querySelector(".banner-close").onclick = function() { b.remove(); };
+      var closeEl = b.querySelector(".banner-close");
+      if (closeEl) closeEl.onclick = function() { b.remove(); };
       holder.appendChild(b);
       var secs = timeoutSecs || (type === "danger" ? 30 : 8);
       setTimeout(function() { if (b.parentNode) b.remove(); }, secs * 1000);
@@ -704,14 +1007,16 @@
       if (d.sentList) S.sentList = d.sentList;
       if (d.receivedList) S.receivedList = d.receivedList;
       if (d.rushData) S.rushData = d.rushData;
+      if (d.violators) S.violators = d.violators;
+      if (d.breaksActive) S.breaksActive = d.breaksActive;
       renderAll();
     }
 
     function renderAll() {
-      renderAttendanceTab();
-      renderWaitingTab();
-      renderBreaksTab();
-      renderRushTab();
+      var steps = [renderAttendanceTab, renderWaitingTab, renderBreaksTab, renderViolatorsTab, renderRushTab];
+      for (var i = 0; i < steps.length; i++) {
+        try { steps[i](); } catch (e) { if (window.console && console.warn) console.warn("render step failed:", e); }
+      }
     }
 
     function renderAttendanceTab() {
@@ -850,25 +1155,144 @@
     function renderBreaksTab() {
       var container = document.getElementById("breaks-da-list");
       var badge = document.getElementById("break-badge-count");
+      if (!container || !badge) return;
       container.innerHTML = "";
-      var onBreakList = (S.roster || []).filter(function(d) { return d.inBreak; });
-      badge.textContent = onBreakList.length + " DAs";
 
-      if (onBreakList.length === 0) {
+      // Combine scheduled breaks (roster.inBreak) + action breaks (breaksActive).
+      var seen = {};
+      var combined = [];
+      (S.roster || []).forEach(function(d) {
+        if (d.inBreak) {
+          var k = String(d.daId).toUpperCase();
+          if (!seen[k]) { seen[k] = true; combined.push({ daId: d.daId, daName: d.daName, dsp: d.dsp, range: d.breakRange || "On Break", action: !!d.actionBreak, startTime: "" }); }
+        }
+      });
+      (S.breaksActive || []).forEach(function(b) {
+        var k = String(b.daId).toUpperCase();
+        if (!seen[k]) { seen[k] = true; combined.push({ daId: b.daId, daName: b.daName, dsp: "", range: "On Break", action: true, startTime: b.startTime }); }
+      });
+
+      badge.textContent = combined.length + " DAs";
+
+      if (combined.length === 0) {
         container.innerHTML = '<div style="padding:14px; text-align:center; color:var(--text-dim); font-size:13px;">No DAs currently on break.</div>';
-        return;
+      } else {
+        combined.forEach(function(da) {
+          var row = document.createElement("div");
+          row.className = "da-row";
+          var meta = da.action
+            ? ("Marked on break" + (da.startTime ? " at " + da.startTime : "") + (da.dsp ? " &bull; " + da.dsp : ""))
+            : ("DSP: " + (da.dsp || "DSP") + " &bull; Scheduled");
+          var endBtn = da.action
+            ? '<button class="btn btn-green" style="padding:5px 10px; font-size:11px;" onclick="endBreakAction(\'' + da.daId + '\')">End Break ➔ Queue</button>'
+            : '<span class="time-badge tag-break">Break: ' + escapeHtml(da.range) + '</span>';
+          row.innerHTML =
+            '<div class="da-details">' +
+              '<div class="da-title-line"><span>' + escapeHtml(da.daName) + '</span><span style="font-size:11px; color:var(--text-dim);">(' + da.daId + ')</span></div>' +
+              '<div class="da-meta-line">' + meta + '</div>' +
+            '</div>' +
+            '<div style="display:flex; align-items:center; gap:6px;">' + endBtn + '</div>';
+          container.appendChild(row);
+        });
       }
 
-      onBreakList.forEach(function(da) {
+      // "DA's from Break" ready-to-dispatch list (mirror of the priority waiting batch, REQ 8C)
+      var retContainer = document.getElementById("breakret-da-list");
+      var retBadge = document.getElementById("breakret-badge-count");
+      if (!retContainer || !retBadge) return;
+      var retList = (S.waitingBatches && S.waitingBatches[BREAK_RETURN_BATCH]) ? S.waitingBatches[BREAK_RETURN_BATCH].filter(function(d){return !d.inBreak;}) : [];
+      retBadge.textContent = retList.length;
+      retContainer.innerHTML = "";
+      if (retList.length === 0) {
+        retContainer.innerHTML = '<div style="padding:14px; text-align:center; color:var(--text-dim); font-size:13px;">No DAs returning from break yet.</div>';
+      } else {
+        retList.forEach(function(da, idx) {
+          var row = document.createElement("div");
+          row.className = "da-row";
+          row.innerHTML =
+            '<div class="da-details">' +
+              '<div class="da-title-line"><span style="color:var(--green); font-weight:900;">#' + (idx + 1) + '</span> <span>' + escapeHtml(da.daName) + '</span><span style="font-size:11px; color:var(--text-dim);">(' + da.daId + ')</span></div>' +
+              '<div class="da-meta-line">Returned at: <b>' + (da.waitTime || "--:--") + '</b> &bull; Priority queue</div>' +
+            '</div>' +
+            '<div><button class="btn btn-green" style="padding:6px 10px; font-size:11px;" onclick="sendSingleDaAction(\'' + da.daId + '\')">Send to Rush Q</button></div>';
+          retContainer.appendChild(row);
+        });
+      }
+    }
+
+    function renderViolatorsTab() {
+      var container = document.getElementById("violators-da-list");
+      var badge = document.getElementById("violator-badge-count");
+      if (!container || !badge) return;
+      var list = S.violators || [];
+      badge.textContent = list.length;
+      container.innerHTML = "";
+      if (list.length === 0) {
+        container.innerHTML = '<div style="padding:14px; text-align:center; color:var(--text-dim); font-size:13px;">No active violators. ✅</div>';
+        return;
+      }
+      list.forEach(function(v) {
         var row = document.createElement("div");
         row.className = "da-row";
+        var exceeded = (v.exceededBy !== "" && v.exceededBy !== undefined && v.exceededBy !== null && v.exceededBy !== "N/A") ? (" &bull; Exceeded by " + v.exceededBy + "m") : "";
         row.innerHTML =
           '<div class="da-details">' +
-            '<div class="da-title-line"><span>' + escapeHtml(da.daName) + '</span><span style="font-size:11px; color:var(--text-dim);">(' + da.daId + ')</span></div>' +
-            '<div class="da-meta-line">DSP: ' + (da.dsp || "DSP") + ' &bull; Batch: ' + (da.batchName || "N/A") + '</div>' +
+            '<div class="da-title-line"><span>' + escapeHtml(v.daName || v.daId) + '</span><span style="font-size:11px; color:var(--text-dim);">(' + v.daId + ')</span></div>' +
+            '<div class="da-meta-line">Logged ' + (v.timeLogged || "--:--") + exceeded + '</div>' +
           '</div>' +
-          '<div><span class="time-badge tag-break">Break: ' + da.breakRange + '</span></div>';
+          '<div><span class="time-badge tag-violator">' + escapeHtml(v.status || "Violation") + '</span></div>';
         container.appendChild(row);
+      });
+    }
+
+    // ---------------- BREAK ACTIONS (REQ 8) ----------------
+    function startBreakAction(queryId) {
+      initAudio();
+      var daId = (queryId || document.getElementById("break-inp").value || "").trim();
+      if (!daId || !isScanCooledDown("BRK_" + daId)) return;
+      document.getElementById("break-inp").value = "";
+      var dd = document.getElementById("break-search-results"); if (dd) dd.style.display = "none";
+
+      var daObj = (S.roster || []).find(function(d) { return d.daId.toUpperCase() === daId.toUpperCase(); });
+      var dName = daObj ? daObj.daName : daId;
+
+      // Optimistic: remove from any waiting batch & add to breaksActive.
+      Object.keys(S.waitingBatches || {}).forEach(function(bn) {
+        S.waitingBatches[bn] = (S.waitingBatches[bn] || []).filter(function(x) { return x.daId.toUpperCase() !== daId.toUpperCase(); });
+        if (S.waitingBatches[bn].length === 0) delete S.waitingBatches[bn];
+      });
+      if (daObj) daObj.inBreak = true;
+      S.breaksActive = (S.breaksActive || []).filter(function(b){return b.daId.toUpperCase()!==daId.toUpperCase();});
+      S.breaksActive.push({ daId: daId, daName: dName, startTime: getDubaiHHMM(), ymName: S.ymName });
+
+      playBeep("success");
+      showBanner("☕ " + dName + " sent on Break (removed from Waiting).", "success", 6);
+      renderAll();
+
+      sendReq("startBreak", { daId: daId, ymName: S.ymName }, function(err, res) {
+        if (err || (res && !res.success)) { playBeep("error"); pollRoster(); }
+      });
+    }
+
+    function endBreakAction(daId) {
+      initAudio();
+      var bObj = (S.breaksActive || []).find(function(b){return b.daId.toUpperCase()===daId.toUpperCase();});
+      var rObj = (S.roster || []).find(function(d){return d.daId.toUpperCase()===daId.toUpperCase();});
+      var dName = bObj ? bObj.daName : (rObj ? rObj.daName : daId);
+      var nowStr = getDubaiHHMM();
+
+      // Optimistic: clear break, push to top-priority batch.
+      S.breaksActive = (S.breaksActive || []).filter(function(b){return b.daId.toUpperCase()!==daId.toUpperCase();});
+      if (rObj) { rObj.inBreak = false; rObj.actionBreak = false; }
+      if (!S.waitingBatches[BREAK_RETURN_BATCH]) S.waitingBatches[BREAK_RETURN_BATCH] = [];
+      S.waitingBatches[BREAK_RETURN_BATCH].push({ daId: daId, daName: dName, batchName: BREAK_RETURN_BATCH, waitTime: nowStr, inBreak: false, breakRange: "" });
+
+      playBeep("success");
+      showBanner("🔄 " + dName + " returned to '" + BREAK_RETURN_BATCH + "' (top of queue).", "success", 6);
+      renderAll();
+
+      sendReq("endBreak", { daId: daId, ymName: S.ymName }, function(err, res) {
+        if (err || (res && !res.success)) { playBeep("error"); pollRoster(); }
       });
     }
 
@@ -923,8 +1347,9 @@
     }
 
     // ---------------- INSTANT (<15ms) OPTIMISTIC SCAN ACTIONS ----------------
-    function handleAttendanceCheckIn(queryId) {
+    function handleAttendanceCheckIn(queryId, opts) {
       initAudio();
+      var _tabId = opts && opts.tabId;
       var daId = (queryId || document.getElementById("attend-inp").value || "").trim();
       if (!daId || !isScanCooledDown("ATT_" + daId)) return;
       document.getElementById("attend-inp").value = "";
@@ -975,6 +1400,7 @@
 
       playBeep("success");
       showBanner("⚡ Instant Check-In: " + daObj.daName + " (" + newStatus + ") ➔ " + targetBatch, "success", 5);
+      autoStopAfterScan(_tabId);
       renderAll();
 
       sendReq("recordCheckIn", { daId: daObj.daId, ymName: S.ymName }, function(err, res) {
@@ -982,8 +1408,9 @@
       });
     }
 
-    function handleWaitingEnqueue(queryId) {
+    function handleWaitingEnqueue(queryId, opts) {
       initAudio();
+      var _tabId = opts && opts.tabId;
       var daId = (queryId || document.getElementById("waiting-inp").value || "").trim();
       if (!daId || !isScanCooledDown("WAIT_" + daId)) return;
       document.getElementById("waiting-inp").value = "";
@@ -1025,6 +1452,7 @@
 
       playBeep("success");
       showBanner("⚡ Added " + dName + " to " + targetBatch, "success", 5);
+      autoStopAfterScan(_tabId);
       renderAll();
 
       sendReq("addToWaiting", { daId: daId, ymName: S.ymName }, function(err, res) {
@@ -1117,12 +1545,23 @@
       sendReq("removeFromWaiting", { daId: daId }, function() {});
     }
 
-    function doRushScanInAction(queryId) {
+    function doRushScanInAction(queryId, opts) {
       initAudio();
+      var _tabId = opts && opts.tabId;
       var daId = (queryId || document.getElementById("rush-inp").value || "").trim();
       if (!daId || !isScanCooledDown("RUSH_" + daId)) return;
       document.getElementById("rush-inp").value = "";
       document.getElementById("rush-search-results").style.display = "none";
+
+      // REQ 7: Client-side pre-check — block known violators immediately.
+      var localViolator = (S.violators || []).find(function(v) { return String(v.daId).toUpperCase() === daId.toUpperCase(); });
+      if (localViolator) {
+        playBeep("error");
+        showBanner("🚫 VIOLATOR: " + (localViolator.daName || daId) + " (" + daId + ") — " + (localViolator.status || "Violation") + ". Receive IN blocked. Send DA back to the OFF-YARD.", "danger", 35);
+        autoStopAfterScan(_tabId);
+        switchTab("tab-violators");
+        return;
+      }
 
       var nowStr = getDubaiHHMM();
       var foundSentIdx = -1;
@@ -1148,8 +1587,20 @@
         renderAll();
       }
 
+      // Scan has been processed — stop the camera regardless of server outcome (REQ 1).
+      autoStopAfterScan(_tabId);
+
       sendReq("rushScanIn", { daId: daId, receiverName: S.ymName }, function(err, res) {
-        if (res && res.violation) {
+        if (res && res.violatorBlock) {
+          // Server rejected the receive-in: roll back the optimistic receive and warn.
+          if (foundSentIdx !== -1) {
+            S.receivedList = (S.receivedList || []).filter(function(r) { return r.daId.toUpperCase() !== daId.toUpperCase(); });
+          }
+          playBeep("error");
+          showBanner(res.message || "🚫 Violator — Receive IN blocked. Send DA back to off-yard.", "danger", 35);
+          pollRoster();
+          switchTab("tab-violators");
+        } else if (res && res.violation) {
           playBeep("error");
           showBanner(res.message, "danger", 35);
           pollRoster();
@@ -1269,6 +1720,7 @@
       document.getElementById("cfg-waiting-lock").value = S.settings.waitingLockMin;
       document.getElementById("cfg-prewave").value = S.settings.preWaveBlockMin;
       document.getElementById("cfg-grace").value = S.settings.waveGraceMin;
+      document.getElementById("cfg-entry-violation").value = S.settings.entryViolationMin;
     }
 
     function saveSettingsAction() {
@@ -1279,9 +1731,9 @@
       var newApi = document.getElementById("cfg-api-url").value.trim() || DEFAULT_API;
       var newSheet = document.getElementById("cfg-sheet-url").value.trim() || DEFAULT_SHEET;
 
-      localStorage.setItem("dud3_ym", newYm);
-      localStorage.setItem("dud3_api", newApi);
-      localStorage.setItem("dud3_sheet", newSheet);
+      SAFE_STORE.setItem("dud3_ym", newYm);
+      SAFE_STORE.setItem("dud3_api", newApi);
+      SAFE_STORE.setItem("dud3_sheet", newSheet);
       S.ymName = newYm; S.api = newApi; S.sheetUrl = newSheet;
 
       var payload = {
@@ -1292,7 +1744,8 @@
         autoOfdMin: parseInt(document.getElementById("cfg-auto-ofd").value, 10),
         waitingLockMin: parseInt(document.getElementById("cfg-waiting-lock").value, 10),
         preWaveBlockMin: parseInt(document.getElementById("cfg-prewave").value, 10),
-        waveGraceMin: parseInt(document.getElementById("cfg-grace").value, 10)
+        waveGraceMin: parseInt(document.getElementById("cfg-grace").value, 10),
+        entryViolationMin: parseInt(document.getElementById("cfg-entry-violation").value, 10)
       };
 
       sendReq("saveSettings", payload, function(err, res) {
@@ -1321,29 +1774,84 @@
       });
     }
 
-    function initCameraForTab(tabId) {
-      if (typeof Html5Qrcode === "undefined") return;
-      var readerMap = {
-        "tab-attend": { id: "qr-reader-attend", cb: handleAttendanceCheckIn },
-        "tab-waiting": { id: "qr-reader-waiting", cb: handleWaitingEnqueue },
-        "tab-rush": { id: "qr-reader-rush", cb: doRushScanInAction }
-      };
+    // ---------------- SCANNER START / STOP (REQ 1) ----------------
+    var SCANNER_MAP = {
+      "tab-attend":  { id: "qr-reader-attend",  key: "attend",  cb: handleAttendanceCheckIn },
+      "tab-waiting": { id: "qr-reader-waiting", key: "waiting", cb: handleWaitingEnqueue },
+      "tab-rush":    { id: "qr-reader-rush",    key: "rush",    cb: doRushScanInAction }
+    };
 
-      var target = readerMap[tabId];
+    function setScannerUi(key, active) {
+      var startBtn = document.getElementById("btn-start-" + key);
+      var stopBtn  = document.getElementById("btn-stop-" + key);
+      var wrap     = document.getElementById(key === "attend" ? "qr-reader-attend" : (key === "waiting" ? "qr-reader-waiting" : "qr-reader-rush"));
+      var chip     = document.getElementById("scanchip-" + key);
+      var chipTxt  = document.getElementById("scantext-" + key);
+      var card     = wrap ? wrap.closest(".scanner-viewport-wrap") : null;
+      if (startBtn) startBtn.style.display = active ? "none" : "";
+      if (stopBtn)  stopBtn.style.display  = active ? "" : "none";
+      if (card) card.classList.toggle("scanner-wrap-active", active);
+      if (chip) chip.classList.toggle("live", active);
+      if (chipTxt) chipTxt.textContent = active ? "Scanning… point at QR code" : "Camera Off";
+    }
+
+    function startScanner(tabId) {
+      initAudio();
+      if (typeof Html5Qrcode === "undefined") {
+        showBanner("Camera library not loaded. Use the text/search box to enter DA ID.", "warning", 8);
+        return;
+      }
+      var target = SCANNER_MAP[tabId];
       if (!target) return;
+      if (S.scannerActive[tabId]) return; // already running
 
       if (!S.scanners[tabId]) {
         S.scanners[tabId] = new Html5Qrcode(target.id);
-        S.scanners[tabId].start(
-          { facingMode: "environment" },
-          { fps: 24, qrbox: { width: 175, height: 175 } },
-          function(decodedText) { target.cb(decodedText); },
-          function() {}
-        ).catch(function() {});
+      }
+      S.scannerActive[tabId] = true;
+      setScannerUi(target.key, true);
+
+      S.scanners[tabId].start(
+        { facingMode: "environment" },
+        { fps: 24, qrbox: { width: 200, height: 200 } },
+        function(decodedText) {
+          // Auto-stop happens inside the scan handler ONLY on an accepted scan.
+          target.cb(decodedText, { fromCamera: true, tabId: tabId });
+        },
+        function() {}
+      ).catch(function(e) {
+        S.scannerActive[tabId] = false;
+        setScannerUi(target.key, false);
+        playBeep("error");
+        showBanner("Could not start camera. Check permissions, or use the text box.", "danger", 10);
+      });
+    }
+
+    function stopScanner(tabId) {
+      var target = SCANNER_MAP[tabId];
+      if (!target) return;
+      var inst = S.scanners[tabId];
+      S.scannerActive[tabId] = false;
+      setScannerUi(target.key, false);
+      if (inst) {
+        inst.stop().then(function() {
+          try { inst.clear(); } catch (e) {}
+        }).catch(function() {});
+      }
+    }
+
+    // Auto-stop after a successful accepted scan (REQ 1).
+    function autoStopAfterScan(tabId) {
+      if (tabId && S.scannerActive[tabId]) {
+        stopScanner(tabId);
       }
     }
 
     function switchTab(tabId) {
+      // Stop any running scanner on the tab we are leaving (keeps camera off by default).
+      Object.keys(SCANNER_MAP).forEach(function(tid) {
+        if (tid !== tabId && S.scannerActive[tid]) stopScanner(tid);
+      });
       document.querySelectorAll(".nav-item").forEach(function(el) {
         el.classList.toggle("active", el.getAttribute("data-tab") === tabId);
       });
@@ -1351,7 +1859,21 @@
         el.classList.toggle("active", el.id === tabId);
       });
       S.activeTab = tabId;
-      initCameraForTab(tabId);
+      updateHeaderSubtitle(tabId);
+      // NOTE: camera is OFF by default — user taps "Start Scanner" to activate.
+    }
+
+    function updateHeaderSubtitle(tabId) {
+      var map = {
+        "tab-attend": "OFF-YARD ATTENDANCE",
+        "tab-waiting": "WAITING & BATCHES",
+        "tab-breaks": "BREAK MANAGEMENT",
+        "tab-violators": "VIOLATION CONTROL",
+        "tab-rush": "RUSH Q RECEIVE IN",
+        "tab-admin": "GLOBAL CONFIG"
+      };
+      var el = document.getElementById("header-tab-sub");
+      if (el && map[tabId]) el.textContent = map[tabId];
     }
 
     function escapeHtml(str) {
@@ -1382,6 +1904,14 @@
         function(item) { doRushScanInAction(item.daId); }
       );
 
+      // Break tab live search (search the roster to send a DA on break)
+      bindLiveSearch(
+        document.getElementById("break-inp"),
+        document.getElementById("break-search-results"),
+        function() { return S.roster; },
+        function(item) { startBreakAction(item.daId); }
+      );
+
       // Replacement Step 1 (Absent DAs) & Step 2 (RushData DAs)
       bindLiveSearch(
         document.getElementById("rep-absent-inp"),
@@ -1406,6 +1936,7 @@
       document.getElementById("btn-attend-checkin").onclick = function() { handleAttendanceCheckIn(); };
       document.getElementById("btn-waiting-enqueue").onclick = function() { handleWaitingEnqueue(); };
       document.getElementById("btn-rush-scanin").onclick = function() { doRushScanInAction(); };
+      document.getElementById("btn-start-break").onclick = function() { startBreakAction(); };
       document.getElementById("btn-assign-rep-inline").onclick = executeInlineReplacement;
       document.getElementById("btn-save-settings").onclick = saveSettingsAction;
       document.getElementById("btn-reset-day").onclick = resetDayAction;
@@ -1413,6 +1944,7 @@
       document.getElementById("attend-inp").addEventListener("keydown", function(e) { if (e.key === "Enter") handleAttendanceCheckIn(); });
       document.getElementById("waiting-inp").addEventListener("keydown", function(e) { if (e.key === "Enter") handleWaitingEnqueue(); });
       document.getElementById("rush-inp").addEventListener("keydown", function(e) { if (e.key === "Enter") doRushScanInAction(); });
+      document.getElementById("break-inp").addEventListener("keydown", function(e) { if (e.key === "Enter") startBreakAction(); });
 
       document.querySelectorAll(".nav-item").forEach(function(btn) {
         btn.addEventListener("click", function() { switchTab(btn.getAttribute("data-tab")); });
@@ -1421,6 +1953,8 @@
       fillSettingsInputs();
       pollRoster();
 
+      updateHeaderSubtitle(S.activeTab || "tab-attend");
+
       setTimeout(function() {
         var splash = document.getElementById("splash-screen");
         if (splash) {
@@ -1428,7 +1962,7 @@
           splash.style.visibility = "hidden";
           setTimeout(function() { splash.remove(); }, 400);
         }
-        initCameraForTab("tab-attend");
+        // Camera stays OFF by default (REQ 1) — user taps "Start Scanner".
       }, 1400);
     });
   </script>
