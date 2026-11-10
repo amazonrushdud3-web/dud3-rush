@@ -1928,53 +1928,35 @@
         }
       }
 
-      var _rcvItem = null;
-      if (foundSentIdx !== -1) {
-        var sentItem = S.sentList.splice(foundSentIdx, 1)[0];
-        _rcvItem = {
-          daId: sentItem.daId,
-          daName: sentItem.daName,
-          batchName: sentItem.batchName,
-          rushInTime: nowStr,
-          sentTime: sentItem.sentTime,
-          ymName: sentItem.ymName
-        };
-        S.receivedList.unshift(_rcvItem);
-        playBeep("success");
-        showBanner("⚡ Received Inside: " + sentItem.daName + " (" + sentItem.batchName + ")", "success", 5);
-        renderAll();
-      } else {
-        // Received a DA not in the local sent list (e.g. synced from another device).
-        _rcvItem = { daId: daId, daName: daId, batchName: "", rushInTime: nowStr, sentTime: "", ymName: S.ymName };
-      }
-      // Hold the received DA in the Rush Q list until the server confirms them, and stop
-      // holding them as "sent". Prevents the received name vanishing after a few seconds.
+      // Receive is STRICTLY scan-confirmed and SERVER-AUTHORITATIVE (no auto-receive, no
+      // client-side hold). We do NOT optimistically move the DA to "Received" — we send the
+      // scan to the server and let the next sync reflect the confirmed state. A sent DA
+      // therefore stays on HOLD in the Rush Queue until the server confirms the scan.
       var _rk = String(daId).toUpperCase();
-      delete S.pendingSent[_rk];
-      S.pendingReceived[_rk] = { item: _rcvItem, ts: Date.now() };
-
-      // Scan has been processed — stop the camera regardless of server outcome (REQ 1).
+      // Stop holding them as pending-sent only AFTER the server confirms (handled on sync);
+      // keep them visible on Hold until then.
       autoStopAfterScan(_tabId);
 
       sendReq("rushScanIn", { daId: daId, receiverName: S.ymName }, function(err, res) {
         if (res && res.violatorBlock) {
-          // Server rejected the receive-in: roll back the optimistic receive and warn.
-          delete S.pendingReceived[String(daId).toUpperCase()];  // don't hold a rejected receive
-          S.receivedList = (S.receivedList || []).filter(function(r) { return r.daId.toUpperCase() !== daId.toUpperCase(); });
           playBeep("violation");
           showBanner(res.message || "🚫 Violator — Receive IN blocked. Send DA back to off-yard.", "danger", 35);
           pollRoster();
           switchTab("tab-violators");
         } else if (res && res.violation) {
-          playBeep("violation");
-          showBanner(res.message, "danger", 35);
+          // e.g. "Not Dispatched via YM" — NOT received; stays on hold.
+          playBeep("error");
+          showBanner(res.message, "danger", 20);
           pollRoster();
         } else if (err || (res && !res.success)) {
           playBeep("error");
           showBanner((res && res.error) || "Rush Scan Error", "danger", 15);
           pollRoster();
-        } else if (foundSentIdx === -1) {
+        } else {
+          // Confirmed by server — show success and let the sync move them to Received.
           playBeep("success");
+          showBanner("✅ Received: " + (res && res.daName ? res.daName : daId) + (res && res.batchName ? " (" + res.batchName + ")" : ""), "success", 5);
+          delete S.pendingSent[_rk];  // server confirmed receive — release the hold
           pollRoster();
         }
       });
