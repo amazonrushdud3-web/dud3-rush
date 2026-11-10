@@ -43,6 +43,30 @@
     #dashboard { display: none; }
     .loader { text-align: center; color: var(--orange); font-weight: bold; display: none; padding: 16px; }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <style>
+    .search-wrap { position: relative; }
+    .search-dropdown {
+      position: absolute; left: 0; right: 0; top: calc(100% - 6px);
+      background: #16222F; border: 1px solid var(--orange); border-radius: 10px;
+      max-height: 260px; overflow-y: auto; z-index: 500; display: none;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+    }
+    .search-item { padding: 11px 14px; border-bottom: 1px solid var(--border); cursor: pointer; text-align: left; }
+    .search-item:last-child { border-bottom: none; }
+    .search-item:active, .search-item.hl { background: #22303F; }
+    .si-alias { font-weight: 900; color: var(--orange); font-size: 15px; }
+    .si-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .search-empty { padding: 12px 14px; color: var(--muted); font-size: 12px; text-align: center; }
+
+    /* QR identity card (styled like the printed DA QR card) */
+    .qr-card { background: #FFFFFF; border-radius: 16px; padding: 18px 16px; text-align: center; color: #111; }
+    .qr-canvas-wrap { display: inline-flex; padding: 10px; background: #fff; border-radius: 10px; }
+    .qr-canvas-wrap img, .qr-canvas-wrap canvas { display: block; }
+    .qr-alias { font-size: 26px; font-weight: 900; letter-spacing: 1px; margin-top: 12px; color: #0F151C; }
+    .qr-daid { font-size: 13px; font-weight: 700; color: #333; margin-top: 2px; font-variant-numeric: tabular-nums; }
+    .qr-dsp { font-size: 12px; font-weight: 800; color: #FF7A00; margin-top: 6px; text-transform: uppercase; letter-spacing: .5px; }
+  </style>
 </head>
 <body>
 
@@ -53,21 +77,35 @@
 </header>
 
 <div id="login-sec" class="card">
-  <div class="card-title" style="text-align:center;">Enter Your Transporter / DA ID</div>
-  <input type="text" id="da-id-input" class="inp" placeholder="Paste or Type DA ID" autocomplete="off">
+  <div class="card-title" style="text-align:center;">Find Your Name / Alias / DA ID</div>
+  <div class="search-wrap">
+    <input type="text" id="da-id-input" class="inp" placeholder="Type your name or alias..." autocomplete="off" oninput="onSearchInput()" onkeydown="onSearchKey(event)">
+    <div class="search-dropdown" id="search-dropdown"></div>
+  </div>
   <button class="btn" onclick="login()">Check Live Status</button>
+  <div style="font-size:11px; color:var(--muted); text-align:center; margin-top:8px;">Start typing — pick yourself from the list.</div>
 </div>
 
 <div id="loader" class="loader">Syncing live status...</div>
 
 <div id="dashboard">
   <div class="card">
+    <div class="card-title">Your QR Identity</div>
+    <div class="qr-card">
+      <div class="qr-canvas-wrap" id="qr-box"></div>
+      <div class="qr-alias" id="d-alias">--</div>
+      <div class="qr-daid" id="qr-daid">--</div>
+      <div class="qr-dsp" id="qr-dsp">DSP: --</div>
+    </div>
+  </div>
+
+  <div class="card">
     <div class="card-title">Driver Profile</div>
-    <div class="profile-row"><span>Name:</span> <span class="val" id="d-name">--</span></div>
+    <div class="profile-row"><span>Alias:</span> <span class="val" id="d-name">--</span></div>
     <div class="profile-row"><span>DA ID:</span> <span class="val" id="d-id">--</span></div>
     <div class="profile-row"><span>DSP:</span> <span class="val" id="d-dsp">--</span></div>
     <div class="profile-row"><span>Wave Time:</span> <span class="val" style="color:var(--text);" id="d-wave">--</span></div>
-    <button class="btn btn-outline" onclick="logout()">Change Driver ID</button>
+    <button class="btn btn-outline" onclick="logout()">Change Driver</button>
   </div>
 
   <div class="card">
@@ -118,8 +156,96 @@ var SAFE_STORE = (function () {
 })();
 
 let currentDaId = "";
+let currentAlias = "";
 let refreshInterval = null, countdownInterval = null;
 let serverOffsetSec = 0;
+let rushRoster = [];      // [{daId, daName, alias, dsp}]
+let selectedDriver = null;
+let hlIndex = -1;
+
+// Load the RushData roster once so the name/alias dropdown can search locally.
+function loadRushRoster() {
+  var url = API_URL + "?action=getRushRoster&sheetUrl=" + encodeURIComponent(SHEET_URL);
+  fetch(url, { cache: "no-store" })
+    .then(function(r){ return r.json(); })
+    .then(function(res){ if (res && res.success && res.roster) rushRoster = res.roster; })
+    .catch(function(){ /* dropdown still allows manual ID entry */ });
+}
+
+function onSearchInput() {
+  var q = document.getElementById("da-id-input").value.trim().toLowerCase();
+  var dd = document.getElementById("search-dropdown");
+  selectedDriver = null; hlIndex = -1;
+  if (!q) { dd.style.display = "none"; dd.innerHTML = ""; return; }
+
+  var matches = rushRoster.filter(function(d){
+    return (d.daName && d.daName.toLowerCase().indexOf(q) !== -1) ||
+           (d.alias && d.alias.toLowerCase().indexOf(q) !== -1) ||
+           (d.daId && d.daId.toLowerCase().indexOf(q) !== -1);
+  }).slice(0, 25);
+
+  if (matches.length === 0) {
+    dd.innerHTML = '<div class="search-empty">No match in RushData — you can still type a full DA ID and press Check.</div>';
+    dd.style.display = "block";
+    return;
+  }
+
+  dd.innerHTML = "";
+  matches.forEach(function(d){
+    var el = document.createElement("div");
+    el.className = "search-item";
+    var sub = [];
+    if (d.daName) sub.push(d.daName);
+    if (d.dsp) sub.push(d.dsp);
+    sub.push(d.daId);
+    el.innerHTML = '<div class="si-alias">' + escapeHtml(d.alias || d.daId) + '</div>' +
+                   '<div class="si-sub">' + escapeHtml(sub.join(" · ")) + '</div>';
+    el.onclick = function(){ pickDriver(d); };
+    dd.appendChild(el);
+  });
+  dd.style.display = "block";
+}
+
+function onSearchKey(e) {
+  var dd = document.getElementById("search-dropdown");
+  var items = dd.querySelectorAll(".search-item");
+  if (e.key === "Enter") {
+    if (hlIndex >= 0 && items[hlIndex]) { items[hlIndex].click(); e.preventDefault(); }
+    else { login(); }
+    return;
+  }
+  if (!items.length) return;
+  if (e.key === "ArrowDown") { hlIndex = Math.min(hlIndex + 1, items.length - 1); e.preventDefault(); }
+  else if (e.key === "ArrowUp") { hlIndex = Math.max(hlIndex - 1, 0); e.preventDefault(); }
+  else return;
+  items.forEach(function(it, i){ it.classList.toggle("hl", i === hlIndex); });
+  items[hlIndex].scrollIntoView({ block: "nearest" });
+}
+
+function pickDriver(d) {
+  selectedDriver = d;
+  currentDaId = String(d.daId).trim().toUpperCase();
+  currentAlias = d.alias || "";
+  document.getElementById("da-id-input").value = (d.alias || d.daName || d.daId);
+  var dd = document.getElementById("search-dropdown");
+  dd.style.display = "none"; dd.innerHTML = "";
+  login();
+}
+
+function escapeHtml(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function renderQr(daId) {
+  var box = document.getElementById("qr-box");
+  if (!box) return;
+  box.innerHTML = "";
+  try {
+    if (typeof QRCode !== "undefined") {
+      new QRCode(box, { text: String(daId), width: 170, height: 170, colorDark: "#0F151C", colorLight: "#FFFFFF", correctLevel: QRCode.CorrectLevel.M });
+    } else {
+      box.innerHTML = '<div style="color:#888;font-size:12px;padding:20px;">QR unavailable</div>';
+    }
+  } catch (e) {}
+}
 
 function getTodayTab(){
   var d=new Date(), m=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
@@ -127,15 +253,26 @@ function getTodayTab(){
 }
 
 window.onload = function() {
+  loadRushRoster();
   var savedId = SAFE_STORE.getItem("dud3_driver_id");
-  if (savedId) { document.getElementById("da-id-input").value = savedId; login(); }
+  if (savedId) { currentDaId = savedId; document.getElementById("da-id-input").value = savedId; login(); }
+  // Close the search dropdown when tapping elsewhere.
+  document.addEventListener("click", function(e){
+    var wrap = document.querySelector(".search-wrap");
+    var dd = document.getElementById("search-dropdown");
+    if (wrap && dd && !wrap.contains(e.target)) { dd.style.display = "none"; }
+  });
 };
 
 function login() {
-  const daId = document.getElementById("da-id-input").value.trim().toUpperCase();
-  if (daId.length < 3) return alert("Please enter a valid DA ID");
+  var daId = "";
+  if (selectedDriver) { daId = String(selectedDriver.daId).trim().toUpperCase(); }
+  else { daId = document.getElementById("da-id-input").value.trim().toUpperCase(); }
+  if (daId.length < 3) return alert("Please pick your name from the list, or type your full DA ID.");
   currentDaId = daId;
   SAFE_STORE.setItem("dud3_driver_id", daId);
+  var dd = document.getElementById("search-dropdown");
+  if (dd) dd.style.display = "none";
   document.getElementById("login-sec").style.display = "none";
   fetchData(daId);
   if (refreshInterval) clearInterval(refreshInterval);
@@ -217,6 +354,7 @@ function adaptResponse(res) {
     found: true,
     daId: (info && info.daId) || currentDaId,
     daName: (info && info.daName) || currentDaId,
+    alias: (info && info.alias) || currentAlias || "",
     dspName: (info && info.dsp) || "DUD3",
     waveTime: (info && info.wave) || "",
     serverTime: res.serverTime || "",
@@ -272,10 +410,20 @@ function updateDashboard(data) {
   }
 
   document.getElementById("dashboard").style.display = "block";
-  document.getElementById("d-name").textContent = data.daName || "--";
+
+  // Alias-only identity (never the DA name) — prefer server alias, fall back to selection.
+  var aliasShown = data.alias || currentAlias || data.daId || "--";
+  currentAlias = data.alias || currentAlias;
+  document.getElementById("d-name").textContent = aliasShown;      // profile "Alias" row
   document.getElementById("d-id").textContent = data.daId || "--";
   document.getElementById("d-dsp").textContent = data.dspName || "DUD3";
   document.getElementById("d-wave").textContent = data.waveTime || "Not Assigned";
+
+  // QR identity card (styled like the printed DA card): alias big, DA ID, DSP, QR=DA ID.
+  document.getElementById("d-alias").textContent = aliasShown;
+  document.getElementById("qr-daid").textContent = data.daId || "--";
+  document.getElementById("qr-dsp").textContent = "DSP: " + (data.dspName || "DUD3");
+  if (document.getElementById("qr-box").childNodes.length === 0 && data.daId) renderQr(data.daId);
 
   document.getElementById("d-batch").textContent = data.batchName || "Not Queued";
   var st = String(data.status || "");
