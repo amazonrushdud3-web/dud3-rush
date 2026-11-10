@@ -946,7 +946,9 @@
       violators: [],
       breaksActive: [],
       selectedBreakDa: null,
-      pendingWaiting: {}
+      pendingWaiting: {},
+      pendingSent: {},
+      pendingReceived: {}
     };
 
     var audioCtx = null;
@@ -1269,6 +1271,41 @@
       return serverBatches;
     }
 
+    // Hold optimistically-SENT DAs in the Rush Q "sent" list until the server confirms
+    // them (as sent, received, or OFD) — mirrors the Waiting hold so they never flicker out.
+    function reconcilePendingSent(serverSent) {
+      serverSent = serverSent || [];
+      var known = {};
+      serverSent.forEach(function(s){ known[String(s.daId).toUpperCase()] = true; });
+      var movedOn = {};
+      (S.receivedList || []).forEach(function(r){ movedOn[String(r.daId).toUpperCase()] = true; });
+      var nowS = Date.now();
+      Object.keys(S.pendingSent).forEach(function(key){
+        if (known[key]) { delete S.pendingSent[key]; return; }       // server shows them sent — release
+        if (movedOn[key]) { delete S.pendingSent[key]; return; }      // already received — release
+        if (nowS - S.pendingSent[key].ts > 20000) { delete S.pendingSent[key]; return; } // safety release
+        serverSent.push(S.pendingSent[key].item);                    // not yet reflected — keep visible
+      });
+      return serverSent;
+    }
+
+    // Hold optimistically-RECEIVED DAs in the Rush Q "received" list until the server
+    // confirms them (received) or they advance to OFD. Prevents the "removes after a few sec".
+    function reconcilePendingReceived(serverReceived) {
+      serverReceived = serverReceived || [];
+      var known = {};
+      serverReceived.forEach(function(r){ known[String(r.daId).toUpperCase()] = true; });
+      var now = Date.now();
+      Object.keys(S.pendingReceived).forEach(function(key){
+        if (known[key]) { delete S.pendingReceived[key]; return; }    // server shows them received — release
+        // Safety release after 20s: by then the server has caught up, and if they are no
+        // longer "received" it's a legitimate change (e.g. auto-OFD) — trust the server.
+        if (now - S.pendingReceived[key].ts > 20000) { delete S.pendingReceived[key]; return; }
+        serverReceived.unshift(S.pendingReceived[key].item);         // not yet reflected — keep at top
+      });
+      return serverReceived;
+    }
+
     function applyRosterData(d) {
       if (d.serverTime) document.getElementById("dubai-clock").textContent = d.serverTime;
       if (d.targetTab) document.getElementById("roster-badge-date").textContent = d.targetTab;
@@ -1278,8 +1315,8 @@
       }
       if (d.roster) S.roster = d.roster;
       if (d.waitingBatches) S.waitingBatches = reconcilePendingWaiting(d.waitingBatches);
-      if (d.sentList) S.sentList = d.sentList;
-      if (d.receivedList) S.receivedList = d.receivedList;
+      if (d.receivedList) S.receivedList = reconcilePendingReceived(d.receivedList);
+      if (d.sentList) S.sentList = reconcilePendingSent(d.sentList);
       if (d.rushData) S.rushData = d.rushData;
       if (d.violators) S.violators = d.violators;
       if (d.breaksActive) S.breaksActive = d.breaksActive;
@@ -1709,7 +1746,7 @@
       sendReq("recordCheckIn", { daId: daObj.daId, ymName: S.ymName }, function(err, res) {
         if (res && res.success && res.clearedViolator) {
           S.violators = (S.violators || []).filter(function(v){ return String(v.daId).toUpperCase() !== String(daObj.daId).toUpperCase(); });
-          showBanner("\u26A0\uFE0F " + daObj.daName + " moved from Violator and added to Waiting Batch.", "warning", 12);
+          showBanner("\u26A0\uFE0F DA Added from Violator: " + daObj.daName, "warning", 12);
         }
         if (err || (res && !res.success)) pollRoster();
       });
@@ -1767,7 +1804,7 @@
       sendReq("addToWaiting", { daId: daId, ymName: S.ymName }, function(err, res) {
         if (res && res.success && res.clearedViolator) {
           S.violators = (S.violators || []).filter(function(v){ return String(v.daId).toUpperCase() !== String(daId).toUpperCase(); });
-          showBanner("\u26A0\uFE0F " + dName + " moved from Violator and added to Waiting Batch.", "warning", 12);
+          showBanner("\u26A0\uFE0F DA Added from Violator: " + dName, "warning", 12);
         }
         if (err || (res && !res.success)) {
           playBeep("error");
@@ -1820,7 +1857,7 @@
         var remaining = [];
         (S.waitingBatches[bName] || []).forEach(function(item) {
           if (idSet[item.daId.toUpperCase()]) {
-            S.sentList.push({
+            var _sentItem = {
               daId: item.daId,
               daName: item.daName,
               batchName: bName,
@@ -1828,7 +1865,9 @@
               ymName: S.ymName,
               elapsedMins: 0,
               isSlaExceeded: false
-            });
+            };
+            S.sentList.push(_sentItem);
+            S.pendingSent[String(item.daId).toUpperCase()] = { item: _sentItem, ts: Date.now() };
           } else {
             remaining.push(item);
           }
@@ -1889,20 +1928,30 @@
         }
       }
 
+      var _rcvItem = null;
       if (foundSentIdx !== -1) {
         var sentItem = S.sentList.splice(foundSentIdx, 1)[0];
-        S.receivedList.unshift({
+        _rcvItem = {
           daId: sentItem.daId,
           daName: sentItem.daName,
           batchName: sentItem.batchName,
           rushInTime: nowStr,
           sentTime: sentItem.sentTime,
           ymName: sentItem.ymName
-        });
+        };
+        S.receivedList.unshift(_rcvItem);
         playBeep("success");
         showBanner("⚡ Received Inside: " + sentItem.daName + " (" + sentItem.batchName + ")", "success", 5);
         renderAll();
+      } else {
+        // Received a DA not in the local sent list (e.g. synced from another device).
+        _rcvItem = { daId: daId, daName: daId, batchName: "", rushInTime: nowStr, sentTime: "", ymName: S.ymName };
       }
+      // Hold the received DA in the Rush Q list until the server confirms them, and stop
+      // holding them as "sent". Prevents the received name vanishing after a few seconds.
+      var _rk = String(daId).toUpperCase();
+      delete S.pendingSent[_rk];
+      S.pendingReceived[_rk] = { item: _rcvItem, ts: Date.now() };
 
       // Scan has been processed — stop the camera regardless of server outcome (REQ 1).
       autoStopAfterScan(_tabId);
@@ -1910,9 +1959,8 @@
       sendReq("rushScanIn", { daId: daId, receiverName: S.ymName }, function(err, res) {
         if (res && res.violatorBlock) {
           // Server rejected the receive-in: roll back the optimistic receive and warn.
-          if (foundSentIdx !== -1) {
-            S.receivedList = (S.receivedList || []).filter(function(r) { return r.daId.toUpperCase() !== daId.toUpperCase(); });
-          }
+          delete S.pendingReceived[String(daId).toUpperCase()];  // don't hold a rejected receive
+          S.receivedList = (S.receivedList || []).filter(function(r) { return r.daId.toUpperCase() !== daId.toUpperCase(); });
           playBeep("violation");
           showBanner(res.message || "🚫 Violator — Receive IN blocked. Send DA back to off-yard.", "danger", 35);
           pollRoster();
