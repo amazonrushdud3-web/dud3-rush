@@ -139,10 +139,10 @@
       background: #000; border-radius: 12px; overflow: hidden;
       border: 2px solid #334455;
     }
-    #qr-reader-attend, #qr-reader-waiting, #qr-reader-rush {
+    #qr-reader-attend, #qr-reader-waiting, #qr-reader-receive {
       width: 100% !important; height: 100% !important;
     }
-    #qr-reader-attend video, #qr-reader-waiting video, #qr-reader-rush video {
+    #qr-reader-attend video, #qr-reader-waiting video, #qr-reader-receive video {
       object-fit: cover !important; width: 100% !important; height: 100% !important;
     }
 
@@ -409,14 +409,14 @@
       main { padding-left: 24px; padding-right: 24px; }
       .tab-content { max-width: 1180px; margin: 0 auto; width: 100%; }
       /* Scanner tabs become a two-column layout: scanner left, lists right */
-      #tab-attend.active, #tab-waiting.active, #tab-rush.active {
+      #tab-attend.active, #tab-waiting.active, #tab-receive.active {
         display: grid; grid-template-columns: 360px 1fr; gap: 18px; align-items: start;
       }
-      #tab-attend .scanner-card, #tab-waiting .scanner-card, #tab-rush .scanner-card { position: sticky; top: 8px; }
+      #tab-attend .scanner-card, #tab-waiting .scanner-card, #tab-receive .scanner-card { position: sticky; top: 8px; }
       #tab-attend .replacement-box { grid-column: 1 / -1; }
       #tab-attend .wave-bar, #tab-attend .metric-row, #tab-attend .batch-card,
       #tab-waiting .metric-row, #tab-waiting #waiting-batches-container,
-      #tab-rush .batch-card { grid-column: 2; }
+      #tab-receive .batch-card { grid-column: 2; }
       #tab-attend .scanner-card { grid-row: span 3; }
       .metric-val { font-size: 24px; }
     }
@@ -485,7 +485,7 @@
     /* Large desktop monitors: wider canvas, roomier scanner column */
     @media (min-width: 1440px) {
       .tab-content { max-width: 1320px; }
-      #tab-attend.active, #tab-waiting.active, #tab-rush.active {
+      #tab-attend.active, #tab-waiting.active, #tab-receive.active {
         grid-template-columns: 400px 1fr; gap: 22px;
       }
       .metric-val { font-size: 26px; }
@@ -733,15 +733,15 @@
       </div>
     </div>
 
-    <!-- ================= TAB 4: RUSH Q ================= -->
-    <div class="tab-content" id="tab-rush">
+    <!-- ================= TAB 4: RECEIVE ================= -->
+    <div class="tab-content" id="tab-receive">
       <div class="scanner-card">
         <div class="scanner-viewport-wrap">
-          <div id="qr-reader-rush"></div>
-          <div class="scanner-idle" id="idle-rush">
+          <div id="qr-reader-receive"></div>
+          <div class="scanner-idle" id="idle-receive">
             <svg viewBox="0 0 24 24"><path d="M9.5 6.5v3h-3v-3h3M11 5H5v6h6V5zm-1.5 9.5v3h-3v-3h3M11 13H5v6h6v-6zm6.5-6.5v3h-3v-3h3M19 5h-6v6h6V5zm-6 8h1.5v1.5H13V13zm1.5 1.5H16V16h-1.5v-1.5zM16 13h1.5v1.5H16V13zm-3 3h1.5v1.5H13V16zm1.5 1.5H16V19h-1.5v-1.5zM16 16h1.5v1.5H16V16zm1.5-1.5H19V16h-1.5v-1.5zm0 3H19V19h-1.5v-1.5z"/></svg>
             <div class="idle-title">Scanner is Off</div>
-            <div class="idle-sub">Tap “Start Scanner” to activate the camera</div>
+            <div class="idle-sub">Tap “Start Scanner” to activate the Received In camera</div>
           </div>
           <div class="laser-line"></div>
           <div class="corner-bracket cb-tl"></div>
@@ -750,27 +750,27 @@
           <div class="corner-bracket cb-br"></div>
         </div>
         <div class="scanner-controls">
-          <button class="btn btn-green" id="btn-start-rush" onclick="startScanner('tab-rush')">▶ Start Scanner</button>
-          <button class="btn btn-ghost" id="btn-stop-rush" onclick="stopScanner('tab-rush')" style="display:none;">■ Stop Scanner</button>
+          <button class="btn btn-green" id="btn-start-receive" onclick="startScanner('tab-receive')">▶ Start Scanner</button>
+          <button class="btn btn-ghost" id="btn-stop-receive" onclick="stopScanner('tab-receive')" style="display:none;">■ Stop Scanner</button>
         </div>
-        <div class="scan-status-chip" id="scanchip-rush"><span class="dot"></span><span id="scantext-rush">Camera Off</span></div><div class="scanner-input-bar">
-          <input type="text" id="rush-inp" class="text-input" placeholder="Scan Barcode at Rush Q Entrance..." autocomplete="off">
-          <button class="btn btn-green" id="btn-rush-scanin">Scan IN</button>
-          <div class="search-results-dropdown" id="rush-search-results"></div>
+        <div class="scan-status-chip" id="scanchip-receive"><span class="dot"></span><span id="scantext-receive">Camera Off</span></div><div class="scanner-input-bar">
+          <input type="text" id="receive-inp" class="text-input" placeholder="Scan DA at Received In station..." autocomplete="off">
+          <button class="btn btn-green" id="btn-receive-scanin">Received In</button>
+          <div class="search-results-dropdown" id="receive-search-results"></div>
         </div>
       </div>
 
       <div class="batch-card">
         <div class="batch-header">
-          <div class="batch-title"><span>⏱️ Sent from Waiting — Awaiting Rush Q Scan</span></div>
-          <span class="batch-badge" id="sent-badge-count">0</span>
+          <div class="batch-title"><span>⏱️ Sent from Waiting — Awaiting Received In (scan before time limit)</span></div>
+          <span class="batch-badge" id="awaiting-badge-count">0</span>
         </div>
-        <div class="da-list" id="sent-da-list"></div>
+        <div class="da-list" id="awaiting-da-list"></div>
       </div>
 
       <div class="batch-card">
         <div class="batch-header">
-          <div class="batch-title"><span>✅ Received Inside (Auto-OFD after set time)</span></div>
+          <div class="batch-title"><span>✅ Received In (confirmed by YM)</span></div>
           <span class="batch-badge" id="received-badge-count" style="background:var(--green); color:#000;">0</span>
         </div>
         <div class="da-list" id="received-da-list"></div>
@@ -799,12 +799,12 @@
         </div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
           <div><label class="metric-lbl">Batch Size (DAs)</label><input type="number" id="cfg-batch-size" class="text-input" style="width:100%; margin-top:4px;" value="25"></div>
-          <div><label class="metric-lbl">Rush SLA Timeout (Min)</label><input type="number" id="cfg-rush-timeout" class="text-input" style="width:100%; margin-top:4px;" value="20"></div>
+          <div><label class="metric-lbl">Receive Timeout (Min)</label><input type="number" id="cfg-rush-timeout" class="text-input" style="width:100%; margin-top:4px;" value="15"></div>
           <div><label class="metric-lbl">Auto-OFD Timer (Min)</label><input type="number" id="cfg-auto-ofd" class="text-input" style="width:100%; margin-top:4px;" value="30"></div>
           <div><label class="metric-lbl">Waiting Lock (Min)</label><input type="number" id="cfg-waiting-lock" class="text-input" style="width:100%; margin-top:4px;" value="30"></div>
           <div><label class="metric-lbl">Pre-Wave Block (Min)</label><input type="number" id="cfg-prewave" class="text-input" style="width:100%; margin-top:4px;" value="30"></div>
           <div><label class="metric-lbl">Wave Grace Period (Min)</label><input type="number" id="cfg-grace" class="text-input" style="width:100%; margin-top:4px;" value="10"></div>
-          <div><label class="metric-lbl">Entry Violation (Min)</label><input type="number" id="cfg-entry-violation" class="text-input" style="width:100%; margin-top:4px;" value="20"></div>
+          <div><label class="metric-lbl">Receive Violation (Min)</label><input type="number" id="cfg-entry-violation" class="text-input" style="width:100%; margin-top:4px;" value="15"></div>
         </div>
         <div>
           <label class="metric-lbl">Admin PIN</label>
@@ -836,9 +836,9 @@
       <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
       <span>Violators</span>
     </button>
-    <button class="nav-item" data-tab="tab-rush">
-      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14h-2v-2h2v2zm0-4h-2V7h2v5z"/></svg>
-      <span>Rush Q</span>
+    <button class="nav-item" data-tab="tab-receive">
+      <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+      <span>Receive</span>
     </button>
     <button class="nav-item" data-tab="tab-admin">
       <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24-1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
@@ -1271,7 +1271,7 @@
       return serverBatches;
     }
 
-    // Hold optimistically-SENT DAs in the Rush Q "sent" list until the server confirms
+    // Hold optimistically-SENT DAs in the Receive "awaiting" list until the server confirms
     // them (as sent, received, or OFD) — mirrors the Waiting hold so they never flicker out.
     function reconcilePendingSent(serverSent) {
       serverSent = serverSent || [];
@@ -1289,7 +1289,7 @@
       return serverSent;
     }
 
-    // Hold optimistically-RECEIVED DAs in the Rush Q "received" list until the server
+    // Hold optimistically-RECEIVED DAs in the Receive "received" list until the server
     // confirms them (received) or they advance to OFD. Prevents the "removes after a few sec".
     function reconcilePendingReceived(serverReceived) {
       serverReceived = serverReceived || [];
@@ -1324,7 +1324,7 @@
     }
 
     function renderAll() {
-      var steps = [renderAttendanceTab, renderWaitingTab, renderBreaksTab, renderViolatorsTab, renderRushTab];
+      var steps = [renderAttendanceTab, renderWaitingTab, renderBreaksTab, renderViolatorsTab, renderReceiveTab];
       for (var i = 0; i < steps.length; i++) {
         try { steps[i](); } catch (e) { if (window.console && console.warn) console.warn("render step failed:", e); }
       }
@@ -1634,9 +1634,9 @@
       });
     }
 
-    function renderRushTab() {
-      var sentContainer = document.getElementById("sent-da-list");
-      var sentBadge = document.getElementById("sent-badge-count");
+    function renderReceiveTab() {
+      var sentContainer = document.getElementById("awaiting-da-list");
+      var sentBadge = document.getElementById("awaiting-badge-count");
       var sent = S.sentList || [];
       sentBadge.textContent = sent.length;
       sentContainer.innerHTML = "";
@@ -1655,7 +1655,7 @@
             '</div>' +
             '<div style="display:flex; align-items:center; gap:6px;">' +
               '<span class="time-badge ' + slaClass + '">' + (s.elapsedMins || 0) + 'm</span>' +
-              '<button class="btn btn-green" style="padding:6px 10px; font-size:11px;" onclick="doRushScanInAction(\'' + s.daId + '\')">&check; Receive</button>' +
+              '<button class="btn btn-green" style="padding:6px 10px; font-size:11px;" onclick="doReceiveScanAction(\'' + s.daId + '\')">&check; Receive</button>' +
             '</div>';
           sentContainer.appendChild(row);
         });
@@ -1877,7 +1877,7 @@
       });
 
       playBeep("success");
-      showBanner("⚡ Dispatched " + daIds.length + " DA(s) to Rush Q", "success", 5);
+      showBanner("⚡ Dispatched " + daIds.length + " DA(s) to Receive queue", "success", 5);
       renderAll();
 
       sendReq("sendDA", { daIds: daIds, ymName: S.ymName }, function(err, res) {
@@ -1901,13 +1901,13 @@
       sendReq("removeFromWaiting", { daId: daId }, function() {});
     }
 
-    function doRushScanInAction(queryId, opts) {
+    function doReceiveScanAction(queryId, opts) {
       initAudio();
       var _tabId = opts && opts.tabId;
-      var daId = (queryId || document.getElementById("rush-inp").value || "").trim();
+      var daId = (queryId || document.getElementById("receive-inp").value || "").trim();
       if (!daId || !isScanCooledDown("RUSH_" + daId)) return;
-      document.getElementById("rush-inp").value = "";
-      document.getElementById("rush-search-results").style.display = "none";
+      document.getElementById("receive-inp").value = "";
+      document.getElementById("receive-search-results").style.display = "none";
 
       // REQ 7: Client-side pre-check — block known violators immediately.
       var localViolator = (S.violators || []).find(function(v) { return String(v.daId).toUpperCase() === daId.toUpperCase(); });
@@ -1931,7 +1931,7 @@
       // Receive is STRICTLY scan-confirmed and SERVER-AUTHORITATIVE (no auto-receive, no
       // client-side hold). We do NOT optimistically move the DA to "Received" — we send the
       // scan to the server and let the next sync reflect the confirmed state. A sent DA
-      // therefore stays on HOLD in the Rush Queue until the server confirms the scan.
+      // therefore stays on HOLD in the Receive queue until the server confirms the scan.
       var _rk = String(daId).toUpperCase();
       // Stop holding them as pending-sent only AFTER the server confirms (handled on sync);
       // keep them visible on Hold until then.
@@ -1950,7 +1950,7 @@
           pollRoster();
         } else if (err || (res && !res.success)) {
           playBeep("error");
-          showBanner((res && res.error) || "Rush Scan Error", "danger", 15);
+          showBanner((res && res.error) || "Receive Scan Error", "danger", 15);
           pollRoster();
         } else {
           // Confirmed by server — show success and let the sync move them to Received.
@@ -2140,13 +2140,13 @@
     var SCANNER_MAP = {
       "tab-attend":  { id: "qr-reader-attend",  key: "attend",  cb: handleAttendanceCheckIn },
       "tab-waiting": { id: "qr-reader-waiting", key: "waiting", cb: handleWaitingEnqueue },
-      "tab-rush":    { id: "qr-reader-rush",    key: "rush",    cb: doRushScanInAction }
+      "tab-receive": { id: "qr-reader-receive", key: "receive", cb: doReceiveScanAction }
     };
 
     function setScannerUi(key, active) {
       var startBtn = document.getElementById("btn-start-" + key);
       var stopBtn  = document.getElementById("btn-stop-" + key);
-      var wrap     = document.getElementById(key === "attend" ? "qr-reader-attend" : (key === "waiting" ? "qr-reader-waiting" : "qr-reader-rush"));
+      var wrap     = document.getElementById(key === "attend" ? "qr-reader-attend" : (key === "waiting" ? "qr-reader-waiting" : "qr-reader-receive"));
       var chip     = document.getElementById("scanchip-" + key);
       var chipTxt  = document.getElementById("scantext-" + key);
       var card     = wrap ? wrap.closest(".scanner-viewport-wrap") : null;
@@ -2247,7 +2247,7 @@
         "tab-waiting": "WAITING & BATCHES",
         "tab-breaks": "BREAK MANAGEMENT",
         "tab-violators": "VIOLATION CONTROL",
-        "tab-rush": "RUSH Q RECEIVE IN",
+        "tab-receive": "RECEIVE — RECEIVED IN",
         "tab-admin": "GLOBAL CONFIG"
       };
       var el = document.getElementById("header-tab-sub");
@@ -2276,10 +2276,10 @@
       );
 
       bindLiveSearch(
-        document.getElementById("rush-inp"),
-        document.getElementById("rush-search-results"),
+        document.getElementById("receive-inp"),
+        document.getElementById("receive-search-results"),
         function() { return S.sentList.length > 0 ? S.sentList : S.roster; },
-        function(item) { doRushScanInAction(item.daId); }
+        function(item) { doReceiveScanAction(item.daId); }
       );
 
       // Break tab live search (search the roster to send a DA on break)
@@ -2313,7 +2313,7 @@
 
       document.getElementById("btn-attend-checkin").onclick = function() { handleAttendanceCheckIn(); };
       document.getElementById("btn-waiting-enqueue").onclick = function() { handleWaitingEnqueue(); };
-      document.getElementById("btn-rush-scanin").onclick = function() { doRushScanInAction(); };
+      document.getElementById("btn-receive-scanin").onclick = function() { doReceiveScanAction(); };
       document.getElementById("btn-start-break").onclick = function() { startBreakAction(); };
       document.getElementById("btn-assign-rep-inline").onclick = executeInlineReplacement;
       document.getElementById("btn-save-settings").onclick = saveSettingsAction;
@@ -2325,7 +2325,7 @@
 
       document.getElementById("attend-inp").addEventListener("keydown", function(e) { if (e.key === "Enter") handleAttendanceCheckIn(); });
       document.getElementById("waiting-inp").addEventListener("keydown", function(e) { if (e.key === "Enter") handleWaitingEnqueue(); });
-      document.getElementById("rush-inp").addEventListener("keydown", function(e) { if (e.key === "Enter") doRushScanInAction(); });
+      document.getElementById("receive-inp").addEventListener("keydown", function(e) { if (e.key === "Enter") doReceiveScanAction(); });
       document.getElementById("break-inp").addEventListener("keydown", function(e) { if (e.key === "Enter") startBreakAction(); });
 
       document.querySelectorAll(".nav-item").forEach(function(btn) {
