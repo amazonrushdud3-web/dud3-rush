@@ -770,7 +770,7 @@
 
       <div class="batch-card">
         <div class="batch-header">
-          <div class="batch-title"><span>✅ Received Inside (Auto-removes on OFD)</span></div>
+          <div class="batch-title"><span>✅ Received Inside (Auto-OFD after set time)</span></div>
           <span class="batch-badge" id="received-badge-count" style="background:var(--green); color:#000;">0</span>
         </div>
         <div class="da-list" id="received-da-list"></div>
@@ -945,7 +945,8 @@
       scanCooldownMap: {},
       violators: [],
       breaksActive: [],
-      selectedBreakDa: null
+      selectedBreakDa: null,
+      pendingWaiting: {}
     };
 
     var audioCtx = null;
@@ -1230,6 +1231,41 @@
       });
     }
 
+    // Track DAs the YM just queued locally so a momentarily-stale server snapshot
+    // (8s cache) can't visually remove them before the backend reflects the check-in.
+    // Self-heals: entries expire after 25s, and are cleared as soon as the server shows them.
+    function markPendingWaiting(daId, batchName, item) {
+      S.pendingWaiting[String(daId).toUpperCase()] = {
+        batchName: batchName, item: item, ts: Date.now()
+      };
+    }
+
+    function reconcilePendingWaiting(serverBatches) {
+      serverBatches = serverBatches || {};
+      var now = Date.now();
+      // Build a set of every DA the server currently knows about in ANY state.
+      var serverKnown = {};
+      Object.keys(serverBatches).forEach(function(bn) {
+        (serverBatches[bn] || []).forEach(function(it) { serverKnown[String(it.daId).toUpperCase()] = true; });
+      });
+      (S.sentList || []).forEach(function(s) { serverKnown[String(s.daId).toUpperCase()] = true; });
+      (S.receivedList || []).forEach(function(r) { serverKnown[String(r.daId).toUpperCase()] = true; });
+
+      Object.keys(S.pendingWaiting).forEach(function(key) {
+        var p = S.pendingWaiting[key];
+        // Expire stale pendings (server had enough time; trust the server now).
+        if (now - p.ts > 25000) { delete S.pendingWaiting[key]; return; }
+        // If the server already reflects this DA anywhere, stop holding it locally.
+        if (serverKnown[key]) { delete S.pendingWaiting[key]; return; }
+        // Otherwise re-insert the optimistic waiting entry so it doesn't disappear.
+        var bn = p.batchName;
+        if (!serverBatches[bn]) serverBatches[bn] = [];
+        var exists = serverBatches[bn].some(function(it){ return String(it.daId).toUpperCase() === key; });
+        if (!exists) serverBatches[bn].push(p.item);
+      });
+      return serverBatches;
+    }
+
     function applyRosterData(d) {
       if (d.serverTime) document.getElementById("dubai-clock").textContent = d.serverTime;
       if (d.targetTab) document.getElementById("roster-badge-date").textContent = d.targetTab;
@@ -1238,7 +1274,7 @@
         document.getElementById("wait-batch-cap").textContent = S.settings.batchSize || 25;
       }
       if (d.roster) S.roster = d.roster;
-      if (d.waitingBatches) S.waitingBatches = d.waitingBatches;
+      if (d.waitingBatches) S.waitingBatches = reconcilePendingWaiting(d.waitingBatches);
       if (d.sentList) S.sentList = d.sentList;
       if (d.receivedList) S.receivedList = d.receivedList;
       if (d.rushData) S.rushData = d.rushData;
@@ -1503,6 +1539,7 @@
       var dName = daObj ? daObj.daName : daId;
 
       // Optimistic: remove from any waiting batch & add to breaksActive.
+      delete S.pendingWaiting[String(daId).toUpperCase()];
       Object.keys(S.waitingBatches || {}).forEach(function(bn) {
         S.waitingBatches[bn] = (S.waitingBatches[bn] || []).filter(function(x) { return x.daId.toUpperCase() !== daId.toUpperCase(); });
         if (S.waitingBatches[bn].length === 0) delete S.waitingBatches[bn];
@@ -1635,14 +1672,16 @@
       daObj.dispatchStatus = "Waiting";
 
       if (!S.waitingBatches[targetBatch]) S.waitingBatches[targetBatch] = [];
-      S.waitingBatches[targetBatch].push({
+      var _attItem = {
         daId: daObj.daId,
         daName: daObj.daName,
         batchName: targetBatch,
         waitTime: nowStr,
         inBreak: daObj.inBreak,
         breakRange: daObj.breakRange
-      });
+      };
+      S.waitingBatches[targetBatch].push(_attItem);
+      markPendingWaiting(daObj.daId, targetBatch, _attItem);
 
       playBeep("success");
       showBanner("⚡ Instant Check-In: " + daObj.daName + " (" + newStatus + ") ➔ " + targetBatch, "success", 5);
@@ -1687,14 +1726,16 @@
       var dName = daObj ? daObj.daName : daId;
 
       if (!S.waitingBatches[targetBatch]) S.waitingBatches[targetBatch] = [];
-      S.waitingBatches[targetBatch].push({
+      var _waitItem = {
         daId: daObj ? daObj.daId : daId,
         daName: dName,
         batchName: targetBatch,
         waitTime: nowStr,
         inBreak: false,
         breakRange: ""
-      });
+      };
+      S.waitingBatches[targetBatch].push(_waitItem);
+      markPendingWaiting((daObj ? daObj.daId : daId), targetBatch, _waitItem);
 
       playBeep("success");
       showBanner("⚡ Added " + dName + " to " + targetBatch, "success", 5);
@@ -1744,7 +1785,10 @@
     function optimisticSendDAs(daIds) {
       var nowStr = getDubaiHHMM();
       var idSet = {};
-      daIds.forEach(function(id) { idSet[id.toUpperCase()] = true; });
+      daIds.forEach(function(id) {
+        idSet[id.toUpperCase()] = true;
+        delete S.pendingWaiting[id.toUpperCase()];  // sent by YM — no longer a pending-waiting hold
+      });
 
       Object.keys(S.waitingBatches || {}).forEach(function(bName) {
         var remaining = [];
@@ -1781,6 +1825,7 @@
     }
 
     function removeDaAction(daId) {
+      delete S.pendingWaiting[String(daId).toUpperCase()];  // explicit removal — drop the hold
       Object.keys(S.waitingBatches || {}).forEach(function(bName) {
         S.waitingBatches[bName] = (S.waitingBatches[bName] || []).filter(function(x) {
           return x.daId.toUpperCase() !== daId.toUpperCase();
