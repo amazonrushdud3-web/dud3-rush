@@ -1658,7 +1658,7 @@
               '<div class="da-meta-line">Sent: ' + s.sentTime + ' &bull; YM: ' + (s.ymName || "YM") + '</div>' +
             '</div>' +
             '<div style="display:flex; align-items:center; gap:6px;">' +
-              '<span class="time-badge ' + slaClass + '">' + (s.elapsedMins || 0) + 'm</span>' +
+              '<span class="time-badge receive-countdown" data-sent="' + (s.sentTime || "") + '" data-daid="' + s.daId + '">--:--</span>' +
               '<button class="btn btn-green" style="padding:6px 10px; font-size:11px;" onclick="doReceiveScanAction(\'' + s.daId + '\')">&check; Receive</button>' +
             '</div>';
           sentContainer.appendChild(row);
@@ -1686,9 +1686,39 @@
           recContainer.appendChild(row);
         });
       }
+      tickReceiveCountdowns();
     }
 
     // ---------------- INSTANT (<15ms) OPTIMISTIC SCAN ACTIONS ----------------
+    // REQ: live per-DA receive countdown. Each Awaiting card shows time LEFT until the
+    // configured receive window (settings.entryViolationMin, default 15) elapses from Sent.
+    // Turns amber under 5 min, red under 2 min, and "OVERDUE" past the limit. Pure client-side
+    // (no extra server calls) — updates every second from the row's data-sent time.
+    function tickReceiveCountdowns() {
+      var limitMin = (S.settings && S.settings.entryViolationMin) ? S.settings.entryViolationMin : 15;
+      var nowMin = parseHHMM(getDubaiHHMM());
+      var chips = document.querySelectorAll(".receive-countdown");
+      for (var i = 0; i < chips.length; i++) {
+        var chip = chips[i];
+        var sent = chip.getAttribute("data-sent");
+        var sentMin = parseHHMM(sent);
+        if (sentMin < 0) { chip.textContent = "--:--"; continue; }
+        var elapsed = nowMin - sentMin;
+        if (elapsed < 0) elapsed += 24 * 60; // past-midnight guard
+        var remaining = limitMin - elapsed;   // whole minutes left
+        if (remaining <= 0) {
+          chip.textContent = "⏱ OVERDUE";
+          chip.style.color = "var(--red)"; chip.style.borderColor = "var(--red)";
+        } else {
+          chip.textContent = remaining + "m left";
+          if (remaining <= 2) { chip.style.color = "var(--red)"; chip.style.borderColor = "var(--red)"; }
+          else if (remaining <= 5) { chip.style.color = "var(--yellow)"; chip.style.borderColor = "var(--yellow)"; }
+          else { chip.style.color = "var(--green)"; chip.style.borderColor = "var(--green)"; }
+        }
+      }
+    }
+
+
     function handleAttendanceCheckIn(queryId, opts) {
       initAudio();
       var _tabId = opts && opts.tabId;
@@ -2343,6 +2373,7 @@
 
       // Periodically retry unsynced records (lightweight — only acts if outbox non-empty).
       setInterval(flushOutbox, 15000);
+      setInterval(tickReceiveCountdowns, 1000);
 
       updateHeaderSubtitle(S.activeTab || "tab-attend");
 
