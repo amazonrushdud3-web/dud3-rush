@@ -1131,8 +1131,11 @@
     function sendReq(action, payload, callback) {
       // Reads (getRoster) are not queued — they are safe to drop/retry freely.
       if (action === "getRoster") {
+        // Capture the mutation version AT REQUEST TIME so pollRoster's staleness guard
+        // can correctly reject a roster response that predates a newer local mutation.
+        var readVersion = S.mutationVersion;
         postOnce(action, payload, genClientId())
-          .then(function(data) { if (callback) callback(null, data, S.mutationVersion); })
+          .then(function(data) { if (callback) callback(null, data, readVersion); })
           .catch(function(ex) { if (callback) callback(ex); });
         return;
       }
