@@ -1242,22 +1242,25 @@
 
     function reconcilePendingWaiting(serverBatches) {
       serverBatches = serverBatches || {};
-      var now = Date.now();
-      // Build a set of every DA the server currently knows about in ANY state.
-      var serverKnown = {};
+      // DAs the server currently shows as WAITING (in any batch).
+      var serverWaiting = {};
       Object.keys(serverBatches).forEach(function(bn) {
-        (serverBatches[bn] || []).forEach(function(it) { serverKnown[String(it.daId).toUpperCase()] = true; });
+        (serverBatches[bn] || []).forEach(function(it) { serverWaiting[String(it.daId).toUpperCase()] = bn; });
       });
-      (S.sentList || []).forEach(function(s) { serverKnown[String(s.daId).toUpperCase()] = true; });
-      (S.receivedList || []).forEach(function(r) { serverKnown[String(r.daId).toUpperCase()] = true; });
+      // DAs the server has advanced PAST waiting (sent/received) — a real state change.
+      var serverMovedOn = {};
+      (S.sentList || []).forEach(function(s) { serverMovedOn[String(s.daId).toUpperCase()] = true; });
+      (S.receivedList || []).forEach(function(r) { serverMovedOn[String(r.daId).toUpperCase()] = true; });
 
       Object.keys(S.pendingWaiting).forEach(function(key) {
         var p = S.pendingWaiting[key];
-        // Expire stale pendings (server had enough time; trust the server now).
-        if (now - p.ts > 25000) { delete S.pendingWaiting[key]; return; }
-        // If the server already reflects this DA anywhere, stop holding it locally.
-        if (serverKnown[key]) { delete S.pendingWaiting[key]; return; }
-        // Otherwise re-insert the optimistic waiting entry so it doesn't disappear.
+        // Stop holding ONLY when the server confirms the DA is genuinely waiting, OR the
+        // server shows them moved on to sent/received (a legitimate YM-driven change).
+        // We do NOT time-expire the hold — a DA must never silently vanish from Waiting.
+        if (serverWaiting[key]) { delete S.pendingWaiting[key]; return; }
+        if (serverMovedOn[key]) { delete S.pendingWaiting[key]; return; }
+        // Otherwise the server hasn't caught up yet (cache lag / eventual consistency):
+        // KEEP the DA visible in their batch until the server reflects them.
         var bn = p.batchName;
         if (!serverBatches[bn]) serverBatches[bn] = [];
         var exists = serverBatches[bn].some(function(it){ return String(it.daId).toUpperCase() === key; });
@@ -1522,8 +1525,23 @@
             '<div class="da-title-line"><span>' + escapeHtml(v.daName || v.daId) + '</span><span style="font-size:11px; color:var(--text-dim);">(' + v.daId + ')</span></div>' +
             '<div class="da-meta-line">Logged ' + (v.timeLogged || "--:--") + exceeded + '</div>' +
           '</div>' +
-          '<div><span class="time-badge tag-violator">' + escapeHtml(v.status || "Violation") + '</span></div>';
+          '<div style="display:flex; align-items:center; gap:6px;">' +
+            '<span class="time-badge tag-violator">' + escapeHtml(v.status || "Violation") + '</span>' +
+            '<button class="btn btn-card" style="padding:5px 10px; font-size:11px; color:var(--red);" onclick="removeViolatorAction(\'' + v.daId + '\')">Remove</button>' +
+          '</div>';
         container.appendChild(row);
+      });
+    }
+
+    // Violator-tab Remove button: clear the DA from Violators (tab + sheet).
+    function removeViolatorAction(daId) {
+      initAudio();
+      // Optimistic: drop from the local violators list immediately.
+      S.violators = (S.violators || []).filter(function(v) { return String(v.daId).toUpperCase() !== String(daId).toUpperCase(); });
+      renderAll();
+      sendReq("clearViolator", { daId: daId }, function(err, res) {
+        if (err || (res && !res.success)) { playBeep("error"); pollRoster(); }
+        else { playBeep("action"); showBanner("Removed " + daId + " from Violators.", "success", 5); }
       });
     }
 
@@ -1689,6 +1707,10 @@
       renderAll();
 
       sendReq("recordCheckIn", { daId: daObj.daId, ymName: S.ymName }, function(err, res) {
+        if (res && res.success && res.clearedViolator) {
+          S.violators = (S.violators || []).filter(function(v){ return String(v.daId).toUpperCase() !== String(daObj.daId).toUpperCase(); });
+          showBanner("\u26A0\uFE0F " + daObj.daName + " moved from Violator and added to Waiting Batch.", "warning", 12);
+        }
         if (err || (res && !res.success)) pollRoster();
       });
     }
@@ -1743,6 +1765,10 @@
       renderAll();
 
       sendReq("addToWaiting", { daId: daId, ymName: S.ymName }, function(err, res) {
+        if (res && res.success && res.clearedViolator) {
+          S.violators = (S.violators || []).filter(function(v){ return String(v.daId).toUpperCase() !== String(daId).toUpperCase(); });
+          showBanner("\u26A0\uFE0F " + dName + " moved from Violator and added to Waiting Batch.", "warning", 12);
+        }
         if (err || (res && !res.success)) {
           playBeep("error");
           if (res && res.error) showBanner(res.error, "danger", 15);
