@@ -1329,7 +1329,12 @@
 
       batchNames.forEach(function(bName) {
         var allInBatch = batches[bName] || [];
-        var daArr = allInBatch.filter(function(d) { return !d.inBreak; });
+        // FIX: show ALL checked-in DAs in the batch (including any whose scheduled
+        // break window overlaps now). On-break DAs were previously hidden entirely,
+        // which made DAs "not appear in Waiting" after scanning. They are shown here
+        // with an on-break marker and are NOT dispatchable (Send is disabled; the
+        // batch/select send actions and the backend already exclude on-break DAs).
+        var daArr = allInBatch;
         if (daArr.length === 0) return;
 
         totalWaitingCount += daArr.length;
@@ -1358,18 +1363,24 @@
         daArr.forEach(function(da, idx) {
           var row = document.createElement("div");
           row.className = "da-row";
+          var onBreak = !!da.inBreak;
+          var breakTag = onBreak ? '<span class="time-badge tag-break" style="margin-left:4px;">On Break' + (da.breakRange ? " " + escapeHtml(da.breakRange) : "") + '</span>' : '';
+          var sendBtn = onBreak
+            ? '<button class="btn btn-card" style="padding:5px 10px; font-size:11px; opacity:0.45;" disabled title="On break — cannot dispatch">Send</button>'
+            : '<button class="btn btn-card" style="padding:5px 10px; font-size:11px;" onclick="sendSingleDaAction(\'' + da.daId + '\')">Send</button>';
           row.innerHTML =
-            '<input type="checkbox" class="da-checkbox" data-batch="' + bName + '" data-daid="' + da.daId + '">' +
+            '<input type="checkbox" class="da-checkbox" data-batch="' + bName + '" data-daid="' + da.daId + '"' + (onBreak ? ' disabled' : '') + '>' +
             '<div class="da-details">' +
               '<div class="da-title-line">' +
                 '<span style="color:var(--orange); font-weight:900;">#' + (idx + 1) + '</span>' +
                 '<span>' + escapeHtml(da.daName) + '</span>' +
                 '<span style="font-size:11px; color:var(--text-dim);">(' + da.daId + ')</span>' +
+                breakTag +
               '</div>' +
               '<div class="da-meta-line">Queued at: <b>' + (da.waitTime || "--:--") + '</b> &bull; FIFO Slot #' + (idx + 1) + ' in ' + bName + '</div>' +
             '</div>' +
             '<div style="display:flex; align-items:center; gap:6px;">' +
-              '<button class="btn btn-card" style="padding:5px 10px; font-size:11px;" onclick="sendSingleDaAction(\'' + da.daId + '\')">Send</button>' +
+              sendBtn +
               '<button class="btn btn-card" style="padding:5px 8px; font-size:11px; color:var(--red);" onclick="removeDaAction(\'' + da.daId + '\')">&times;</button>' +
             '</div>';
           listEl.appendChild(row);
