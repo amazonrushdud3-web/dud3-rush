@@ -121,6 +121,12 @@
         <div class="bp-val" id="d-wait-num" style="color:var(--green)">--</div>
       </div>
     </div>
+    <div class="batch-grid" style="margin-top:10px;">
+      <div class="batch-pill" style="grid-column:1 / -1;">
+        <div class="bp-lbl">Turns Completed Today</div>
+        <div class="bp-val" id="d-turn" style="color:var(--purple)">0</div>
+      </div>
+    </div>
 
     <div class="status-box">
       <div class="status-text" id="d-status">LOADING...</div>
@@ -371,7 +377,8 @@ function adaptResponse(res) {
     ofdTime: res.ofdTime || "",
 
     rushTimeout: settings.rushTimeoutMin || 20,
-    autoOfd: settings.autoOfdMin || 30
+    autoOfd: settings.autoOfdMin || 30,
+    turnCount: res.turnCount || 0
   };
 }
 
@@ -426,6 +433,8 @@ function updateDashboard(data) {
   if (document.getElementById("qr-box").childNodes.length === 0 && data.daId) renderQr(data.daId);
 
   document.getElementById("d-batch").textContent = data.batchName || "Not Queued";
+  var turns = data.turnCount || 0;
+  document.getElementById("d-turn").textContent = turns > 0 ? ("Turn " + turns) : "No turns yet";
   var st = String(data.status || "");
   if (st === "Waiting" && data.batchPosition > 0) {
     document.getElementById("d-wait-num").textContent = "#" + data.batchPosition + " of " + data.batchTotal;
