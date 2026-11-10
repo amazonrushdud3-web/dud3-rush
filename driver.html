@@ -154,22 +154,41 @@ function logout() {
 function fetchData(daId) {
   if (!daId) return;
   document.getElementById("loader").style.display = "block";
+
+  var payload = { action: 'getDaStatus', daId: daId, sheetUrl: SHEET_URL, dayTab: getTodayTab() };
+
+  // Primary: POST with text/plain (a "simple" request — no CORS preflight).
   fetch(API_URL, {
     method: 'POST',
     headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify({ action: 'getDaStatus', daId: daId, sheetUrl: SHEET_URL, dayTab: getTodayTab() }),
+    body: JSON.stringify(payload),
     cache: 'no-store'
   })
   .then(function(res){ return res.json(); })
-  .then(function(res){
-    document.getElementById("loader").style.display = "none";
-    if (!res.success) { return alert("Error: " + (res.error || (res.errors ? res.errors[0] : "Failed"))); }
-    var data = adaptResponse(res);
-    if (!data.found) { logout(); return alert("DA ID not found in today's roster."); }
-    updateDashboard(data);
-  }).catch(function(err){
-    document.getElementById("loader").style.display = "none";
+  .then(function(res){ handleStatusResponse(res); })
+  .catch(function(){
+    // Fallback: GET with query params — Apps Script handles this reliably and it
+    // sidesteps any network/CORS/preflight quirk that can block the POST.
+    var url = API_URL + "?action=getDaStatus"
+      + "&daId=" + encodeURIComponent(daId)
+      + "&sheetUrl=" + encodeURIComponent(SHEET_URL)
+      + "&dayTab=" + encodeURIComponent(getTodayTab());
+    fetch(url, { method: 'GET', cache: 'no-store' })
+      .then(function(res){ return res.json(); })
+      .then(function(res){ handleStatusResponse(res); })
+      .catch(function(err){
+        document.getElementById("loader").style.display = "none";
+        alert("Could not reach the server. Check your connection and try again.");
+      });
   });
+}
+
+function handleStatusResponse(res) {
+  document.getElementById("loader").style.display = "none";
+  if (!res || !res.success) { return alert("Error: " + ((res && (res.error || (res.errors && res.errors[0]))) || "Request failed")); }
+  var data = adaptResponse(res);
+  if (!data.found) { logout(); return alert("DA ID not found in today's roster."); }
+  updateDashboard(data);
 }
 
 /* Map the MAIN app's doGetDaStatus response to the flat shape this UI expects. */
