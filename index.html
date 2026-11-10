@@ -1279,12 +1279,16 @@
       serverSent.forEach(function(s){ known[String(s.daId).toUpperCase()] = true; });
       var movedOn = {};
       (S.receivedList || []).forEach(function(r){ movedOn[String(r.daId).toUpperCase()] = true; });
-      var nowS = Date.now();
+      var nowViolators = {};
+      (S.violators || []).forEach(function(v){ nowViolators[String(v.daId).toUpperCase()] = true; });
       Object.keys(S.pendingSent).forEach(function(key){
-        if (known[key]) { delete S.pendingSent[key]; return; }       // server shows them sent — release
-        if (movedOn[key]) { delete S.pendingSent[key]; return; }      // already received — release
-        if (nowS - S.pendingSent[key].ts > 20000) { delete S.pendingSent[key]; return; } // safety release
-        serverSent.push(S.pendingSent[key].item);                    // not yet reflected — keep visible
+        // Release the optimistic hold ONLY on a real server-confirmed transition — never on a
+        // timer. This guarantees a sent DA is NOT removed from the Receive list before the YM
+        // scans them (received) or they time out (violator). No premature/auto removal.
+        if (known[key]) { delete S.pendingSent[key]; return; }        // server shows them awaiting — release (server now authoritative)
+        if (movedOn[key]) { delete S.pendingSent[key]; return; }       // received — release
+        if (nowViolators[key]) { delete S.pendingSent[key]; return; }  // timed out -> violator — release
+        serverSent.push(S.pendingSent[key].item);                      // not yet reflected — keep visible
       });
       return serverSent;
     }
