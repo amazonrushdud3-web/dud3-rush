@@ -1,1100 +1,523 @@
-/**
- * ============================================================================
- * DUD3 RUSH PRO & ANOW DISPATCH — BACKEND (Code.gs)  [CLEAN REBUILD]
- * Stack: Google Apps Script + Google Sheets (single source of truth)
- * Timezone: Asia/Dubai (UTC+04:00)
- *
- * Canonical process (per approved spec):
- *   Attendance scan -> immediate FIFO Waiting (auto-batch, 25/batch default)
- *   -> manual YM Send only -> Receive tab "Awaiting Received In" (held on sheet)
- *   -> YM Received-In scan confirms (single-row write) OR 15-min timeout -> Violators
- *   Violators: hard-block Receive, Remove button, re-scan into Waiting clears + banner
- *   Breaks: pull from Waiting -> Break; return -> "DA's from Break" priority batch
- *   Turn = each Received-In scan. Driver Hub (separate app) reads getDaStatus/getRushRoster.
- *
- * Design rules to prevent the historical bugs:
- *   - All state lives in the Sheet. No timer auto-removes Waiting DAs.
- *   - Dispatch rows are matched by MOST-ACTIVE row (waiting>sent>received>ofd), never
- *     "last row wins". Receive writes ONLY the matched row (fast, concurrency-safe).
- *   - Receive self-heals a lagging Sent Time and resolves replacement IDs via roster M col.
- *   - clientId idempotency makes offline-outbox retries safe (no duplicates).
- * Master_Dispatch columns (0-based):
- *   0 Date | 1 DA ID | 2 DA Name | 3 YM Name | 4 Batch | 5 Sent | 6 RushIn
- *   7 MinToScanIn | 8 OFD | 9 Dwell | 10 WaitTime
- * Daily roster columns (0-based):
- *   0 DA ID |1 Name |2 ServiceType |3 Wave |4 ShiftEnd |5 DSP |6 Status |7 ScanTime
- *   8 Break1 |9 Break2 |10 Reason |11 Comment |12 Replacement "Name (ID)"
- * ============================================================================
- */
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DUD3 Driver Hub</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#0F151C">
+  <style>
+    :root { --bg:#0F151C; --card:#1F2B3A; --orange:#FF9900; --blue:#00A8E1; --green:#00E676; --red:#FF3B30; --purple:#BB86FC; --text:#FFF; --muted:#8FA0B3; --border:#2E3E52; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background: var(--bg); color: var(--text); padding: 15px; max-width: 480px; margin: 0 auto; }
 
-var MASTER_SHEET_URL = "https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit";
-var TIMEZONE = "Asia/Dubai";
-var BREAK_RETURN_BATCH = "DA's from Break";
+    header { text-align: center; margin-bottom: 18px; padding: 10px; border-bottom: 2px solid var(--orange); }
+    header h1 { font-size: 20px; font-weight: 900; letter-spacing: 1px; }
+    header h1 span { color: var(--orange); }
 
-var MUTATING_ACTIONS = {
-  recordCheckIn: 1, addToWaiting: 1, sendDA: 1, rushScanIn: 1, removeFromWaiting: 1,
-  assignReplacement: 1, startBreak: 1, endBreak: 1, resetDay: 1, saveSettings: 1, clearViolator: 1
+    #toast-msg { position: fixed; top: 12px; left: 50%; transform: translateX(-50%) translateY(-200%); width: calc(100% - 30px); max-width: 400px; padding: 12px 16px; border-radius: 10px; font-weight: 800; font-size: 13px; display: flex; justify-content: space-between; align-items: center; z-index: 10000; box-shadow: 0 8px 24px rgba(0,0,0,0.6); transition: transform 0.3s; background: var(--orange); color: #000; }
+    #toast-msg.show { transform: translateX(-50%) translateY(0); }
+
+    .card { background: var(--card); border: 1px solid var(--border); padding: 16px; border-radius: 14px; margin-bottom: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    .card-title { font-size: 11px; color: var(--muted); text-transform: uppercase; font-weight: 800; margin-bottom: 10px; letter-spacing: 0.8px; }
+
+    .inp { width: 100%; padding: 14px; border-radius: 10px; border: 2px solid var(--border); background: #141D28; color: #FFF; font-size: 16px; font-weight: bold; text-align: center; margin-bottom: 10px; }
+    .inp:focus { border-color: var(--orange); outline: none; }
+    .btn { width: 100%; padding: 14px; border-radius: 10px; border: none; background: var(--orange); color: #000; font-size: 15px; font-weight: 900; cursor: pointer; }
+    .btn-outline { background: transparent; border: 1px solid var(--muted); color: var(--muted); padding: 9px; margin-top: 10px; font-size: 12px; }
+
+    .profile-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding: 9px 0; font-size: 14px; }
+    .profile-row:last-of-type { border-bottom: none; }
+    .val { font-size: 14px; font-weight: 800; color: var(--blue); }
+
+    .batch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    .batch-pill { background: #141D28; border: 1px solid var(--border); border-radius: 10px; padding: 12px 8px; text-align: center; }
+    .bp-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; font-weight: 800; margin-bottom: 4px; }
+    .bp-val { font-size: 20px; font-weight: 900; color: var(--orange); }
+
+    .status-box { background: rgba(0,168,225,0.1); border: 1px solid var(--blue); text-align: center; padding: 18px; border-radius: 12px; margin-top: 12px; }
+    .status-text { font-size: 22px; font-weight: 900; color: var(--blue); }
+
+    .timer-box { background: rgba(255,153,0,0.12); border: 1px dashed var(--orange); text-align: center; padding: 15px; border-radius: 12px; margin-top: 12px; }
+    .countdown { font-size: 26px; font-weight: 900; color: var(--orange); font-variant-numeric: tabular-nums; letter-spacing: 1px; }
+
+    #dashboard { display: none; }
+    .loader { text-align: center; color: var(--orange); font-weight: bold; display: none; padding: 16px; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <style>
+    .search-wrap { position: relative; }
+    .search-dropdown {
+      position: absolute; left: 0; right: 0; top: calc(100% - 6px);
+      background: #16222F; border: 1px solid var(--orange); border-radius: 10px;
+      max-height: 260px; overflow-y: auto; z-index: 500; display: none;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+    }
+    .search-item { padding: 11px 14px; border-bottom: 1px solid var(--border); cursor: pointer; text-align: left; }
+    .search-item:last-child { border-bottom: none; }
+    .search-item:active, .search-item.hl { background: #22303F; }
+    .si-alias { font-weight: 900; color: var(--orange); font-size: 15px; }
+    .si-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .search-empty { padding: 12px 14px; color: var(--muted); font-size: 12px; text-align: center; }
+
+    /* QR identity card (styled like the printed DA QR card) */
+    .qr-card { background: #FFFFFF; border-radius: 16px; padding: 18px 16px; text-align: center; color: #111; }
+    .qr-canvas-wrap { display: inline-flex; padding: 10px; background: #fff; border-radius: 10px; }
+    .qr-canvas-wrap img, .qr-canvas-wrap canvas { display: block; }
+    .qr-alias { font-size: 26px; font-weight: 900; letter-spacing: 1px; margin-top: 12px; color: #0F151C; }
+    .qr-daid { font-size: 13px; font-weight: 700; color: #333; margin-top: 2px; font-variant-numeric: tabular-nums; }
+    .qr-dsp { font-size: 12px; font-weight: 800; color: #FF7A00; margin-top: 6px; text-transform: uppercase; letter-spacing: .5px; }
+  </style>
+</head>
+<body>
+
+<div id="toast-msg"><span id="toast-txt"></span><button style="background:none;border:none;color:#000;font-weight:bold;font-size:18px;cursor:pointer;" onclick="document.getElementById('toast-msg').className=''">\u2715</button></div>
+
+<header>
+  <h1>DUD3 <span>DRIVER HUB</span></h1>
+</header>
+
+<div id="login-sec" class="card">
+  <div class="card-title" style="text-align:center;">Find Your Name / Alias / DA ID</div>
+  <div class="search-wrap">
+    <input type="text" id="da-id-input" class="inp" placeholder="Type your name or alias..." autocomplete="off" oninput="onSearchInput()" onkeydown="onSearchKey(event)">
+    <div class="search-dropdown" id="search-dropdown"></div>
+  </div>
+  <button class="btn" onclick="login()">Check Live Status</button>
+  <div style="font-size:11px; color:var(--muted); text-align:center; margin-top:8px;">Start typing — pick yourself from the list.</div>
+</div>
+
+<div id="loader" class="loader">Syncing live status...</div>
+
+<div id="dashboard">
+  <div class="card">
+    <div class="card-title">Your QR Identity</div>
+    <div class="qr-card">
+      <div class="qr-canvas-wrap" id="qr-box"></div>
+      <div class="qr-alias" id="d-alias">--</div>
+      <div class="qr-daid" id="qr-daid">--</div>
+      <div class="qr-dsp" id="qr-dsp">DSP: --</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Driver Profile</div>
+    <div class="profile-row"><span>Alias:</span> <span class="val" id="d-name">--</span></div>
+    <div class="profile-row"><span>DA ID:</span> <span class="val" id="d-id">--</span></div>
+    <div class="profile-row"><span>DSP:</span> <span class="val" id="d-dsp">--</span></div>
+    <div class="profile-row"><span>Wave Time:</span> <span class="val" style="color:var(--text);" id="d-wave">--</span></div>
+    <button class="btn btn-outline" onclick="logout()">Change Driver</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Live Queue & Batch Status</div>
+
+    <div class="batch-grid">
+      <div class="batch-pill">
+        <div class="bp-lbl">Assigned Batch</div>
+        <div class="bp-val" id="d-batch">--</div>
+      </div>
+      <div class="batch-pill">
+        <div class="bp-lbl">Waiting Number</div>
+        <div class="bp-val" id="d-wait-num" style="color:var(--green)">--</div>
+      </div>
+    </div>
+    <div class="batch-grid" style="margin-top:10px;">
+      <div class="batch-pill" style="grid-column:1 / -1;">
+        <div class="bp-lbl">Turns Completed Today</div>
+        <div class="bp-val" id="d-turn" style="color:var(--purple)">0</div>
+      </div>
+    </div>
+
+    <div class="status-box">
+      <div class="status-text" id="d-status">LOADING...</div>
+    </div>
+
+    <div class="timer-box" id="timer-container" style="display:none;">
+      <div style="font-size:11px; color:var(--muted); text-transform:uppercase; font-weight:800; margin-bottom:5px;" id="timer-label">Timer</div>
+      <div class="countdown" id="d-timer">00:00:00</div>
+    </div>
+  </div>
+
+  <p style="text-align:center; font-size:11px; color:var(--muted); margin-top:12px;">
+    Auto-refreshes every 10 seconds \u00b7 <a href="javascript:void(0)" onclick="fetchData(currentDaId)" style="color:var(--orange);font-weight:bold;">Refresh Now</a>
+  </p>
+</div>
+
+<script>
+    // --- SELF-CLEAN: strip any injected external theme (e.g. preview/extension <style id="qw-...">)
+    // so only this app's own styling applies. No-op on the live site (nothing injected there). ---
+    (function stripInjectedThemes() {
+      try {
+        var kill = document.querySelectorAll('style[id^="qw-"], style#qw-theme, link[id^="qw-"]');
+        for (var i = 0; i < kill.length; i++) { if (kill[i] && kill[i].parentNode) kill[i].parentNode.removeChild(kill[i]); }
+      } catch (e) {}
+    })();
+
+/* Reuses the MAIN YM app backend (same /exec URL, same Google Sheet).
+   The main Code.gs doGetDaStatus returns a flat response (no "data" wrapper)
+   with dispatchState enums — adaptResponse() below maps it to the UI. */
+const API_URL = "https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec";
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit";
+
+/* Safe storage shim — sandboxed preview iframes can throw on localStorage; fall back to memory. */
+var SAFE_STORE = (function () {
+  var mem = {}, ok = false;
+  try { var t = "__dud3drv__"; window.localStorage.setItem(t, "1"); window.localStorage.removeItem(t); ok = true; } catch (e) { ok = false; }
+  return {
+    getItem: function (k) { if (ok) { try { return window.localStorage.getItem(k); } catch (e) {} } return (k in mem) ? mem[k] : null; },
+    setItem: function (k, v) { if (ok) { try { window.localStorage.setItem(k, v); return; } catch (e) {} } mem[k] = String(v); },
+    removeItem: function (k) { if (ok) { try { window.localStorage.removeItem(k); return; } catch (e) {} } delete mem[k]; }
+  };
+})();
+
+let currentDaId = "";
+let currentAlias = "";
+let refreshInterval = null, countdownInterval = null;
+let serverOffsetSec = 0;
+let rushRoster = [];      // [{daId, daName, alias, dsp}]
+let selectedDriver = null;
+let hlIndex = -1;
+
+// Load the RushData roster once so the name/alias dropdown can search locally.
+function loadRushRoster() {
+  var url = API_URL + "?action=getRushRoster&sheetUrl=" + encodeURIComponent(SHEET_URL);
+  fetch(url, { cache: "no-store" })
+    .then(function(r){ return r.json(); })
+    .then(function(res){ if (res && res.success && res.roster) rushRoster = res.roster; })
+    .catch(function(){ /* dropdown still allows manual ID entry */ });
+}
+
+function onSearchInput() {
+  var q = document.getElementById("da-id-input").value.trim().toLowerCase();
+  var dd = document.getElementById("search-dropdown");
+  selectedDriver = null; hlIndex = -1;
+  if (!q) { dd.style.display = "none"; dd.innerHTML = ""; return; }
+
+  var matches = rushRoster.filter(function(d){
+    return (d.daName && d.daName.toLowerCase().indexOf(q) !== -1) ||
+           (d.alias && d.alias.toLowerCase().indexOf(q) !== -1) ||
+           (d.daId && d.daId.toLowerCase().indexOf(q) !== -1);
+  }).slice(0, 25);
+
+  if (matches.length === 0) {
+    dd.innerHTML = '<div class="search-empty">No match in RushData — you can still type a full DA ID and press Check.</div>';
+    dd.style.display = "block";
+    return;
+  }
+
+  dd.innerHTML = "";
+  matches.forEach(function(d){
+    var el = document.createElement("div");
+    el.className = "search-item";
+    var sub = [];
+    if (d.daName) sub.push(d.daName);
+    if (d.dsp) sub.push(d.dsp);
+    sub.push(d.daId);
+    el.innerHTML = '<div class="si-alias">' + escapeHtml(d.alias || d.daId) + '</div>' +
+                   '<div class="si-sub">' + escapeHtml(sub.join(" · ")) + '</div>';
+    el.onclick = function(){ pickDriver(d); };
+    dd.appendChild(el);
+  });
+  dd.style.display = "block";
+}
+
+function onSearchKey(e) {
+  var dd = document.getElementById("search-dropdown");
+  var items = dd.querySelectorAll(".search-item");
+  if (e.key === "Enter") {
+    if (hlIndex >= 0 && items[hlIndex]) { items[hlIndex].click(); e.preventDefault(); }
+    else { login(); }
+    return;
+  }
+  if (!items.length) return;
+  if (e.key === "ArrowDown") { hlIndex = Math.min(hlIndex + 1, items.length - 1); e.preventDefault(); }
+  else if (e.key === "ArrowUp") { hlIndex = Math.max(hlIndex - 1, 0); e.preventDefault(); }
+  else return;
+  items.forEach(function(it, i){ it.classList.toggle("hl", i === hlIndex); });
+  items[hlIndex].scrollIntoView({ block: "nearest" });
+}
+
+function pickDriver(d) {
+  selectedDriver = d;
+  currentDaId = String(d.daId).trim().toUpperCase();
+  currentAlias = d.alias || "";
+  document.getElementById("da-id-input").value = (d.alias || d.daName || d.daId);
+  var dd = document.getElementById("search-dropdown");
+  dd.style.display = "none"; dd.innerHTML = "";
+  login();
+}
+
+function escapeHtml(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function renderQr(daId) {
+  var box = document.getElementById("qr-box");
+  if (!box) return;
+  box.innerHTML = "";
+  try {
+    if (typeof QRCode !== "undefined") {
+      new QRCode(box, { text: String(daId), width: 170, height: 170, colorDark: "#0F151C", colorLight: "#FFFFFF", correctLevel: QRCode.CorrectLevel.M });
+    } else {
+      box.innerHTML = '<div style="color:#888;font-size:12px;padding:20px;">QR unavailable</div>';
+    }
+  } catch (e) {}
+}
+
+function getTodayTab(){
+  var d=new Date(), m=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+  return ("0"+d.getDate()).slice(-2)+" "+m[d.getMonth()];
+}
+
+window.onload = function() {
+  loadRushRoster();
+  var savedId = SAFE_STORE.getItem("dud3_driver_id");
+  if (savedId) { currentDaId = savedId; document.getElementById("da-id-input").value = savedId; login(); }
+  // Close the search dropdown when tapping elsewhere.
+  document.addEventListener("click", function(e){
+    var wrap = document.querySelector(".search-wrap");
+    var dd = document.getElementById("search-dropdown");
+    if (wrap && dd && !wrap.contains(e.target)) { dd.style.display = "none"; }
+  });
 };
 
-/* ---------------------------------------------------------------- ENTRY POINTS */
-function doGet(e) {
-  if (!e || !e.parameter || (!e.parameter.action && !e.parameter.payload)) {
-    try {
-      return HtmlService.createHtmlOutputFromFile("index")
-        .setTitle("DUD3 Rush PRO & ANOW Dispatch")
-        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
-        .addMetaTag("viewport", "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover");
-    } catch (htmlErr) {
-      return handleAction("ping", {});
-    }
-  }
-  var action = e.parameter.action || "ping";
-  var payload = {};
-  if (e.parameter.payload) {
-    try { payload = JSON.parse(e.parameter.payload); } catch (err) { payload = {}; }
-  } else {
-    payload = e.parameter;
-  }
-  if (e.parameter.clientId && !payload.clientId) payload.clientId = e.parameter.clientId;
-  return handleAction(action, payload);
+function login() {
+  var daId = "";
+  if (selectedDriver) { daId = String(selectedDriver.daId).trim().toUpperCase(); }
+  else { daId = document.getElementById("da-id-input").value.trim().toUpperCase(); }
+  if (daId.length < 3) return alert("Please pick your name from the list, or type your full DA ID.");
+  currentDaId = daId;
+  SAFE_STORE.setItem("dud3_driver_id", daId);
+  var dd = document.getElementById("search-dropdown");
+  if (dd) dd.style.display = "none";
+  document.getElementById("login-sec").style.display = "none";
+  fetchData(daId);
+  if (refreshInterval) clearInterval(refreshInterval);
+  refreshInterval = setInterval(function(){ fetchData(daId); }, 10000);
 }
 
-function doPost(e) {
-  var action = "ping";
-  var payload = {};
-  try {
-    if (e && e.postData && e.postData.contents) {
-      var body = JSON.parse(e.postData.contents);
-      action = body.action || (e.parameter && e.parameter.action) || "ping";
-      payload = body.payload || body;
-      if (body.clientId && payload && !payload.clientId) payload.clientId = body.clientId;
-    } else if (e && e.parameter) {
-      action = e.parameter.action || "ping";
-      payload = e.parameter;
-    }
-  } catch (err) {
-    action = (e && e.parameter && e.parameter.action) || "ping";
-    payload = (e && e.parameter) ? e.parameter : {};
-  }
-  return handleAction(action, payload);
+function logout() {
+  SAFE_STORE.removeItem("dud3_driver_id");
+  if (refreshInterval) clearInterval(refreshInterval);
+  if (countdownInterval) clearInterval(countdownInterval);
+  document.getElementById("dashboard").style.display = "none";
+  document.getElementById("login-sec").style.display = "block";
+  document.getElementById("da-id-input").value = "";
 }
 
-function handleAction(action, payload) {
-  payload = payload || {};
-  var output = { success: false, action: action, timestamp: getDubaiDateString(new Date(), "yyyy-MM-dd HH:mm:ss") };
+function fetchData(daId) {
+  if (!daId) return;
+  document.getElementById("loader").style.display = "block";
 
-  // Idempotency: replay the stored result for a repeated clientId (offline-outbox retries).
-  var _cid = payload.clientId ? String(payload.clientId).trim() : "";
-  var _idemCache = null, _idemKey = "";
-  if (_cid && MUTATING_ACTIONS[action]) {
-    try {
-      _idemCache = CacheService.getScriptCache();
-      _idemKey = "idem_" + _cid;
-      var prior = _idemCache.get(_idemKey);
-      if (prior) {
-        try { var pp = JSON.parse(prior); pp.idempotentReplay = true;
-          return ContentService.createTextOutput(JSON.stringify(pp)).setMimeType(ContentService.MimeType.JSON); } catch (e) {}
-      }
-    } catch (e) { _idemCache = null; }
-  }
+  var payload = { action: 'getDaStatus', daId: daId, sheetUrl: SHEET_URL, dayTab: getTodayTab() };
 
-  try {
-    var ss = getTargetSpreadsheet(payload.sheetUrl);
-    if (action === "ping") {
-      output = { success: true, message: "DUD3 Rush PRO Engine Online", serverTime: getDubaiDateString(new Date(), "HH:mm") };
-    } else if (action === "getRoster")        { output = doGetRoster(ss, payload); }
-    else if (action === "recordCheckIn")      { output = doRecordCheckIn(ss, payload); updateCachedRosterSnapshot(ss); }
-    else if (action === "addToWaiting")       { output = doAddToWaiting(ss, payload); updateCachedRosterSnapshot(ss); }
-    else if (action === "sendDA")             { output = doSendDA(ss, payload); updateCachedRosterSnapshot(ss); }
-    else if (action === "rushScanIn")         { output = doRushScanIn(ss, payload); updateCachedRosterSnapshot(ss); }
-    else if (action === "removeFromWaiting")  { output = doRemoveFromWaiting(ss, payload); updateCachedRosterSnapshot(ss); }
-    else if (action === "assignReplacement")  { output = doAssignReplacement(ss, payload); updateCachedRosterSnapshot(ss); }
-    else if (action === "saveSettings")       { output = doSaveSettings(ss, payload); updateCachedRosterSnapshot(ss); }
-    else if (action === "resetDay")           { output = doResetDay(ss, payload); updateCachedRosterSnapshot(ss); }
-    else if (action === "startBreak")         { output = doStartBreak(ss, payload); updateCachedRosterSnapshot(ss); }
-    else if (action === "endBreak")           { output = doEndBreak(ss, payload); updateCachedRosterSnapshot(ss); }
-    else if (action === "clearViolator")      { output = doClearViolator(ss, payload); updateCachedRosterSnapshot(ss); }
-    else if (action === "getDaStatus")        { output = doGetDaStatus(ss, payload); }
-    else if (action === "getRushRoster")      { output = { success: true, roster: getRushRoster(ss), serverTime: getDubaiDateString(new Date(), "HH:mm") }; }
-    else { output.error = "Unknown action: " + action; }
-  } catch (ex) {
-    output.success = false;
-    output.error = ex.toString();
-  }
-
-  if (_idemCache && _idemKey) { try { _idemCache.put(_idemKey, JSON.stringify(output), 600); } catch (e) {} }
-  return ContentService.createTextOutput(JSON.stringify(output)).setMimeType(ContentService.MimeType.JSON);
-}
-
-/* ---------------------------------------------------------------- HELPERS */
-function getTargetSpreadsheet(overrideUrl) {
-  if (overrideUrl && overrideUrl.indexOf("docs.google.com/spreadsheets") !== -1) {
-    try { return SpreadsheetApp.openByUrl(overrideUrl.trim()); } catch (e) {}
-  }
-  try {
-    var master = SpreadsheetApp.openByUrl(MASTER_SHEET_URL);
-    var settingsSheet = master.getSheetByName("App Settings");
-    if (settingsSheet) {
-      var data = settingsSheet.getDataRange().getValues();
-      for (var i = 0; i < data.length; i++) {
-        if (String(data[i][0]).trim() === "sheetUrl" && data[i][1]) {
-          var customUrl = String(data[i][1]).trim();
-          if (customUrl && customUrl.indexOf("docs.google.com/spreadsheets") !== -1) {
-            return SpreadsheetApp.openByUrl(customUrl);
-          }
-        }
-      }
-    }
-    return master;
-  } catch (err) {
-    return SpreadsheetApp.openByUrl(MASTER_SHEET_URL);
-  }
-}
-
-function getDubaiDateString(dateObj, pattern) { return Utilities.formatDate(dateObj, TIMEZONE, pattern); }
-function getTodaySheetName() { return Utilities.formatDate(new Date(), TIMEZONE, "dd MMM").toUpperCase(); }
-
-function cleanTimeStr(val) {
-  if (val === null || val === undefined || val === "") return "";
-  if (val instanceof Date) return Utilities.formatDate(val, TIMEZONE, "HH:mm");
-  var str = String(val).trim();
-  if (str.charAt(0) === "'") str = str.substring(1);
-  return str;
-}
-
-function parseTimeToMins(timeStr) {
-  if (!timeStr) return -1;
-  var parts = cleanTimeStr(timeStr).split(":");
-  if (parts.length < 2) return -1;
-  var h = parseInt(parts[0], 10), m = parseInt(parts[1], 10);
-  if (isNaN(h) || isNaN(m)) return -1;
-  return h * 60 + m;
-}
-
-function minutesToHHMM(mins) {
-  var h = Math.floor(mins / 60) % 24, m = mins % 60;
-  return (h < 10 ? "0" + h : h) + ":" + (m < 10 ? "0" + m : m);
-}
-
-function parseBreakRange(breakStr) {
-  if (!breakStr) return null;
-  var s = String(breakStr).trim();
-  if (!s || s === "-" || s.toLowerCase() === "n/a") return null;
-  s = s.replace(/\s*to\s*/i, "-").replace(/\s*-\s*/, "-");
-  var parts = s.split("-");
-  if (parts.length !== 2) return null;
-  var parsePart = function(p) {
-    p = p.trim();
-    var segs = p.split(":");
-    if (segs.length < 2) return -1;
-    var hh = parseInt(segs[0], 10), mm = parseInt(segs[1], 10);
-    if (isNaN(hh) || isNaN(mm)) return -1;
-    if (hh >= 1 && hh <= 6) hh += 12;
-    return hh * 60 + mm;
-  };
-  var startMins = parsePart(parts[0]), endMins = parsePart(parts[1]);
-  if (startMins < 0 || endMins < 0) return null;
-  if (endMins < startMins) endMins += 24 * 60;
-  return { start: startMins, end: endMins, raw: s };
-}
-
-function isInsideBreak(currentMins, b1Str, b2Str) {
-  var b1 = parseBreakRange(b1Str);
-  if (b1 && currentMins >= b1.start && currentMins < b1.end) return { inBreak: true, range: b1.raw };
-  var b2 = parseBreakRange(b2Str);
-  if (b2 && currentMins >= b2.start && currentMins < b2.end) return { inBreak: true, range: b2.raw };
-  return { inBreak: false };
-}
-
-function getGlobalSettings(ss) {
-  var def = {
-    preWaveBlockMin: 30, waveGraceMin: 10, batchSize: 25, rushTimeoutMin: 20,
-    autoOfdMin: 30, waitingLockMin: 45, entryViolationMin: 15, adminPin: "1234", sheetUrl: MASTER_SHEET_URL
-  };
-  var sh = ss.getSheetByName("App Settings");
-  if (!sh) return def;
-  var rows = sh.getDataRange().getValues();
-  for (var i = 0; i < rows.length; i++) {
-    var k = String(rows[i][0]).trim(), v = rows[i][1];
-    if (k && v !== undefined && v !== "") {
-      if (k === "adminPin" || k === "sheetUrl" || k === "apiUrl") def[k] = String(v).trim();
-      else { var num = parseInt(v, 10); if (!isNaN(num)) def[k] = num; }
-    }
-  }
-  return def;
-}
-
-function ensureMasterDispatch(ss) {
-  var sh = ss.getSheetByName("Master_Dispatch");
-  var headers = ["Date", "DA ID", "DA Name", "YM Name", "Batch Name", "Sent Time", "Rush Scan IN", "Min to Scan IN", "OFD Time", "Dwell Min", "WaitTime"];
-  if (!sh) {
-    sh = ss.insertSheet("Master_Dispatch");
-    sh.appendRow(headers);
-    sh.getRange("A1:K1").setFontWeight("bold").setBackground("#1F2B3A").setFontColor("#FFFFFF");
-    sh.setFrozenRows(1);
-  } else {
-    var cur = sh.getRange(1, 1, 1, Math.max(sh.getLastColumn(), 1)).getValues()[0];
-    if (cur.length < 11 || cur[0] === "") {
-      sh.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight("bold").setBackground("#1F2B3A").setFontColor("#FFFFFF");
-    }
-  }
-  return sh;
-}
-
-function ensureViolationsSheet(ss) {
-  var sh = ss.getSheetByName("Violations_List");
-  var headers = ["Date", "Time Logged", "DA ID", "DA Name", "Status", "Exceeded By (Mins)", "Cleared"];
-  if (!sh) {
-    sh = ss.insertSheet("Violations_List");
-    sh.appendRow(headers);
-    sh.getRange("A1:G1").setFontWeight("bold");
-    sh.setFrozenRows(1);
-  } else {
-    var cur = sh.getRange(1, 1, 1, Math.max(sh.getLastColumn(), 1)).getValues()[0];
-    if (cur.length < 7 || String(cur[6]).trim() === "") sh.getRange(1, 7).setValue("Cleared").setFontWeight("bold");
-  }
-  return sh;
-}
-
-function ensureScanLog(ss) {
-  var sh = ss.getSheetByName("Scan Log");
-  if (!sh) {
-    sh = ss.insertSheet("Scan Log");
-    sh.appendRow(["Date", "Time", "DA ID", "DA Name", "Action"]);
-    sh.getRange("A1:E1").setFontWeight("bold");
-    sh.setFrozenRows(1);
-  }
-  return sh;
-}
-
-function ensureBreaksActiveSheet(ss) {
-  var sh = ss.getSheetByName("Breaks_Active");
-  if (!sh) {
-    sh = ss.insertSheet("Breaks_Active");
-    sh.appendRow(["Date", "DA ID", "DA Name", "Start Time", "End Time", "YM Name"]);
-    sh.getRange("A1:F1").setFontWeight("bold");
-    sh.setFrozenRows(1);
-  }
-  return sh;
-}
-
-function logScan(ss, dateStr, timeStr, daId, daName, action) {
-  try { ensureScanLog(ss).appendRow([dateStr, timeStr, daId, daName, action]); } catch (e) {}
-}
-
-function updateCachedRosterSnapshot(ss) {
-  try {
-    SpreadsheetApp.flush();
-    var fresh = doGetRoster(ss, { syncOnly: false });
-    CacheService.getScriptCache().put("dud3_roster_snapshot", JSON.stringify(fresh), 6);
-  } catch (e) {}
-}
-
-// Resolve a scanned ID to the ORIGINAL DA ID if it is a replacement listed in roster col M "Name (ID)".
-function resolveReplacementId(ss, todayName, daId) {
-  try {
-    var rosterSheet = ss.getSheetByName(todayName);
-    if (!rosterSheet || rosterSheet.getLastRow() < 2) return daId;
-    var rData = rosterSheet.getDataRange().getValues();
-    var want = daId.toUpperCase();
-    for (var r = 1; r < rData.length; r++) {
-      if (String(rData[r][0]).trim().toUpperCase() === want) return daId; // direct roster DA ID
-      var rep = String(rData[r][12] || "").trim().toUpperCase();
-      if (rep && rep.indexOf("(" + want + ")") !== -1) {
-        var orig = String(rData[r][0]).trim();
-        if (orig) return orig;
-      }
-    }
-  } catch (e) {}
-  return daId;
-}
-
-// Active (uncleared) violator record for a DA today, else null.
-function findActiveViolator(ss, todayName, daId) {
-  try {
-    var sh = ensureViolationsSheet(ss);
-    var last = sh.getLastRow();
-    if (last < 2) return null;
-    var vals = sh.getRange(2, 1, last - 1, 7).getValues();
-    var hit = null;
-    for (var i = 0; i < vals.length; i++) {
-      if (String(vals[i][0]).trim().toUpperCase() === todayName &&
-          String(vals[i][2]).trim().toUpperCase() === daId.toUpperCase() &&
-          !String(vals[i][6]).trim()) {
-        hit = { daId: String(vals[i][2]).trim(), daName: String(vals[i][3]).trim(), status: String(vals[i][4]).trim() };
-      }
-    }
-    return hit;
-  } catch (e) { return null; }
-}
-
-// Clear (resolve) all active violations for a DA today. Returns count cleared.
-function clearViolationsForDa(ss, todayName, daId) {
-  var sh = ensureViolationsSheet(ss);
-  var last = sh.getLastRow();
-  if (last < 2) return 0;
-  var vals = sh.getRange(2, 1, last - 1, 7).getValues();
-  var cleared = 0, nowStr = getDubaiDateString(new Date(), "HH:mm");
-  for (var i = 0; i < vals.length; i++) {
-    if (String(vals[i][0]).trim().toUpperCase() === todayName &&
-        String(vals[i][2]).trim().toUpperCase() === daId.toUpperCase() &&
-        !String(vals[i][6]).trim()) {
-      sh.getRange(i + 2, 7).setValue("Cleared " + nowStr);
-      cleared++;
-    }
-  }
-  if (cleared > 0) SpreadsheetApp.flush();
-  return cleared;
-}
-
-function calculateNextBatch(dSheet, todayName, batchSize) {
-  var data = dSheet.getDataRange().getValues();
-  var batchTotalAssigned = {}, maxBatchNum = 0;
-  for (var i = 1; i < data.length; i++) {
-    if (String(data[i][0]).trim().toUpperCase() !== todayName) continue;
-    var bName = String(data[i][4]).trim() || "Batch 1";
-    if (bName === BREAK_RETURN_BATCH) continue; // managed separately; never affects numbering
-    var numMatch = bName.match(/\d+/);
-    var bNum = numMatch ? parseInt(numMatch[0], 10) : 1;
-    if (bNum > maxBatchNum) maxBatchNum = bNum;
-    batchTotalAssigned[bName] = (batchTotalAssigned[bName] || 0) + 1;
-  }
-  if (maxBatchNum === 0) return "Batch 1";
-  var currentTarget = "Batch " + maxBatchNum;
-  // Strict isolation: fill the current (highest) batch to capacity, then roll forward.
-  if ((batchTotalAssigned[currentTarget] || 0) < batchSize) return currentTarget;
-  return "Batch " + (maxBatchNum + 1);
-}
-
-/* ---------------------------------------------------------------- READ: FULL ROSTER SNAPSHOT */
-function doGetRoster(ss, payload) {
-  var cache = CacheService.getScriptCache();
-  if (payload && payload.syncOnly) {
-    var cached = cache.get("dud3_roster_snapshot");
-    if (cached) { try { var parsed = JSON.parse(cached); parsed.cached = true; return parsed; } catch (e) {} }
-  }
-
-  var todayName = getTodaySheetName();
-  var targetTabName = (payload && payload.dateTab) ? payload.dateTab.toUpperCase() : todayName;
-  var rosterSheet = ss.getSheetByName(targetTabName);
-  if (!rosterSheet) {
-    var sheets = ss.getSheets();
-    for (var s = 0; s < sheets.length; s++) {
-      var nm = sheets[s].getName().trim().toUpperCase();
-      if (/^\d{2}\s+[A-Z]{3}$/.test(nm)) { rosterSheet = sheets[s]; targetTabName = nm; break; }
-    }
-  }
-
-  var settings = getGlobalSettings(ss);
-  var nowStr = getDubaiDateString(new Date(), "HH:mm");
-  var curMins = parseTimeToMins(nowStr);
-
-  var rosterList = [], daMap = {};
-  if (rosterSheet && rosterSheet.getLastRow() > 1) {
-    var rawRoster = rosterSheet.getRange(2, 1, rosterSheet.getLastRow() - 1, 13).getValues();
-    var dirty = false;
-    for (var i = 0; i < rawRoster.length; i++) {
-      var r = rawRoster[i], rowIdx = i + 2;
-      var daId = String(r[0]).trim();
-      if (!daId) continue;
-      var waveStr = cleanTimeStr(r[3]);
-      var status = String(r[6]).trim();
-      var scanTime = cleanTimeStr(r[7]);
-      var b1 = cleanTimeStr(r[8]), b2 = cleanTimeStr(r[9]);
-      var waveMins = parseTimeToMins(waveStr);
-      // Auto-Absent only for DAs who never scanned in (never touches checked-in DAs).
-      if (waveMins > 0 && !scanTime && status !== "Replacement Present") {
-        if (curMins > (waveMins + settings.waveGraceMin) && status !== "Absent") {
-          status = "Absent"; rosterSheet.getRange(rowIdx, 7).setValue("Absent"); dirty = true;
-        }
-      }
-      var item = {
-        rowIdx: rowIdx, daId: daId, daName: String(r[1]).trim(), serviceType: String(r[2]).trim(),
-        wave: waveStr, shiftEnd: cleanTimeStr(r[4]), dsp: String(r[5]).trim(), status: status,
-        scanTime: scanTime, break1: b1, break2: b2, reason: String(r[10]).trim(), comment: String(r[11]).trim(),
-        replacement: String(r[12]).trim(), inBreak: false, breakRange: "", actionBreak: false,
-        dispatchStatus: "Idle", batchName: "", sentTime: "", rushInTime: "", ofdTime: "", waitTime: "", turn: 1
-      };
-      var brk = isInsideBreak(curMins, b1, b2);
-      if (brk.inBreak) { item.inBreak = true; item.breakRange = brk.range; }
-      rosterList.push(item);
-      daMap[daId.toUpperCase()] = item;
-    }
-    if (dirty) SpreadsheetApp.flush();
-  }
-
-  var dispatchSheet = ensureMasterDispatch(ss);
-  var lastD = dispatchSheet.getLastRow();
-  var dispatchRows = (lastD > 1) ? dispatchSheet.getRange(2, 1, lastD - 1, 11).getValues() : [];
-
-  var waitingBatches = {}, sentList = [], receivedList = [], mergedDaState = {}, violatedSet = {};
-
-  for (var j = 0; j < dispatchRows.length; j++) {
-    var dRow = dispatchRows[j];
-    if (String(dRow[0]).trim().toUpperCase() !== targetTabName) continue;
-    var dDaId = String(dRow[1]).trim();
-    if (!dDaId) continue;
-    var key = dDaId.toUpperCase();
-    var dSent = cleanTimeStr(dRow[5]), dRushIn = cleanTimeStr(dRow[6]), dOfd = cleanTimeStr(dRow[8]), dWait = cleanTimeStr(dRow[10]);
-
-    // AUTO-OFD: a RECEIVED DA (rushIn, no OFD) auto-completes to OFD after autoOfdMin. Never
-    // touches an un-received DA. Removes them from the "Received In" list after the interval.
-    if (dRushIn && !dOfd) {
-      var rushMins = parseTimeToMins(dRushIn);
-      if (rushMins > 0 && (curMins - rushMins) >= settings.autoOfdMin) {
-        var calcOfd = getDubaiDateString(new Date(), "HH:mm");
-        dispatchSheet.getRange(j + 2, 9).setValue("'" + calcOfd);
-        dispatchSheet.getRange(j + 2, 10).setValue(curMins - rushMins);
-        dOfd = calcOfd;
-      }
-    }
-
-    // RECEIVE TIMEOUT -> VIOLATOR: a SENT DA not Received-In within entryViolationMin is
-    // flagged (logged once) AND excluded from the awaiting (sentList) — they move to Violators.
-    if (dSent && !dRushIn && !dOfd) {
-      var sentMins2 = parseTimeToMins(dSent);
-      var evLimit = settings.entryViolationMin || 15;
-      if (sentMins2 > 0 && (curMins - sentMins2) >= evLimit) {
-        violatedSet[key] = true;
-        if (!findActiveViolator(ss, targetTabName, dDaId)) {
-          try {
-            ensureViolationsSheet(ss).appendRow([targetTabName, nowStr, dDaId, String(dRow[2]).trim(),
-              "\u23F1\uFE0F Receive Timeout (no Received In scan)", (curMins - sentMins2) - evLimit, ""]);
-          } catch (evErr) {}
-        }
-      }
-    }
-
-    var candidate = {
-      daId: dDaId, daName: String(dRow[2]).trim(), ymName: String(dRow[3]).trim(),
-      batchName: String(dRow[4]).trim() || "Batch 1", sentTime: dSent, rushInTime: dRushIn, ofdTime: dOfd, waitTime: dWait
-    };
-    // MOST-ACTIVE row wins (never "last row"): waiting > sent > received > closed.
-    var prev = mergedDaState[key];
-    if (!prev) { mergedDaState[key] = candidate; }
-    else {
-      var rank = function (x) {
-        if (x.waitTime && !x.sentTime && !x.rushInTime && !x.ofdTime) return 4;
-        if (x.sentTime && !x.rushInTime && !x.ofdTime) return 3;
-        if (x.rushInTime && !x.ofdTime) return 2;
-        return 1;
-      };
-      if (rank(candidate) >= rank(prev)) mergedDaState[key] = candidate;
-    }
-  }
-
-  for (var daKey in mergedDaState) {
-    var st = mergedDaState[daKey];
-    var daObj = daMap[daKey];
-    if (!daObj) {
-      daObj = { rowIdx: -1, daId: st.daId, daName: st.daName, serviceType: "", wave: "", shiftEnd: "",
-        dsp: "", status: "Present", scanTime: st.waitTime || nowStr, break1: "", break2: "", inBreak: false, turn: 1 };
-      rosterList.push(daObj); daMap[daKey] = daObj;
-    }
-    daObj.batchName = st.batchName; daObj.sentTime = st.sentTime; daObj.rushInTime = st.rushInTime;
-    daObj.ofdTime = st.ofdTime; daObj.waitTime = st.waitTime; daObj.ymName = st.ymName;
-
-    if (st.ofdTime) {
-      daObj.dispatchStatus = "OFD";
-    } else if (st.rushInTime) {
-      daObj.dispatchStatus = "Received";
-      receivedList.push({ daId: st.daId, daName: st.daName, batchName: st.batchName,
-        rushInTime: st.rushInTime, sentTime: st.sentTime, ymName: st.ymName });
-    } else if (st.sentTime) {
-      daObj.dispatchStatus = "Sent to OP";
-      if (!violatedSet[daKey]) {   // exclude timed-out violators from the awaiting list
-        var sMins = parseTimeToMins(st.sentTime);
-        var elapsed = (sMins > 0) ? Math.max(0, curMins - sMins) : 0;
-        sentList.push({ daId: st.daId, daName: st.daName, batchName: st.batchName, sentTime: st.sentTime,
-          ymName: st.ymName, elapsedMins: elapsed, isSlaExceeded: elapsed > (settings.entryViolationMin || 15) });
-      }
-    } else if (st.waitTime) {
-      daObj.dispatchStatus = "Waiting";
-      if (!waitingBatches[st.batchName]) waitingBatches[st.batchName] = [];
-      waitingBatches[st.batchName].push({ daId: st.daId, daName: st.daName, batchName: st.batchName,
-        waitTime: st.waitTime, inBreak: daObj.inBreak, breakRange: daObj.breakRange });
-    }
-  }
-
-  // Strict FIFO within each waiting batch by arrival time.
-  Object.keys(waitingBatches).forEach(function(bn) {
-    waitingBatches[bn].sort(function(a, b) { return parseTimeToMins(a.waitTime) - parseTimeToMins(b.waitTime); });
+  // Primary: POST with text/plain (a "simple" request — no CORS preflight).
+  fetch(API_URL, {
+    method: 'POST',
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(payload),
+    cache: 'no-store'
+  })
+  .then(function(res){ return res.json(); })
+  .then(function(res){ handleStatusResponse(res); })
+  .catch(function(){
+    // Fallback: GET with query params — Apps Script handles this reliably and it
+    // sidesteps any network/CORS/preflight quirk that can block the POST.
+    var url = API_URL + "?action=getDaStatus"
+      + "&daId=" + encodeURIComponent(daId)
+      + "&sheetUrl=" + encodeURIComponent(SHEET_URL)
+      + "&dayTab=" + encodeURIComponent(getTodayTab());
+    fetch(url, { method: 'GET', cache: 'no-store' })
+      .then(function(res){ return res.json(); })
+      .then(function(res){ handleStatusResponse(res); })
+      .catch(function(err){
+        document.getElementById("loader").style.display = "none";
+        alert("Could not reach the server. Check your connection and try again.");
+      });
   });
-
-  // RushData roster (for replacement search / Driver Hub)
-  var rushDataList = [];
-  var rdSheet = ss.getSheetByName("RushData");
-  if (rdSheet && rdSheet.getLastRow() > 1) {
-    var rdVals = rdSheet.getRange(2, 1, rdSheet.getLastRow() - 1, 3).getValues();
-    for (var k = 0; k < rdVals.length; k++) {
-      if (rdVals[k][0]) rushDataList.push({ daId: String(rdVals[k][0]).trim(), daName: String(rdVals[k][1]).trim(), dsp: String(rdVals[k][2]).trim() });
-    }
-  }
-
-  // Active breaks (for Break tab) + mark roster items on break
-  var breaksActive = [];
-  try {
-    var bSheet = ensureBreaksActiveSheet(ss);
-    if (bSheet.getLastRow() > 1) {
-      var bVals = bSheet.getRange(2, 1, bSheet.getLastRow() - 1, 6).getValues();
-      for (var bi = 0; bi < bVals.length; bi++) {
-        if (String(bVals[bi][0]).trim().toUpperCase() !== targetTabName) continue;
-        if (String(bVals[bi][4]).trim()) continue; // ended
-        breaksActive.push({ daId: String(bVals[bi][1]).trim(), daName: String(bVals[bi][2]).trim(),
-          startTime: cleanTimeStr(bVals[bi][3]), ymName: String(bVals[bi][5]).trim() });
-        var bKey = String(bVals[bi][1]).trim().toUpperCase();
-        if (daMap[bKey]) { daMap[bKey].inBreak = true; daMap[bKey].breakRange = daMap[bKey].breakRange || "On Break"; daMap[bKey].actionBreak = true; }
-      }
-    }
-  } catch (eB) {}
-
-  // Active violators (for Violators tab)
-  var violators = [];
-  try {
-    var vSheet = ensureViolationsSheet(ss);
-    if (vSheet.getLastRow() > 1) {
-      var vVals = vSheet.getRange(2, 1, vSheet.getLastRow() - 1, 7).getValues();
-      for (var vi = 0; vi < vVals.length; vi++) {
-        if (String(vVals[vi][0]).trim().toUpperCase() !== targetTabName) continue;
-        if (String(vVals[vi][6]).trim()) continue; // cleared
-        violators.push({ timeLogged: String(vVals[vi][1]).trim(), daId: String(vVals[vi][2]).trim(),
-          daName: String(vVals[vi][3]).trim(), status: String(vVals[vi][4]).trim(), exceededBy: vVals[vi][5] });
-      }
-    }
-  } catch (eV) {}
-
-  var result = {
-    success: true, targetTab: targetTabName, serverTime: nowStr, settings: settings,
-    roster: rosterList, waitingBatches: waitingBatches, sentList: sentList, receivedList: receivedList,
-    rushData: rushDataList, breaksActive: breaksActive, violators: violators, cached: false
-  };
-  try { cache.put("dud3_roster_snapshot", JSON.stringify(result), 6); } catch (e) {}
-  return result;
 }
 
-/* ---------------------------------------------------------------- MUTATIONS */
-function doRecordCheckIn(ss, p) {
-  var daId = String(p.daId || "").trim();
-  var ymName = String(p.ymName || "YM").trim();
-  if (!daId) return { success: false, error: "Missing DA ID" };
-
-  var todayName = getTodaySheetName();
-  var sheet = ss.getSheetByName(todayName);
-  if (!sheet) return { success: false, error: "Roster tab '" + todayName + "' not found" };
-
-  var settings = getGlobalSettings(ss);
-  var nowStr = getDubaiDateString(new Date(), "HH:mm");
-  var curMins = parseTimeToMins(nowStr);
-
-  var data = sheet.getDataRange().getValues();
-  var matchRow = -1, daData = null;
-  for (var i = 1; i < data.length; i++) {
-    if (String(data[i][0]).trim().toUpperCase() === daId.toUpperCase()) { matchRow = i + 1; daData = data[i]; break; }
-  }
-  if (matchRow === -1) return { success: false, error: "DA ID " + daId + " not found in roster " + todayName };
-
-  var currentStatus = String(daData[6]).trim();
-  var existingScan = cleanTimeStr(daData[7]);
-  var waveStr = cleanTimeStr(daData[3]);
-  var waveMins = parseTimeToMins(waveStr);
-
-  if (existingScan && (currentStatus === "Present" || currentStatus === "Late Arrival" || currentStatus === "Replacement Present")) {
-    return { success: false, alreadyCheckedIn: true, message: "DA already checked in at " + existingScan + " (" + currentStatus + ")." };
-  }
-  if (waveMins > 0 && (waveMins - curMins) > settings.preWaveBlockMin) {
-    return { success: false, tooEarly: true, waveTime: waveStr,
-      message: "Too Early! Wave is at " + waveStr + ". Check-in unlocks at " + minutesToHHMM(waveMins - settings.preWaveBlockMin) };
-  }
-
-  var finalStatus = (waveMins > 0 && curMins > (waveMins + settings.waveGraceMin)) ? "Late Arrival" : "Present";
-  sheet.getRange(matchRow, 7).setValue(finalStatus);
-  sheet.getRange(matchRow, 8).setValue("'" + nowStr);
-
-  var dSheet = ensureMasterDispatch(ss);
-  var assignedBatch = calculateNextBatch(dSheet, todayName, settings.batchSize);
-  dSheet.appendRow([todayName, daId, String(daData[1]).trim(), ymName, assignedBatch, "", "", "", "", "", "'" + nowStr]);
-
-  // Scanning into Waiting clears any active violation (returning them to the queue).
-  var clearedViolator = clearViolationsForDa(ss, todayName, daId) > 0;
-
-  logScan(ss, todayName, nowStr, daId, String(daData[1]).trim(), "Attendance Check-In (" + finalStatus + ") -> " + assignedBatch + (clearedViolator ? " [cleared Violator]" : ""));
-  return { success: true, status: finalStatus, scanTime: nowStr, batchName: assignedBatch,
-    daName: String(daData[1]).trim(), clearedViolator: clearedViolator, message: "Checked In: " + finalStatus + " -> " + assignedBatch };
+function handleStatusResponse(res) {
+  document.getElementById("loader").style.display = "none";
+  if (!res || !res.success) { return alert("Error: " + ((res && (res.error || (res.errors && res.errors[0]))) || "Request failed")); }
+  var data = adaptResponse(res);
+  if (!data.found) { logout(); return alert("DA ID not found in today's roster."); }
+  updateDashboard(data);
 }
 
-function doAddToWaiting(ss, p) {
-  var daId = String(p.daId || "").trim();
-  var ymName = String(p.ymName || "YM").trim();
-  if (!daId) return { success: false, error: "Missing DA ID" };
+/* Map the MAIN app's doGetDaStatus response to the flat shape this UI expects. */
+function adaptResponse(res) {
+  var info = res.daInfo || null;
+  var settings = res.settings || {};
+  // Found if we have roster identity OR any dispatch activity today.
+  var found = !!info || !!res.batchName || !!res.sentTime || !!res.rushInTime || !!res.waitTime;
+  if (!found) return { found: false };
 
-  var todayName = getTodaySheetName();
-  var settings = getGlobalSettings(ss);
-  var nowStr = getDubaiDateString(new Date(), "HH:mm");
-  var curMins = parseTimeToMins(nowStr);
-
-  var dSheet = ensureMasterDispatch(ss);
-  var dData = dSheet.getDataRange().getValues();
-  var latestOfd = "", latestRushIn = "", latestSent = "", latestWait = "", latestRow = -1;
-  for (var i = 1; i < dData.length; i++) {
-    if (String(dData[i][0]).trim().toUpperCase() === todayName && String(dData[i][1]).trim().toUpperCase() === daId.toUpperCase()) {
-      latestRow = i + 1; latestWait = cleanTimeStr(dData[i][10]); latestSent = cleanTimeStr(dData[i][5]);
-      latestRushIn = cleanTimeStr(dData[i][6]); latestOfd = cleanTimeStr(dData[i][8]);
-    }
-  }
-  if (latestRow !== -1 && !latestOfd) {
-    if (latestRushIn) return { success: false, error: "DA is Inside (Received In). Auto-OFD required before re-queue." };
-    if (latestSent) return { success: false, error: "DA is in transit (Sent). Received In scan first." };
-    if (latestWait) return { success: false, error: "DA is already queued in the Waiting List." };
-  }
-  if (latestOfd) {
-    var ofdMins = parseTimeToMins(latestOfd);
-    if (ofdMins > 0 && (curMins - ofdMins) < settings.waitingLockMin) {
-      return { success: false, error: "Waiting Lock Active! OFD at " + latestOfd + ". Wait " + (settings.waitingLockMin - (curMins - ofdMins)) + " more min." };
+  // Translate dispatchState enum (+ break) into the human status text the UI uses.
+  var status;
+  if (res.inBreak) status = "On Break";
+  else {
+    switch (res.dispatchState) {
+      case "OFD": status = "OFD"; break;
+      case "RECEIVED_INSIDE": status = "Received"; break;
+      case "SENT_TO_OP": status = "Sent to OP"; break;
+      case "WAITING": status = "Waiting"; break;
+      default:
+        status = (info && info.status) ? info.status : "Not Checked In";
     }
   }
 
-  var daName = daId;
-  var rosterSheet = ss.getSheetByName(todayName);
-  if (rosterSheet) {
-    var rData = rosterSheet.getDataRange().getValues();
-    for (var r = 1; r < rData.length; r++) {
-      if (String(rData[r][0]).trim().toUpperCase() === daId.toUpperCase()) {
-        daName = String(rData[r][1]).trim();
-        var brk = isInsideBreak(curMins, cleanTimeStr(rData[r][8]), cleanTimeStr(rData[r][9]));
-        if (brk.inBreak) return { success: false, error: "DA is on Break (" + brk.range + "). Blocked." };
-        break;
-      }
-    }
-  }
-
-  var clearedViolator = clearViolationsForDa(ss, todayName, daId) > 0;
-  var nextBatch = calculateNextBatch(dSheet, todayName, settings.batchSize);
-  dSheet.appendRow([todayName, daId, daName, ymName, nextBatch, "", "", "", "", "", "'" + nowStr]);
-  logScan(ss, todayName, nowStr, daId, daName, "Added to Waiting -> " + nextBatch + (clearedViolator ? " [cleared Violator]" : ""));
-  return { success: true, batchName: nextBatch, waitTime: nowStr, daName: daName, clearedViolator: clearedViolator, message: "Queued into " + nextBatch };
-}
-
-function doSendDA(ss, p) {
-  var daIds = p.daIds || (p.daId ? [p.daId] : []);
-  var ymName = String(p.ymName || "YM").trim();
-  if (!daIds || daIds.length === 0) return { success: false, error: "No DAs provided to send" };
-
-  var todayName = getTodaySheetName();
-  var dSheet = ensureMasterDispatch(ss);
-  var vals = dSheet.getDataRange().getValues();
-  var nowStr = getDubaiDateString(new Date(), "HH:mm");
-  var curMins = parseTimeToMins(nowStr);
-
-  // Break-block check
-  var rosterSheet = ss.getSheetByName(todayName);
-  var breakBlocked = [];
-  if (rosterSheet) {
-    var rData = rosterSheet.getDataRange().getValues(), rMap = {};
-    for (var r = 1; r < rData.length; r++) {
-      rMap[String(rData[r][0]).trim().toUpperCase()] = { b1: cleanTimeStr(rData[r][8]), b2: cleanTimeStr(rData[r][9]), name: String(rData[r][1]).trim() };
-    }
-    for (var k = 0; k < daIds.length; k++) {
-      var entry = rMap[String(daIds[k]).trim().toUpperCase()];
-      if (entry) { var brk = isInsideBreak(curMins, entry.b1, entry.b2); if (brk.inBreak) breakBlocked.push(entry.name + " (Break: " + brk.range + ")"); }
-    }
-  }
-  if (breakBlocked.length > 0) return { success: false, error: "Cannot send — on Break: " + breakBlocked.join(", ") };
-
-  var targetMap = {};
-  for (var d = 0; d < daIds.length; d++) targetMap[String(daIds[d]).trim().toUpperCase()] = true;
-
-  var updatedCount = 0, changedRows = [];
-  for (var i = 1; i < vals.length; i++) {
-    if (String(vals[i][0]).trim().toUpperCase() === todayName && targetMap[String(vals[i][1]).trim().toUpperCase()] && !cleanTimeStr(vals[i][5])) {
-      vals[i][3] = ymName; vals[i][5] = "'" + nowStr; changedRows.push(i + 1); updatedCount++;
-    }
-  }
-  // Write ONLY changed rows' D:F (fast; no full-sheet rewrite) — keeps Send at attendance speed.
-  for (var c = 0; c < changedRows.length; c++) {
-    var ri = changedRows[c] - 1;
-    dSheet.getRange(changedRows[c], 4, 1, 3).setValues([[ vals[ri][3], vals[ri][4], vals[ri][5] ]]);
-  }
-  if (updatedCount > 0) { SpreadsheetApp.flush(); logScan(ss, todayName, nowStr, daIds.join(","), "", "Sent " + updatedCount + " DA(s) by " + ymName); }
-  return { success: true, sentCount: updatedCount, sentTime: nowStr, message: "Sent " + updatedCount + " DA(s) to Receive queue" };
-}
-
-function doRushScanIn(ss, p) {
-  var daId = String(p.daId || "").trim();
-  var receiver = String(p.receiverName || p.ymName || "YM").trim();
-  if (!daId) return { success: false, error: "Missing DA ID" };
-
-  var todayName = getTodaySheetName();
-  var settings = getGlobalSettings(ss);
-  var nowStr = getDubaiDateString(new Date(), "HH:mm");
-  var curMins = parseTimeToMins(nowStr);
-
-  // Resolve a replacement's scanned ID to the original DA ID (roster M col "Name (ID)").
-  daId = resolveReplacementId(ss, todayName, daId);
-
-  // Scheduled-break block
-  var rosterSheet = ss.getSheetByName(todayName);
-  if (rosterSheet) {
-    var rData = rosterSheet.getDataRange().getValues();
-    for (var r = 1; r < rData.length; r++) {
-      if (String(rData[r][0]).trim().toUpperCase() === daId.toUpperCase()) {
-        var brk = isInsideBreak(curMins, cleanTimeStr(rData[r][8]), cleanTimeStr(rData[r][9]));
-        if (brk.inBreak) return { success: false, error: "Action Blocked: DA is on scheduled Break (" + brk.range + ")" };
-        break;
-      }
-    }
-  }
-
-  // Violator hard-block
-  var violatorHit = findActiveViolator(ss, todayName, daId);
-  if (violatorHit) {
-    logScan(ss, todayName, nowStr, daId, violatorHit.daName || daId, "Received In BLOCKED (Violator)");
-    return { success: false, violation: true, violatorBlock: true, daId: daId, daName: violatorHit.daName || daId,
-      message: "\uD83D\uDEAB VIOLATOR: " + (violatorHit.daName || daId) + " (" + daId + "). Received In blocked. Send back to OFF-YARD." };
-  }
-
-  var dSheet = ensureMasterDispatch(ss);
-  var vals = dSheet.getDataRange().getValues();
-  var wantUp = daId.toUpperCase();
-  var sentOpenIdx = -1, sentAnyIdx = -1, waitOpenIdx = -1, newestIdx = -1;
-  for (var i = vals.length - 1; i >= 1; i--) {
-    if (String(vals[i][0]).trim().toUpperCase() !== todayName) continue;
-    var rowDaUp = String(vals[i][1]).trim().toUpperCase();
-    var rowNameUp = String(vals[i][2]).trim().toUpperCase();
-    var isMatch = (rowDaUp === wantUp) || (rowNameUp.indexOf("(" + wantUp + ")") !== -1) || (rowNameUp.indexOf(wantUp) !== -1 && wantUp.length >= 5);
-    if (!isMatch) continue;
-    if (newestIdx === -1) newestIdx = i;
-    var rSent = cleanTimeStr(vals[i][5]), rRush = cleanTimeStr(vals[i][6]), rOfd = cleanTimeStr(vals[i][8]), rWait = cleanTimeStr(vals[i][10]);
-    if (rSent && !rRush && !rOfd && sentOpenIdx === -1) sentOpenIdx = i;
-    if (rSent && sentAnyIdx === -1) sentAnyIdx = i;
-    if (rWait && !rSent && !rRush && !rOfd && waitOpenIdx === -1) waitOpenIdx = i;
-  }
-  var matchRowIdx = (sentOpenIdx !== -1) ? sentOpenIdx : (sentAnyIdx !== -1 ? sentAnyIdx : (waitOpenIdx !== -1 ? waitOpenIdx : newestIdx));
-
-  if (matchRowIdx === -1) {
-    var _diagRows = [];
-    for (var di = 1; di < vals.length; di++) {
-      if (String(vals[di][1]).trim().toUpperCase() === wantUp) {
-        _diagRows.push("date=[" + String(vals[di][0]) + "] sent=[" + cleanTimeStr(vals[di][5]) + "] rush=[" + cleanTimeStr(vals[di][6]) + "] ofd=[" + cleanTimeStr(vals[di][8]) + "] wait=[" + cleanTimeStr(vals[di][10]) + "]");
-      }
-    }
-    var diagMsg = "scanned=[" + daId + "] todayTab=[" + todayName + "] rowsForDA=" + _diagRows.length + (_diagRows.length ? (" :: " + _diagRows.join(" | ")) : "");
-    ensureViolationsSheet(ss).appendRow([todayName, nowStr, daId, "Unknown", "\uD83D\uDEA8 Not in Queue", "N/A", ""]);
-    logScan(ss, todayName, nowStr, daId, "", "Received In Blocked - DIAG: " + diagMsg);
-    return { success: false, violation: true, violationType: "NOT_DISPATCHED",
-      message: "\uD83D\uDEA8 No queue entry found. DIAG: " + diagMsg, diag: diagMsg };
-  }
-
-  var daName = String(vals[matchRowIdx][2]).trim();
-  var batchName = String(vals[matchRowIdx][4]).trim();
-  var rowSentTime = cleanTimeStr(vals[matchRowIdx][5]);
-
-  // Self-heal: DA is in the queue but the Sent Time write lagged — stamp it now so the
-  // receive is valid (prevents false "Not Dispatched" when send write trails the scan).
-  if (!rowSentTime) {
-    rowSentTime = nowStr;
-    vals[matchRowIdx][3] = receiver;
-    vals[matchRowIdx][5] = "'" + nowStr;
-    if (!cleanTimeStr(vals[matchRowIdx][10])) vals[matchRowIdx][10] = "'" + nowStr;
-    logScan(ss, todayName, nowStr, daId, daName, "Received In: auto-stamped missing Sent Time");
-  }
-
-  var sMins = parseTimeToMins(rowSentTime);
-  var transitMins = (sMins > 0) ? Math.max(0, curMins - sMins) : 0;
-
-  // Mark ONLY the matched row as received (single-row write — fast + concurrency-safe).
-  vals[matchRowIdx][6] = "'" + nowStr;
-  vals[matchRowIdx][7] = transitMins;
-  dSheet.getRange(matchRowIdx + 1, 1, 1, 11).setValues([vals[matchRowIdx].slice(0, 11)]);
-  SpreadsheetApp.flush();
-
-  logScan(ss, todayName, nowStr, daId, daName, "Received In (" + transitMins + " min transit)");
-  return { success: true, daId: daId, daName: daName, batchName: batchName, transitMins: transitMins, violation: false,
-    message: "Received In (" + transitMins + "m transit)" };
-}
-
-function doRemoveFromWaiting(ss, p) {
-  var daId = String(p.daId || "").trim();
-  if (!daId) return { success: false, error: "Missing DA ID" };
-  var todayName = getTodaySheetName();
-  var dSheet = ensureMasterDispatch(ss);
-  var vals = dSheet.getDataRange().getValues();
-  var found = false;
-  for (var i = vals.length - 1; i >= 1; i--) {
-    if (String(vals[i][0]).trim().toUpperCase() === todayName && String(vals[i][1]).trim().toUpperCase() === daId.toUpperCase() && !cleanTimeStr(vals[i][5])) {
-      dSheet.deleteRow(i + 1); found = true; break;
-    }
-  }
-  return { success: found, message: found ? "DA removed from Waiting List" : "DA not found in Waiting List" };
-}
-
-function doAssignReplacement(ss, p) {
-  var originalDaId = String(p.originalDaId || "").trim();
-  var replacementDaId = String(p.replacementDaId || "").trim();
-  var replacementName = String(p.replacementName || "").trim();
-  if (!originalDaId || !replacementDaId) return { success: false, error: "Both Original and Replacement DA are required" };
-
-  var todayName = getTodaySheetName();
-  var sheet = ss.getSheetByName(todayName);
-  if (!sheet) return { success: false, error: "Roster tab not found" };
-  var nowStr = getDubaiDateString(new Date(), "HH:mm");
-  var data = sheet.getDataRange().getValues();
-  var matchRow = -1, origName = "";
-  for (var i = 1; i < data.length; i++) {
-    if (String(data[i][0]).trim().toUpperCase() === originalDaId.toUpperCase()) { matchRow = i + 1; origName = String(data[i][1]).trim(); break; }
-  }
-  if (matchRow === -1) return { success: false, error: "Original DA " + originalDaId + " not found" };
-
-  var updatedName = origName + " / \uD83D\uDD01 / " + replacementName;
-  sheet.getRange(matchRow, 2).setValue(updatedName).setWrap(true);
-  sheet.getRange(matchRow, 7).setValue("Replacement Present");
-  sheet.getRange(matchRow, 8).setValue("'" + nowStr);
-  sheet.getRange(matchRow, 13).setValue(replacementName + " (" + replacementDaId + ")").setBackground("#00C853").setFontColor("#062010").setFontWeight("bold");
-
-  var settings = getGlobalSettings(ss);
-  var dSheet = ensureMasterDispatch(ss);
-  var assignedBatch = calculateNextBatch(dSheet, todayName, settings.batchSize);
-  dSheet.appendRow([todayName, originalDaId, updatedName, "YM", assignedBatch, "", "", "", "", "", "'" + nowStr]);
-  SpreadsheetApp.flush();
-  logScan(ss, todayName, nowStr, replacementDaId, replacementName, "Replaced " + originalDaId + " -> " + assignedBatch);
-  return { success: true, batchName: assignedBatch, updatedName: updatedName, scanTime: nowStr, message: "Replacement queued to " + assignedBatch };
-}
-
-function doSaveSettings(ss, p) {
-  var master = SpreadsheetApp.openByUrl(MASTER_SHEET_URL);
-  var targets = [ss];
-  if (master.getId() !== ss.getId()) targets.push(master);
-  var keys = ["preWaveBlockMin", "waveGraceMin", "batchSize", "rushTimeoutMin", "autoOfdMin", "waitingLockMin", "entryViolationMin", "adminPin", "sheetUrl", "apiUrl"];
-  for (var t = 0; t < targets.length; t++) {
-    var book = targets[t];
-    var sSheet = book.getSheetByName("App Settings");
-    if (!sSheet) { sSheet = book.insertSheet("App Settings"); sSheet.appendRow(["Key", "Value"]); sSheet.getRange("A1:B1").setFontWeight("bold"); }
-    var data = sSheet.getDataRange().getValues(), existing = {};
-    for (var i = 1; i < data.length; i++) { var kn = String(data[i][0]).trim(); if (kn) existing[kn] = i + 1; }
-    for (var k = 0; k < keys.length; k++) {
-      var key = keys[k];
-      if (p[key] !== undefined) {
-        if (existing[key]) sSheet.getRange(existing[key], 2).setValue(p[key]);
-        else sSheet.appendRow([key, p[key]]);
-      }
-    }
-  }
-  SpreadsheetApp.flush();
-  return { success: true, message: "Settings saved globally across all devices" };
-}
-
-function doResetDay(ss, p) {
-  var pin = String(p.pin || "").trim();
-  var settings = getGlobalSettings(ss);
-  if (pin !== String(settings.adminPin)) return { success: false, error: "Invalid Admin PIN" };
-  var todayName = getTodaySheetName();
-
-  var dSheet = ensureMasterDispatch(ss);
-  var vals = dSheet.getDataRange().getValues();
-  for (var i = vals.length - 1; i >= 1; i--) { if (String(vals[i][0]).trim().toUpperCase() === todayName) dSheet.deleteRow(i + 1); }
-
-  var rSheet = ss.getSheetByName(todayName);
-  if (rSheet && rSheet.getLastRow() > 1) {
-    var count = rSheet.getLastRow() - 1;
-    rSheet.getRange(2, 7, count, 1).clearContent();  // Status
-    rSheet.getRange(2, 8, count, 1).clearContent();  // Scan Time
-    rSheet.getRange(2, 13, count, 1).clearContent().setBackground(null); // Replacement
-  }
-  try {
-    var bSheet = ensureBreaksActiveSheet(ss);
-    var bVals = bSheet.getDataRange().getValues();
-    for (var bi = bVals.length - 1; bi >= 1; bi--) { if (String(bVals[bi][0]).trim().toUpperCase() === todayName) bSheet.deleteRow(bi + 1); }
-  } catch (eb) {}
-  SpreadsheetApp.flush();
-  return { success: true, message: "Today's dispatch queue and attendance reset successfully" };
-}
-
-function doClearViolator(ss, p) {
-  var daId = String(p.daId || "").trim();
-  if (!daId) return { success: false, error: "Missing DA ID" };
-  var todayName = getTodaySheetName();
-  var n = clearViolationsForDa(ss, todayName, daId);
-  logScan(ss, todayName, getDubaiDateString(new Date(), "HH:mm"), daId, "", "Violator removed via Remove button (" + n + " cleared)");
-  return { success: true, daId: daId, cleared: n, message: n > 0 ? ("Removed " + daId + " from Violators") : "No active violation for " + daId };
-}
-
-function doStartBreak(ss, p) {
-  var daId = String(p.daId || "").trim();
-  if (!daId) return { success: false, error: "Missing DA ID" };
-  var ymName = String(p.ymName || "YM").trim();
-  var todayName = getTodaySheetName();
-  var nowStr = getDubaiDateString(new Date(), "HH:mm");
-
-  var daName = daId;
-  var rosterSheet = ss.getSheetByName(todayName);
-  if (rosterSheet) {
-    var rData = rosterSheet.getDataRange().getValues();
-    for (var r = 1; r < rData.length; r++) { if (String(rData[r][0]).trim().toUpperCase() === daId.toUpperCase()) { daName = String(rData[r][1]).trim() || daId; break; } }
-  }
-  // Remove any ACTIVE waiting row (waiting, not sent)
-  var dSheet = ensureMasterDispatch(ss);
-  var vals = dSheet.getDataRange().getValues();
-  var removed = false;
-  for (var i = vals.length - 1; i >= 1; i--) {
-    if (String(vals[i][0]).trim().toUpperCase() === todayName && String(vals[i][1]).trim().toUpperCase() === daId.toUpperCase() &&
-        cleanTimeStr(vals[i][10]) && !cleanTimeStr(vals[i][5])) { dSheet.deleteRow(i + 1); removed = true; }
-  }
-  var bSheet = ensureBreaksActiveSheet(ss);
-  var bVals = bSheet.getDataRange().getValues();
-  var existing = -1;
-  for (var j = 1; j < bVals.length; j++) {
-    if (String(bVals[j][0]).trim().toUpperCase() === todayName && String(bVals[j][1]).trim().toUpperCase() === daId.toUpperCase() && !String(bVals[j][4]).trim()) existing = j + 1;
-  }
-  if (existing === -1) bSheet.appendRow([todayName, daId, daName, "'" + nowStr, "", ymName]);
-  logScan(ss, todayName, nowStr, daId, daName, "Break STARTED by " + ymName + (removed ? " (removed from waiting)" : ""));
-  return { success: true, daId: daId, daName: daName, startTime: nowStr, message: daName + " is now ON BREAK." };
-}
-
-function doEndBreak(ss, p) {
-  var daId = String(p.daId || "").trim();
-  if (!daId) return { success: false, error: "Missing DA ID" };
-  var ymName = String(p.ymName || "YM").trim();
-  var todayName = getTodaySheetName();
-  var nowStr = getDubaiDateString(new Date(), "HH:mm");
-
-  var bSheet = ensureBreaksActiveSheet(ss);
-  var bVals = bSheet.getDataRange().getValues();
-  var daName = daId, closedAny = false;
-  for (var j = bVals.length - 1; j >= 1; j--) {
-    if (String(bVals[j][0]).trim().toUpperCase() === todayName && String(bVals[j][1]).trim().toUpperCase() === daId.toUpperCase() && !String(bVals[j][4]).trim()) {
-      daName = String(bVals[j][2]).trim() || daId; bSheet.getRange(j + 1, 5).setValue("'" + nowStr); closedAny = true;
-    }
-  }
-  if (!closedAny) {
-    var rosterSheet = ss.getSheetByName(todayName);
-    if (rosterSheet) { var rData = rosterSheet.getDataRange().getValues(); for (var r = 1; r < rData.length; r++) { if (String(rData[r][0]).trim().toUpperCase() === daId.toUpperCase()) { daName = String(rData[r][1]).trim() || daId; break; } } }
-  }
-  var dSheet = ensureMasterDispatch(ss);
-  dSheet.appendRow([todayName, daId, daName, ymName, BREAK_RETURN_BATCH, "", "", "", "", "", "'" + nowStr]);
-  SpreadsheetApp.flush();
-  logScan(ss, todayName, nowStr, daId, daName, "Break ENDED -> " + BREAK_RETURN_BATCH);
-  return { success: true, daId: daId, daName: daName, endTime: nowStr, batchName: BREAK_RETURN_BATCH, message: daName + " returned to '" + BREAK_RETURN_BATCH + "'." };
-}
-
-/* ---------------------------------------------------------------- DRIVER HUB SUPPORT */
-function detectRushCols(hdr) {
-  function find(cands, fb) { for (var c = 0; c < cands.length; c++) { var idx = hdr.indexOf(cands[c]); if (idx >= 0) return idx; } return fb; }
-  return { id: find(["da id","daid","id","transporter id","transporterid"],0), name: find(["da name","name","driver name"],1),
-           dsp: find(["dsp","dsp name","company"],2), alias: find(["alias","login","da alias","amazon alias","user name","username"],3) };
-}
-function lookupRushIdentity(ss, daId) {
-  try {
-    var rd = ss.getSheetByName("RushData");
-    if (!rd || rd.getLastRow() < 2) return null;
-    var vals = rd.getDataRange().getValues();
-    var col = detectRushCols(vals[0].map(function(h){ return String(h).trim().toLowerCase(); }));
-    var want = String(daId).trim().toLowerCase();
-    for (var i = 1; i < vals.length; i++) {
-      var rid = String(vals[i][col.id] || "").trim();
-      var alias = (col.alias < vals[i].length) ? String(vals[i][col.alias] || "").trim() : "";
-      if (!rid) continue;
-      if (rid.toLowerCase() === want || (alias && alias.toLowerCase() === want))
-        return { daId: rid, daName: String(vals[i][col.name] || "").trim(), dsp: String(vals[i][col.dsp] || "").trim(), alias: alias };
-    }
-  } catch (e) {}
-  return null;
-}
-function getRushRoster(ss) {
-  var out = [];
-  try {
-    var rd = ss.getSheetByName("RushData");
-    if (!rd || rd.getLastRow() < 2) return out;
-    var vals = rd.getDataRange().getValues();
-    var col = detectRushCols(vals[0].map(function(h){ return String(h).trim().toLowerCase(); }));
-    for (var i = 1; i < vals.length; i++) {
-      var rid = String(vals[i][col.id] || "").trim();
-      if (!rid) continue;
-      out.push({ daId: rid, daName: String(vals[i][col.name] || "").trim(),
-        alias: (col.alias < vals[i].length) ? String(vals[i][col.alias] || "").trim() : "", dsp: String(vals[i][col.dsp] || "").trim() });
-    }
-  } catch (e) {}
-  return out;
-}
-
-function doGetDaStatus(ss, p) {
-  var daId = String(p.daId || "").trim();
-  if (!daId) return { success: false, error: "Missing DA ID" };
-  var todayName = getTodaySheetName();
-  var nowStr = getDubaiDateString(new Date(), "HH:mm");
-  var curMins = parseTimeToMins(nowStr);
-  var settings = getGlobalSettings(ss);
-
-  var rosterSheet = ss.getSheetByName(todayName);
-  var daInfo = null;
-  if (rosterSheet && rosterSheet.getLastRow() > 1) {
-    var rData = rosterSheet.getRange(2, 1, rosterSheet.getLastRow() - 1, 13).getValues();
-    for (var i = 0; i < rData.length; i++) {
-      var rowId = String(rData[i][0]).trim();
-      var repCol = String(rData[i][12]).trim();
-      if (rowId.toUpperCase() === daId.toUpperCase() || repCol.toUpperCase().indexOf("(" + daId.toUpperCase() + ")") !== -1) {
-        daInfo = { daId: rowId, daName: String(rData[i][1]).trim(), serviceType: String(rData[i][2]).trim(),
-          wave: cleanTimeStr(rData[i][3]), shiftEnd: cleanTimeStr(rData[i][4]), dsp: String(rData[i][5]).trim(),
-          status: String(rData[i][6]).trim(), scanTime: cleanTimeStr(rData[i][7]), break1: cleanTimeStr(rData[i][8]), break2: cleanTimeStr(rData[i][9]) };
-        daId = rowId; break;
-      }
-    }
-  }
-  if (daInfo && !daInfo.alias) { var _ri = lookupRushIdentity(ss, daInfo.daId); daInfo.alias = _ri ? (_ri.alias || "") : ""; }
-  if (!daInfo) {
-    var rushId = lookupRushIdentity(ss, daId);
-    if (rushId) { daInfo = { daId: rushId.daId, daName: rushId.daName || rushId.daId, alias: rushId.alias || "", serviceType: "", wave: "", shiftEnd: "", dsp: rushId.dsp || "", status: "Roster Not Published", scanTime: "", break1: "", break2: "" }; daId = rushId.daId; }
-  }
-
-  var dSheet = ensureMasterDispatch(ss);
-  var dData = dSheet.getDataRange().getValues();
-  var userDispatches = [], activeBatches = {};
-  for (var j = 1; j < dData.length; j++) {
-    if (String(dData[j][0]).trim().toUpperCase() !== todayName) continue;
-    var rowDa = String(dData[j][1]).trim();
-    var bName = String(dData[j][4]).trim() || "Batch 1";
-    var rec = { daId: rowDa, batchName: bName, sentTime: cleanTimeStr(dData[j][5]), rushInTime: cleanTimeStr(dData[j][6]), ofdTime: cleanTimeStr(dData[j][8]), waitTime: cleanTimeStr(dData[j][10]), ymName: String(dData[j][3]).trim() };
-    if (!activeBatches[bName]) activeBatches[bName] = [];
-    activeBatches[bName].push(rec);
-    if (rowDa.toUpperCase() === daId.toUpperCase()) userDispatches.push(rec);
-  }
-
-  var turnCount = 0;
-  for (var t = 0; t < userDispatches.length; t++) if (userDispatches[t].rushInTime) turnCount++;
-
-  function _rk(x) {
-    if (x.waitTime && !x.sentTime && !x.rushInTime && !x.ofdTime) return 4;
-    if (x.sentTime && !x.rushInTime && !x.ofdTime) return 3;
-    if (x.rushInTime && !x.ofdTime) return 2;
-    return 1;
-  }
-  var latest = null;
-  for (var li = 0; li < userDispatches.length; li++) if (!latest || _rk(userDispatches[li]) >= _rk(latest)) latest = userDispatches[li];
-
-  var dispatchState = "NOT_CHECKED_IN", batchName = "", batchPosition = 0, batchTotal = 0, waitingPosition = 0, totalWaiting = 0;
-  if (daInfo && (daInfo.status === "Present" || daInfo.status === "Late Arrival" || daInfo.status === "Replacement Present")) dispatchState = "WAITING";
-  if (latest) {
-    batchName = latest.batchName;
-    if (latest.ofdTime) dispatchState = "OFD";
-    else if (latest.rushInTime) dispatchState = "RECEIVED_INSIDE";
-    else if (latest.sentTime) dispatchState = "SENT_TO_OP";
-    else if (latest.waitTime) dispatchState = "WAITING";
-    if (dispatchState === "WAITING" && activeBatches[batchName]) {
-      var batchMembers = activeBatches[batchName].filter(function(x){ return x.waitTime && !x.sentTime; });
-      batchMembers.sort(function(a,b){ return parseTimeToMins(a.waitTime) - parseTimeToMins(b.waitTime); });
-      batchTotal = batchMembers.length;
-      for (var b = 0; b < batchMembers.length; b++) if (batchMembers[b].daId.toUpperCase() === daId.toUpperCase()) { batchPosition = b + 1; break; }
-      var allWaiting = [];
-      for (var bn in activeBatches) (activeBatches[bn] || []).forEach(function(x){ if (x.waitTime && !x.sentTime) allWaiting.push(x); });
-      allWaiting.sort(function(a,b){ return parseTimeToMins(a.waitTime) - parseTimeToMins(b.waitTime); });
-      totalWaiting = allWaiting.length;
-      for (var w = 0; w < allWaiting.length; w++) if (allWaiting[w].daId.toUpperCase() === daId.toUpperCase()) { waitingPosition = w + 1; break; }
-    }
-  }
-  var brkCheck = isInsideBreak(curMins, daInfo ? daInfo.break1 : "", daInfo ? daInfo.break2 : "");
   return {
-    success: true, serverTime: nowStr, settings: settings, daInfo: daInfo, dispatchState: dispatchState,
-    batchName: batchName, batchPosition: batchPosition, batchTotal: batchTotal, waitingPosition: waitingPosition, totalWaiting: totalWaiting,
-    checkInTime: daInfo ? daInfo.scanTime : "", sentTime: latest ? latest.sentTime : "", rushInTime: latest ? latest.rushInTime : "",
-    ofdTime: latest ? latest.ofdTime : "", waitTime: latest ? latest.waitTime : "",
-    inBreak: brkCheck.inBreak, breakRange: brkCheck.range || "", turnCount: turnCount
+    found: true,
+    daId: (info && info.daId) || currentDaId,
+    daName: (info && info.daName) || currentDaId,
+    alias: (info && info.alias) || currentAlias || "",
+    dspName: (info && info.dsp) || "DUD3",
+    waveTime: (info && info.wave) || "",
+    serverTime: res.serverTime || "",
+
+    status: status,
+    batchName: res.batchName || "",
+    batchPosition: res.batchPosition || res.waitingPosition || 0,
+    batchTotal: res.batchTotal || res.totalWaiting || 0,
+
+    checkInTime: res.checkInTime || (info && info.scanTime) || "",
+    waitTime: res.waitTime || "",
+    sentTime: res.sentTime || "",
+    rushInTime: res.rushInTime || "",
+    ofdTime: res.ofdTime || "",
+
+    rushTimeout: settings.rushTimeoutMin || 20,
+    autoOfd: settings.autoOfdMin || 30,
+    turnCount: res.turnCount || 0
   };
 }
+
+function hhmmToSec(str) {
+  if (!str) return null;
+  var m = String(str).replace(/^'+/, "").trim().match(/(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)?/);
+  if (!m) return null;
+  var h = parseInt(m[1], 10), min = parseInt(m[2], 10), a = m[3] ? m[3].toUpperCase() : "";
+  if (a === "PM" && h < 12) h += 12;
+  if (a === "AM" && h === 12) h = 0;
+  return (h * 3600) + (min * 60);
+}
+
+function localNowSec() {
+  var d = new Date();
+  return d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds();
+}
+
+function dubaiNowSec() { return localNowSec() + serverOffsetSec; }
+
+function formatHMS(totalSec) {
+  totalSec = Math.max(0, Math.floor(totalSec));
+  var h = Math.floor(totalSec / 3600);
+  var m = Math.floor((totalSec % 3600) / 60);
+  var s = totalSec % 60;
+  return ("0" + h).slice(-2) + ":" + ("0" + m).slice(-2) + ":" + ("0" + s).slice(-2);
+}
+
+function updateDashboard(data) {
+  if (data.serverTime) {
+    var srvSec = hhmmToSec(data.serverTime);
+    if (srvSec !== null) {
+      var d = new Date();
+      serverOffsetSec = (srvSec + d.getSeconds()) - localNowSec();
+    }
+  }
+
+  document.getElementById("dashboard").style.display = "block";
+
+  // Alias-only identity (never the DA name) — prefer server alias, fall back to selection.
+  var aliasShown = data.alias || currentAlias || data.daId || "--";
+  currentAlias = data.alias || currentAlias;
+  document.getElementById("d-name").textContent = aliasShown;      // profile "Alias" row
+  document.getElementById("d-id").textContent = data.daId || "--";
+  document.getElementById("d-dsp").textContent = data.dspName || "DUD3";
+  document.getElementById("d-wave").textContent = data.waveTime || "Not Assigned";
+
+  // QR identity card (styled like the printed DA card): alias big, DA ID, DSP, QR=DA ID.
+  document.getElementById("d-alias").textContent = aliasShown;
+  document.getElementById("qr-daid").textContent = data.daId || "--";
+  document.getElementById("qr-dsp").textContent = "DSP: " + (data.dspName || "DUD3");
+  if (document.getElementById("qr-box").childNodes.length === 0 && data.daId) renderQr(data.daId);
+
+  document.getElementById("d-batch").textContent = data.batchName || "Not Queued";
+  var turns = data.turnCount || 0;
+  document.getElementById("d-turn").textContent = turns > 0 ? ("Turn " + turns) : "No turns yet";
+  var st = String(data.status || "");
+  if (st === "Waiting" && data.batchPosition > 0) {
+    document.getElementById("d-wait-num").textContent = "#" + data.batchPosition + " of " + data.batchTotal;
+  } else if (st === "Sent to OP") {
+    document.getElementById("d-wait-num").textContent = "DISPATCHED";
+  } else if (st === "Received") {
+    document.getElementById("d-wait-num").textContent = "IN STATION";
+  } else {
+    document.getElementById("d-wait-num").textContent = "--";
+  }
+
+  const statusEl = document.getElementById("d-status");
+  statusEl.textContent = (st || "Not Checked In").toUpperCase();
+  if (st.indexOf("Absent") !== -1 || st.indexOf("Break") !== -1) statusEl.style.color = "var(--red)";
+  else if (st.indexOf("Received") !== -1 || st.indexOf("OFD") !== -1) statusEl.style.color = "var(--green)";
+  else if (st.indexOf("Sent") !== -1) statusEl.style.color = "var(--orange)";
+  else if (st.indexOf("Waiting") !== -1) statusEl.style.color = "var(--blue)";
+  else statusEl.style.color = "var(--text)";
+
+  setupTimers(data);
+}
+
+function setupTimers(data) {
+  const timerBox = document.getElementById("timer-container");
+  const timerLabel = document.getElementById("timer-label");
+  const timerDisplay = document.getElementById("d-timer");
+  if (countdownInterval) clearInterval(countdownInterval);
+  timerBox.style.display = "none";
+  var st = String(data.status || "");
+
+  var startRef = hhmmToSec(data.waitTime || data.checkInTime);
+  var sentRef  = hhmmToSec(data.sentTime);
+  var rushRef  = hhmmToSec(data.rushInTime);
+
+  // 1. WAITING TIMER (counts UP)
+  if ((st === "Waiting" || st === "Present" || st.indexOf("Late") !== -1 || st.indexOf("Replacement") !== -1) && startRef !== null) {
+    timerBox.style.display = "block";
+    timerLabel.textContent = "\u23f3 Waiting Time in " + (data.batchName || "Queue");
+    timerLabel.style.color = "var(--orange)";
+    timerDisplay.style.color = "var(--orange)";
+    var tickWait = function() {
+      var elapsed = Math.max(0, dubaiNowSec() - startRef);
+      timerDisplay.textContent = formatHMS(elapsed);
+    };
+    tickWait();
+    countdownInterval = setInterval(tickWait, 1000);
+  }
+  // 2. SENT TO RUSH QUEUE DEADLINE (counts DOWN)
+  else if (st === "Sent to OP" && sentRef !== null) {
+    var deadlineSec = sentRef + ((Number(data.rushTimeout) || 20) * 60);
+    timerBox.style.display = "block";
+    timerLabel.textContent = "\ud83d\udea8 Proceed to Rush Queue \u2014 Entry Deadline";
+    var tickSent = function() {
+      var rem = deadlineSec - dubaiNowSec();
+      if (rem <= 0) { timerDisplay.style.color = "var(--red)"; timerDisplay.textContent = "SLA EXCEEDED"; }
+      else { timerDisplay.style.color = "var(--green)"; timerDisplay.textContent = formatHMS(rem); }
+    };
+    tickSent();
+    countdownInterval = setInterval(tickSent, 1000);
+  }
+  // 3. RECEIVED INSIDE -> AUTO OFD COUNTDOWN
+  else if (st === "Received" && rushRef !== null && !data.ofdTime) {
+    var ofdDeadline = rushRef + ((Number(data.autoOfd) || 30) * 60);
+    timerBox.style.display = "block";
+    timerLabel.textContent = "\ud83d\ude9a Inside Station \u2014 Auto OFD In";
+    timerDisplay.style.color = "var(--green)";
+    var tickRcv = function() {
+      var rem = Math.max(0, ofdDeadline - dubaiNowSec());
+      timerDisplay.textContent = formatHMS(rem);
+    };
+    tickRcv();
+    countdownInterval = setInterval(tickRcv, 1000);
+  }
+}
+</script>
+</body>
+</html>
