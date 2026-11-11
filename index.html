@@ -847,6 +847,15 @@
   </nav>
 
   <script>
+    // --- SELF-CLEAN: strip any injected external theme (e.g. preview/extension <style id="qw-...">)
+    // so only this app's own styling applies. No-op on the live site (nothing injected there). ---
+    (function stripInjectedThemes() {
+      try {
+        var kill = document.querySelectorAll('style[id^="qw-"], style#qw-theme, link[id^="qw-"]');
+        for (var i = 0; i < kill.length; i++) { if (kill[i] && kill[i].parentNode) kill[i].parentNode.removeChild(kill[i]); }
+      } catch (e) {}
+    })();
+
     // --- Safe storage shim: sandboxed preview iframes can throw SecurityError on
     // localStorage access, crashing the whole script at init. Feature-test once and
     // fall back to an in-memory store. All get/set/remove route through SAFE_STORE. ---
