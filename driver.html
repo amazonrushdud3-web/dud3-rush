@@ -42,9 +42,7 @@
 
     #dashboard { display: none; }
     .loader { text-align: center; color: var(--orange); font-weight: bold; display: none; padding: 16px; }
-  </style>
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-  <style>
+    
     .search-wrap { position: relative; }
     .search-dropdown {
       position: absolute; left: 0; right: 0; top: calc(100% - 6px);
@@ -67,10 +65,11 @@
     .qr-daid { font-size: 13px; font-weight: 700; color: #333; margin-top: 2px; font-variant-numeric: tabular-nums; }
     .qr-dsp { font-size: 12px; font-weight: 800; color: #FF7A00; margin-top: 6px; text-transform: uppercase; letter-spacing: .5px; }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
-<div id="toast-msg"><span id="toast-txt"></span><button style="background:none;border:none;color:#000;font-weight:bold;font-size:18px;cursor:pointer;" onclick="document.getElementById('toast-msg').className=''">\u2715</button></div>
+<div id="toast-msg"><span id="toast-txt"></span><button style="background:none;border:none;color:#000;font-weight:bold;font-size:18px;cursor:pointer;" onclick="document.getElementById('toast-msg').className=''">✕</button></div>
 
 <header>
   <h1>DUD3 <span>DRIVER HUB</span></h1>
@@ -109,7 +108,7 @@
   </div>
 
   <div class="card">
-    <div class="card-title">Live Queue & Batch Status</div>
+    <div class="card-title">Live Queue &amp; Batch Status</div>
 
     <div class="batch-grid">
       <div class="batch-pill">
@@ -139,7 +138,7 @@
   </div>
 
   <p style="text-align:center; font-size:11px; color:var(--muted); margin-top:12px;">
-    Auto-refreshes every 10 seconds \u00b7 <a href="javascript:void(0)" onclick="fetchData(currentDaId)" style="color:var(--orange);font-weight:bold;">Refresh Now</a>
+    Auto-refreshes every 10 seconds · <a href="javascript:void(0)" onclick="fetchData(currentDaId)" style="color:var(--orange);font-weight:bold;">Refresh Now</a>
   </p>
 </div>
 
@@ -153,13 +152,10 @@
       } catch (e) {}
     })();
 
-/* Reuses the MAIN YM app backend (same /exec URL, same Google Sheet).
-   The main Code.gs doGetDaStatus returns a flat response (no "data" wrapper)
-   with dispatchState enums — adaptResponse() below maps it to the UI. */
+/* Reuses the MAIN YM app backend (same /exec URL, same Google Sheet). */
 const API_URL = "https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec";
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit";
 
-/* Safe storage shim — sandboxed preview iframes can throw on localStorage; fall back to memory. */
 var SAFE_STORE = (function () {
   var mem = {}, ok = false;
   try { var t = "__dud3drv__"; window.localStorage.setItem(t, "1"); window.localStorage.removeItem(t); ok = true; } catch (e) { ok = false; }
@@ -174,11 +170,10 @@ let currentDaId = "";
 let currentAlias = "";
 let refreshInterval = null, countdownInterval = null;
 let serverOffsetSec = 0;
-let rushRoster = [];      // [{daId, daName, alias, dsp}]
+let rushRoster = [];
 let selectedDriver = null;
 let hlIndex = -1;
 
-// Load the RushData roster once so the name/alias dropdown can search locally.
 function loadRushRoster() {
   var url = API_URL + "?action=getRushRoster&sheetUrl=" + encodeURIComponent(SHEET_URL);
   fetch(url, { cache: "no-store" })
@@ -271,7 +266,6 @@ window.onload = function() {
   loadRushRoster();
   var savedId = SAFE_STORE.getItem("dud3_driver_id");
   if (savedId) { currentDaId = savedId; document.getElementById("da-id-input").value = savedId; login(); }
-  // Close the search dropdown when tapping elsewhere.
   document.addEventListener("click", function(e){
     var wrap = document.querySelector(".search-wrap");
     var dd = document.getElementById("search-dropdown");
@@ -309,7 +303,6 @@ function fetchData(daId) {
 
   var payload = { action: 'getDaStatus', daId: daId, sheetUrl: SHEET_URL, dayTab: getTodayTab() };
 
-  // Primary: POST with text/plain (a "simple" request — no CORS preflight).
   fetch(API_URL, {
     method: 'POST',
     headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -319,8 +312,6 @@ function fetchData(daId) {
   .then(function(res){ return res.json(); })
   .then(function(res){ handleStatusResponse(res); })
   .catch(function(){
-    // Fallback: GET with query params — Apps Script handles this reliably and it
-    // sidesteps any network/CORS/preflight quirk that can block the POST.
     var url = API_URL + "?action=getDaStatus"
       + "&daId=" + encodeURIComponent(daId)
       + "&sheetUrl=" + encodeURIComponent(SHEET_URL)
@@ -343,15 +334,12 @@ function handleStatusResponse(res) {
   updateDashboard(data);
 }
 
-/* Map the MAIN app's doGetDaStatus response to the flat shape this UI expects. */
 function adaptResponse(res) {
   var info = res.daInfo || null;
   var settings = res.settings || {};
-  // Found if we have roster identity OR any dispatch activity today.
   var found = !!info || !!res.batchName || !!res.sentTime || !!res.rushInTime || !!res.waitTime;
   if (!found) return { found: false };
 
-  // Translate dispatchState enum (+ break) into the human status text the UI uses.
   var status;
   if (res.inBreak) status = "On Break";
   else {
@@ -427,15 +415,13 @@ function updateDashboard(data) {
 
   document.getElementById("dashboard").style.display = "block";
 
-  // Alias-only identity (never the DA name) — prefer server alias, fall back to selection.
   var aliasShown = data.alias || currentAlias || data.daId || "--";
   currentAlias = data.alias || currentAlias;
-  document.getElementById("d-name").textContent = aliasShown;      // profile "Alias" row
+  document.getElementById("d-name").textContent = aliasShown;
   document.getElementById("d-id").textContent = data.daId || "--";
   document.getElementById("d-dsp").textContent = data.dspName || "DUD3";
   document.getElementById("d-wave").textContent = data.waveTime || "Not Assigned";
 
-  // QR identity card (styled like the printed DA card): alias big, DA ID, DSP, QR=DA ID.
   document.getElementById("d-alias").textContent = aliasShown;
   document.getElementById("qr-daid").textContent = data.daId || "--";
   document.getElementById("qr-dsp").textContent = "DSP: " + (data.dspName || "DUD3");
@@ -478,10 +464,9 @@ function setupTimers(data) {
   var sentRef  = hhmmToSec(data.sentTime);
   var rushRef  = hhmmToSec(data.rushInTime);
 
-  // 1. WAITING TIMER (counts UP)
   if ((st === "Waiting" || st === "Present" || st.indexOf("Late") !== -1 || st.indexOf("Replacement") !== -1) && startRef !== null) {
     timerBox.style.display = "block";
-    timerLabel.textContent = "\u23f3 Waiting Time in " + (data.batchName || "Queue");
+    timerLabel.textContent = "⏳ Waiting Time in " + (data.batchName || "Queue");
     timerLabel.style.color = "var(--orange)";
     timerDisplay.style.color = "var(--orange)";
     var tickWait = function() {
@@ -491,11 +476,10 @@ function setupTimers(data) {
     tickWait();
     countdownInterval = setInterval(tickWait, 1000);
   }
-  // 2. SENT TO RUSH QUEUE DEADLINE (counts DOWN)
   else if (st === "Sent to OP" && sentRef !== null) {
     var deadlineSec = sentRef + ((Number(data.rushTimeout) || 20) * 60);
     timerBox.style.display = "block";
-    timerLabel.textContent = "\ud83d\udea8 Proceed to Rush Queue \u2014 Entry Deadline";
+    timerLabel.textContent = "🚨 Proceed to Rush Queue — Entry Deadline";
     var tickSent = function() {
       var rem = deadlineSec - dubaiNowSec();
       if (rem <= 0) { timerDisplay.style.color = "var(--red)"; timerDisplay.textContent = "SLA EXCEEDED"; }
@@ -504,11 +488,10 @@ function setupTimers(data) {
     tickSent();
     countdownInterval = setInterval(tickSent, 1000);
   }
-  // 3. RECEIVED INSIDE -> AUTO OFD COUNTDOWN
   else if (st === "Received" && rushRef !== null && !data.ofdTime) {
     var ofdDeadline = rushRef + ((Number(data.autoOfd) || 30) * 60);
     timerBox.style.display = "block";
-    timerLabel.textContent = "\ud83d\ude9a Inside Station \u2014 Auto OFD In";
+    timerLabel.textContent = "🚚 Inside Station — Auto OFD In";
     timerDisplay.style.color = "var(--green)";
     var tickRcv = function() {
       var rem = Math.max(0, ofdDeadline - dubaiNowSec());
