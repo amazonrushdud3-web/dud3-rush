@@ -57,7 +57,7 @@
     .si-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
     .search-empty { padding: 12px 14px; color: var(--muted); font-size: 12px; text-align: center; }
 
-    /* QR identity card (styled like the printed DA QR card) */
+    /* QR identity card */
     .qr-card { background: #FFFFFF; border-radius: 16px; padding: 18px 16px; text-align: center; color: #111; }
     .qr-canvas-wrap { display: inline-flex; padding: 10px; background: #fff; border-radius: 10px; }
     .qr-canvas-wrap img, .qr-canvas-wrap canvas { display: block; }
@@ -143,16 +143,6 @@
 </div>
 
 <script>
-    // --- SELF-CLEAN: strip any injected external theme (e.g. preview/extension <style id="qw-...">)
-    // so only this app's own styling applies. No-op on the live site (nothing injected there). ---
-    (function stripInjectedThemes() {
-      try {
-        var kill = document.querySelectorAll('style[id^="qw-"], style#qw-theme, link[id^="qw-"]');
-        for (var i = 0; i < kill.length; i++) { if (kill[i] && kill[i].parentNode) kill[i].parentNode.removeChild(kill[i]); }
-      } catch (e) {}
-    })();
-
-/* Reuses the MAIN YM app backend (same /exec URL, same Google Sheet). */
 const API_URL = "https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec";
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit";
 
@@ -173,13 +163,14 @@ let serverOffsetSec = 0;
 let rushRoster = [];
 let selectedDriver = null;
 let hlIndex = -1;
+let lastRenderedQrId = "";
 
 function loadRushRoster() {
   var url = API_URL + "?action=getRushRoster&sheetUrl=" + encodeURIComponent(SHEET_URL);
   fetch(url, { cache: "no-store" })
     .then(function(r){ return r.json(); })
     .then(function(res){ if (res && res.success && res.roster) rushRoster = res.roster; })
-    .catch(function(){ /* dropdown still allows manual ID entry */ });
+    .catch(function(){});
 }
 
 function onSearchInput() {
@@ -245,12 +236,17 @@ function pickDriver(d) {
 function escapeHtml(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
 function renderQr(daId) {
+  var daIdStr = String(daId);
+  if (lastRenderedQrId === daIdStr) return; // Prevent redrawing if already correct
+
   var box = document.getElementById("qr-box");
   if (!box) return;
   box.innerHTML = "";
+  
   try {
     if (typeof QRCode !== "undefined") {
-      new QRCode(box, { text: String(daId), width: 170, height: 170, colorDark: "#0F151C", colorLight: "#FFFFFF", correctLevel: QRCode.CorrectLevel.M });
+      new QRCode(box, { text: daIdStr, width: 170, height: 170, colorDark: "#0F151C", colorLight: "#FFFFFF", correctLevel: QRCode.CorrectLevel.M });
+      lastRenderedQrId = daIdStr;
     } else {
       box.innerHTML = '<div style="color:#888;font-size:12px;padding:20px;">QR unavailable</div>';
     }
@@ -295,6 +291,8 @@ function logout() {
   document.getElementById("dashboard").style.display = "none";
   document.getElementById("login-sec").style.display = "block";
   document.getElementById("da-id-input").value = "";
+  document.getElementById("qr-box").innerHTML = "";
+  lastRenderedQrId = "";
 }
 
 function fetchData(daId) {
@@ -425,7 +423,8 @@ function updateDashboard(data) {
   document.getElementById("d-alias").textContent = aliasShown;
   document.getElementById("qr-daid").textContent = data.daId || "--";
   document.getElementById("qr-dsp").textContent = "DSP: " + (data.dspName || "DUD3");
-  if (document.getElementById("qr-box").childNodes.length === 0 && data.daId) renderQr(data.daId);
+  
+  if (data.daId) renderQr(data.daId);
 
   document.getElementById("d-batch").textContent = data.batchName || "Not Queued";
   var turns = data.turnCount || 0;
