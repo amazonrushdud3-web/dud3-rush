@@ -237,7 +237,7 @@ function escapeHtml(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,
 
 function renderQr(daId) {
   var daIdStr = String(daId);
-  if (lastRenderedQrId === daIdStr) return; // Prevent redrawing if already correct
+  if (lastRenderedQrId === daIdStr) return; 
 
   var box = document.getElementById("qr-box");
   if (!box) return;
