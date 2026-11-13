@@ -10,7 +10,6 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Rush PRO">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
   <style>
@@ -42,7 +41,6 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; }
     input, select { user-select: text; }
     html { -webkit-text-size-adjust: 100%; max-width: 100%; overflow-x: hidden; }
-    
     body { background: var(--bg-grad); background-attachment: fixed; color: var(--text); height: 100dvh; max-width: 100%; overflow: hidden; display: flex; flex-direction: column; }
 
     header {
@@ -95,7 +93,6 @@
     
     .time-badge { font-size: 11px; font-weight: 700; padding: 3px 6px; border-radius: 6px; background: #121A24; border: 1px solid var(--border); color: #CBD5E1; font-variant-numeric: tabular-nums; }
     
-    /* HARDWARE SCANNER */
     .scanner-card { padding: 12px; display: flex; flex-direction: column; align-items: center; }
     .scanner-viewport-wrap { position: relative; width: 100%; max-width: 300px; aspect-ratio: 1/1; background: #000; border-radius: 14px; overflow: hidden; border: 2px solid #2B3E52; }
     #qr-reader-attend, #qr-reader-waiting, #qr-reader-receive { width: 100% !important; height: 100% !important; }
@@ -103,8 +100,6 @@
     .laser-line { position: absolute; width: 100%; height: 3px; background: linear-gradient(90deg, transparent, #FF9900, #FF3300, transparent); box-shadow: 0 0 10px #FF9900; animation: scanLaser 1.6s infinite ease-in-out; pointer-events: none; z-index: 10; display:none; }
     @keyframes scanLaser { 0% { top: 6%; opacity: 0.2; } 50% { top: 92%; opacity: 1; } 100% { top: 6%; opacity: 0.2; } }
     .scanner-wrap-active .laser-line { display: block; }
-    .scanner-idle { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; z-index: 12; color: var(--text-dim); text-align: center; background: #05090D; }
-    .scanner-wrap-active .scanner-idle { display: none; }
     
     .scanner-input-bar { width: 100%; margin-top: 10px; display: flex; gap: 8px; position: relative; }
     .text-input { flex: 1; background: var(--card-alt); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; color: #FFF; font-size: 14px; outline: none; min-height: 42px; }
@@ -112,12 +107,9 @@
     
     .btn { background: linear-gradient(180deg, #FFAD1F, #FF8F00); color: #000; font-weight: 800; border: none; border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; justify-content: center; white-space: nowrap; min-height: 42px; }
     .btn:active { transform: scale(0.96); }
-    .btn-green { background: linear-gradient(180deg, #1ED48C, #10B478); color: #03210C; }
+    .btn-green { background: linear-gradient(180deg, #1ED48C, #10B478); color: #052015; }
     .btn-card { background: var(--card-hi); color: #FFF; border: 1px solid #334760; }
     
-    .search-results-dropdown { position: absolute; top: 44px; left: 0; right: 0; background: #1B2634; border: 1px solid var(--orange); border-radius: 8px; max-height: 210px; overflow-y: auto; z-index: 150; box-shadow: 0 10px 28px rgba(0,0,0,0.65); display: none; }
-    .dropdown-item { padding: 10px 12px; border-bottom: 1px solid #233142; cursor: pointer; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
-
     .metric-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom:12px; }
     .metric-box { background: linear-gradient(180deg, var(--card-hi), var(--card-alt)); border-radius: 10px; padding: 10px 4px; text-align: center; border: 1px solid var(--border); }
     .metric-val { font-size: 20px; font-weight: 900; font-variant-numeric: tabular-nums; }
@@ -131,15 +123,6 @@
     .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: var(--text-dim); cursor: pointer; font-size: 10px; font-weight: 700; background: transparent; border: none; }
     .nav-item svg { width: 20px; height: 20px; fill: currentColor; }
     .nav-item.active { color: var(--orange); }
-
-    /* Desktop Adjustments */
-    @media (min-width: 760px) {
-      main { padding-left: 24px; padding-right: 24px; }
-      .tab-content { max-width: 1180px; margin: 0 auto; width: 100%; }
-      #tab-attend.active, #tab-waiting.active, #tab-receive.active { display: grid; grid-template-columns: 360px 1fr; gap: 18px; align-items: start; }
-      .scanner-card { position: sticky; top: 8px; }
-      .crd:not(.scanner-card) { grid-column: 2; }
-    }
   </style>
 </head>
 <body>
@@ -154,7 +137,6 @@
     </div>
     <div class="top-status">
       <div class="sync-badge" id="sync-status"><span class="sync-dot"></span><span id="sync-text">LIVE</span></div>
-      <div class="clock-display" id="dubai-clock">--:--</div>
     </div>
   </header>
   
@@ -167,17 +149,15 @@
     <div class="tab-content active" id="tab-attend">
       <div class="crd scanner-card">
         <div class="crd-t">📷 DA Attendance Scan</div>
-        <button class="btn btn-green" id="btn-start-attend" style="width:100%; margin-bottom:10px;">▶ START SCANNER</button>
-        <button class="btn btn-card" id="btn-stop-attend" style="width:100%; margin-bottom:10px; display:none;">■ STOP SCANNER</button>
+        <button class="btn btn-green" id="btn-start-attend" onclick="startScanner('tab-attend')" style="width:100%; margin-bottom:10px;">▶ START SCANNER</button>
+        <button class="btn btn-card" id="btn-stop-attend" onclick="stopScanner('tab-attend')" style="width:100%; margin-bottom:10px; display:none;">■ STOP SCANNER</button>
         <div class="scanner-viewport-wrap">
           <div id="qr-reader-attend"></div>
-          <div class="scanner-idle"><div class="idle-title">Camera Off</div></div>
           <div class="laser-line"></div>
         </div>
         <div class="scanner-input-bar">
           <input type="text" id="attend-inp" class="text-input" placeholder="Scan or Type DA ID..." autocomplete="off">
           <button class="btn" id="btn-attend-checkin">Check In</button>
-          <div class="search-results-dropdown" id="attend-search-results"></div>
         </div>
       </div>
 
@@ -189,9 +169,7 @@
       </div>
 
       <div class="batch-card">
-        <div class="batch-header">
-          <div class="batch-title">🕒 Recent Check-Ins</div>
-        </div>
+        <div class="batch-header"><div class="batch-title">🕒 Recent Check-Ins</div></div>
         <div class="da-list" id="recent-att-list"></div>
       </div>
     </div>
@@ -200,22 +178,16 @@
     <div class="tab-content" id="tab-waiting">
       <div class="crd scanner-card" style="border-color:var(--green)">
         <div class="crd-t" style="color:var(--green)">📥 Add to Waiting Queue</div>
-        <button class="btn btn-green" id="btn-start-waiting" style="width:100%; margin-bottom:10px;">▶ START SCANNER</button>
-        <button class="btn btn-card" id="btn-stop-waiting" style="width:100%; margin-bottom:10px; display:none;">■ STOP SCANNER</button>
+        <button class="btn btn-green" id="btn-start-waiting" onclick="startScanner('tab-waiting')" style="width:100%; margin-bottom:10px;">▶ START SCANNER</button>
+        <button class="btn btn-card" id="btn-stop-waiting" onclick="stopScanner('tab-waiting')" style="width:100%; margin-bottom:10px; display:none;">■ STOP SCANNER</button>
         <div class="scanner-viewport-wrap">
           <div id="qr-reader-waiting"></div>
-          <div class="scanner-idle"><div class="idle-title">Camera Off</div></div>
           <div class="laser-line"></div>
         </div>
         <div class="scanner-input-bar">
           <input type="text" id="waiting-inp" class="text-input" placeholder="Scan DA ID to Queue..." autocomplete="off">
           <button class="btn btn-green" id="btn-waiting-enqueue">Queue</button>
-          <div class="search-results-dropdown" id="waiting-search-results"></div>
         </div>
-      </div>
-
-      <div class="crd" style="padding:10px;">
-        <input type="text" id="inp-ym" class="text-input" placeholder="Yard Marshal Name (required to send)" style="width:100%; margin-bottom:8px;">
       </div>
 
       <div id="waiting-batches-container" style="display:flex; flex-direction:column; gap:12px;"></div>
@@ -228,38 +200,27 @@
         <div class="scanner-input-bar">
           <input type="text" id="break-inp" class="text-input" placeholder="Scan DA ID..." autocomplete="off">
           <button class="btn" id="btn-start-break" style="background:#FBBF24;">Send on Break</button>
-          <div class="search-results-dropdown" id="break-search-results"></div>
         </div>
       </div>
       <div class="batch-card">
-        <div class="batch-header"><div class="batch-title">☕ Currently on Break</div><span class="batch-badge" id="break-badge-count">0</span></div>
+        <div class="batch-header"><div class="batch-title">☕ Currently on Break</div></div>
         <div class="da-list" id="breaks-da-list"></div>
       </div>
     </div>
-    
-    <!-- TAB 4: VIOLATORS -->
-    <div class="tab-content" id="tab-violators">
-      <div class="batch-card" style="border-color:var(--red)">
-        <div class="batch-header"><div class="batch-title" style="color:var(--red)">🚫 Active Violators</div><span class="batch-badge" id="violator-badge-count" style="background:var(--red);color:#fff">0</span></div>
-        <div class="da-list" id="violators-da-list"></div>
-      </div>
-    </div>
 
-    <!-- TAB 5: RECEIVE -->
+    <!-- TAB 4: RECEIVE -->
     <div class="tab-content" id="tab-receive">
       <div class="crd scanner-card" style="border-color:var(--green)">
         <div class="crd-t" style="color:var(--green)">✅ Receive Inside Warehouse</div>
-        <button class="btn btn-green" id="btn-start-receive" style="width:100%; margin-bottom:10px;">▶ START SCANNER</button>
-        <button class="btn btn-card" id="btn-stop-receive" style="width:100%; margin-bottom:10px; display:none;">■ STOP SCANNER</button>
+        <button class="btn btn-green" id="btn-start-receive" onclick="startScanner('tab-receive')" style="width:100%; margin-bottom:10px;">▶ START SCANNER</button>
+        <button class="btn btn-card" id="btn-stop-receive" onclick="stopScanner('tab-receive')" style="width:100%; margin-bottom:10px; display:none;">■ STOP SCANNER</button>
         <div class="scanner-viewport-wrap">
           <div id="qr-reader-receive"></div>
-          <div class="scanner-idle"><div class="idle-title">Camera Off</div></div>
           <div class="laser-line"></div>
         </div>
         <div class="scanner-input-bar">
           <input type="text" id="receive-inp" class="text-input" placeholder="Scan DA ID at station..." autocomplete="off">
           <button class="btn btn-green" id="btn-receive-scanin">Receive</button>
-          <div class="search-results-dropdown" id="receive-search-results"></div>
         </div>
       </div>
 
@@ -274,18 +235,31 @@
       </div>
     </div>
 
-    <!-- TAB 6: ADMIN -->
+    <!-- TAB 5: ADMIN -->
     <div class="tab-content" id="tab-admin">
       <div class="crd">
         <div class="crd-t">⚙️ Global Settings</div>
+        
+        <label style="font-size:11px;color:var(--muted)">Yard Marshal Name</label>
+        <input type="text" id="cfg-ym-name" class="text-input" style="width:100%; margin-bottom:8px;">
+        
         <label style="font-size:11px;color:var(--muted)">Active Google Sheet URL</label>
-        <input type="text" id="s-sheet" class="text-input" style="width:100%; margin-bottom:8px;">
+        <input type="text" id="cfg-sheet-url" class="text-input" style="width:100%; margin-bottom:8px;">
+        
         <label style="font-size:11px;color:var(--muted)">Apps Script API URL</label>
-        <input type="text" id="s-api" class="text-input" style="width:100%; margin-bottom:12px;">
+        <input type="text" id="cfg-api-url" class="text-input" style="width:100%; margin-bottom:12px;">
+        
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
-          <div><label style="font-size:11px;color:var(--muted)">Batch Size</label><input type="number" id="s-batch" class="text-input" style="width:100%;"></div>
-          <div><label style="font-size:11px;color:var(--muted)">Admin PIN</label><input type="password" id="s-pin" class="text-input" style="width:100%;"></div>
+          <div><label style="font-size:11px;color:var(--muted)">Batch Size (DAs)</label><input type="number" id="cfg-batch-size" class="text-input" style="width:100%;"></div>
+          <div><label style="font-size:11px;color:var(--muted)">Receive Timeout (Min)</label><input type="number" id="cfg-rush-timeout" class="text-input" style="width:100%;"></div>
+          <div><label style="font-size:11px;color:var(--muted)">Auto-OFD Timer (Min)</label><input type="number" id="cfg-auto-ofd" class="text-input" style="width:100%;"></div>
+          <div><label style="font-size:11px;color:var(--muted)">Waiting Lock (Min)</label><input type="number" id="cfg-waiting-lock" class="text-input" style="width:100%;"></div>
+          <div><label style="font-size:11px;color:var(--muted)">Pre-Wave Block (Min)</label><input type="number" id="cfg-prewave" class="text-input" style="width:100%;"></div>
+          <div><label style="font-size:11px;color:var(--muted)">Wave Grace Period (Min)</label><input type="number" id="cfg-grace" class="text-input" style="width:100%;"></div>
+          <div><label style="font-size:11px;color:var(--muted)">Receive Violation (Min)</label><input type="number" id="cfg-entry-violation" class="text-input" style="width:100%;"></div>
+          <div><label style="font-size:11px;color:var(--muted)">Admin PIN</label><input type="password" id="cfg-admin-pin" class="text-input" style="width:100%;"></div>
         </div>
+
         <button class="btn btn-green" id="btn-save-settings" style="width:100%; margin-bottom:10px;">💾 Save Settings</button>
         <button class="btn btn-card" id="btn-clear-cache" style="width:100%; margin-bottom:10px;">🗑️ Clear Local Cache</button>
       </div>
@@ -297,13 +271,12 @@
     <button class="nav-item active" data-tab="tab-attend"><span>📋</span><span>Attend</span></button>
     <button class="nav-item" data-tab="tab-waiting"><span>📥</span><span>Waiting</span></button>
     <button class="nav-item" data-tab="tab-breaks"><span>☕</span><span>Breaks</span></button>
-    <button class="nav-item" data-tab="tab-violators"><span>🚫</span><span>Violators</span></button>
     <button class="nav-item" data-tab="tab-receive"><span>✅</span><span>Receive</span></button>
     <button class="nav-item" data-tab="tab-admin"><span>⚙️</span><span>Admin</span></button>
   </nav>
 
   <script>
-    // --- 1. LOCAL STORAGE SHIM ---
+    // 1. LOCAL STORAGE SHIM
     var SAFE_STORE = (function() {
       var mem = {}, ok = false;
       try { var tk = "__test__"; localStorage.setItem(tk, "1"); localStorage.removeItem(tk); ok = true; } catch (e) { ok = false; }
@@ -314,7 +287,7 @@
       };
     })();
 
-    // --- 2. GLOBAL STATE ---
+    // 2. GLOBAL STATE
     var DEFAULT_API = "https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec";
     var DEFAULT_SHEET = "https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit";
     
@@ -324,7 +297,7 @@
       ymName: SAFE_STORE.getItem("dud3_ym") || "YM",
       day: Utilities_formatDate(),
       settings: { batchSize: 25 },
-      roster: [], waitingBatches: {}, sentList: [], receivedList: [], violators: [], breaksActive: [],
+      roster: [], waitingBatches: {}, sentList: [], receivedList: [], breaksActive: [],
       scanners: {}, scannerActive: {}, scanCooldownMap: {},
       highestBatchNum: 0, batchAssignedTotals: {}
     };
@@ -339,12 +312,15 @@
     }
     function escapeHtml(s) { return String(s||"").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
 
-    // --- 3. AUDIO BEEP ---
+    // 3. AUDIO BEEP
     var audioCtx = null;
+    function initAudio() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+    }
     function playBeep(type) {
       try {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === "suspended") audioCtx.resume();
+        initAudio();
         var osc = audioCtx.createOscillator(), gain = audioCtx.createGain(), t = audioCtx.currentTime;
         osc.connect(gain); gain.connect(audioCtx.destination);
         if (type === "success") { osc.type = "sine"; osc.frequency.setValueAtTime(1800, t); gain.gain.setValueAtTime(0.3, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1); osc.start(t); osc.stop(t + 0.15); if(navigator.vibrate) navigator.vibrate(30); } 
@@ -366,7 +342,7 @@
       S.scanCooldownMap[key] = n; return true;
     }
 
-    // --- 4. THE SEQUENTIAL OUTBOX QUEUE ---
+    // 4. THE SEQUENTIAL OUTBOX QUEUE
     var OUTBOX_KEY = "dud3_outbox_v2";
     function loadOutbox() { try { return JSON.parse(SAFE_STORE.getItem(OUTBOX_KEY)||"[]")||[]; } catch(e){ return []; } }
     function saveOutbox(arr) { try { SAFE_STORE.setItem(OUTBOX_KEY, JSON.stringify(arr)); } catch(e){} updateOutboxBadge(arr.length); }
@@ -391,14 +367,11 @@
       fetch(S.api, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) })
       .then(function(res){ return res.json(); })
       .catch(function(){
-        // Fallback GET
         var u = S.api + "?action=" + encodeURIComponent(item.action) + "&clientId=" + encodeURIComponent(item.clientId) + "&dayTab=" + encodeURIComponent(S.day) + "&sheetUrl=" + encodeURIComponent(S.sheetUrl) + "&payload=" + encodeURIComponent(JSON.stringify(item.payload));
         return fetch(u).then(function(r){ return r.json(); });
       })
       .then(function(data){
-        if (data && data.retry) {
-          _flushing = false; setTimeout(flushOutbox, 1500); return;
-        }
+        if (data && data.retry) { _flushing = false; setTimeout(flushOutbox, 1500); return; }
         outboxRemove(item.clientId);
         _flushing = false;
         if (loadOutbox().length > 0) setTimeout(flushOutbox, 50);
@@ -410,7 +383,7 @@
     }
     window.addEventListener("online", flushOutbox);
 
-    // --- 5. DATA SYNCING ---
+    // 5. DATA SYNCING
     var pollTimer = null;
     function pollRoster() {
       if (loadOutbox().length > 0) return; 
@@ -426,11 +399,8 @@
           S.waitingBatches = d.waitingBatches || {};
           S.sentList = d.sentList || [];
           S.receivedList = d.receivedList || [];
-          S.violators = d.violators || [];
           S.breaksActive = d.breaksActive || [];
           if (d.settings) S.settings = Object.assign(S.settings, d.settings);
-          if (d.serverTime) document.getElementById("dubai-clock").textContent = d.serverTime;
-          syncBatchWatermarksFromState();
           renderAll();
         }
         clearTimeout(pollTimer);
@@ -444,68 +414,25 @@
       });
     }
 
-    // --- 6. OPTIMISTIC UI ACTIONS ---
-    function syncBatchWatermarksFromState() {
-      var maxB = S.highestBatchNum || 0;
-      var counts = {};
-
-      var bump = function(bName) {
-        if (!bName || bName === "DA's from Break") return;
-        var m = String(bName).match(/(\d+)/);
-        if (!m) return;
-        var n = parseInt(m[1], 10);
-        if (n > maxB) maxB = n;
-        counts[n] = (counts[n] || 0) + 1;
-      };
-
-      Object.keys(S.waitingBatches || {}).forEach(function(bn) {
-        (S.waitingBatches[bn] || []).forEach(function() { bump(bn); });
-      });
-      (S.sentList || []).forEach(function(s) { bump(s.batchName); });
-      (S.receivedList || []).forEach(function(r) { bump(r.batchName); });
-      (S.roster || []).forEach(function(d) {
-        if (d.dispatchStatus === "OFD" && d.batchName) bump(d.batchName);
-      });
-
-      S.highestBatchNum = maxB;
-      Object.keys(counts).forEach(function(k) {
-        S.batchAssignedTotals[k] = Math.max(S.batchAssignedTotals[k] || 0, counts[k]);
-      });
-    }
-
-    function getNextBatchNameOptimistic() {
-      syncBatchWatermarksFromState();
+    // 6. OPTIMISTIC UI ACTIONS
+    function getNextBatchName() {
       var cap = S.settings.batchSize || 25;
-
-      if (S.highestBatchNum === 0) {
-        S.highestBatchNum = 1;
-        S.batchAssignedTotals[1] = 1;
-        return "Batch 1";
-      }
-
-      var curNum = S.highestBatchNum;
-      var curBatchName = "Batch " + curNum;
-      var totalAssigned = S.batchAssignedTotals[curNum] || ((S.waitingBatches[curBatchName] || []).length);
-      var waitingNow = (S.waitingBatches[curBatchName] || []).length;
-      var sentOrRecFromCur = (S.sentList || []).some(function(s){ return s.batchName === curBatchName; }) ||
-                             (S.receivedList || []).some(function(r){ return r.batchName === curBatchName; });
-
-      if (totalAssigned >= cap || (sentOrRecFromCur && waitingNow === 0)) {
-        curNum = curNum + 1;
-        S.highestBatchNum = curNum;
-        S.batchAssignedTotals[curNum] = 1;
-        return "Batch " + curNum;
-      }
-
-      S.batchAssignedTotals[curNum] = totalAssigned + 1;
-      return "Batch " + curNum;
+      var maxN = 0, counts = {};
+      Object.keys(S.waitingBatches).forEach(function(bn){
+        var n = parseInt((bn.match(/\d+/) || [0])[0], 10);
+        if (n > maxN) maxN = n;
+        counts[n] = (counts[n] || 0) + S.waitingBatches[bn].length;
+      });
+      if (maxN === 0) return "Batch 1";
+      if ((counts[maxN] || 0) >= cap) return "Batch " + (maxN + 1);
+      return "Batch " + maxN;
     }
 
     function handleAttendanceCheckIn(daIdInput) {
+      initAudio();
       var daId = (daIdInput || document.getElementById("attend-inp").value).trim().toUpperCase();
       if (!daId || !isCooledDown("ATT_"+daId)) return;
       document.getElementById("attend-inp").value = "";
-      document.getElementById("attend-search-results").style.display = "none";
 
       var da = S.roster.find(function(d){ return d.daId.toUpperCase() === daId || (d.daName && d.daName.toUpperCase() === daId); });
       if (!da) { playBeep("error"); showBanner("DA not found in roster.", "danger"); return; }
@@ -513,7 +440,7 @@
 
       playBeep("success");
       var tNow = nowHHMM();
-      var bName = getNextBatchNameOptimistic();
+      var bName = getNextBatchName();
       da.status = "Present"; da.scanTime = tNow; da.batchName = bName; da.waitTime = tNow;
       if (!S.waitingBatches[bName]) S.waitingBatches[bName] = [];
       S.waitingBatches[bName].push(da);
@@ -524,6 +451,7 @@
     }
 
     function handleWaitingEnqueue(daIdInput) {
+      initAudio();
       var daId = (daIdInput || document.getElementById("waiting-inp").value).trim().toUpperCase();
       if (!daId || !isCooledDown("WAIT_"+daId)) return;
       document.getElementById("waiting-inp").value = "";
@@ -533,7 +461,7 @@
 
       playBeep("success");
       var tNow = nowHHMM();
-      var bName = getNextBatchNameOptimistic();
+      var bName = getNextBatchName();
       da.batchName = bName; da.waitTime = tNow;
       if (!S.waitingBatches[bName]) S.waitingBatches[bName] = [];
       S.waitingBatches[bName].push(da);
@@ -544,11 +472,12 @@
     }
 
     function doReceiveScanAction(daIdInput) {
+      initAudio();
       var daId = (daIdInput || document.getElementById("receive-inp").value).trim().toUpperCase();
       if (!daId || !isCooledDown("RCV_"+daId)) return;
       document.getElementById("receive-inp").value = "";
       
-      // Prevent Receive if not in Sent list
+      // 🛑 STRICT BLOCK: Reject if DA is not in Sent List
       var found = -1;
       for (var i=0; i<S.sentList.length; i++) { if (S.sentList[i].daId.toUpperCase() === daId) { found = i; break; } }
       if (found === -1) {
@@ -561,12 +490,13 @@
       item.rushInTime = nowHHMM();
       S.receivedList.unshift(item);
       playBeep("success");
-      showBanner("✅ Received: " + item.daName + " (" + item.batchName + ")", "success");
       renderAll();
+      
       outboxAdd({ clientId: genCid(), action: "rushScanIn", payload: { daId: daId, receiverName: S.ymName } });
     }
 
     function sendBatchAction(bName) {
+      initAudio();
       var daIds = (S.waitingBatches[bName] || []).map(function(d){ return d.daId; });
       if (!daIds.length) return;
       playBeep("success");
@@ -585,13 +515,26 @@
       outboxAdd({ clientId: genCid(), action: "sendDA", payload: { daIds: daIds, ymName: S.ymName, batchName: bName } });
     }
 
-    // --- 7. RENDERING ---
+    // 7. RENDERING
     function renderAll() {
       renderAttend(); renderWaiting(); renderReceive();
     }
     
     function renderAttend() {
       var c = document.getElementById("recent-att-list"); c.innerHTML = "";
+      var pCnt = 0, lCnt = 0, aCnt = 0;
+      
+      S.roster.forEach(function(da) {
+        if (da.status === "Present" || da.status === "Replacement Present") pCnt++;
+        else if (da.status === "Late Arrival") lCnt++;
+        else aCnt++;
+      });
+      
+      document.getElementById("cnt-present").textContent = pCnt;
+      document.getElementById("cnt-late").textContent = lCnt;
+      document.getElementById("cnt-absent").textContent = aCnt;
+      document.getElementById("cnt-total").textContent = S.roster.length;
+
       var recents = S.roster.filter(function(r){ return r.scanTime; }).reverse().slice(0, 50);
       recents.forEach(function(da){
         var r = document.createElement("div"); r.className = "da-row";
@@ -635,10 +578,55 @@
       document.getElementById("received-badge-count").textContent = S.receivedList.length;
     }
 
-    // --- 8. UI EVENT BINDING ---
+    // 8. SCANNER ENGINE
+    var SCANNER_MAP = {
+      "tab-attend":  { id: "qr-reader-attend",  key: "attend",  cb: handleAttendanceCheckIn },
+      "tab-waiting": { id: "qr-reader-waiting", key: "waiting", cb: handleWaitingEnqueue },
+      "tab-receive": { id: "qr-reader-receive", key: "receive", cb: doReceiveScanAction }
+    };
+
+    function startScanner(tabId) {
+      initAudio();
+      var target = SCANNER_MAP[tabId];
+      if (!target || S.scannerActive[tabId]) return;
+
+      if (!S.scanners[tabId]) {
+        S.scanners[tabId] = new Html5Qrcode(target.id, { experimentalFeatures: { useBarCodeDetectorIfSupported: true } });
+      }
+      S.scannerActive[tabId] = true;
+      document.getElementById(target.id).parentElement.classList.add("scanner-wrap-active");
+      document.getElementById("btn-start-" + target.key).style.display = "none";
+      document.getElementById("btn-stop-" + target.key).style.display = "";
+
+      S.scanners[tabId].start(
+        { facingMode: "environment" }, 
+        { fps: 30, qrbox: { width: 200, height: 200 }, disableFlip: true }, 
+        function(text) { target.cb(text); }
+      ).catch(function() {
+        S.scannerActive[tabId] = false;
+        document.getElementById(target.id).parentElement.classList.remove("scanner-wrap-active");
+        document.getElementById("btn-start-" + target.key).style.display = "";
+        document.getElementById("btn-stop-" + target.key).style.display = "none";
+        showBanner("Camera error. Please use manual input.", "danger");
+      });
+    }
+
+    function stopScanner(tabId) {
+      var target = SCANNER_MAP[tabId];
+      if (!target) return;
+      S.scannerActive[tabId] = false;
+      document.getElementById(target.id).parentElement.classList.remove("scanner-wrap-active");
+      document.getElementById("btn-start-" + target.key).style.display = "";
+      document.getElementById("btn-stop-" + target.key).style.display = "none";
+      if (S.scanners[tabId]) S.scanners[tabId].stop().catch(function(){});
+    }
+
+    // 9. EVENT BINDING
     document.addEventListener("DOMContentLoaded", function() {
+      // Tab Switching
       document.querySelectorAll(".nav-item").forEach(function(el){
         el.onclick = function() {
+          Object.keys(SCANNER_MAP).forEach(function(tid) { if (S.scannerActive[tid]) stopScanner(tid); });
           document.querySelectorAll(".nav-item").forEach(function(n){ n.classList.remove("active"); });
           document.querySelectorAll(".tab-content").forEach(function(t){ t.classList.remove("active"); });
           el.classList.add("active");
@@ -648,6 +636,7 @@
         };
       });
 
+      // Manual Inputs
       document.getElementById("btn-attend-checkin").onclick = function(){ handleAttendanceCheckIn(); };
       document.getElementById("attend-inp").onkeydown = function(e){ if(e.key==="Enter") handleAttendanceCheckIn(); };
       
@@ -657,6 +646,7 @@
       document.getElementById("btn-receive-scanin").onclick = function(){ doReceiveScanAction(); };
       document.getElementById("receive-inp").onkeydown = function(e){ if(e.key==="Enter") doReceiveScanAction(); };
 
+      // Admin Settings
       document.getElementById("btn-save-settings").onclick = function(){
         S.ymName = document.getElementById("cfg-ym-name").value;
         S.api = document.getElementById("cfg-api-url").value;
@@ -675,24 +665,10 @@
       document.getElementById("cfg-api-url").value = S.api;
       document.getElementById("cfg-sheet-url").value = S.sheetUrl;
 
-      // Start background poll
+      // Init
+      updateOutboxBadge(loadOutbox().length);
+      flushOutbox();
       pollRoster();
-
-      // Camera logic
-      function startCam(id, inpId, cb) {
-        var scanner = new Html5Qrcode(id, { experimentalFeatures: { useBarCodeDetectorIfSupported: true } });
-        document.getElementById(id).parentElement.classList.add("scanner-wrap-active");
-        scanner.start({ facingMode: "environment" }, { fps: 30, qrbox: { width: 200, height: 200 }, disableFlip: true }, function(text){ cb(text); });
-        S.scanners[id] = scanner;
-      }
-      document.getElementById("btn-start-attend").onclick = function() { this.style.display="none"; document.getElementById("btn-stop-attend").style.display=""; startCam("qr-reader-attend", "attend-inp", handleAttendanceCheckIn); };
-      document.getElementById("btn-stop-attend").onclick = function() { this.style.display="none"; document.getElementById("btn-start-attend").style.display=""; S.scanners["qr-reader-attend"].stop(); document.getElementById("qr-reader-attend").parentElement.classList.remove("scanner-wrap-active"); };
-
-      document.getElementById("btn-start-waiting").onclick = function() { this.style.display="none"; document.getElementById("btn-stop-waiting").style.display=""; startCam("qr-reader-waiting", "waiting-inp", handleWaitingEnqueue); };
-      document.getElementById("btn-stop-waiting").onclick = function() { this.style.display="none"; document.getElementById("btn-start-waiting").style.display=""; S.scanners["qr-reader-waiting"].stop(); document.getElementById("qr-reader-waiting").parentElement.classList.remove("scanner-wrap-active"); };
-
-      document.getElementById("btn-start-receive").onclick = function() { this.style.display="none"; document.getElementById("btn-stop-receive").style.display=""; startCam("qr-reader-receive", "receive-inp", doReceiveScanAction); };
-      document.getElementById("btn-stop-receive").onclick = function() { this.style.display="none"; document.getElementById("btn-start-receive").style.display=""; S.scanners["qr-reader-receive"].stop(); document.getElementById("qr-reader-receive").parentElement.classList.remove("scanner-wrap-active"); };
     });
   </script>
 </body>
