@@ -5,7 +5,13 @@
   <title>DUD3 Rush PRO &amp; ANOW Last-Mile Dispatch</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#FF9900">
+  <meta name="color-scheme" content="dark">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Rush PRO">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
   <style>
     :root {
       --bg: #0B1118;
@@ -89,7 +95,7 @@
     .text-input:focus { border-color: var(--orange); }
     .btn { background: linear-gradient(180deg, #FFAD1F, #FF8F00); color: #000; font-weight: 800; border: none; border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; justify-content: center; white-space: nowrap; min-height: 42px; }
     .btn:active { transform: scale(0.96); }
-    .btn-green { background: linear-gradient(180deg, #1ED48C, #10B478); color: #052015; }
+    .btn-green { background: linear-gradient(180deg, #1ED48C, #10B478); color: #03210C; }
     .btn-card { background: var(--card-hi); color: #FFF; border: 1px solid #334760; }
     .search-results-dropdown { position: absolute; top: 44px; left: 0; right: 0; background: #1B2634; border: 1px solid var(--orange); border-radius: 8px; max-height: 210px; overflow-y: auto; z-index: 150; box-shadow: 0 10px 28px rgba(0,0,0,0.65); display: none; }
     .dropdown-item { padding: 10px 12px; border-bottom: 1px solid #233142; cursor: pointer; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
@@ -124,7 +130,7 @@
       <div class="brand-logo">D3</div>
       <div>
         <div class="brand-title">RUSH <span>PRO</span></div>
-        <div class="brand-sub" id="header-tab-sub">DISPATCH ENGINE</div>
+        <div class="brand-sub" id="header-tab-sub">OFF-YARD ATTENDANCE</div>
       </div>
     </div>
     <div class="top-status">
@@ -141,8 +147,8 @@
     <div class="tab-content active" id="tab-attend">
       <div class="crd scanner-card">
         <div class="crd-t">📷 DA Attendance Scan</div>
-        <button class="btn btn-green" id="btn-start-attend" style="width:100%; margin-bottom:10px;">▶ START SCANNER</button>
-        <button class="btn btn-card" id="btn-stop-attend" style="width:100%; margin-bottom:10px; display:none;">■ STOP SCANNER</button>
+        <button class="btn btn-green" id="btn-start-attend" onclick="startScanner('tab-attend')" style="width:100%; margin-bottom:10px;">▶ START SCANNER</button>
+        <button class="btn btn-card" id="btn-stop-attend" onclick="stopScanner('tab-attend')" style="width:100%; margin-bottom:10px; display:none;">■ STOP SCANNER</button>
         <div class="scanner-viewport-wrap"><div id="qr-reader-attend"></div><div class="scanner-idle">Camera Off</div><div class="laser-line"></div></div>
         <div class="scanner-input-bar">
           <input type="text" id="attend-inp" class="text-input" placeholder="Scan or Type DA ID..." autocomplete="off">
@@ -179,8 +185,8 @@
     <div class="tab-content" id="tab-waiting">
       <div class="crd scanner-card" style="border-color:var(--green)">
         <div class="crd-t" style="color:var(--green)">📥 Add to Waiting Queue</div>
-        <button class="btn btn-green" id="btn-start-waiting" style="width:100%; margin-bottom:10px;">▶ START SCANNER</button>
-        <button class="btn btn-card" id="btn-stop-waiting" style="width:100%; margin-bottom:10px; display:none;">■ STOP SCANNER</button>
+        <button class="btn btn-green" id="btn-start-waiting" onclick="startScanner('tab-waiting')" style="width:100%; margin-bottom:10px;">▶ START SCANNER</button>
+        <button class="btn btn-card" id="btn-stop-waiting" onclick="stopScanner('tab-waiting')" style="width:100%; margin-bottom:10px; display:none;">■ STOP SCANNER</button>
         <div class="scanner-viewport-wrap"><div id="qr-reader-waiting"></div><div class="scanner-idle">Camera Off</div><div class="laser-line"></div></div>
         <div class="scanner-input-bar">
           <input type="text" id="waiting-inp" class="text-input" placeholder="Scan DA ID to Queue..." autocomplete="off">
@@ -188,6 +194,7 @@
           <div class="search-results-dropdown" id="waiting-search-results"></div>
         </div>
       </div>
+
       <div id="waiting-batches-container" style="display:flex; flex-direction:column; gap:12px;"></div>
     </div>
     
@@ -202,7 +209,7 @@
         </div>
       </div>
       <div class="batch-card"><div class="batch-header"><div class="batch-title">☕ Currently on Break</div></div><div class="da-list" id="breaks-da-list"></div></div>
-      <div class="batch-card break-return"><div class="batch-header"><div class="batch-title">🔄 DA's from Break</div></div><div class="da-list" id="breakret-da-list"></div></div>
+      <div class="batch-card break-return"><div class="batch-header"><div class="batch-title">🔄 DA's from Break — Ready to Dispatch</div></div><div class="da-list" id="breakret-da-list"></div></div>
     </div>
 
     <!-- TAB 4: VIOLATORS -->
@@ -218,8 +225,8 @@
     <div class="tab-content" id="tab-receive">
       <div class="crd scanner-card" style="border-color:var(--green)">
         <div class="crd-t" style="color:var(--green)">✅ Receive Inside Warehouse</div>
-        <button class="btn btn-green" id="btn-start-receive" style="width:100%; margin-bottom:10px;">▶ START SCANNER</button>
-        <button class="btn btn-card" id="btn-stop-receive" style="width:100%; margin-bottom:10px; display:none;">■ STOP SCANNER</button>
+        <button class="btn btn-green" id="btn-start-receive" onclick="startScanner('tab-receive')" style="width:100%; margin-bottom:10px;">▶ START SCANNER</button>
+        <button class="btn btn-card" id="btn-stop-receive" onclick="stopScanner('tab-receive')" style="width:100%; margin-bottom:10px; display:none;">■ STOP SCANNER</button>
         <div class="scanner-viewport-wrap"><div id="qr-reader-receive"></div><div class="scanner-idle">Camera Off</div><div class="laser-line"></div></div>
         <div class="scanner-input-bar">
           <input type="text" id="receive-inp" class="text-input" placeholder="Scan DA ID at station..." autocomplete="off">
@@ -227,6 +234,7 @@
           <div class="search-results-dropdown" id="receive-search-results"></div>
         </div>
       </div>
+
       <div class="batch-card"><div class="batch-header"><div class="batch-title">⏱️ Awaiting Received In Scan</div><span class="batch-badge" id="awaiting-badge-count">0</span></div><div class="da-list" id="sent-list"></div></div>
       <div class="batch-card"><div class="batch-header"><div class="batch-title">✅ Received Inside</div><span class="batch-badge" id="received-badge-count" style="background:var(--green);color:#000;">0</span></div><div class="da-list" id="recv-list"></div></div>
     </div>
@@ -241,6 +249,10 @@
         <input type="text" id="cfg-sheet-url" class="text-input" style="width:100%; margin-bottom:8px;">
         <label style="font-size:11px;color:var(--muted)">Apps Script API URL</label>
         <input type="text" id="cfg-api-url" class="text-input" style="width:100%; margin-bottom:12px;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+          <div><label style="font-size:11px;color:var(--muted)">Batch Size (DAs)</label><input type="number" id="cfg-batch-size" class="text-input" style="width:100%;"></div>
+          <div><label style="font-size:11px;color:var(--muted)">Admin PIN</label><input type="password" id="cfg-admin-pin" class="text-input" style="width:100%;"></div>
+        </div>
         <button class="btn btn-green" id="btn-save-settings" style="width:100%; margin-bottom:10px;">💾 Save Settings</button>
         <button class="btn btn-card" id="btn-clear-cache" style="width:100%; margin-bottom:10px;">🗑️ Clear Local Cache</button>
         <button class="btn" id="btn-reset-day" style="width:100%; background:var(--red); color:#FFF;">🔄 Reset Day</button>
@@ -282,431 +294,6 @@
       scanners: {}, scannerActive: {}, scanCooldownMap: {},
       highestBatchNum: 0, batchAssignedTotals: {}, serverNextBatchName: null,
       pendingWaiting: {}, pendingSent: {}, pendingReceived: {}
-    };
-
-    function Utilities_formatDate() {
-      var d = new Date(), m = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
-      return ("0" + d.getDate()).slice(-2) + " " + m[d.getMonth()];
-    }
-    function nowHHMM() {
-      var d = new Date();
-      return d.toLocaleTimeString("en-GB", { timeZone: "Asia/Dubai", hour: "2-digit", minute: "2-digit", hour12: false });
-    }
-    function escapeHtml(s) { return String(s||"").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
-
-    var audioCtx = null;
-    function initAudio() {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      if (audioCtx.state === "suspended") audioCtx.resume();
-    }
-    function playBeep(type) {
-      try {
-        initAudio();
-        var osc = audioCtx.createOscillator(), gain = audioCtx.createGain(), t = audioCtx.currentTime;
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        if (type === "success") { osc.type = "sine"; osc.frequency.setValueAtTime(1800, t); gain.gain.setValueAtTime(0.3, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1); osc.start(t); osc.stop(t + 0.15); if(navigator.vibrate) navigator.vibrate(30); } 
-        else { osc.type = "square"; osc.frequency.setValueAtTime(150, t); gain.gain.setValueAtTime(0.4, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2); osc.start(t); osc.stop(t + 0.25); if(navigator.vibrate) navigator.vibrate([100,50,100]); }
-      } catch (e) {}
-    }
-
-    function showBanner(text, type, secs) {
-      var h = document.getElementById("banner-holder");
-      var b = document.createElement("div"); b.className = "banner banner-" + (type || "warning");
-      b.innerHTML = '<span>' + text + '</span><span class="banner-close">&times;</span>';
-      b.querySelector(".banner-close").onclick = function(){ b.remove(); };
-      h.appendChild(b); setTimeout(function(){ if(b.parentNode) b.remove(); }, (secs||5)*1000);
-    }
-
-    function isCooledDown(key) {
-      var n = Date.now();
-      if (S.scanCooldownMap[key] && n - S.scanCooldownMap[key] < 1500) return false;
-      S.scanCooldownMap[key] = n; return true;
-    }
-
-    var OUTBOX_KEY = "dud3_outbox_v2";
-    function loadOutbox() { try { return JSON.parse(SAFE_STORE.getItem(OUTBOX_KEY)||"[]")||[]; } catch(e){ return []; } }
-    function saveOutbox(arr) { try { SAFE_STORE.setItem(OUTBOX_KEY, JSON.stringify(arr)); } catch(e){} updateOutboxBadge(arr.length); }
-    function outboxAdd(item) { var arr = loadOutbox(); arr.push(item); saveOutbox(arr); flushOutbox(); }
-    function outboxRemove(cid) { var arr = loadOutbox().filter(function(x){ return x.clientId !== cid; }); saveOutbox(arr); }
-    function updateOutboxBadge(n) {
-      var el = document.getElementById("pending-badge");
-      if (n > 0) { el.style.display = "inline-flex"; el.textContent = "⏳ " + n + " pending save"; } else { el.style.display = "none"; }
-    }
-    function genCid() { return "c" + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
-
-    var _flushing = false;
-    function flushOutbox() {
-      if (_flushing || !navigator.onLine) return;
-      var arr = loadOutbox();
-      if (arr.length === 0) return;
-      _flushing = true;
-      var item = arr[0];
-      
-      var payload = { action: item.action, sheetUrl: S.sheetUrl, dayTab: S.day, clientId: item.clientId, payload: item.payload };
-      
-      fetch(S.api, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) })
-      .then(function(res){ return res.json(); })
-      .catch(function(){
-        var u = S.api + "?action=" + encodeURIComponent(item.action) + "&clientId=" + encodeURIComponent(item.clientId) + "&dayTab=" + encodeURIComponent(S.day) + "&sheetUrl=" + encodeURIComponent(S.sheetUrl) + "&payload=" + encodeURIComponent(JSON.stringify(item.payload));
-        return fetch(u).then(function(r){ return r.json(); });
-      })
-      .then(function(data){
-        if (data && data.retry) { _flushing = false; setTimeout(flushOutbox, 1500); return; }
-        outboxRemove(item.clientId);
-        _flushing = false;
-        if (loadOutbox().length > 0) setTimeout(flushOutbox, 50);
-        else pollRoster(); 
-      })
-      .catch(function(err){ _flushing = false; setTimeout(flushOutbox, 3000); });
-    }
-    window.addEventListener("online", flushOutbox);
-
-    var pollTimer = null;
-    function pollRoster() {
-      if (loadOutbox().length > 0) return; 
-      document.getElementById("sync-status").classList.add("syncing");
-      fetch(S.api + "?action=syncOnly&dayTab=" + encodeURIComponent(S.day) + "&sheetUrl=" + encodeURIComponent(S.sheetUrl))
-      .then(function(r){ return r.json(); })
-      .then(function(d){
-        document.getElementById("sync-status").classList.remove("syncing");
-        if (d && d.success && d.roster) {
-          if (d.nextBatchName) S.serverNextBatchName = d.nextBatchName;
-          S.roster = d.roster;
-          S.waitingBatches = d.waitingBatches || {};
-          S.sentList = d.sentList || [];
-          S.receivedList = d.receivedList || [];
-          S.violators = d.violators || [];
-          S.breaksActive = d.breaksActive || [];
-          if (d.settings) S.settings = Object.assign(S.settings, d.settings);
-          syncBatchWatermarksFromState();
-          renderAll();
-        }
-        clearTimeout(pollTimer);
-        pollTimer = setTimeout(pollRoster, 3500);
-      })
-      .You are absolutely right—the app crashed to a white screen because in the previous code block, I accidentally stripped out the Javascript functions for the "Breaks" and "Replacement" tabs to save text space, which caused a fatal `ReferenceError` that killed all the buttons. 
-
-Here is the **fully restored, 100% complete `Index.html`** that merges the new ultra-fast sequential scanner with all of your original tabs, features, and functions completely intact. Your `Code.gs` and `Driver_index.html` from the previous step are perfectly fine and do not need to be changed.
-
-Replace everything in your `Index.html` file on GitHub with this code:
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>DUD3 Rush PRO &amp; ANOW Last-Mile Dispatch</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#FF9900">
-  <meta name="color-scheme" content="dark">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Rush PRO">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  
-  <script src="[https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js](https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js)"></script>
-
-  <style>
-    :root {
-      --bg: #0B1118;
-      --bg-grad: radial-gradient(1200px 600px at 100% -10%, rgba(255,153,0,0.08), transparent 55%),
-                 radial-gradient(900px 500px at -10% 110%, rgba(35,131,226,0.10), transparent 55%),
-                 #0B1118;
-      --card: #16202C;
-      --card-alt: #111B25;
-      --card-hi: #1C2938;
-      --border: #273645;
-      --border-soft: #1E2A37;
-      --orange: #FF9900;
-      --orange-glow: rgba(255, 153, 0, 0.28);
-      --blue: #2383E2;
-      --green: #16C784;
-      --red: #FF4D4F;
-      --yellow: #FFC53D;
-      --text: #F3F6FA;
-      --text-dim: #8FA0B4;
-      --radius: 16px;
-      --radius-sm: 10px;
-      --shadow-soft: 0 4px 16px rgba(0,0,0,0.28);
-      --safe-top: env(safe-area-inset-top, 0px);
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; }
-    input, select { user-select: text; }
-    html { -webkit-text-size-adjust: 100%; max-width: 100%; overflow-x: hidden; }
-    
-    body { background: var(--bg-grad); background-attachment: fixed; color: var(--text); height: 100dvh; max-width: 100%; overflow: hidden; display: flex; flex-direction: column; }
-
-    header {
-      background: linear-gradient(180deg, rgba(22,32,44,0.96), rgba(17,27,37,0.92)); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-      border-bottom: 1px solid var(--border-soft); padding: calc(var(--safe-top) + 8px) 16px 10px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; z-index: 100;
-    }
-    .brand-wrap { display: flex; align-items: center; gap: 10px; }
-    .brand-logo { width: 32px; height: 32px; background: linear-gradient(135deg, #FF9900, #FF6A00); border-radius: 10px; display: grid; place-items: center; font-weight: 900; font-size: 15px; color: #000; box-shadow: 0 4px 14px var(--orange-glow); }
-    .brand-title { font-size: 16px; font-weight: 800; letter-spacing: 0.4px; }
-    .brand-title span { color: var(--orange); }
-    .brand-sub { font-size: 10px; color: var(--text-dim); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
-    
-    .top-status { display: flex; align-items: center; gap: 8px; }
-    .sync-badge { font-size: 11px; padding: 4px 8px; background: #102A1C; color: var(--green); border: 1px solid #1E5030; border-radius: 999px; font-weight: 700; display: flex; align-items: center; gap: 4px; }
-    .sync-badge.syncing { background: #2D2513; color: var(--orange); border-color: #554010; }
-    .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-    
-    #pending-holder { display:flex; justify-content:center; }
-    #pending-badge { align-items:center; gap:6px; font-size:11px; font-weight:800; color:#201400; background:var(--yellow); padding:3px 12px; border-radius:0 0 10px 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
-
-    #banner-holder { position: relative; z-index: 95; }
-    .banner { padding: 10px 14px; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: space-between; animation: slideDown 0.2s ease-out; border-bottom: 1px solid rgba(0,0,0,0.2); }
-    @keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    .banner-warning { background: #D97706; color: #FFF; }
-    .banner-danger { background: #DC2626; color: #FFF; }
-    .banner-success { background: #059669; color: #FFF; }
-    .banner-close { cursor: pointer; font-size: 18px; font-weight: 900; padding: 0 6px; }
-
-    main { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 12px 14px calc(var(--safe-bottom) + 75px); scroll-behavior: smooth; }
-    
-    .tab-content { display: none; flex-direction: column; gap: 12px; animation: fadePane 0.15s ease-out; }
-    .tab-content.active { display: flex; }
-    @keyframes fadePane { from { opacity: 0.4; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-
-    .crd, .batch-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 13px; margin-bottom: 11px; box-shadow: var(--shadow-soft); }
-    .crd-t { font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; letter-spacing: 0.4px; }
-    
-    .batch-card { background: linear-gradient(180deg, var(--card), var(--card-alt)); padding: 0; overflow: hidden; }
-    .batch-header { background: #182330; padding: 11px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 8px; }
-    .batch-title { font-size: 14px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
-    .batch-badge { background: #FF9900; color: #000; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 999px; }
-    
-    .da-list { display: flex; flex-direction: column; max-height: 55vh; overflow-y: auto; }
-    .da-row { display: flex; align-items: center; padding: 10px 14px; border-bottom: 1px solid #182431; gap: 10px; font-size: 13px; }
-    .da-row:last-child { border-bottom: none; }
-    .da-details { flex: 1; min-width: 0; }
-    .da-title-line { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; }
-    .da-meta-line { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
-    
-    .time-badge { font-size: 11px; font-weight: 700; padding: 3px 6px; border-radius: 6px; background: #121A24; border: 1px solid var(--border); color: #CBD5E1; font-variant-numeric: tabular-nums; }
-    
-    .scanner-card { padding: 12px; display: flex; flex-direction: column; align-items: center; }
-    .scanner-viewport-wrap { position: relative; width: 100%; max-width: 300px; aspect-ratio: 1/1; background: #000; border-radius: 14px; overflow: hidden; border: 2px solid #2B3E52; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03), var(--shadow-soft); }
-    #qr-reader-attend, #qr-reader-waiting, #qr-reader-receive { width: 100% !important; height: 100% !important; }
-    #qr-reader-attend video, #qr-reader-waiting video, #qr-reader-receive video { object-fit: cover !important; width: 100% !important; height: 100% !important; }
-    .laser-line { position: absolute; width: 100%; height: 3px; background: linear-gradient(90deg, transparent, #FF9900, #FF3300, transparent); box-shadow: 0 0 10px #FF9900; animation: scanLaser 1.6s infinite ease-in-out; pointer-events: none; z-index: 10; display:none; }
-    @keyframes scanLaser { 0% { top: 6%; opacity: 0.2; } 50% { top: 92%; opacity: 1; } 100% { top: 6%; opacity: 0.2; } }
-    .scanner-wrap-active .laser-line { display: block; }
-    .scanner-idle { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; z-index: 12; color: var(--text-dim); text-align: center; background: radial-gradient(120px 120px at 50% 42%, rgba(255,153,0,0.06), transparent 70%), #05090D; }
-    .scanner-wrap-active .scanner-idle { display: none; }
-    
-    .scanner-controls { display: flex; gap: 8px; width: 100%; max-width: 300px; margin-top: 10px; }
-    .scanner-controls .btn { flex: 1; padding: 11px 10px; font-size: 13px; }
-    
-    .scanner-input-bar { width: 100%; margin-top: 10px; display: flex; gap: 8px; position: relative; }
-    .text-input { flex: 1; background: var(--card-alt); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; color: #FFF; font-size: 14px; outline: none; min-height: 42px; }
-    .text-input:focus { border-color: var(--orange); }
-    
-    .btn { background: linear-gradient(180deg, #FFAD1F, #FF8F00); color: #000; font-weight: 800; border: none; border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; justify-content: center; white-space: nowrap; min-height: 42px; }
-    .btn:active { transform: scale(0.96); }
-    .btn-green { background: linear-gradient(180deg, #1ED48C, #10B478); color: #052015; }
-    .btn-card { background: var(--card-hi); color: #FFF; border: 1px solid #334760; }
-    
-    .search-results-dropdown { position: absolute; top: 44px; left: 0; right: 0; background: #1B2634; border: 1px solid var(--orange); border-radius: 8px; max-height: 210px; overflow-y: auto; z-index: 150; box-shadow: 0 10px 28px rgba(0,0,0,0.65); display: none; }
-    .dropdown-item { padding: 10px 12px; border-bottom: 1px solid #233142; cursor: pointer; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
-
-    .metric-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom:12px; }
-    .metric-box { background: linear-gradient(180deg, var(--card-hi), var(--card-alt)); border-radius: 10px; padding: 10px 4px; text-align: center; border: 1px solid var(--border); }
-    .metric-val { font-size: 20px; font-weight: 900; font-variant-numeric: tabular-nums; }
-    .metric-lbl { font-size: 9px; font-weight: 700; color: var(--text-dim); margin-top: 4px; text-transform: uppercase; }
-
-    nav {
-      position: fixed; bottom: 0; left: 0; right: 0; height: calc(var(--safe-bottom) + 58px);
-      background: linear-gradient(180deg, rgba(20,29,39,0.96), rgba(13,20,28,0.98)); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-      border-top: 1px solid var(--border-soft); display: grid; grid-template-columns: repeat(6, 1fr); z-index: 100; padding-bottom: var(--safe-bottom);
-    }
-    .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: var(--text-dim); cursor: pointer; font-size: 10px; font-weight: 700; background: transparent; border: none; }
-    .nav-item svg { width: 20px; height: 20px; fill: currentColor; }
-    .nav-item.active { color: var(--orange); }
-
-    .tag-break { background: #3B2404; color: #FBBF24; border: 1px solid #78350F; }
-    .tag-violator { color: var(--red); border-color: var(--red) !important; background: var(--red-soft) !important; }
-    .violator-banner { background: linear-gradient(135deg, #E03234, #B21F21); color: #fff; border-radius: var(--radius); padding: 14px 16px; font-weight: 800; font-size: 13px; display: flex; gap: 10px; align-items: center; box-shadow: 0 6px 18px rgba(255,77,79,0.28); border: 1px solid #FF6668; }
-
-    @media (min-width: 760px) {
-      main { padding-left: 24px; padding-right: 24px; }
-      .tab-content { max-width: 1180px; margin: 0 auto; width: 100%; }
-      #tab-attend.active, #tab-waiting.active, #tab-receive.active { display: grid; grid-template-columns: 360px 1fr; gap: 18px; align-items: start; }
-      .scanner-card { position: sticky; top: 8px; }
-      .crd:not(.scanner-card), .batch-card { grid-column: 2; }
-    }
-  </style>
-</head>
-<body>
-
-  <header>
-    <div class="brand-wrap">
-      <div class="brand-logo">D3</div>
-      <div>
-        <div class="brand-title">RUSH <span>PRO</span></div>
-        <div class="brand-sub" id="header-tab-sub">OFF-YARD ATTENDANCE</div>
-      </div>
-    </div>
-    <div class="top-status">
-      <div class="sync-badge" id="sync-status"><span class="sync-dot"></span><span id="sync-text">LIVE</span></div>
-    </div>
-  </header>
-  
-  <div id="pending-holder"><span id="pending-badge" style="display:none;"></span></div>
-  <div id="banner-holder"></div>
-
-  <main id="main-content">
-
-    <!-- TAB 1: ATTENDANCE -->
-    <div class="tab-content active" id="tab-attend">
-      <div class="crd scanner-card">
-        <div class="crd-t">📷 DA Attendance Scan</div>
-        <button class="btn btn-green" id="btn-start-attend" onclick="startScanner('tab-attend')" style="width:100%; margin-bottom:10px;">▶ START SCANNER</button>
-        <button class="btn btn-card" id="btn-stop-attend" onclick="stopScanner('tab-attend')" style="width:100%; margin-bottom:10px; display:none;">■ STOP SCANNER</button>
-        <div class="scanner-viewport-wrap"><div id="qr-reader-attend"></div><div class="laser-line"></div></div>
-        <div class="scanner-input-bar">
-          <input type="text" id="attend-inp" class="text-input" placeholder="Scan or Type DA ID..." autocomplete="off">
-          <button class="btn" id="btn-attend-checkin">Check In</button>
-          <div class="search-results-dropdown" id="attend-search-results"></div>
-        </div>
-      </div>
-
-      <div class="crd" style="padding:14px;">
-        <div style="font-size:13px; font-weight:800; color:var(--orange); margin-bottom:8px;">🔁 Quick Replacement Assignment</div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-          <div style="position:relative;"><input type="text" id="rep-absent-inp" class="text-input" style="width:100%;" placeholder="1. Search Absent DA..." autocomplete="off"><div class="search-results-dropdown" id="rep-absent-dropdown"></div></div>
-          <div style="position:relative;"><input type="text" id="rep-new-inp" class="text-input" style="width:100%;" placeholder="2. Search Replacement..." autocomplete="off"><div class="search-results-dropdown" id="rep-new-dropdown"></div></div>
-        </div>
-        <button class="btn btn-green" id="btn-assign-rep-inline" style="width:100%; margin-top:8px;">Assign Replacement &amp; Queue</button>
-      </div>
-
-      <div class="metric-row">
-        <div class="metric-box"><div class="metric-val" id="cnt-present" style="color:var(--green)">0</div><div class="metric-lbl">Present</div></div>
-        <div class="metric-box"><div class="metric-val" id="cnt-late" style="color:var(--yellow)">0</div><div class="metric-lbl">Late</div></div>
-        <div class="metric-box"><div class="metric-val" id="cnt-absent" style="color:var(--red)">0</div><div class="metric-lbl">Absent</div></div>
-        <div class="metric-box"><div class="metric-val" id="cnt-total">0</div><div class="metric-lbl">Total</div></div>
-      </div>
-
-      <div class="batch-card">
-        <div class="batch-header"><div class="batch-title">🕒 Recent Check-Ins</div></div>
-        <div class="da-list" id="recent-att-list"></div>
-      </div>
-    </div>
-
-    <!-- TAB 2: WAITING -->
-    <div class="tab-content" id="tab-waiting">
-      <div class="crd scanner-card" style="border-color:var(--green)">
-        <div class="crd-t" style="color:var(--green)">📥 Add to Waiting Queue</div>
-        <button class="btn btn-green" id="btn-start-waiting" onclick="startScanner('tab-waiting')" style="width:100%; margin-bottom:10px;">▶ START SCANNER</button>
-        <button class="btn btn-card" id="btn-stop-waiting" onclick="stopScanner('tab-waiting')" style="width:100%; margin-bottom:10px; display:none;">■ STOP SCANNER</button>
-        <div class="scanner-viewport-wrap"><div id="qr-reader-waiting"></div><div class="laser-line"></div></div>
-        <div class="scanner-input-bar">
-          <input type="text" id="waiting-inp" class="text-input" placeholder="Scan DA ID to Queue..." autocomplete="off">
-          <button class="btn btn-green" id="btn-waiting-enqueue">Queue</button>
-          <div class="search-results-dropdown" id="waiting-search-results"></div>
-        </div>
-      </div>
-
-      <div id="waiting-batches-container" style="display:flex; flex-direction:column; gap:12px;"></div>
-    </div>
-    
-    <!-- TAB 3: BREAKS -->
-    <div class="tab-content" id="tab-breaks">
-      <div class="crd" style="border-color:var(--red)">
-        <div class="crd-t" style="color:var(--red)">☕ Send DA on Break</div>
-        <div class="scanner-input-bar">
-          <input type="text" id="break-inp" class="text-input" placeholder="Scan DA ID..." autocomplete="off">
-          <button class="btn" id="btn-start-break" style="background:#FBBF24;color:#000;">Send on Break</button>
-          <div class="search-results-dropdown" id="break-search-results"></div>
-        </div>
-      </div>
-      <div class="batch-card"><div class="batch-header"><div class="batch-title">☕ Currently on Break</div><span class="batch-badge" id="break-badge-count" style="background:#FBBF24;color:#000;">0</span></div><div class="da-list" id="breaks-da-list"></div></div>
-      <div class="batch-card"><div class="batch-header"><div class="batch-title">🔄 DA's from Break — Ready to Dispatch</div><span class="batch-badge" id="breakret-badge-count" style="background:var(--green);color:#032015;">0</span></div><div class="da-list" id="breakret-da-list"></div></div>
-    </div>
-
-    <!-- TAB 4: VIOLATORS -->
-    <div class="tab-content" id="tab-violators">
-      <div class="violator-banner"><span>Violators must be sent back to the OFF-YARD. Receive IN is blocked for every DA listed here.</span></div>
-      <div class="batch-card" style="border-color:var(--red)">
-        <div class="batch-header"><div class="batch-title" style="color:var(--red)">🚫 Active Violators</div><span class="batch-badge" id="violator-badge-count" style="background:var(--red);color:#fff">0</span></div>
-        <div class="da-list" id="violators-da-list"></div>
-      </div>
-    </div>
-
-    <!-- TAB 5: RECEIVE -->
-    <div class="tab-content" id="tab-receive">
-      <div class="crd scanner-card" style="border-color:var(--green)">
-        <div class="crd-t" style="color:var(--green)">✅ Receive Inside Warehouse</div>
-        <button class="btn btn-green" id="btn-start-receive" onclick="startScanner('tab-receive')" style="width:100%; margin-bottom:10px;">▶ START SCANNER</button>
-        <button class="btn btn-card" id="btn-stop-receive" onclick="stopScanner('tab-receive')" style="width:100%; margin-bottom:10px; display:none;">■ STOP SCANNER</button>
-        <div class="scanner-viewport-wrap"><div id="qr-reader-receive"></div><div class="laser-line"></div></div>
-        <div class="scanner-input-bar">
-          <input type="text" id="receive-inp" class="text-input" placeholder="Scan DA ID at station..." autocomplete="off">
-          <button class="btn btn-green" id="btn-receive-scanin">Receive</button>
-          <div class="search-results-dropdown" id="receive-search-results"></div>
-        </div>
-      </div>
-
-      <div class="batch-card"><div class="batch-header"><div class="batch-title">⏱️ Awaiting Received In Scan</div><span class="batch-badge" id="awaiting-badge-count">0</span></div><div class="da-list" id="sent-list"></div></div>
-      <div class="batch-card"><div class="batch-header"><div class="batch-title">✅ Received Inside</div><span class="batch-badge" id="received-badge-count" style="background:var(--green);color:#000;">0</span></div><div class="da-list" id="recv-list"></div></div>
-    </div>
-
-    <!-- TAB 6: ADMIN -->
-    <div class="tab-content" id="tab-admin">
-      <div class="crd">
-        <div class="crd-t">⚙️ Global Settings</div>
-        <label style="font-size:11px;color:var(--muted)">Yard Marshal Name</label>
-        <input type="text" id="cfg-ym-name" class="text-input" style="width:100%; margin-bottom:8px;">
-        <label style="font-size:11px;color:var(--muted)">Active Google Sheet URL</label>
-        <input type="text" id="cfg-sheet-url" class="text-input" style="width:100%; margin-bottom:8px;">
-        <label style="font-size:11px;color:var(--muted)">Apps Script API URL</label>
-        <input type="text" id="cfg-api-url" class="text-input" style="width:100%; margin-bottom:12px;">
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
-          <div><label style="font-size:11px;color:var(--muted)">Batch Size (DAs)</label><input type="number" id="cfg-batch-size" class="text-input" style="width:100%;"></div>
-          <div><label style="font-size:11px;color:var(--muted)">Admin PIN</label><input type="password" id="cfg-admin-pin" class="text-input" style="width:100%;"></div>
-        </div>
-        <button class="btn btn-green" id="btn-save-settings" style="width:100%; margin-bottom:10px;">💾 Save Settings</button>
-        <button class="btn btn-card" id="btn-clear-cache" style="width:100%; margin-bottom:10px;">🗑️ Clear Local Cache</button>
-      </div>
-    </div>
-
-  </main>
-
-  <nav>
-    <button class="nav-item active" data-tab="tab-attend"><span>📋</span><span>Attend</span></button>
-    <button class="nav-item" data-tab="tab-waiting"><span>📥</span><span>Waiting</span></button>
-    <button class="nav-item" data-tab="tab-breaks"><span>☕</span><span>Breaks</span></button>
-    <button class="nav-item" data-tab="tab-violators"><span>🚫</span><span>Violators</span></button>
-    <button class="nav-item" data-tab="tab-receive"><span>✅</span><span>Receive</span></button>
-    <button class="nav-item" data-tab="tab-admin"><span>⚙️</span><span>Admin</span></button>
-  </nav>
-
-  <script>
-    var SAFE_STORE = (function() {
-      var mem = {}, ok = false;
-      try { var tk = "__test__"; localStorage.setItem(tk, "1"); localStorage.removeItem(tk); ok = true; } catch (e) { ok = false; }
-      return {
-        getItem: function(k) { if(ok){ try{ return localStorage.getItem(k); }catch(e){} } return mem[k]||null; },
-        setItem: function(k, v) { if(ok){ try{ localStorage.setItem(k, v); return; }catch(e){} } mem[k] = String(v); },
-        removeItem: function(k) { if(ok){ try{ localStorage.removeItem(k); return; }catch(e){} } delete mem[k]; }
-      };
-    })();
-
-    var DEFAULT_API = "[https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec](https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec)";
-    var DEFAULT_SHEET = "[https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit](https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit)";
-    
-    var S = {
-      api: SAFE_STORE.getItem("dud3_api") || DEFAULT_API,
-      sheetUrl: SAFE_STORE.getItem("dud3_sheet") || DEFAULT_SHEET,
-      ymName: SAFE_STORE.getItem("dud3_ym") || "YM",
-      day: Utilities_formatDate(),
-      settings: { batchSize: 25 },
-      roster: [], waitingBatches: {}, sentList: [], receivedList: [], violators: [], breaksActive: [],
-      scanners: {}, scannerActive: {}, scanCooldownMap: {},
-      highestBatchNum: 0, batchAssignedTotals: {}, serverNextBatchName: null,
-      selectedAbsentDa: null, selectedReplacementDa: null
     };
 
     function Utilities_formatDate() {
@@ -854,6 +441,7 @@ Replace everything in your `Index.html` file on GitHub with this code:
         curNum = curNum + 1;
         S.highestBatchNum = curNum;
         S.batchAssignedTotals[curNum] = 1;
+        S.serverNextBatchName = "Batch " + curNum;
         return "Batch " + curNum;
       }
       S.batchAssignedTotals[curNum] = totalAssigned + 1;
@@ -889,6 +477,7 @@ Replace everything in your `Index.html` file on GitHub with this code:
       var daId = (daIdInput || document.getElementById("waiting-inp").value).trim().toUpperCase();
       if (!daId || !isCooledDown("WAIT_"+daId)) return;
       document.getElementById("waiting-inp").value = "";
+      document.getElementById("waiting-search-results").style.display = "none";
       
       var da = S.roster.find(function(d){ return d.daId.toUpperCase() === daId; });
       if (!da) { playBeep("error"); showBanner("DA not found.", "danger"); return; }
@@ -912,26 +501,32 @@ Replace everything in your `Index.html` file on GitHub with this code:
       outboxAdd({ clientId: genCid(), action: "addToWaiting", payload: { daId: da.daId, ymName: S.ymName } });
     }
 
+    // 🟢 OPTIMISTIC RECEIVE SCAN (Blocks receiving directly from waiting queue)
     function doReceiveScanAction(daIdInput) {
       initAudio();
       var daId = (daIdInput || document.getElementById("receive-inp").value).trim().toUpperCase();
-      if (!daId || !isCooledDown("RUSH_"+daId)) return;
+      if (!daId || !isCooledDown("RCV_"+daId)) return;
       document.getElementById("receive-inp").value = "";
+      document.getElementById("receive-search-results").style.display = "none";
       
-      // 🛑 STRICT BLOCK: Reject if DA is not in Sent List
       var found = -1;
       for (var i=0; i<S.sentList.length; i++) { if (S.sentList[i].daId.toUpperCase() === daId) { found = i; break; } }
+      
+      // 🛑 STRICT FRONTEND BLOCK: Reject if DA is not in Sent List
       if (found === -1) {
          playBeep("error");
          showBanner("DA Currently Not sent from waiting BY Offyard", "danger", 15);
          return; 
       }
       
+      // Move from Sent to Received instantly
       var item = S.sentList.splice(found, 1)[0];
       item.rushInTime = nowHHMM();
       S.receivedList.unshift(item);
       playBeep("success");
+      showBanner("✅ Received: " + item.daName + " (" + item.batchName + ")", "success");
       renderAll();
+      
       outboxAdd({ clientId: genCid(), action: "rushScanIn", payload: { daId: daId, receiverName: S.ymName } });
     }
 
@@ -1044,7 +639,7 @@ Replace everything in your `Index.html` file on GitHub with this code:
 
     // 7. RENDERING
     function renderAll() {
-      renderAttend(); renderWaiting(); renderReceive(); renderBreaks(); renderViolators(); tickReceiveCountdowns();
+      renderAttend(); renderWaiting(); renderReceive(); renderBreaks(); renderViolators();
     }
     
     function renderAttend() {
@@ -1080,7 +675,7 @@ Replace everything in your `Index.html` file on GitHub with this code:
         var list = document.createElement("div"); list.className = "da-list";
         arr.forEach(function(da, i){
           var r = document.createElement("div"); r.className = "da-row";
-          var sendBtn = da.inBreak ? '<button class="btn btn-card" style="padding:5px 10px; font-size:11px; opacity:0.45;" disabled>Send</button>' : '<button class="btn btn-card" style="padding:5px 10px; font-size:11px;" onclick="optimisticSendDAs([\'' + da.daId + '\'])">Send</button>';
+          var sendBtn = da.inBreak ? '<button class="btn btn-card" style="padding:5px 10px; font-size:11px; opacity:0.45;" disabled>Send</button>' : '<button class="btn btn-card" style="padding:5px 10px; font-size:11px;" onclick="outboxAdd({ clientId: genCid(), action: \'sendDA\', payload: { daIds: [\''+da.daId+'\'], ymName: S.ymName, batchName: \''+bn+'\' } }); removeDaAction(\''+da.daId+'\');">Send</button>';
           var breakTag = da.inBreak ? '<span class="time-badge tag-break" style="margin-left:4px;">On Break</span>' : '';
           
           r.innerHTML = '<div class="da-details"><div class="da-title-line">#' + (i+1) + ' ' + escapeHtml(da.daName) + breakTag + '</div><div class="da-meta-line">' + da.daId + ' | Wait: ' + (da.waitTime||"") + '</div></div><div style="display:flex; gap:6px;">'+sendBtn+'<button class="btn btn-card" style="padding:5px 8px;font-size:11px;color:var(--red);" onclick="removeDaAction(\''+da.daId+'\')">&times;</button></div>';
@@ -1092,8 +687,7 @@ Replace everything in your `Index.html` file on GitHub with this code:
 
     function renderBreaks() {
       var container = document.getElementById("breaks-da-list");
-      var badge = document.getElementById("break-badge-count");
-      if (!container || !badge) return;
+      if (!container) return;
       container.innerHTML = "";
 
       var seen = {}; var combined = [];
@@ -1104,7 +698,6 @@ Replace everything in your `Index.html` file on GitHub with this code:
         var k = String(b.daId).toUpperCase(); if (!seen[k]) { seen[k] = true; combined.push({ daId: b.daId, daName: b.daName, range: "On Break", action: true }); }
       });
 
-      badge.textContent = combined.length;
       combined.forEach(function(da) {
         var row = document.createElement("div"); row.className = "da-row";
         var endBtn = da.action ? '<button class="btn btn-green" style="padding:5px 10px; font-size:11px;" onclick="endBreakAction(\'' + da.daId + '\')">End Break</button>' : '<span class="time-badge tag-break">Scheduled</span>';
@@ -1113,22 +706,21 @@ Replace everything in your `Index.html` file on GitHub with this code:
       });
 
       var retContainer = document.getElementById("breakret-da-list");
-      var retBadge = document.getElementById("breakret-badge-count");
+      if (!retContainer) return;
       var retList = (S.waitingBatches && S.waitingBatches[BREAK_RETURN_BATCH]) ? S.waitingBatches[BREAK_RETURN_BATCH].filter(function(d){return !d.inBreak;}) : [];
-      retBadge.textContent = retList.length; retContainer.innerHTML = "";
+      retContainer.innerHTML = "";
       retList.forEach(function(da, idx) {
         var row = document.createElement("div"); row.className = "da-row";
-        row.innerHTML = '<div class="da-details"><div class="da-title-line">#' + (idx + 1) + ' ' + escapeHtml(da.daName) + '</div><div class="da-meta-line">Wait: ' + (da.waitTime || "") + '</div></div><div><button class="btn btn-green" style="padding:6px 10px; font-size:11px;" onclick="optimisticSendDAs([\'' + da.daId + '\'])">Send</button></div>';
+        row.innerHTML = '<div class="da-details"><div class="da-title-line">#' + (idx + 1) + ' ' + escapeHtml(da.daName) + '</div><div class="da-meta-line">Wait: ' + (da.waitTime || "") + '</div></div><div><button class="btn btn-green" style="padding:6px 10px; font-size:11px;" onclick="outboxAdd({ clientId: genCid(), action: \'sendDA\', payload: { daIds: [\''+da.daId+'\'], ymName: S.ymName, batchName: \'DA\\\'s from Break\' } }); removeDaAction(\''+da.daId+'\');">Send</button></div>';
         retContainer.appendChild(row);
       });
     }
 
     function renderViolators() {
       var container = document.getElementById("violators-da-list");
-      var badge = document.getElementById("violator-badge-count");
-      if (!container || !badge) return;
+      if (!container) return;
       var list = S.violators || [];
-      badge.textContent = list.length; container.innerHTML = "";
+      container.innerHTML = "";
       list.forEach(function(v) {
         var row = document.createElement("div"); row.className = "da-row";
         row.innerHTML = '<div class="da-details"><div class="da-title-line">' + escapeHtml(v.daName || v.daId) + '</div><div class="da-meta-line">Logged: ' + (v.timeLogged || "") + '</div></div><div><button class="btn btn-card" style="padding:5px 10px; font-size:11px; color:var(--red);" onclick="removeViolatorAction(\'' + v.daId + '\')">Remove</button></div>';
@@ -1140,7 +732,7 @@ Replace everything in your `Index.html` file on GitHub with this code:
       var cSent = document.getElementById("sent-list"); cSent.innerHTML = "";
       S.sentList.forEach(function(da){
         var r = document.createElement("div"); r.className = "da-row";
-        r.innerHTML = '<div class="da-details"><div class="da-title-line">' + escapeHtml(da.daName) + '</div><div class="da-meta-line">' + da.daId + ' | Sent: ' + da.sentTime + '</div></div><div style="display:flex; align-items:center; gap:6px;"><span class="time-badge receive-countdown" data-sent="' + (da.sentTime || "") + '">--:--</span><button class="btn btn-green" style="padding:4px 8px;font-size:11px;" onclick="doReceiveScanAction(\''+da.daId+'\')">✓ Receive</button></div>';
+        r.innerHTML = '<div class="da-details"><div class="da-title-line">' + escapeHtml(da.daName) + '</div><div class="da-meta-line">' + da.daId + ' | Sent: ' + da.sentTime + '</div></div><button class="btn btn-green" style="padding:4px 8px;font-size:11px;" onclick="doReceiveScanAction(\''+da.daId+'\')">✓ Receive</button>';
         cSent.appendChild(r);
       });
       document.getElementById("awaiting-badge-count").textContent = S.sentList.length;
@@ -1152,20 +744,6 @@ Replace everything in your `Index.html` file on GitHub with this code:
         cRecv.appendChild(r);
       });
       document.getElementById("received-badge-count").textContent = S.receivedList.length;
-    }
-    
-    function tickReceiveCountdowns() {
-      var limitMin = (S.settings && S.settings.entryViolationMin) ? S.settings.entryViolationMin : 15;
-      var nowMin = parseHHMM(nowHHMM());
-      document.querySelectorAll(".receive-countdown").forEach(function(chip) {
-        var sentMin = parseHHMM(chip.getAttribute("data-sent"));
-        if (sentMin < 0) return;
-        var elapsed = nowMin - sentMin;
-        if (elapsed < 0) elapsed += 24 * 60;
-        var remaining = limitMin - elapsed;
-        if (remaining <= 0) { chip.textContent = "OVERDUE"; chip.style.color = "var(--red)"; } 
-        else { chip.textContent = remaining + "m left"; chip.style.color = (remaining <= 2) ? "var(--red)" : (remaining <= 5 ? "var(--yellow)" : "var(--green)"); }
-      });
     }
 
     function bindLiveSearch(inputEl, dropdownEl, listGetter, onSelect) {
@@ -1193,6 +771,7 @@ Replace everything in your `Index.html` file on GitHub with this code:
     document.addEventListener("DOMContentLoaded", function() {
       document.querySelectorAll(".nav-item").forEach(function(el){
         el.onclick = function() {
+          Object.keys(S.scannerActive).forEach(function(tid) { if (S.scannerActive[tid]) stopScanner(tid); });
           document.querySelectorAll(".nav-item").forEach(function(n){ n.classList.remove("active"); });
           document.querySelectorAll(".tab-content").forEach(function(t){ t.classList.remove("active"); });
           el.classList.add("active");
@@ -1213,6 +792,13 @@ Replace everything in your `Index.html` file on GitHub with this code:
 
       document.getElementById("btn-start-break").onclick = function(){ startBreakAction(); };
       document.getElementById("break-inp").onkeydown = function(e){ if(e.key==="Enter") startBreakAction(); };
+
+      document.getElementById("btn-reset-day").onclick = function(){
+        var pin = prompt("Enter Admin PIN to confirm Reset Day:");
+        if (!pin) return;
+        outboxAdd({ clientId: genCid(), action: "resetDay", payload: { pin: pin } });
+        showBanner("Reset queued...", "success");
+      };
 
       bindLiveSearch(document.getElementById("attend-inp"), document.getElementById("attend-search-results"), function() { return S.roster; }, function(item) { handleAttendanceCheckIn(item.daId); });
       bindLiveSearch(document.getElementById("waiting-inp"), document.getElementById("waiting-search-results"), function() { return S.roster; }, function(item) { handleWaitingEnqueue(item.daId); });
@@ -1250,7 +836,6 @@ Replace everything in your `Index.html` file on GitHub with this code:
 
       // Start background poll
       pollRoster();
-      setInterval(tickReceiveCountdowns, 1000);
 
       // Camera logic
       function startCam(id, inpId, cb) {
@@ -1260,15 +845,25 @@ Replace everything in your `Index.html` file on GitHub with this code:
         document.getElementById("btn-stop-" + id.split("-")[2]).style.display = "";
         scanner.start({ facingMode: "environment" }, { fps: 30, qrbox: { width: 200, height: 200 }, disableFlip: true }, function(text){ cb(text); });
         S.scanners[id] = scanner;
+        S.scannerActive[id] = true;
       }
+      function stopScanner(id) {
+        if(S.scanners[id]) { S.scanners[id].stop(); S.scannerActive[id] = false; }
+        document.getElementById(id).parentElement.classList.remove("scanner-wrap-active");
+        document.getElementById("btn-start-" + id.split("-")[2]).style.display = "";
+        document.getElementById("btn-stop-" + id.split("-")[2]).style.display = "none";
+      }
+      
       document.getElementById("btn-start-attend").onclick = function() { startCam("qr-reader-attend", "attend-inp", handleAttendanceCheckIn); };
-      document.getElementById("btn-stop-attend").onclick = function() { this.style.display="none"; document.getElementById("btn-start-attend").style.display=""; S.scanners["qr-reader-attend"].stop(); document.getElementById("qr-reader-attend").parentElement.classList.remove("scanner-wrap-active"); };
+      document.getElementById("btn-stop-attend").onclick = function() { stopScanner("qr-reader-attend"); };
 
       document.getElementById("btn-start-waiting").onclick = function() { startCam("qr-reader-waiting", "waiting-inp", handleWaitingEnqueue); };
-      document.getElementById("btn-stop-waiting").onclick = function() { this.style.display="none"; document.getElementById("btn-start-waiting").style.display=""; S.scanners["qr-reader-waiting"].stop(); document.getElementById("qr-reader-waiting").parentElement.classList.remove("scanner-wrap-active"); };
+      document.getElementById("btn-stop-waiting").onclick = function() { stopScanner("qr-reader-waiting"); };
 
       document.getElementById("btn-start-receive").onclick = function() { startCam("qr-reader-receive", "receive-inp", doReceiveScanAction); };
-      document.getElementById("btn-stop-receive").onclick = function() { this.style.display="none"; document.getElementById("btn-start-receive").style.display=""; S.scanners["qr-reader-receive"].stop(); document.getElementById("qr-reader-receive").parentElement.classList.remove("scanner-wrap-active"); };
+      document.getElementById("btn-stop-receive").onclick = function() { stopScanner("qr-reader-receive"); };
+
+      window.stopScanner = stopScanner; // expose for tab switching
 
       setTimeout(function() {
         var splash = document.getElementById("splash-screen");
