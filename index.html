@@ -809,6 +809,7 @@
       pendingWaiting: {},
       pendingSent: {},
       pendingReceived: {},
+      pendingClearedViolators: {},
       highestBatchNum: 0,
       batchAssignedTotals: {},
       serverNextBatchName: null
@@ -1206,7 +1207,7 @@
       }
       if (d.nextBatchName) S.serverNextBatchName = d.nextBatchName;
       if (d.roster) S.roster = d.roster;
-      if (d.violators) S.violators = d.violators;
+      if (d.violators) S.violators = reconcilePendingClearedViolators(d.violators);
       if (d.breaksActive) S.breaksActive = d.breaksActive;
       if (d.receivedList) S.receivedList = reconcilePendingReceived(d.receivedList);
       if (d.sentList) S.sentList = reconcilePendingSent(d.sentList);
@@ -1455,13 +1456,39 @@
       });
     }
 
+    // Keep a just-removed violator out of every incoming roster sync until the server
+    // confirms the clear (mirrors the pendingSent/Waiting/Received optimistic pattern),
+    // so "Remove" is INSTANT and never flickers back on the next poll.
+    function reconcilePendingClearedViolators(serverViolators) {
+      var list = serverViolators || [];
+      var now = Date.now();
+      // Expire stale guards (safety net: 20s) so a genuinely-still-violating DA can reappear.
+      Object.keys(S.pendingClearedViolators).forEach(function(k) {
+        if (now - (S.pendingClearedViolators[k] || 0) > 20000) delete S.pendingClearedViolators[k];
+      });
+      return list.filter(function(v) {
+        return !S.pendingClearedViolators[String(v.daId).toUpperCase()];
+      });
+    }
+
     function removeViolatorAction(daId) {
       initAudio();
-      S.violators = (S.violators || []).filter(function(v) { return String(v.daId).toUpperCase() !== String(daId).toUpperCase(); });
+      var up = String(daId).toUpperCase();
+      // 1) Instant local removal + guard so polls can't bring it back.
+      S.pendingClearedViolators[up] = Date.now();
+      S.violators = (S.violators || []).filter(function(v) { return String(v.daId).toUpperCase() !== up; });
+      playBeep("action");
+      showBanner("⚡ Removed " + daId + " from Violators.", "success", 5);
       renderAll();
+      // 2) Confirm with the server in the background.
       sendReq("clearViolator", { daId: daId }, function(err, res) {
-        if (err || (res && !res.success)) { playBeep("error"); pollRoster(); }
-        else { playBeep("action"); showBanner("Removed " + daId + " from Violators.", "success", 5); }
+        if (err || (res && !res.success)) {
+          // Rollback the guard so the real state resurfaces, then resync.
+          delete S.pendingClearedViolators[up];
+          playBeep("error");
+          showBanner((res && res.error) || "Could not remove violator — retrying sync.", "danger", 12);
+          pollRoster();
+        }
       });
     }
 
@@ -2079,6 +2106,7 @@
           S.pendingWaiting = {};
           S.pendingSent = {};
           S.pendingReceived = {};
+          S.pendingClearedViolators = {};
           S.highestBatchNum = 0;
           S.batchAssignedTotals = {};
           S.serverNextBatchName = "Batch 1";
