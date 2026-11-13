@@ -2,505 +2,2314 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>DUD3 Driver Hub</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-  <meta name="theme-color" content="#0F151C">
+  <title>DUD3 Rush PRO &amp; ANOW Last-Mile Dispatch</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#FF9900">
+  <meta name="color-scheme" content="dark">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Rush PRO">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="application-name" content="Rush PRO">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20512%20512%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23FF9F1C%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23FF6A00%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width%3D%22512%22%20height%3D%22512%22%20rx%3D%22112%22%20fill%3D%22%230B1118%22/%3E%3Crect%20x%3D%2296%22%20y%3D%22150%22%20width%3D%22320%22%20height%3D%2230%22%20rx%3D%228%22%20fill%3D%22url%28%23g%29%22%20opacity%3D%220.15%22/%3E%3Cpath%20d%3D%22M256%2096%20L400%20170%20L400%20342%20L256%20416%20L112%20342%20L112%20170%20Z%22%20fill%3D%22none%22%20stroke%3D%22url%28%23g%29%22%20stroke-width%3D%2226%22%20stroke-linejoin%3D%22round%22/%3E%3Cpath%20d%3D%22M112%20170%20L256%20244%20L400%20170%20M256%20244%20L256%20416%22%20fill%3D%22none%22%20stroke%3D%22url%28%23g%29%22%20stroke-width%3D%2220%22%20stroke-linejoin%3D%22round%22%20opacity%3D%220.65%22/%3E%3Cpath%20d%3D%22M180%20262%20c40%2046%20112%2046%20152%200%22%20fill%3D%22none%22%20stroke%3D%22%2316C784%22%20stroke-width%3D%2222%22%20stroke-linecap%3D%22round%22/%3E%3Ccircle%20cx%3D%22372%22%20cy%3D%22250%22%20r%3D%2212%22%20fill%3D%22%2316C784%22/%3E%3C/svg%3E">
+  <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20512%20512%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23FF9F1C%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23FF6A00%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width%3D%22512%22%20height%3D%22512%22%20rx%3D%22112%22%20fill%3D%22%230B1118%22/%3E%3Crect%20x%3D%2296%22%20y%3D%22150%22%20width%3D%22320%22%20height%3D%2230%22%20rx%3D%228%22%20fill%3D%22url%28%23g%29%22%20opacity%3D%220.15%22/%3E%3Cpath%20d%3D%22M256%2096%20L400%20170%20L400%20342%20L256%20416%20L112%20342%20L112%20170%20Z%22%20fill%3D%22none%22%20stroke%3D%22url%28%23g%29%22%20stroke-width%3D%2226%22%20stroke-linejoin%3D%22round%22/%3E%3Cpath%20d%3D%22M112%20170%20L256%20244%20L400%20170%20M256%20244%20L256%20416%22%20fill%3D%22none%22%20stroke%3D%22url%28%23g%29%22%20stroke-width%3D%2220%22%20stroke-linejoin%3D%22round%22%20opacity%3D%220.65%22/%3E%3Cpath%20d%3D%22M180%20262%20c40%2046%20112%2046%20152%200%22%20fill%3D%22none%22%20stroke%3D%22%2316C784%22%20stroke-width%3D%2222%22%20stroke-linecap%3D%22round%22/%3E%3Ccircle%20cx%3D%22372%22%20cy%3D%22250%22%20r%3D%2212%22%20fill%3D%22%2316C784%22/%3E%3C/svg%3E">
+  <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%20%22DUD3%20Rush%20PRO%20%5Cu2014%20DA%20Attendance%20%26%20Yard%22%2C%20%22short_name%22%3A%20%22Rush%20PRO%22%2C%20%22description%22%3A%20%22DA%20Attendance%20and%20Yard%20Management%20%5Cu2014%20instant%20QR%20scanning%2C%20FIFO%20batches%2C%20violations%20%26%20breaks.%22%2C%20%22start_url%22%3A%20%22.%22%2C%20%22scope%22%3A%20%22.%22%2C%20%22display%22%3A%20%22standalone%22%2C%20%22orientation%22%3A%20%22any%22%2C%20%22background_color%22%3A%20%22%230B1118%22%2C%20%22theme_color%22%3A%20%22%23FF9900%22%2C%20%22categories%22%3A%20%5B%22productivity%22%2C%20%22business%22%5D%7D">
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
   <style>
-    :root { --bg:#0F151C; --card:#1F2B3A; --orange:#FF9900; --blue:#00A8E1; --green:#00E676; --red:#FF3B30; --purple:#BB86FC; --text:#FFF; --muted:#8FA0B3; --border:#2E3E52; }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-    body { background: var(--bg); color: var(--text); padding: 15px; max-width: 480px; margin: 0 auto; }
-
-    header { text-align: center; margin-bottom: 18px; padding: 10px; border-bottom: 2px solid var(--orange); }
-    header h1 { font-size: 20px; font-weight: 900; letter-spacing: 1px; }
-    header h1 span { color: var(--orange); }
-
-    #toast-msg { position: fixed; top: 12px; left: 50%; transform: translateX(-50%) translateY(-200%); width: calc(100% - 30px); max-width: 400px; padding: 12px 16px; border-radius: 10px; font-weight: 800; font-size: 13px; display: flex; justify-content: space-between; align-items: center; z-index: 10000; box-shadow: 0 8px 24px rgba(0,0,0,0.6); transition: transform 0.3s; background: var(--orange); color: #000; }
-    #toast-msg.show { transform: translateX(-50%) translateY(0); }
-
-    .card { background: var(--card); border: 1px solid var(--border); padding: 16px; border-radius: 14px; margin-bottom: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-    .card-title { font-size: 11px; color: var(--muted); text-transform: uppercase; font-weight: 800; margin-bottom: 10px; letter-spacing: 0.8px; }
-
-    .inp { width: 100%; padding: 14px; border-radius: 10px; border: 2px solid var(--border); background: #141D28; color: #FFF; font-size: 16px; font-weight: bold; text-align: center; margin-bottom: 10px; }
-    .inp:focus { border-color: var(--orange); outline: none; }
-    .btn { width: 100%; padding: 14px; border-radius: 10px; border: none; background: var(--orange); color: #000; font-size: 15px; font-weight: 900; cursor: pointer; }
-    .btn-outline { background: transparent; border: 1px solid var(--muted); color: var(--muted); padding: 9px; margin-top: 10px; font-size: 12px; }
-
-    .profile-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding: 9px 0; font-size: 14px; }
-    .profile-row:last-of-type { border-bottom: none; }
-    .val { font-size: 14px; font-weight: 800; color: var(--blue); }
-
-    .batch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-    .batch-pill { background: #141D28; border: 1px solid var(--border); border-radius: 10px; padding: 12px 8px; text-align: center; }
-    .bp-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; font-weight: 800; margin-bottom: 4px; }
-    .bp-val { font-size: 20px; font-weight: 900; color: var(--orange); }
-
-    .status-box { background: rgba(0,168,225,0.1); border: 1px solid var(--blue); text-align: center; padding: 18px; border-radius: 12px; margin-top: 12px; }
-    .status-text { font-size: 22px; font-weight: 900; color: var(--blue); }
-
-    .timer-box { background: rgba(255,153,0,0.12); border: 1px dashed var(--orange); text-align: center; padding: 15px; border-radius: 12px; margin-top: 12px; }
-    .countdown { font-size: 26px; font-weight: 900; color: var(--orange); font-variant-numeric: tabular-nums; letter-spacing: 1px; }
-
-    #dashboard { display: none; }
-    .loader { text-align: center; color: var(--orange); font-weight: bold; display: none; padding: 16px; }
-    
-    .search-wrap { position: relative; }
-    .search-dropdown {
-      position: absolute; left: 0; right: 0; top: calc(100% - 6px);
-      background: #16222F; border: 1px solid var(--orange); border-radius: 10px;
-      max-height: 260px; overflow-y: auto; z-index: 500; display: none;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+    :root {
+      --bg: #0B1118;
+      --bg-grad: radial-gradient(1200px 600px at 100% -10%, rgba(255,153,0,0.08), transparent 55%),
+                 radial-gradient(900px 500px at -10% 110%, rgba(35,131,226,0.10), transparent 55%),
+                 #0B1118;
+      --card: #16202C;
+      --card-alt: #111B25;
+      --card-hi: #1C2938;
+      --border: #273645;
+      --border-soft: #1E2A37;
+      --orange: #FF9900;
+      --orange-2: #FF7A00;
+      --orange-glow: rgba(255, 153, 0, 0.28);
+      --blue: #2383E2;
+      --green: #16C784;
+      --green-soft: #0C3A2A;
+      --red: #FF4D4F;
+      --red-soft: #3A1416;
+      --yellow: #FFC53D;
+      --text: #F3F6FA;
+      --text-dim: #8FA0B4;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --shadow: 0 8px 28px rgba(0,0,0,0.42);
+      --shadow-soft: 0 4px 16px rgba(0,0,0,0.28);
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
-    .search-item { padding: 11px 14px; border-bottom: 1px solid var(--border); cursor: pointer; text-align: left; }
-    .search-item:last-child { border-bottom: none; }
-    .search-item:active, .search-item.hl { background: #22303F; }
-    .si-alias { font-weight: 900; color: var(--orange); font-size: 15px; }
-    .si-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
-    .search-empty { padding: 12px 14px; color: var(--muted); font-size: 12px; text-align: center; }
 
-    /* QR identity card (styled like the printed DA QR card) */
-    .qr-card { background: #FFFFFF; border-radius: 16px; padding: 18px 16px; text-align: center; color: #111; }
-    .qr-canvas-wrap { display: inline-flex; padding: 10px; background: #fff; border-radius: 10px; }
-    .qr-canvas-wrap img, .qr-canvas-wrap canvas { display: block; }
-    .qr-alias { font-size: 26px; font-weight: 900; letter-spacing: 1px; margin-top: 12px; color: #0F151C; }
-    .qr-daid { font-size: 13px; font-weight: 700; color: #333; margin-top: 2px; font-variant-numeric: tabular-nums; }
-    .qr-dsp { font-size: 12px; font-weight: 800; color: #FF7A00; margin-top: 6px; text-transform: uppercase; letter-spacing: .5px; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; max-width: 100%; overflow-x: hidden; }
+    img, svg, video { max-width: 100%; height: auto; }
+
+    body {
+      background: var(--bg-grad);
+      background-attachment: fixed;
+      color: var(--text);
+      height: 100dvh;
+      max-width: 100%;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: linear-gradient(180deg, rgba(22,32,44,0.96), rgba(17,27,37,0.92));
+      backdrop-filter: saturate(140%) blur(8px);
+      -webkit-backdrop-filter: saturate(140%) blur(8px);
+      border-bottom: 1px solid var(--border-soft);
+      padding: calc(var(--safe-top) + 8px) 16px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      z-index: 100;
+    }
+    .brand-wrap { display: flex; align-items: center; gap: 10px; }
+    .brand-logo {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, #FF9900, #FF6A00);
+      border-radius: 10px; display: grid; place-items: center;
+      font-weight: 900; font-size: 15px; color: #000;
+      box-shadow: 0 4px 14px var(--orange-glow);
+    }
+    .brand-title { font-size: 16px; font-weight: 800; letter-spacing: 0.4px; }
+    .brand-title span { color: var(--orange); }
+    .brand-sub { font-size: 10px; color: var(--text-dim); font-weight: 600; letter-spacing: 1px; }
+    .top-status { display: flex; align-items: center; gap: 8px; }
+    .sync-badge {
+      font-size: 11px; padding: 4px 8px; background: #102A1C;
+      color: var(--green); border: 1px solid #1E5030; border-radius: 999px;
+      font-weight: 700; display: flex; align-items: center; gap: 4px;
+    }
+    .sync-badge.syncing { background: #2D2513; color: var(--orange); border-color: #554010; }
+    .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .clock-display {
+      font-size: 13px; font-weight: 700; color: #FFF;
+      font-variant-numeric: tabular-nums; background: var(--card-hi);
+      padding: 4px 8px; border-radius: 8px; border: 1px solid var(--border);
+    }
+
+    #banner-holder { position: relative; z-index: 95; }
+    .banner {
+      padding: 10px 14px; font-size: 13px; font-weight: 700;
+      display: flex; align-items: center; justify-content: space-between;
+      animation: slideDown 0.2s ease-out; border-bottom: 1px solid rgba(0,0,0,0.2);
+    }
+    @keyframes slideDown {
+      from { transform: translateY(-100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .banner-warning { background: #D97706; color: #FFF; }
+    .banner-danger { background: #DC2626; color: #FFF; }
+    .banner-success { background: #059669; color: #FFF; }
+    .banner-close { cursor: pointer; font-size: 18px; font-weight: 900; padding: 0 6px; }
+
+    main {
+      flex: 1; overflow-y: auto; overflow-x: hidden;
+      padding: 12px 14px calc(var(--safe-bottom) + 75px);
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+    }
+    .tab-content { display: none; flex-direction: column; gap: 12px; }
+    .tab-content.active { display: flex; }
+
+    .scanner-card, .batch-card, .replacement-box, .metric-box {
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-soft);
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+    .scanner-card {
+      background: var(--card); padding: 12px; display: flex;
+      flex-direction: column; align-items: center;
+    }
+    .scanner-viewport-wrap {
+      position: relative; width: 100%; max-width: 300px; height: auto; aspect-ratio: 1 / 1;
+      background: #000; border-radius: 14px; overflow: hidden;
+      border: 2px solid #2B3E52;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03), var(--shadow-soft);
+    }
+    #qr-reader-attend, #qr-reader-waiting, #qr-reader-receive {
+      width: 100% !important; height: 100% !important;
+    }
+    #qr-reader-attend video, #qr-reader-waiting video, #qr-reader-receive video {
+      object-fit: cover !important; width: 100% !important; height: 100% !important;
+    }
+
+    .scanner-idle {
+      position: absolute; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 8px; z-index: 12;
+      color: var(--text-dim); text-align: center; padding: 16px;
+      background: radial-gradient(120px 120px at 50% 42%, rgba(255,153,0,0.06), transparent 70%), #05090D;
+    }
+    .scanner-idle svg { width: 46px; height: 46px; fill: var(--orange); opacity: 0.9; }
+    .scanner-idle .idle-title { font-size: 13px; font-weight: 800; color: var(--text); letter-spacing: .3px; }
+    .scanner-idle .idle-sub { font-size: 11px; font-weight: 600; }
+    .scanner-wrap-active .scanner-idle { display: none; }
+    .scanner-wrap-active .laser-line, .scanner-wrap-active .corner-bracket { display: block; }
+    .laser-line, .corner-bracket { display: none; }
+
+    .laser-line {
+      position: absolute; width: 100%; height: 3px;
+      background: linear-gradient(90deg, transparent, #FF9900, #FF3300, transparent);
+      box-shadow: 0 0 10px #FF9900; top: 0; left: 0;
+      animation: scanLaser 1.6s infinite ease-in-out; pointer-events: none; z-index: 10;
+    }
+    @keyframes scanLaser {
+      0% { top: 6%; opacity: 0.2; }
+      50% { top: 92%; opacity: 1; }
+      100% { top: 6%; opacity: 0.2; }
+    }
+    .corner-bracket {
+      position: absolute; width: 20px; height: 20px;
+      border-color: var(--orange); border-style: solid; pointer-events: none; z-index: 9;
+    }
+    .cb-tl { top: 10px; left: 10px; border-width: 3px 0 0 3px; }
+    .cb-tr { top: 10px; right: 10px; border-width: 3px 3px 0 0; }
+    .cb-bl { bottom: 10px; left: 10px; border-width: 0 0 3px 3px; }
+    .cb-br { bottom: 10px; right: 10px; border-width: 0 3px 3px 0; }
+
+    .scanner-controls {
+      display: flex; gap: 8px; width: 100%; max-width: 300px; margin-top: 10px;
+    }
+    .scanner-controls .btn { flex: 1; padding: 11px 10px; font-size: 13px; }
+    .scan-status-chip {
+      display: inline-flex; align-items: center; gap: 6px; margin-top: 8px;
+      font-size: 11px; font-weight: 700; color: var(--text-dim);
+      padding: 4px 10px; border-radius: 999px; background: var(--card-alt); border: 1px solid var(--border);
+    }
+    .scan-status-chip .dot { width: 7px; height: 7px; border-radius: 50%; background: #55697E; }
+    .scan-status-chip.live { color: var(--green); border-color: #1E5030; }
+    .scan-status-chip.live .dot { background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulseDot 1.1s infinite; }
+    @keyframes pulseDot { 0%,100%{opacity:1;} 50%{opacity:.35;} }
+
+    .scanner-input-bar { width: 100%; margin-top: 10px; display: flex; gap: 8px; position: relative; }
+    .text-input {
+      flex: 1; background: var(--card-alt); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 10px 12px; color: #FFF;
+      font-size: 14px; outline: none; user-select: text; min-height: 42px;
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    .text-input:focus { border-color: var(--orange); box-shadow: 0 0 0 2px var(--orange-glow); }
+    .btn {
+      background: linear-gradient(180deg, #FFAD1F, #FF8F00); color: #000; font-weight: 800;
+      border: none; border-radius: var(--radius-sm); padding: 10px 14px; min-height: 42px;
+      font-size: 13px; cursor: pointer; display: flex;
+      align-items: center; gap: 6px; justify-content: center;
+      white-space: nowrap; box-shadow: 0 4px 12px rgba(255,153,0,0.22);
+      transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease, filter .12s ease;
+    }
+    .btn:hover { filter: brightness(1.05); }
+    .btn:active { transform: translateY(1px) scale(0.98); opacity: 0.9; }
+    .btn-green { background: linear-gradient(180deg, #1ED48C, #10B478); color: #052015; box-shadow: 0 4px 12px rgba(22,199,132,0.22); }
+    .btn-card { background: var(--card-hi); color: #FFF; border: 1px solid #334760; box-shadow: none; }
+    .btn-card:hover { background: #223042; }
+    .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); box-shadow: none; }
+    .btn-danger { background: linear-gradient(180deg, #FF5A5C, #E03234); color: #fff; box-shadow: 0 4px 12px rgba(255,77,79,0.22); }
+
+    .search-results-dropdown {
+      position: absolute; top: 44px; left: 0; right: 0;
+      background: #1B2634; border: 1px solid var(--orange);
+      border-radius: 8px; max-height: 210px; overflow-y: auto;
+      z-index: 150; box-shadow: 0 10px 28px rgba(0,0,0,0.65); display: none;
+    }
+    .dropdown-item {
+      padding: 10px 12px; border-bottom: 1px solid #233142;
+      cursor: pointer; font-size: 13px; display: flex;
+      justify-content: space-between; align-items: center;
+    }
+    .dropdown-item:active { background: #25364A; }
+
+    .wave-bar {
+      display: flex; align-items: center; gap: 6px; overflow-x: auto;
+      padding-bottom: 2px; scrollbar-width: none;
+    }
+    .wave-pill {
+      padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 800;
+      background: var(--card); border: 1px solid var(--border); color: var(--text-dim);
+      cursor: pointer; white-space: nowrap; transition: all .15s ease;
+    }
+    .wave-pill.active {
+      background: var(--orange); color: #000; border-color: var(--orange);
+      box-shadow: 0 4px 12px var(--orange-glow);
+    }
+
+    .metric-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .metric-box {
+      background: linear-gradient(180deg, var(--card-hi), var(--card-alt));
+      padding: 12px 8px; text-align: center;
+    }
+    .metric-val { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
+    .metric-lbl { font-size: 10px; font-weight: 600; color: var(--text-dim); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.6px; }
+
+    .replacement-box {
+      background: linear-gradient(145deg, #1A2635, #151F2C);
+      border: 1px solid #334960; padding: 12px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .rep-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    @media (max-width: 420px) { .rep-grid { grid-template-columns: 1fr; } }
+
+    .batch-card { background: linear-gradient(180deg, var(--card), var(--card-alt)); overflow: hidden; }
+    .batch-card:hover { border-color: #31485E; box-shadow: var(--shadow); }
+    .batch-card.break-return { border-color: #1E5030; box-shadow: 0 6px 18px rgba(22,199,132,0.18); }
+    .batch-card.break-return .batch-header { background: linear-gradient(90deg, #0E2B20, #12201A); }
+    .batch-header {
+      background: #182330; padding: 11px 14px; display: flex;
+      justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);
+      flex-wrap: wrap; gap: 8px; min-width: 0;
+    }
+    .batch-title { font-size: 14px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+    .batch-badge { background: #FF9900; color: #000; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 999px; }
+    .batch-actions { display: flex; gap: 6px; align-items: center; }
+    .da-list { display: flex; flex-direction: column; }
+    .da-row {
+      display: flex; align-items: center; padding: 10px 14px;
+      border-bottom: 1px solid #182431; gap: 10px; font-size: 13px;
+      min-width: 0; transition: background .12s ease;
+    }
+    .da-row:hover { background: rgba(255,255,255,0.03); }
+    .da-row:last-child { border-bottom: none; }
+    .da-checkbox { width: 18px; height: 18px; accent-color: var(--orange); cursor: pointer; }
+    .da-details { flex: 1; min-width: 0; }
+    .da-title-line { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; min-width: 0; }
+    .da-meta-line { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+    .time-badge {
+      font-size: 11px; font-weight: 700; padding: 3px 6px; border-radius: 6px;
+      background: #121A24; border: 1px solid var(--border); color: #CBD5E1; font-variant-numeric: tabular-nums;
+    }
+    .tag-sla { background: #450A0A; color: #F87171; border: 1px solid #7F1D1D; }
+    .tag-break { background: #3B2404; color: #FBBF24; border: 1px solid #78350F; }
+    .tag-violator { color: var(--red); border-color: var(--red) !important; background: var(--red-soft) !important; }
+    .tag-breakret { color: var(--green); border-color: var(--green) !important; background: var(--green-soft) !important; }
+
+    .violator-banner {
+      background: linear-gradient(135deg, #E03234, #B21F21);
+      color: #fff; border-radius: var(--radius); padding: 14px 16px;
+      font-weight: 800; font-size: 13px; display: flex; gap: 10px; align-items: center;
+      box-shadow: 0 6px 18px rgba(255,77,79,0.28); border: 1px solid #FF6668;
+    }
+    .violator-banner svg { width: 24px; height: 24px; fill: #fff; flex-shrink: 0; }
+
+    nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      height: calc(var(--safe-bottom) + 58px);
+      background: linear-gradient(180deg, rgba(20,29,39,0.96), rgba(13,20,28,0.98));
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border-top: 1px solid var(--border-soft); display: grid;
+      grid-template-columns: repeat(6, 1fr); z-index: 100; padding-bottom: var(--safe-bottom);
+    }
+    .nav-item {
+      min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 4px; color: var(--text-dim); cursor: pointer; font-size: 11px;
+      font-weight: 700; border: none; background: transparent; outline: none;
+    }
+    .nav-item svg { width: 20px; height: 20px; fill: currentColor; }
+    .nav-item.active { color: var(--orange); }
+
+    #splash-screen {
+      position: fixed; inset: 0;
+      background: radial-gradient(600px 400px at 50% 38%, rgba(255,153,0,0.10), transparent 60%), #070B0F;
+      z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      transition: opacity 0.4s ease-out, visibility 0.4s ease-out;
+    }
+    .radar-circle {
+      width: 110px; height: 110px; border-radius: 50%;
+      border: 2px solid var(--orange); position: relative;
+      display: grid; place-items: center;
+      box-shadow: 0 0 40px var(--orange-glow), inset 0 0 20px rgba(255,153,0,0.08);
+      animation: pulseRadar 1.6s infinite ease-out;
+    }
+    .radar-circle::after {
+      content: ""; position: absolute; width: 150%; height: 150%;
+      border-radius: 50%; border: 1px solid rgba(255,153,0,0.25);
+      animation: radarRing 1.6s infinite ease-out;
+    }
+    @keyframes pulseRadar {
+      0% { transform: scale(0.9); opacity: 0.8; }
+      50% { transform: scale(1.08); opacity: 1; }
+      100% { transform: scale(0.9); opacity: 0.8; }
+    }
+    @keyframes radarRing {
+      0% { transform: scale(0.55); opacity: 0.9; }
+      100% { transform: scale(1.15); opacity: 0; }
+    }
+    .package-laser {
+      width: 48px; height: 48px; background: #1B2838;
+      border: 2px solid #FFF; border-radius: 8px; display: grid; place-items: center;
+    }
+    .splash-curve {
+      width: 60px; height: 14px; border-bottom: 4px solid var(--orange);
+      border-radius: 0 0 50% 50%; margin-top: 14px;
+    }
+    .splash-text {
+      margin-top: 16px; font-size: 18px; font-weight: 900; letter-spacing: 2px;
+      background: linear-gradient(90deg, #fff, #FFD79A, #fff);
+      background-size: 200% 100%;
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      animation: shimmer 2.2s linear infinite;
+    }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .splash-sub { font-size: 11px; color: var(--orange); font-weight: 700; letter-spacing: 1.5px; margin-top: 4px; }
+    .splash-smile { margin-top: 18px; width: 120px; height: 20px; position: relative; overflow: visible; }
+    .splash-smile svg { width: 120px; height: 20px; }
+    .splash-smile path {
+      fill: none; stroke: var(--orange); stroke-width: 4; stroke-linecap: round;
+      stroke-dasharray: 160; stroke-dashoffset: 160;
+      animation: drawSmile 1.1s ease-out forwards 0.25s;
+    }
+    @keyframes drawSmile { to { stroke-dashoffset: 0; } }
+    .splash-bar {
+      margin-top: 16px; width: 150px; height: 4px; border-radius: 4px;
+      background: #1A2430; overflow: hidden; position: relative;
+    }
+    .splash-bar::after {
+      content: ""; position: absolute; left: -40%; top: 0; height: 100%; width: 40%;
+      background: linear-gradient(90deg, transparent, var(--orange), transparent);
+      animation: loadSlide 1.1s infinite ease-in-out;
+    }
+    @keyframes loadSlide { 0% { left: -40%; } 100% { left: 110%; } }
+
+    .install-btn {
+      display: none; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 800; padding: 5px 10px;
+      border-radius: 999px; border: 1px solid var(--orange);
+      color: var(--orange); background: rgba(255,153,0,0.08); cursor: pointer;
+      white-space: nowrap;
+    }
+    .install-btn.show { display: inline-flex; }
+    .install-btn svg { width: 14px; height: 14px; fill: currentColor; }
+
+    @media (min-width: 760px) {
+      main { padding-left: 24px; padding-right: 24px; }
+      .tab-content { max-width: 1180px; margin: 0 auto; width: 100%; }
+      #tab-attend.active, #tab-waiting.active, #tab-receive.active {
+        display: grid; grid-template-columns: 360px 1fr; gap: 18px; align-items: start;
+      }
+      #tab-attend .scanner-card, #tab-waiting .scanner-card, #tab-receive .scanner-card { position: sticky; top: 8px; }
+      #tab-attend .replacement-box { grid-column: 1 / -1; }
+      #tab-attend .wave-bar, #tab-attend .metric-row, #tab-attend .batch-card,
+      #tab-waiting .metric-row, #tab-waiting #waiting-batches-container,
+      #tab-receive .batch-card { grid-column: 2; }
+      #tab-attend .scanner-card { grid-row: span 3; }
+      .metric-val { font-size: 24px; }
+      nav { gap: 6px; }
+      .nav-item { border-radius: 10px; }
+      .nav-item:hover { background: rgba(255,255,255,0.04); }
+    }
+    @media (min-width: 1024px) {
+      nav { max-width: 1180px; left: 50%; transform: translateX(-50%); border-radius: 18px 18px 0 0; }
+    }
+    @media (min-width: 1440px) {
+      .tab-content { max-width: 1320px; }
+      #tab-attend.active, #tab-waiting.active, #tab-receive.active {
+        grid-template-columns: 400px 1fr; gap: 22px;
+      }
+      .metric-val { font-size: 26px; }
+    }
+    @media (max-height: 560px) and (max-width: 760px) {
+      .scanner-viewport-wrap { max-width: 180px; }
+      .scanner-controls { max-width: 180px; }
+    }
+    @media (display-mode: standalone) {
+      header { padding-top: calc(var(--safe-top) + 12px); }
+      body { overscroll-behavior: none; }
+    }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
-<div id="toast-msg"><span id="toast-txt"></span><button style="background:none;border:none;color:#000;font-weight:bold;font-size:18px;cursor:pointer;" onclick="document.getElementById('toast-msg').className=''">✕</button></div>
-
-<header>
-  <h1>DUD3 <span>DRIVER HUB</span></h1>
-</header>
-
-<div id="login-sec" class="card">
-  <div class="card-title" style="text-align:center;">Find Your Name / Alias / DA ID</div>
-  <div class="search-wrap">
-    <input type="text" id="da-id-input" class="inp" placeholder="Type your name or alias..." autocomplete="off" oninput="onSearchInput()" onkeydown="onSearchKey(event)">
-    <div class="search-dropdown" id="search-dropdown"></div>
-  </div>
-  <button class="btn" onclick="login()">Check Live Status</button>
-  <div style="font-size:11px; color:var(--muted); text-align:center; margin-top:8px;">Start typing — pick yourself from the list.</div>
-</div>
-
-<div id="loader" class="loader">Syncing live status...</div>
-
-<div id="dashboard">
-  <div class="card">
-    <div class="card-title">Your QR Identity</div>
-    <div class="qr-card">
-      <div class="qr-canvas-wrap" id="qr-box"></div>
-      <div class="qr-alias" id="d-alias">--</div>
-      <div class="qr-daid" id="qr-daid">--</div>
-      <div class="qr-dsp" id="qr-dsp">DSP: --</div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">Driver Profile</div>
-    <div class="profile-row"><span>Alias:</span> <span class="val" id="d-name">--</span></div>
-    <div class="profile-row"><span>DA ID:</span> <span class="val" id="d-id">--</span></div>
-    <div class="profile-row"><span>DSP:</span> <span class="val" id="d-dsp">--</span></div>
-    <div class="profile-row"><span>Wave Time:</span> <span class="val" style="color:var(--text);" id="d-wave">--</span></div>
-    <button class="btn btn-outline" onclick="logout()">Change Driver</button>
-  </div>
-
-  <div class="card">
-    <div class="card-title">Live Queue &amp; Batch Status</div>
-
-    <div class="batch-grid">
-      <div class="batch-pill">
-        <div class="bp-lbl">Assigned Batch</div>
-        <div class="bp-val" id="d-batch">--</div>
-      </div>
-      <div class="batch-pill">
-        <div class="bp-lbl">Waiting Number</div>
-        <div class="bp-val" id="d-wait-num" style="color:var(--green)">--</div>
+  <div id="splash-screen">
+    <div class="radar-circle">
+      <div class="package-laser">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="#FF9900"><path d="M21 16.5l-9 5.2-9-5.2V7.5l9-5.2 9 5.2v9zM12 4.2L5.5 8 12 11.8 18.5 8 12 4.2zM4.5 9.7v5.6l6.5 3.8v-5.6L4.5 9.7zm15 0l-6.5 3.8v5.6l6.5-3.8V9.7z"></path></svg>
       </div>
     </div>
-    <div class="batch-grid" style="margin-top:10px;">
-      <div class="batch-pill" style="grid-column:1 / -1;">
-        <div class="bp-lbl">Turns Completed Today</div>
-        <div class="bp-val" id="d-turn" style="color:var(--purple)">0</div>
+    <div class="splash-curve"></div>
+    <div class="splash-text">RUSH PRO DUD3</div>
+    <div class="splash-sub">INSTANT DISPATCH ENGINE</div>
+    <div class="splash-smile"><svg viewBox="0 0 120 20"><path d="M6 4 C 35 24, 85 24, 114 4"></path></svg></div>
+    <div class="splash-bar"></div>
+  </div>
+
+  <header>
+    <div class="brand-wrap">
+      <div class="brand-logo">D3</div>
+      <div>
+        <div class="brand-title">RUSH <span>PRO</span></div>
+        <div class="brand-sub" id="header-tab-sub">OFF-YARD ATTENDANCE</div>
+      </div>
+    </div>
+    <div class="top-status">
+      <button class="install-btn" id="install-btn" title="Install app">
+        <svg viewBox="0 0 24 24"><path d="M12 3v10.59l3.3-3.3 1.4 1.42L12 17.4l-4.7-4.7 1.4-1.4 3.3 3.29V3h2zM5 19h14v2H5z"></path></svg>
+        Install
+      </button>
+      <div class="sync-badge" id="sync-status">
+        <span class="sync-dot"></span>
+        <span id="sync-text">LIVE</span>
+      </div>
+      <div class="clock-display" id="dubai-clock">--:--</div>
+    </div>
+  </header>
+  <div id="pending-holder" style="display:flex; justify-content:center;">
+    <span id="pending-badge" style="display:none; align-items:center; gap:6px; font-size:11px; font-weight:800; color:#201400; background:var(--yellow); padding:3px 12px; border-radius:0 0 10px 10px;"></span>
+  </div>
+
+  <div id="banner-holder"></div>
+
+  <main id="main-content">
+
+    <!-- ================= TAB 1: ATTENDANCE ================= -->
+    <div class="tab-content active" id="tab-attend">
+      <div class="scanner-card">
+        <div class="scanner-viewport-wrap">
+          <div id="qr-reader-attend"></div>
+          <div class="scanner-idle" id="idle-attend">
+            <svg viewBox="0 0 24 24"><path d="M9.5 6.5v3h-3v-3h3M11 5H5v6h6V5zm-1.5 9.5v3h-3v-3h3M11 13H5v6h6v-6zm6.5-6.5v3h-3v-3h3M19 5h-6v6h6V5zm-6 8h1.5v1.5H13V13zm1.5 1.5H16V16h-1.5v-1.5zM16 13h1.5v1.5H16V13zm-3 3h1.5v1.5H13V16zm1.5 1.5H16V19h-1.5v-1.5zM16 16h1.5v1.5H16V16zm1.5-1.5H19V16h-1.5v-1.5zm0 3H19V19h-1.5v-1.5z"></path></svg>
+            <div class="idle-title">Scanner is Off</div>
+            <div class="idle-sub">Tap “Start Scanner” to activate the camera</div>
+          </div>
+          <div class="laser-line"></div>
+          <div class="corner-bracket cb-tl"></div>
+          <div class="corner-bracket cb-tr"></div>
+          <div class="corner-bracket cb-bl"></div>
+          <div class="corner-bracket cb-br"></div>
+        </div>
+        <div class="scanner-controls">
+          <button class="btn btn-green" id="btn-start-attend" onclick="startScanner('tab-attend')">▶ Start Scanner</button>
+          <button class="btn btn-ghost" id="btn-stop-attend" onclick="stopScanner('tab-attend')" style="display:none;">■ Stop Scanner</button>
+        </div>
+        <div class="scan-status-chip" id="scanchip-attend"><span class="dot"></span><span id="scantext-attend">Camera Off</span></div>
+        <div class="scanner-input-bar">
+          <input type="text" id="attend-inp" class="text-input" placeholder="Instant Scan or Search DA ID / Name..." autocomplete="off">
+          <button class="btn" id="btn-attend-checkin">Check In</button>
+          <div class="search-results-dropdown" id="attend-search-results"></div>
+        </div>
+      </div>
+
+      <!-- Dedicated Replacement Search Bar -->
+      <div class="replacement-box">
+        <div style="font-size:13px; font-weight:800; color:var(--orange);">
+          <span>🔁 Quick Replacement Assignment (Absent DA ➔ RushData DA)</span>
+        </div>
+        <div class="rep-grid">
+          <div style="position:relative;">
+            <input type="text" id="rep-absent-inp" class="text-input" style="width:100%;" placeholder="1. Search Absent DA..." autocomplete="off">
+            <div class="search-results-dropdown" id="rep-absent-dropdown"></div>
+          </div>
+          <div style="position:relative;">
+            <input type="text" id="rep-new-inp" class="text-input" style="width:100%;" placeholder="2. Search Replacement (RushData)..." autocomplete="off">
+            <div class="search-results-dropdown" id="rep-new-dropdown"></div>
+          </div>
+        </div>
+        <button class="btn btn-green" id="btn-assign-rep-inline" style="width:100%; padding:9px;">Assign Replacement &amp; Queue to Batch</button>
+      </div>
+
+      <!-- Wave Switcher Pill Bar -->
+      <div class="wave-bar" id="wave-pill-bar"></div>
+
+      <!-- Current Running Wave Metrics -->
+      <div class="metric-row">
+        <div class="metric-box"><div class="metric-val" id="cnt-present" style="color:var(--green)">0</div><div class="metric-lbl">Wave Present</div></div>
+        <div class="metric-box"><div class="metric-val" id="cnt-late" style="color:var(--yellow)">0</div><div class="metric-lbl">Wave Late</div></div>
+        <div class="metric-box"><div class="metric-val" id="cnt-absent" style="color:var(--red)">0</div><div class="metric-lbl">Wave Absent</div></div>
+        <div class="metric-box"><div class="metric-val" id="cnt-total">0</div><div class="metric-lbl">Wave Total</div></div>
+      </div>
+
+      <!-- Current Running Wave Roster Card -->
+      <div class="batch-card">
+        <div class="batch-header">
+          <div class="batch-title">
+            <span id="current-wave-label">🌊 Current Running Wave</span>
+            <span class="batch-badge" id="roster-badge-date">--</span>
+          </div>
+        </div>
+        <div class="da-list" id="attend-roster-list">
+          <div style="padding:14px; text-align:center; color:var(--text-dim); font-size:13px;">Loading active wave...</div>
+        </div>
       </div>
     </div>
 
-    <div class="status-box">
-      <div class="status-text" id="d-status">LOADING...</div>
+    <!-- ================= TAB 2: WAITING ================= -->
+    <div class="tab-content" id="tab-waiting">
+      <div class="scanner-card">
+        <div class="scanner-viewport-wrap">
+          <div id="qr-reader-waiting"></div>
+          <div class="scanner-idle" id="idle-waiting">
+            <svg viewBox="0 0 24 24"><path d="M9.5 6.5v3h-3v-3h3M11 5H5v6h6V5zm-1.5 9.5v3h-3v-3h3M11 13H5v6h6v-6zm6.5-6.5v3h-3v-3h3M19 5h-6v6h6V5zm-6 8h1.5v1.5H13V13zm1.5 1.5H16V16h-1.5v-1.5zM16 13h1.5v1.5H16V13zm-3 3h1.5v1.5H13V16zm1.5 1.5H16V19h-1.5v-1.5zM16 16h1.5v1.5H16V16zm1.5-1.5H19V16h-1.5v-1.5zm0 3H19V19h-1.5v-1.5z"></path></svg>
+            <div class="idle-title">Scanner is Off</div>
+            <div class="idle-sub">Tap “Start Scanner” to activate the camera</div>
+          </div>
+          <div class="laser-line"></div>
+          <div class="corner-bracket cb-tl"></div>
+          <div class="corner-bracket cb-tr"></div>
+          <div class="corner-bracket cb-bl"></div>
+          <div class="corner-bracket cb-br"></div>
+        </div>
+        <div class="scanner-controls">
+          <button class="btn btn-green" id="btn-start-waiting" onclick="startScanner('tab-waiting')">▶ Start Scanner</button>
+          <button class="btn btn-ghost" id="btn-stop-waiting" onclick="stopScanner('tab-waiting')" style="display:none;">■ Stop Scanner</button>
+        </div>
+        <div class="scan-status-chip" id="scanchip-waiting"><span class="dot"></span><span id="scantext-waiting">Camera Off</span></div>
+        <div class="scanner-input-bar">
+          <input type="text" id="waiting-inp" class="text-input" placeholder="Scan or Search DA to Add to Waiting Batch..." autocomplete="off">
+          <button class="btn btn-green" id="btn-waiting-enqueue">+ Add to Batch</button>
+          <div class="search-results-dropdown" id="waiting-search-results"></div>
+        </div>
+      </div>
+
+      <div class="metric-row" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="metric-box"><div class="metric-val" id="wait-total-das" style="color:var(--orange)">0</div><div class="metric-lbl">Waiting DAs</div></div>
+        <div class="metric-box"><div class="metric-val" id="wait-active-batches">0</div><div class="metric-lbl">Active Batches</div></div>
+        <div class="metric-box"><div class="metric-val" id="wait-batch-cap">25</div><div class="metric-lbl">Batch Cap</div></div>
+      </div>
+
+      <div id="waiting-batches-container" style="display:flex; flex-direction:column; gap:12px;"></div>
     </div>
 
-    <div class="timer-box" id="timer-container" style="display:none;">
-      <div style="font-size:11px; color:var(--muted); text-transform:uppercase; font-weight:800; margin-bottom:5px;" id="timer-label">Timer</div>
-      <div class="countdown" id="d-timer">00:00:00</div>
+    <!-- ================= TAB 3: BREAKS ================= -->
+    <div class="tab-content" id="tab-breaks">
+      <div class="replacement-box">
+        <div style="font-size:13px; font-weight:800; color:var(--orange);">☕ Break Control (Yard Marshal)</div>
+        <div class="scanner-input-bar" style="margin-top:0; position:relative;">
+          <input type="text" id="break-inp" class="text-input" placeholder="Scan or search DA to send on Break..." autocomplete="off">
+          <button class="btn" id="btn-start-break" style="background:linear-gradient(180deg,#FBBF24,#F59E0B); color:#201400;">Send on Break</button>
+          <div class="search-results-dropdown" id="break-search-results"></div>
+        </div>
+      </div>
+
+      <div class="batch-card">
+        <div class="batch-header">
+          <div class="batch-title"><span>☕ Currently on Break</span></div>
+          <span class="batch-badge" id="break-badge-count" style="background:#FBBF24; color:#000;">0 DAs</span>
+        </div>
+        <div class="da-list" id="breaks-da-list"></div>
+      </div>
+
+      <div class="batch-card break-return">
+        <div class="batch-header">
+          <div class="batch-title"><span>🔄 DA's from Break — Ready to Dispatch</span></div>
+          <span class="batch-badge" id="breakret-badge-count" style="background:var(--green); color:#032015;">0</span>
+        </div>
+        <div class="da-list" id="breakret-da-list"></div>
+      </div>
     </div>
-  </div>
 
-  <p style="text-align:center; font-size:11px; color:var(--muted); margin-top:12px;">
-    Auto-refreshes every 10 seconds · <a href="javascript:void(0)" onclick="fetchData(currentDaId)" style="color:var(--orange);font-weight:bold;">Refresh Now</a>
-  </p>
-</div>
+    <!-- ================= TAB: VIOLATORS ================= -->
+    <div class="tab-content" id="tab-violators">
+      <div class="violator-banner">
+        <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"></path></svg>
+        <span>Violators must be sent back to the OFF-YARD. Receive IN is blocked for every DA listed here.</span>
+      </div>
+      <div class="batch-card">
+        <div class="batch-header">
+          <div class="batch-title"><span>🚫 Active Violators</span></div>
+          <span class="batch-badge" id="violator-badge-count" style="background:var(--red); color:#fff;">0</span>
+        </div>
+        <div class="da-list" id="violators-da-list"></div>
+      </div>
+    </div>
 
-<script>
-    // --- SELF-CLEAN: strip any injected external theme (e.g. preview/extension <style id="qw-...">)
-    // so only this app's own styling applies. No-op on the live site (nothing injected there). ---
-    (function stripInjectedThemes() {
+    <!-- ================= TAB 4: RECEIVE ================= -->
+    <div class="tab-content" id="tab-receive">
+      <div class="scanner-card">
+        <div class="scanner-viewport-wrap">
+          <div id="qr-reader-receive"></div>
+          <div class="scanner-idle" id="idle-receive">
+            <svg viewBox="0 0 24 24"><path d="M9.5 6.5v3h-3v-3h3M11 5H5v6h6V5zm-1.5 9.5v3h-3v-3h3M11 13H5v6h6v-6zm6.5-6.5v3h-3v-3h3M19 5h-6v6h6V5zm-6 8h1.5v1.5H13V13zm1.5 1.5H16V16h-1.5v-1.5zM16 13h1.5v1.5H16V13zm-3 3h1.5v1.5H13V16zm1.5 1.5H16V19h-1.5v-1.5zM16 16h1.5v1.5H16V16zm1.5-1.5H19V16h-1.5v-1.5zm0 3H19V19h-1.5v-1.5z"></path></svg>
+            <div class="idle-title">Scanner is Off</div>
+            <div class="idle-sub">Tap “Start Scanner” to activate the Received In camera</div>
+          </div>
+          <div class="laser-line"></div>
+          <div class="corner-bracket cb-tl"></div>
+          <div class="corner-bracket cb-tr"></div>
+          <div class="corner-bracket cb-bl"></div>
+          <div class="corner-bracket cb-br"></div>
+        </div>
+        <div class="scanner-controls">
+          <button class="btn btn-green" id="btn-start-receive" onclick="startScanner('tab-receive')">▶ Start Scanner</button>
+          <button class="btn btn-ghost" id="btn-stop-receive" onclick="stopScanner('tab-receive')" style="display:none;">■ Stop Scanner</button>
+        </div>
+        <div class="scan-status-chip" id="scanchip-receive"><span class="dot"></span><span id="scantext-receive">Camera Off</span></div>
+        <div class="scanner-input-bar">
+          <input type="text" id="receive-inp" class="text-input" placeholder="Scan DA at Received In station..." autocomplete="off">
+          <button class="btn btn-green" id="btn-receive-scanin">Received In</button>
+          <div class="search-results-dropdown" id="receive-search-results"></div>
+        </div>
+      </div>
+
+      <div class="batch-card">
+        <div class="batch-header">
+          <div class="batch-title"><span>⏱️ Sent from Waiting — Awaiting Received In (scan before time limit)</span></div>
+          <span class="batch-badge" id="awaiting-badge-count">0</span>
+        </div>
+        <div class="da-list" id="awaiting-da-list"></div>
+      </div>
+
+      <div class="batch-card">
+        <div class="batch-header">
+          <div class="batch-title"><span>✅ Received In (confirmed by YM)</span></div>
+          <span class="batch-badge" id="received-badge-count" style="background:var(--green); color:#000;">0</span>
+        </div>
+        <div class="da-list" id="received-da-list"></div>
+      </div>
+    </div>
+
+    <!-- ================= TAB 5: ADMIN ================= -->
+    <div class="tab-content" id="tab-admin">
+      <div class="batch-card" style="padding:14px; display:flex; flex-direction:column; gap:12px;">
+        <div class="batch-title" style="margin-bottom:6px;">⚙️ Global Dispatch &amp; Cloud Config</div>
+        <div>
+          <label class="metric-lbl">Yard Marshal Name (Local Device)</label>
+          <input type="text" id="cfg-ym-name" class="text-input" style="width:100%; margin-top:4px;">
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:4px 0;">
+          <label class="metric-lbl" style="margin:0;">Scanning Sounds &amp; Audio Feedback</label>
+          <button id="cfg-sound-toggle" class="btn btn-card" type="button" style="padding:8px 14px; min-width:92px;">🔊 On</button>
+        </div>
+        <div>
+          <label class="metric-lbl">Google Apps Script Web App API URL</label>
+          <input type="text" id="cfg-api-url" class="text-input" style="width:100%; margin-top:4px;">
+        </div>
+        <div>
+          <label class="metric-lbl">Active Google Sheet URL (Monthly Switching)</label>
+          <input type="text" id="cfg-sheet-url" class="text-input" style="width:100%; margin-top:4px;">
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div><label class="metric-lbl">Batch Size (DAs)</label><input type="number" id="cfg-batch-size" class="text-input" style="width:100%; margin-top:4px;" value="25"></div>
+          <div><label class="metric-lbl">Receive Timeout (Min)</label><input type="number" id="cfg-rush-timeout" class="text-input" style="width:100%; margin-top:4px;" value="15"></div>
+          <div><label class="metric-lbl">Auto-OFD Timer (Min)</label><input type="number" id="cfg-auto-ofd" class="text-input" style="width:100%; margin-top:4px;" value="30"></div>
+          <div><label class="metric-lbl">Waiting Lock (Min)</label><input type="number" id="cfg-waiting-lock" class="text-input" style="width:100%; margin-top:4px;" value="45"></div>
+          <div><label class="metric-lbl">Pre-Wave Block (Min)</label><input type="number" id="cfg-prewave" class="text-input" style="width:100%; margin-top:4px;" value="30"></div>
+          <div><label class="metric-lbl">Wave Grace Period (Min)</label><input type="number" id="cfg-grace" class="text-input" style="width:100%; margin-top:4px;" value="10"></div>
+          <div><label class="metric-lbl">Receive Violation (Min)</label><input type="number" id="cfg-entry-violation" class="text-input" style="width:100%; margin-top:4px;" value="15"></div>
+        </div>
+        <div>
+          <label class="metric-lbl">Admin PIN</label>
+          <input type="password" id="cfg-admin-pin" class="text-input" style="width:100%; margin-top:4px;" placeholder="****">
+        </div>
+        <div style="display:flex; gap:8px; margin-top:6px;">
+          <button class="btn btn-green" id="btn-save-settings" style="flex:1;">Save Settings</button>
+          <button class="btn" id="btn-reset-day" style="background:var(--red); color:#FFF;">Reset Day</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <nav>
+    <button class="nav-item active" data-tab="tab-attend">
+      <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"></path></svg>
+      <span>Attend</span>
+    </button>
+    <button class="nav-item" data-tab="tab-waiting">
+      <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"></path></svg>
+      <span>Waiting</span>
+    </button>
+    <button class="nav-item" data-tab="tab-breaks">
+      <svg viewBox="0 0 24 24"><path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 5h-2V5h2v3zM4 19h16v2H4z"></path></svg>
+      <span>Breaks</span>
+    </button>
+    <button class="nav-item" data-tab="tab-violators">
+      <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"></path></svg>
+      <span>Violators</span>
+    </button>
+    <button class="nav-item" data-tab="tab-receive">
+      <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path></svg>
+      <span>Receive</span>
+    </button>
+    <button class="nav-item" data-tab="tab-admin">
+      <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24-1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"></path></svg>
+      <span>Admin</span>
+    </button>
+  </nav>
+
+  <script>
+    var SAFE_STORE = (function() {
+      var mem = {}, ok = false;
       try {
-        var kill = document.querySelectorAll('style[id^="qw-"], style#qw-theme, link[id^="qw-"]');
-        for (var i = 0; i < kill.length; i++) { if (kill[i] && kill[i].parentNode) kill[i].parentNode.removeChild(kill[i]); }
-      } catch (e) {}
+        var tk = "__dud3_test__";
+        window.localStorage.setItem(tk, "1");
+        window.localStorage.removeItem(tk);
+        ok = true;
+      } catch (e) { ok = false; }
+      return {
+        getItem: function(k) {
+          if (ok) { try { return window.localStorage.getItem(k); } catch (e) {} }
+          return (k in mem) ? mem[k] : null;
+        },
+        setItem: function(k, v) {
+          if (ok) { try { window.localStorage.setItem(k, v); return; } catch (e) {} }
+          mem[k] = String(v);
+        },
+        removeItem: function(k) {
+          if (ok) { try { window.localStorage.removeItem(k); return; } catch (e) {} }
+          delete mem[k];
+        }
+      };
     })();
 
-/* Reuses the MAIN YM app backend (same /exec URL, same Google Sheet). */
-const API_URL = "https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec";
-const SHEET_URL = "https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit";
-
-var SAFE_STORE = (function () {
-  var mem = {}, ok = false;
-  try { var t = "__dud3drv__"; window.localStorage.setItem(t, "1"); window.localStorage.removeItem(t); ok = true; } catch (e) { ok = false; }
-  return {
-    getItem: function (k) { if (ok) { try { return window.localStorage.getItem(k); } catch (e) {} } return (k in mem) ? mem[k] : null; },
-    setItem: function (k, v) { if (ok) { try { window.localStorage.setItem(k, v); return; } catch (e) {} } mem[k] = String(v); },
-    removeItem: function (k) { if (ok) { try { window.localStorage.removeItem(k); return; } catch (e) {} } delete mem[k]; }
-  };
-})();
-
-let currentDaId = "";
-let currentAlias = "";
-let refreshInterval = null, countdownInterval = null;
-let serverOffsetSec = 0;
-let rushRoster = [];
-let selectedDriver = null;
-let hlIndex = -1;
-
-function loadRushRoster() {
-  var url = API_URL + "?action=getRushRoster&sheetUrl=" + encodeURIComponent(SHEET_URL);
-  fetch(url, { cache: "no-store" })
-    .then(function(r){ return r.json(); })
-    .then(function(res){ if (res && res.success && res.roster) rushRoster = res.roster; })
-    .catch(function(){ /* dropdown still allows manual ID entry */ });
-}
-
-function onSearchInput() {
-  var q = document.getElementById("da-id-input").value.trim().toLowerCase();
-  var dd = document.getElementById("search-dropdown");
-  selectedDriver = null; hlIndex = -1;
-  if (!q) { dd.style.display = "none"; dd.innerHTML = ""; return; }
-
-  var matches = rushRoster.filter(function(d){
-    return (d.daName && d.daName.toLowerCase().indexOf(q) !== -1) ||
-           (d.alias && d.alias.toLowerCase().indexOf(q) !== -1) ||
-           (d.daId && d.daId.toLowerCase().indexOf(q) !== -1);
-  }).slice(0, 25);
-
-  if (matches.length === 0) {
-    dd.innerHTML = '<div class="search-empty">No match in RushData — you can still type a full DA ID and press Check.</div>';
-    dd.style.display = "block";
-    return;
-  }
-
-  dd.innerHTML = "";
-  matches.forEach(function(d){
-    var el = document.createElement("div");
-    el.className = "search-item";
-    var sub = [];
-    if (d.daName) sub.push(d.daName);
-    if (d.dsp) sub.push(d.dsp);
-    sub.push(d.daId);
-    el.innerHTML = '<div class="si-alias">' + escapeHtml(d.alias || d.daId) + '</div>' +
-                   '<div class="si-sub">' + escapeHtml(sub.join(" · ")) + '</div>';
-    el.onclick = function(){ pickDriver(d); };
-    dd.appendChild(el);
-  });
-  dd.style.display = "block";
-}
-
-function onSearchKey(e) {
-  var dd = document.getElementById("search-dropdown");
-  var items = dd.querySelectorAll(".search-item");
-  if (e.key === "Enter") {
-    if (hlIndex >= 0 && items[hlIndex]) { items[hlIndex].click(); e.preventDefault(); }
-    else { login(); }
-    return;
-  }
-  if (!items.length) return;
-  if (e.key === "ArrowDown") { hlIndex = Math.min(hlIndex + 1, items.length - 1); e.preventDefault(); }
-  else if (e.key === "ArrowUp") { hlIndex = Math.max(hlIndex - 1, 0); e.preventDefault(); }
-  else return;
-  items.forEach(function(it, i){ it.classList.toggle("hl", i === hlIndex); });
-  items[hlIndex].scrollIntoView({ block: "nearest" });
-}
-
-function pickDriver(d) {
-  selectedDriver = d;
-  currentDaId = String(d.daId).trim().toUpperCase();
-  currentAlias = d.alias || "";
-  document.getElementById("da-id-input").value = (d.alias || d.daName || d.daId);
-  var dd = document.getElementById("search-dropdown");
-  dd.style.display = "none"; dd.innerHTML = "";
-  login();
-}
-
-function escapeHtml(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
-
-function renderQr(daId) {
-  var box = document.getElementById("qr-box");
-  if (!box) return;
-  box.innerHTML = "";
-  try {
-    if (typeof QRCode !== "undefined") {
-      new QRCode(box, { text: String(daId), width: 170, height: 170, colorDark: "#0F151C", colorLight: "#FFFFFF", correctLevel: QRCode.CorrectLevel.M });
-    } else {
-      box.innerHTML = '<div style="color:#888;font-size:12px;padding:20px;">QR unavailable</div>';
-    }
-  } catch (e) {}
-}
-
-function getTodayTab(){
-  var d=new Date(), m=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
-  return ("0"+d.getDate()).slice(-2)+" "+m[d.getMonth()];
-}
-
-window.onload = function() {
-  loadRushRoster();
-  var savedId = SAFE_STORE.getItem("dud3_driver_id");
-  if (savedId) { currentDaId = savedId; document.getElementById("da-id-input").value = savedId; login(); }
-  document.addEventListener("click", function(e){
-    var wrap = document.querySelector(".search-wrap");
-    var dd = document.getElementById("search-dropdown");
-    if (wrap && dd && !wrap.contains(e.target)) { dd.style.display = "none"; }
-  });
-};
-
-function login() {
-  var daId = "";
-  if (selectedDriver) { daId = String(selectedDriver.daId).trim().toUpperCase(); }
-  else { daId = document.getElementById("da-id-input").value.trim().toUpperCase(); }
-  if (daId.length < 3) return alert("Please pick your name from the list, or type your full DA ID.");
-  currentDaId = daId;
-  SAFE_STORE.setItem("dud3_driver_id", daId);
-  var dd = document.getElementById("search-dropdown");
-  if (dd) dd.style.display = "none";
-  document.getElementById("login-sec").style.display = "none";
-  fetchData(daId);
-  if (refreshInterval) clearInterval(refreshInterval);
-  refreshInterval = setInterval(function(){ fetchData(daId); }, 10000);
-}
-
-function logout() {
-  SAFE_STORE.removeItem("dud3_driver_id");
-  if (refreshInterval) clearInterval(refreshInterval);
-  if (countdownInterval) clearInterval(countdownInterval);
-  document.getElementById("dashboard").style.display = "none";
-  document.getElementById("login-sec").style.display = "block";
-  document.getElementById("da-id-input").value = "";
-}
-
-function fetchData(daId) {
-  if (!daId) return;
-  document.getElementById("loader").style.display = "block";
-
-  var payload = { action: 'getDaStatus', daId: daId, sheetUrl: SHEET_URL, dayTab: getTodayTab() };
-
-  fetch(API_URL, {
-    method: 'POST',
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify(payload),
-    cache: 'no-store'
-  })
-  .then(function(res){ return res.json(); })
-  .then(function(res){ handleStatusResponse(res); })
-  .catch(function(){
-    var url = API_URL + "?action=getDaStatus"
-      + "&daId=" + encodeURIComponent(daId)
-      + "&sheetUrl=" + encodeURIComponent(SHEET_URL)
-      + "&dayTab=" + encodeURIComponent(getTodayTab());
-    fetch(url, { method: 'GET', cache: 'no-store' })
-      .then(function(res){ return res.json(); })
-      .then(function(res){ handleStatusResponse(res); })
-      .catch(function(err){
-        document.getElementById("loader").style.display = "none";
-        alert("Could not reach the server. Check your connection and try again.");
+    var _deferredInstallPrompt = null;
+    window.addEventListener("beforeinstallprompt", function(e) {
+      e.preventDefault();
+      _deferredInstallPrompt = e;
+      var b = document.getElementById("install-btn");
+      if (b) b.classList.add("show");
+    });
+    window.addEventListener("appinstalled", function() {
+      _deferredInstallPrompt = null;
+      var b = document.getElementById("install-btn");
+      if (b) b.classList.remove("show");
+    });
+    function triggerInstall() {
+      if (!_deferredInstallPrompt) {
+        var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+        if (isIOS) {
+          showBanner("To install: tap the Share icon, then \"Add to Home Screen\".", "warning", 12);
+        } else {
+          showBanner("App install isn't available here. Open this app from its hosted URL to install.", "warning", 10);
+        }
+        return;
+      }
+      _deferredInstallPrompt.prompt();
+      _deferredInstallPrompt.userChoice.finally(function() {
+        _deferredInstallPrompt = null;
+        var b = document.getElementById("install-btn");
+        if (b) b.classList.remove("show");
       });
-  });
-}
-
-function handleStatusResponse(res) {
-  document.getElementById("loader").style.display = "none";
-  if (!res || !res.success) { return alert("Error: " + ((res && (res.error || (res.errors && res.errors[0]))) || "Request failed")); }
-  var data = adaptResponse(res);
-  if (!data.found) { logout(); return alert("DA ID not found in today's roster."); }
-  updateDashboard(data);
-}
-
-function adaptResponse(res) {
-  var info = res.daInfo || null;
-  var settings = res.settings || {};
-  var found = !!info || !!res.batchName || !!res.sentTime || !!res.rushInTime || !!res.waitTime;
-  if (!found) return { found: false };
-
-  var status;
-  if (res.inBreak) status = "On Break";
-  else {
-    switch (res.dispatchState) {
-      case "OFD": status = "OFD"; break;
-      case "RECEIVED_INSIDE": status = "Received"; break;
-      case "SENT_TO_OP": status = "Sent to OP"; break;
-      case "WAITING": status = "Waiting"; break;
-      default:
-        status = (info && info.status) ? info.status : "Not Checked In";
     }
-  }
 
-  return {
-    found: true,
-    daId: (info && info.daId) || currentDaId,
-    daName: (info && info.daName) || currentDaId,
-    alias: (info && info.alias) || currentAlias || "",
-    dspName: (info && info.dsp) || "DUD3",
-    waveTime: (info && info.wave) || "",
-    serverTime: res.serverTime || "",
+    var DEFAULT_API = "https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec";
+    var DEFAULT_SHEET = "https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit";
 
-    status: status,
-    batchName: res.batchName || "",
-    batchPosition: res.batchPosition || res.waitingPosition || 0,
-    batchTotal: res.batchTotal || res.totalWaiting || 0,
+    var S = {
+      api: SAFE_STORE.getItem("dud3_api") || DEFAULT_API,
+      sheetUrl: SAFE_STORE.getItem("dud3_sheet") || DEFAULT_SHEET,
+      ymName: SAFE_STORE.getItem("dud3_ym") || "YM-1",
+      soundEnabled: SAFE_STORE.getItem("dud3_sound") !== "off",
+      activeTab: "tab-attend",
+      selectedWave: null,
+      roster: [],
+      waitingBatches: {},
+      sentList: [],
+      receivedList: [],
+      rushData: [],
+      settings: { batchSize: 25, rushTimeoutMin: 20, autoOfdMin: 30, waitingLockMin: 45, preWaveBlockMin: 30, waveGraceMin: 10, entryViolationMin: 15 },
+      selectedAbsentDa: null,
+      selectedReplacementDa: null,
+      inflightMutations: 0,
+      mutationVersion: 0,
+      pollTimer: null,
+      scanners: {},
+      scannerActive: {},
+      scanCooldownMap: {},
+      violators: [],
+      breaksActive: [],
+      pendingWaiting: {},
+      pendingSent: {},
+      pendingReceived: {},
+      highestBatchNum: 0,
+      batchAssignedTotals: {},
+      serverNextBatchName: null
+    };
 
-    checkInTime: res.checkInTime || (info && info.scanTime) || "",
-    waitTime: res.waitTime || "",
-    sentTime: res.sentTime || "",
-    rushInTime: res.rushInTime || "",
-    ofdTime: res.ofdTime || "",
+    var audioCtx = null;
+    function initAudio() {
+      if (!audioCtx) {
+        var AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) audioCtx = new AudioContextClass();
+      }
+      if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+    }
 
-    rushTimeout: settings.rushTimeoutMin || 20,
-    autoOfd: settings.autoOfdMin || 30,
-    turnCount: res.turnCount || 0
-  };
-}
+    function playTone(freqs, startGain, durs, wave) {
+      if (!audioCtx) return;
+      var t = audioCtx.currentTime;
+      for (var i = 0; i < freqs.length; i++) {
+        var osc = audioCtx.createOscillator();
+        var gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.type = wave || "sine";
+        osc.frequency.setValueAtTime(freqs[i], t);
+        gain.gain.setValueAtTime(startGain, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + durs[i]);
+        osc.start(t); osc.stop(t + durs[i] + 0.02);
+        t += durs[i];
+      }
+    }
 
-function hhmmToSec(str) {
-  if (!str) return null;
-  var m = String(str).replace(/^'+/, "").trim().match(/(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)?/);
-  if (!m) return null;
-  var h = parseInt(m[1], 10), min = parseInt(m[2], 10), a = m[3] ? m[3].toUpperCase() : "";
-  if (a === "PM" && h < 12) h += 12;
-  if (a === "AM" && h === 12) h = 0;
-  return (h * 3600) + (min * 60);
-}
+    function playBeep(type) {
+      if (S.soundEnabled === false) {
+        if (navigator.vibrate) navigator.vibrate(type === "success" ? 30 : 80);
+        return;
+      }
+      try {
+        initAudio();
+        if (!audioCtx) return;
+        if (type === "success") {
+          playTone([1568, 2093], 0.3, [0.06, 0.09], "sine");
+          if (navigator.vibrate) navigator.vibrate(35);
+        } else if (type === "violation") {
+          playTone([180, 150, 120], 0.42, [0.14, 0.14, 0.2], "square");
+          if (navigator.vibrate) navigator.vibrate([120, 60, 120, 60, 160]);
+        } else if (type === "action") {
+          playTone([880], 0.26, [0.08], "triangle");
+          if (navigator.vibrate) navigator.vibrate(25);
+        } else {
+          playTone([320, 200], 0.4, [0.12, 0.2], "sawtooth");
+          if (navigator.vibrate) navigator.vibrate([100, 40, 100]);
+        }
+      } catch (e) {}
+    }
 
-function localNowSec() {
-  var d = new Date();
-  return d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds();
-}
+    function isScanCooledDown(daId) {
+      var key = String(daId || "").trim().toUpperCase();
+      var now = Date.now();
+      if (S.scanCooldownMap[key] && (now - S.scanCooldownMap[key]) < 1500) return false;
+      S.scanCooldownMap[key] = now;
+      return true;
+    }
 
-function dubaiNowSec() { return localNowSec() + serverOffsetSec; }
-
-function formatHMS(totalSec) {
-  totalSec = Math.max(0, Math.floor(totalSec));
-  var h = Math.floor(totalSec / 3600);
-  var m = Math.floor((totalSec % 3600) / 60);
-  var s = totalSec % 60;
-  return ("0" + h).slice(-2) + ":" + ("0" + m).slice(-2) + ":" + ("0" + s).slice(-2);
-}
-
-function updateDashboard(data) {
-  if (data.serverTime) {
-    var srvSec = hhmmToSec(data.serverTime);
-    if (srvSec !== null) {
+    function getDubaiHHMM() {
       var d = new Date();
-      serverOffsetSec = (srvSec + d.getSeconds()) - localNowSec();
+      return d.toLocaleTimeString("en-GB", { timeZone: "Asia/Dubai", hour: "2-digit", minute: "2-digit", hour12: false });
     }
-  }
 
-  document.getElementById("dashboard").style.display = "block";
+    function parseHHMM(str) {
+      if (!str) return -1;
+      var p = String(str).trim().split(":");
+      if (p.length < 2) return -1;
+      return parseInt(p[0], 10) * 60 + parseInt(p[1], 10);
+    }
 
-  var aliasShown = data.alias || currentAlias || data.daId || "--";
-  currentAlias = data.alias || currentAlias;
-  document.getElementById("d-name").textContent = aliasShown;
-  document.getElementById("d-id").textContent = data.daId || "--";
-  document.getElementById("d-dsp").textContent = data.dspName || "DUD3";
-  document.getElementById("d-wave").textContent = data.waveTime || "Not Assigned";
+    var BREAK_RETURN_BATCH = "DA's from Break";
+    function getSortedBatchKeys(batchesObj) {
+      return Object.keys(batchesObj || {}).sort(function(a, b) {
+        if (a === BREAK_RETURN_BATCH && b !== BREAK_RETURN_BATCH) return -1;
+        if (b === BREAK_RETURN_BATCH && a !== BREAK_RETURN_BATCH) return 1;
+        var na = parseInt((a.match(/\d+/) || [999])[0], 10);
+        var nb = parseInt((b.match(/\d+/) || [999])[0], 10);
+        return na - nb;
+      });
+    }
 
-  document.getElementById("d-alias").textContent = aliasShown;
-  document.getElementById("qr-daid").textContent = data.daId || "--";
-  document.getElementById("qr-dsp").textContent = "DSP: " + (data.dspName || "DUD3");
-  if (document.getElementById("qr-box").childNodes.length === 0 && data.daId) renderQr(data.daId);
+    // 🟢 FORWARD-ONLY BATCH HIGH-WATER MARK ENGINE (Never reopens old dispatched batches)
+    function syncBatchWatermarksFromState() {
+      var maxB = S.highestBatchNum || 0;
+      var counts = {};
 
-  document.getElementById("d-batch").textContent = data.batchName || "Not Queued";
-  var turns = data.turnCount || 0;
-  document.getElementById("d-turn").textContent = turns > 0 ? ("Turn " + turns) : "No turns yet";
-  var st = String(data.status || "");
-  if (st === "Waiting" && data.batchPosition > 0) {
-    document.getElementById("d-wait-num").textContent = "#" + data.batchPosition + " of " + data.batchTotal;
-  } else if (st === "Sent to OP") {
-    document.getElementById("d-wait-num").textContent = "DISPATCHED";
-  } else if (st === "Received") {
-    document.getElementById("d-wait-num").textContent = "IN STATION";
-  } else {
-    document.getElementById("d-wait-num").textContent = "--";
-  }
+      var bump = function(bName) {
+        if (!bName || bName === BREAK_RETURN_BATCH) return;
+        var m = String(bName).match(/(\d+)/);
+        if (!m) return;
+        var n = parseInt(m[1], 10);
+        if (n > maxB) maxB = n;
+        counts[n] = (counts[n] || 0) + 1;
+      };
 
-  const statusEl = document.getElementById("d-status");
-  statusEl.textContent = (st || "Not Checked In").toUpperCase();
-  if (st.indexOf("Absent") !== -1 || st.indexOf("Break") !== -1) statusEl.style.color = "var(--red)";
-  else if (st.indexOf("Received") !== -1 || st.indexOf("OFD") !== -1) statusEl.style.color = "var(--green)";
-  else if (st.indexOf("Sent") !== -1) statusEl.style.color = "var(--orange)";
-  else if (st.indexOf("Waiting") !== -1) statusEl.style.color = "var(--blue)";
-  else statusEl.style.color = "var(--text)";
+      Object.keys(S.waitingBatches || {}).forEach(function(bn) {
+        (S.waitingBatches[bn] || []).forEach(function() { bump(bn); });
+      });
+      (S.sentList || []).forEach(function(s) { bump(s.batchName); });
+      (S.receivedList || []).forEach(function(r) { bump(r.batchName); });
+      (S.roster || []).forEach(function(d) {
+        if (d.dispatchStatus === "OFD" && d.batchName) bump(d.batchName);
+      });
 
-  setupTimers(data);
-}
+      S.highestBatchNum = maxB;
+      Object.keys(counts).forEach(function(k) {
+        S.batchAssignedTotals[k] = Math.max(S.batchAssignedTotals[k] || 0, counts[k]);
+      });
+    }
 
-function setupTimers(data) {
-  const timerBox = document.getElementById("timer-container");
-  const timerLabel = document.getElementById("timer-label");
-  const timerDisplay = document.getElementById("d-timer");
-  if (countdownInterval) clearInterval(countdownInterval);
-  timerBox.style.display = "none";
-  var st = String(data.status || "");
+    function getNextBatchNameOptimistic() {
+      syncBatchWatermarksFromState();
+      var cap = S.settings.batchSize || 25;
 
-  var startRef = hhmmToSec(data.waitTime || data.checkInTime);
-  var sentRef  = hhmmToSec(data.sentTime);
-  var rushRef  = hhmmToSec(data.rushInTime);
+      if (S.serverNextBatchName) {
+        var sm = String(S.serverNextBatchName).match(/(\d+)/);
+        if (sm) {
+          var sNum = parseInt(sm[1], 10);
+          if (sNum > S.highestBatchNum) S.highestBatchNum = sNum;
+        }
+      }
 
-  if ((st === "Waiting" || st === "Present" || st.indexOf("Late") !== -1 || st.indexOf("Replacement") !== -1) && startRef !== null) {
-    timerBox.style.display = "block";
-    timerLabel.textContent = "⏳ Waiting Time in " + (data.batchName || "Queue");
-    timerLabel.style.color = "var(--orange)";
-    timerDisplay.style.color = "var(--orange)";
-    var tickWait = function() {
-      var elapsed = Math.max(0, dubaiNowSec() - startRef);
-      timerDisplay.textContent = formatHMS(elapsed);
+      if (S.highestBatchNum === 0) {
+        S.highestBatchNum = 1;
+        S.batchAssignedTotals[1] = 1;
+        return "Batch 1";
+      }
+
+      var curNum = S.highestBatchNum;
+      var curBatchName = "Batch " + curNum;
+      var totalAssigned = S.batchAssignedTotals[curNum] || ((S.waitingBatches[curBatchName] || []).length);
+      var waitingNow = (S.waitingBatches[curBatchName] || []).length;
+      var sentOrRecFromCur = (S.sentList || []).some(function(s){ return s.batchName === curBatchName; }) ||
+                             (S.receivedList || []).some(function(r){ return r.batchName === curBatchName; });
+
+      if (totalAssigned >= cap || (sentOrRecFromCur && waitingNow === 0)) {
+        curNum = curNum + 1;
+        S.highestBatchNum = curNum;
+        S.batchAssignedTotals[curNum] = 1;
+        S.serverNextBatchName = "Batch " + curNum;
+        return "Batch " + curNum;
+      }
+
+      S.batchAssignedTotals[curNum] = totalAssigned + 1;
+      return "Batch " + curNum;
+    }
+
+    function determineCurrentRunningWave() {
+      var waves = [];
+      (S.roster || []).forEach(function(d) {
+        if (d.wave && waves.indexOf(d.wave) === -1) waves.push(d.wave);
+      });
+      waves.sort(function(a, b) { return parseHHMM(a) - parseHHMM(b); });
+      if (waves.length === 0) return null;
+
+      var curMins = parseHHMM(getDubaiHHMM());
+      var preBlock = S.settings.preWaveBlockMin || 30;
+      var activeWave = waves[0];
+      var minDiff = 99999;
+
+      for (var i = 0; i < waves.length; i++) {
+        var wMins = parseHHMM(waves[i]);
+        if (curMins >= (wMins - preBlock) && curMins <= (wMins + 60)) return waves[i];
+        var diff = Math.abs(curMins - wMins);
+        if (diff < minDiff) { minDiff = diff; activeWave = waves[i]; }
+      }
+      return activeWave;
+    }
+
+    function showBanner(text, type, timeoutSecs) {
+      var holder = document.getElementById("banner-holder");
+      if (!holder) return;
+      var b = document.createElement("div");
+      b.className = "banner banner-" + (type || "warning");
+      b.innerHTML = '<span>' + text + '</span><span class="banner-close">&times;</span>';
+      var closeEl = b.querySelector(".banner-close");
+      if (closeEl) closeEl.onclick = function() { b.remove(); };
+      holder.appendChild(b);
+      var secs = timeoutSecs || (type === "danger" ? 30 : 6);
+      setTimeout(function() { if (b.parentNode) b.remove(); }, secs * 1000);
+    }
+
+    var OUTBOX_KEY = "dud3_outbox_v1";
+
+    function loadOutbox() {
+      try { return JSON.parse(SAFE_STORE.getItem(OUTBOX_KEY) || "[]") || []; }
+      catch (e) { return []; }
+    }
+    function saveOutbox(arr) {
+      try { SAFE_STORE.setItem(OUTBOX_KEY, JSON.stringify(arr || [])); } catch (e) {}
+      updateOutboxBadge((arr || []).length);
+    }
+    function outboxAdd(item) {
+      var arr = loadOutbox();
+      arr.push(item);
+      saveOutbox(arr);
+    }
+    function outboxRemove(clientId) {
+      var arr = loadOutbox().filter(function(x) { return x.clientId !== clientId; });
+      saveOutbox(arr);
+    }
+    function updateOutboxBadge(n) {
+      var el = document.getElementById("pending-badge");
+      if (!el) return;
+      if (n > 0) { el.style.display = "inline-flex"; el.textContent = "⏳ " + n + " pending"; }
+      else { el.style.display = "none"; }
+    }
+    function genClientId() {
+      return "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    }
+
+    function postOnce(action, payload, clientId) {
+      var bodyData = { action: action, sheetUrl: S.sheetUrl, clientId: clientId, payload: payload || {} };
+      return fetch(S.api, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(bodyData)
+      })
+        .then(function(res) { return res.json(); })
+        .catch(function() {
+          var url = S.api + "?action=" + encodeURIComponent(action) +
+                    "&clientId=" + encodeURIComponent(clientId) +
+                    "&payload=" + encodeURIComponent(JSON.stringify(payload || {}));
+          return fetch(url).then(function(res) { return res.json(); });
+        });
+    }
+
+    function sendReq(action, payload, callback) {
+      if (action === "getRoster") {
+        var readVersion = S.mutationVersion;
+        postOnce(action, payload, genClientId())
+          .then(function(data) { if (callback) callback(null, data, readVersion); })
+          .catch(function(ex) { if (callback) callback(ex); });
+        return;
+      }
+
+      S.inflightMutations++;
+      S.mutationVersion++;
+      var currentVersion = S.mutationVersion;
+
+      var clientId = genClientId();
+      outboxAdd({ clientId: clientId, action: action, payload: payload || {}, ts: Date.now() });
+
+      postOnce(action, payload, clientId)
+        .then(function(data) {
+          S.inflightMutations = Math.max(0, S.inflightMutations - 1);
+          outboxRemove(clientId);
+          if (callback) callback(null, data, currentVersion);
+        })
+        .catch(function(ex) {
+          S.inflightMutations = Math.max(0, S.inflightMutations - 1);
+          if (callback) callback(ex);
+        });
+    }
+
+    var _outboxFlushing = false;
+    function flushOutbox() {
+      if (_outboxFlushing) return;
+      if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+      var arr = loadOutbox();
+      if (arr.length === 0) return;
+      _outboxFlushing = true;
+      var i = 0;
+      function next() {
+        if (i >= arr.length) { _outboxFlushing = false; pollRoster(); return; }
+        var item = arr[i++];
+        postOnce(item.action, item.payload, item.clientId)
+          .then(function(data) {
+            if (!(data && data.success === false && !data.error)) outboxRemove(item.clientId);
+            next();
+          })
+          .catch(function() { _outboxFlushing = false; });
+      }
+      next();
+    }
+
+    window.addEventListener("online", function() {
+      showBanner("Back online — syncing pending records…", "success", 4);
+      flushOutbox();
+    });
+    window.addEventListener("offline", function() {
+      showBanner("Offline — scans are saved and will sync automatically when reconnected.", "warning", 6);
+    });
+
+    function scheduleNextSync(delayMs) {
+      if (S.pollTimer) clearTimeout(S.pollTimer);
+      S.pollTimer = setTimeout(function() {
+        if (document.hidden) { scheduleNextSync(3000); return; }
+        pollRoster();
+      }, delayMs || 2800);
+    }
+
+    function pollRoster() {
+      if (S.inflightMutations > 0) {
+        scheduleNextSync(1800);
+        return;
+      }
+      var syncBadge = document.getElementById("sync-status");
+      var syncText = document.getElementById("sync-text");
+      if (syncBadge) syncBadge.classList.add("syncing");
+      if (syncText) syncText.textContent = "SYNC";
+
+      sendReq("getRoster", { syncOnly: true }, function(err, res, ver) {
+        if (syncBadge) syncBadge.classList.remove("syncing");
+        if (syncText) syncText.textContent = err ? "OFF" : "LIVE";
+        if (!err && res && res.success) {
+          if (S.inflightMutations === 0 && ver >= S.mutationVersion) {
+            applyRosterData(res);
+          }
+        }
+        scheduleNextSync(2800);
+      });
+    }
+
+    function markPendingWaiting(daId, batchName, item) {
+      S.pendingWaiting[String(daId).toUpperCase()] = {
+        batchName: batchName, item: item, ts: Date.now()
+      };
+    }
+
+    function reconcilePendingWaiting(serverBatches) {
+      serverBatches = serverBatches || {};
+      var serverWaiting = {};
+      Object.keys(serverBatches).forEach(function(bn) {
+        (serverBatches[bn] || []).forEach(function(it) { serverWaiting[String(it.daId).toUpperCase()] = bn; });
+      });
+      var serverMovedOn = {};
+      (S.sentList || []).forEach(function(s) { serverMovedOn[String(s.daId).toUpperCase()] = true; });
+      (S.receivedList || []).forEach(function(r) { serverMovedOn[String(r.daId).toUpperCase()] = true; });
+
+      Object.keys(S.pendingWaiting).forEach(function(key) {
+        var p = S.pendingWaiting[key];
+        if (serverWaiting[key]) { delete S.pendingWaiting[key]; return; }
+        if (serverMovedOn[key]) { delete S.pendingWaiting[key]; return; }
+        var bn = p.batchName;
+        if (!serverBatches[bn]) serverBatches[bn] = [];
+        var exists = serverBatches[bn].some(function(it){ return String(it.daId).toUpperCase() === key; });
+        if (!exists) serverBatches[bn].push(p.item);
+      });
+      return serverBatches;
+    }
+
+    function reconcilePendingSent(serverSent) {
+      serverSent = serverSent || [];
+      var known = {};
+      serverSent.forEach(function(s){ known[String(s.daId).toUpperCase()] = true; });
+      var movedOn = {};
+      (S.receivedList || []).forEach(function(r){ movedOn[String(r.daId).toUpperCase()] = true; });
+      Object.keys(S.pendingReceived).forEach(function(k){ movedOn[k] = true; });
+      var nowViolators = {};
+      (S.violators || []).forEach(function(v){ nowViolators[String(v.daId).toUpperCase()] = true; });
+      Object.keys(S.pendingSent).forEach(function(key){
+        if (known[key]) { delete S.pendingSent[key]; return; }
+        if (movedOn[key]) { delete S.pendingSent[key]; return; }
+        if (nowViolators[key]) { delete S.pendingSent[key]; return; }
+        serverSent.push(S.pendingSent[key].item);
+      });
+      return serverSent.filter(function(s) {
+        return !S.pendingReceived[String(s.daId).toUpperCase()];
+      });
+    }
+
+    function reconcilePendingReceived(serverReceived) {
+      serverReceived = serverReceived || [];
+      var known = {};
+      serverReceived.forEach(function(r){ known[String(r.daId).toUpperCase()] = true; });
+      var now = Date.now();
+      Object.keys(S.pendingReceived).forEach(function(key){
+        if (known[key]) { delete S.pendingReceived[key]; return; }
+        if (now - S.pendingReceived[key].ts > 20000) { delete S.pendingReceived[key]; return; }
+        serverReceived.unshift(S.pendingReceived[key].item);
+      });
+      return serverReceived;
+    }
+
+    function applyRosterData(d) {
+      if (d.serverTime) document.getElementById("dubai-clock").textContent = d.serverTime;
+      if (d.targetTab) {
+        var prevTab = document.getElementById("roster-badge-date").textContent;
+        if (prevTab && prevTab !== "--" && prevTab !== d.targetTab) {
+          // Operational day rolled over at 12:00 AM midnight — reset local batch watermarks to Batch 1
+          S.highestBatchNum = 0;
+          S.batchAssignedTotals = {};
+          S.serverNextBatchName = "Batch 1";
+        }
+        document.getElementById("roster-badge-date").textContent = d.targetTab;
+      }
+      if (d.settings) {
+        S.settings = Object.assign(S.settings, d.settings);
+        document.getElementById("wait-batch-cap").textContent = S.settings.batchSize || 25;
+      }
+      if (d.nextBatchName) S.serverNextBatchName = d.nextBatchName;
+      if (d.roster) S.roster = d.roster;
+      if (d.violators) S.violators = d.violators;
+      if (d.breaksActive) S.breaksActive = d.breaksActive;
+      if (d.receivedList) S.receivedList = reconcilePendingReceived(d.receivedList);
+      if (d.sentList) S.sentList = reconcilePendingSent(d.sentList);
+      if (d.waitingBatches) S.waitingBatches = reconcilePendingWaiting(d.waitingBatches);
+      if (d.rushData) S.rushData = d.rushData;
+      syncBatchWatermarksFromState();
+      renderAll();
+    }
+
+    function renderAll() {
+      var steps = [renderAttendanceTab, renderWaitingTab, renderBreaksTab, renderViolatorsTab, renderReceiveTab];
+      for (var i = 0; i < steps.length; i++) {
+        try { steps[i](); } catch (e) {}
+      }
+    }
+
+    function renderAttendanceTab() {
+      var list = S.roster || [];
+      var waves = [];
+      list.forEach(function(d) {
+        if (d.wave && waves.indexOf(d.wave) === -1) waves.push(d.wave);
+      });
+      waves.sort(function(a, b) { return parseHHMM(a) - parseHHMM(b); });
+
+      var autoWave = determineCurrentRunningWave();
+      var activeWave = S.selectedWave || autoWave;
+
+      var waveBar = document.getElementById("wave-pill-bar");
+      waveBar.innerHTML = "";
+      waves.forEach(function(w) {
+        var pill = document.createElement("button");
+        pill.className = "wave-pill" + (w === activeWave ? " active" : "");
+        pill.textContent = (w === autoWave ? "⚡ Current Wave " : "Wave ") + w;
+        pill.onclick = function() {
+          S.selectedWave = w;
+          renderAttendanceTab();
+        };
+        waveBar.appendChild(pill);
+      });
+
+      document.getElementById("current-wave-label").textContent = activeWave ? ("🌊 Running Wave: " + activeWave) : "🌊 Current Running Wave";
+
+      var waveRoster = activeWave ? list.filter(function(d) { return d.wave === activeWave; }) : list;
+      var pCnt = 0, lCnt = 0, aCnt = 0;
+      var container = document.getElementById("attend-roster-list");
+      container.innerHTML = "";
+
+      if (waveRoster.length === 0) {
+        container.innerHTML = '<div style="padding:14px; text-align:center; color:var(--text-dim); font-size:13px;">No DAs scheduled in this wave.</div>';
+      }
+
+      waveRoster.forEach(function(da) {
+        var st = da.status || "Absent";
+        if (st === "Present" || st === "Replacement Present") pCnt++;
+        else if (st === "Late Arrival") lCnt++;
+        else aCnt++;
+
+        var row = document.createElement("div");
+        row.className = "da-row";
+        var statusColor = (st === "Present" || st === "Replacement Present") ? "var(--green)" : (st === "Late Arrival" ? "var(--yellow)" : "var(--red)");
+        var quickPickBtn = (st === "Absent") ? '<button class="btn btn-card" style="font-size:11px; padding:4px 8px;" onclick="selectAbsentForReplacement(\'' + da.daId + '\', \'' + escapeHtml(da.daName) + '\')">🔁 Select</button>' : '';
+
+        row.innerHTML =
+          '<div class="da-details">' +
+            '<div class="da-title-line"><span>' + escapeHtml(da.daName) + '</span><span style="font-size:11px; color:var(--text-dim);">(' + da.daId + ')</span></div>' +
+            '<div class="da-meta-line">Wave: <b>' + (da.wave || "--:--") + '</b> &bull; DSP: ' + (da.dsp || "DSP") + (da.batchName ? (' &bull; <b style="color:var(--orange);">' + da.batchName + '</b>') : '') + '</div>' +
+          '</div>' +
+          '<div style="display:flex; align-items:center; gap:6px;">' +
+            '<span class="time-badge" style="color:' + statusColor + '; border-color:' + statusColor + ';">' + st + (da.scanTime ? (' ' + da.scanTime) : '') + '</span>' +
+            quickPickBtn +
+          '</div>';
+        container.appendChild(row);
+      });
+
+      document.getElementById("cnt-present").textContent = pCnt;
+      document.getElementById("cnt-late").textContent = lCnt;
+      document.getElementById("cnt-absent").textContent = aCnt;
+      document.getElementById("cnt-total").textContent = waveRoster.length;
+    }
+
+    function renderWaitingTab() {
+      var container = document.getElementById("waiting-batches-container");
+      container.innerHTML = "";
+      var batches = S.waitingBatches || {};
+      var batchNames = getSortedBatchKeys(batches);
+
+      var totalWaitingCount = 0;
+      var activeBatchCards = 0;
+
+      batchNames.forEach(function(bName) {
+        var daArr = batches[bName] || [];
+        if (daArr.length === 0) return;
+
+        totalWaitingCount += daArr.length;
+        activeBatchCards++;
+
+        var card = document.createElement("div");
+        card.className = "batch-card";
+
+        var header = document.createElement("div");
+        header.className = "batch-header";
+        header.innerHTML =
+          '<div class="batch-title">' +
+            '<input type="checkbox" class="da-checkbox" onchange="toggleSelectAllBatch(\'' + bName + '\', this.checked)">' +
+            '<span>📦 ' + bName + '</span>' +
+            '<span class="batch-badge">' + daArr.length + ' / ' + (S.settings.batchSize || 25) + ' DAs</span>' +
+          '</div>' +
+          '<div class="batch-actions">' +
+            '<button class="btn btn-card" style="padding:6px 10px; font-size:12px;" onclick="sendSelectedInBatch(\'' + bName + '\')">Send Selected</button>' +
+            '<button class="btn btn-green" style="padding:6px 12px; font-size:12px;" onclick="sendBatchAction(\'' + bName + '\')">Send ' + bName + '</button>' +
+          '</div>';
+        card.appendChild(header);
+
+        var listEl = document.createElement("div");
+        listEl.className = "da-list";
+
+        daArr.forEach(function(da, idx) {
+          var row = document.createElement("div");
+          row.className = "da-row";
+          var onBreak = !!da.inBreak;
+          var breakTag = onBreak ? '<span class="time-badge tag-break" style="margin-left:4px;">On Break' + (da.breakRange ? " " + escapeHtml(da.breakRange) : "") + '</span>' : '';
+          var sendBtn = onBreak
+            ? '<button class="btn btn-card" style="padding:5px 10px; font-size:11px; opacity:0.45;" disabled>Send</button>'
+            : '<button class="btn btn-card" style="padding:5px 10px; font-size:11px;" onclick="sendSingleDaAction(\'' + da.daId + '\')">Send</button>';
+          row.innerHTML =
+            '<input type="checkbox" class="da-checkbox" data-batch="' + bName + '" data-daid="' + da.daId + '"' + (onBreak ? ' disabled' : '') + '>' +
+            '<div class="da-details">' +
+              '<div class="da-title-line">' +
+                '<span style="color:var(--orange); font-weight:900;">#' + (idx + 1) + '</span>' +
+                '<span>' + escapeHtml(da.daName) + '</span>' +
+                '<span style="font-size:11px; color:var(--text-dim);">(' + da.daId + ')</span>' +
+                breakTag +
+              '</div>' +
+              '<div class="da-meta-line">Queued at: <b>' + (da.waitTime || "--:--") + '</b> &bull; FIFO Slot #' + (idx + 1) + ' in ' + bName + '</div>' +
+            '</div>' +
+            '<div style="display:flex; align-items:center; gap:6px;">' +
+              sendBtn +
+              '<button class="btn btn-card" style="padding:5px 8px; font-size:11px; color:var(--red);" onclick="removeDaAction(\'' + da.daId + '\')">&times;</button>' +
+            '</div>';
+          listEl.appendChild(row);
+        });
+
+        card.appendChild(listEl);
+        container.appendChild(card);
+      });
+
+      document.getElementById("wait-total-das").textContent = totalWaitingCount;
+      document.getElementById("wait-active-batches").textContent = activeBatchCards;
+
+      if (activeBatchCards === 0) {
+        container.innerHTML = '<div class="batch-card" style="padding:20px; text-align:center; color:var(--text-dim); font-size:13px;">No DAs currently waiting in batches. Scan on Attendance or scan above to queue into the active batch.</div>';
+      }
+    }
+
+    function renderBreaksTab() {
+      var container = document.getElementById("breaks-da-list");
+      var badge = document.getElementById("break-badge-count");
+      if (!container || !badge) return;
+      container.innerHTML = "";
+
+      var seen = {};
+      var combined = [];
+      (S.roster || []).forEach(function(d) {
+        if (d.inBreak) {
+          var k = String(d.daId).toUpperCase();
+          if (!seen[k]) { seen[k] = true; combined.push({ daId: d.daId, daName: d.daName, dsp: d.dsp, range: d.breakRange || "On Break", action: !!d.actionBreak, startTime: "" }); }
+        }
+      });
+      (S.breaksActive || []).forEach(function(b) {
+        var k = String(b.daId).toUpperCase();
+        if (!seen[k]) { seen[k] = true; combined.push({ daId: b.daId, daName: b.daName, dsp: "", range: "On Break", action: true, startTime: b.startTime }); }
+      });
+
+      badge.textContent = combined.length + " DAs";
+
+      if (combined.length === 0) {
+        container.innerHTML = '<div style="padding:14px; text-align:center; color:var(--text-dim); font-size:13px;">No DAs currently on break.</div>';
+      } else {
+        combined.forEach(function(da) {
+          var row = document.createElement("div");
+          row.className = "da-row";
+          var meta = da.action
+            ? ("Marked on break" + (da.startTime ? " at " + da.startTime : "") + (da.dsp ? " &bull; " + da.dsp : ""))
+            : ("DSP: " + (da.dsp || "DSP") + " &bull; Scheduled");
+          var endBtn = da.action
+            ? '<button class="btn btn-green" style="padding:5px 10px; font-size:11px;" onclick="endBreakAction(\'' + da.daId + '\')">End Break ➔ Queue</button>'
+            : '<span class="time-badge tag-break">Break: ' + escapeHtml(da.range) + '</span>';
+          row.innerHTML =
+            '<div class="da-details">' +
+              '<div class="da-title-line"><span>' + escapeHtml(da.daName) + '</span><span style="font-size:11px; color:var(--text-dim);">(' + da.daId + ')</span></div>' +
+              '<div class="da-meta-line">' + meta + '</div>' +
+            '</div>' +
+            '<div style="display:flex; align-items:center; gap:6px;">' + endBtn + '</div>';
+          container.appendChild(row);
+        });
+      }
+
+      var retContainer = document.getElementById("breakret-da-list");
+      var retBadge = document.getElementById("breakret-badge-count");
+      if (!retContainer || !retBadge) return;
+      var retList = (S.waitingBatches && S.waitingBatches[BREAK_RETURN_BATCH]) ? S.waitingBatches[BREAK_RETURN_BATCH].filter(function(d){return !d.inBreak;}) : [];
+      retBadge.textContent = retList.length;
+      retContainer.innerHTML = "";
+      if (retList.length === 0) {
+        retContainer.innerHTML = '<div style="padding:14px; text-align:center; color:var(--text-dim); font-size:13px;">No DAs returning from break yet.</div>';
+      } else {
+        retList.forEach(function(da, idx) {
+          var row = document.createElement("div");
+          row.className = "da-row";
+          row.innerHTML =
+            '<div class="da-details">' +
+              '<div class="da-title-line"><span style="color:var(--green); font-weight:900;">#' + (idx + 1) + '</span> <span>' + escapeHtml(da.daName) + '</span><span style="font-size:11px; color:var(--text-dim);">(' + da.daId + ')</span></div>' +
+              '<div class="da-meta-line">Returned at: <b>' + (da.waitTime || "--:--") + '</b> &bull; Priority queue</div>' +
+            '</div>' +
+            '<div><button class="btn btn-green" style="padding:6px 10px; font-size:11px;" onclick="sendSingleDaAction(\'' + da.daId + '\')">Send to Rush Q</button></div>';
+          retContainer.appendChild(row);
+        });
+      }
+    }
+
+    function renderViolatorsTab() {
+      var container = document.getElementById("violators-da-list");
+      var badge = document.getElementById("violator-badge-count");
+      if (!container || !badge) return;
+      var list = S.violators || [];
+      badge.textContent = list.length;
+      container.innerHTML = "";
+      if (list.length === 0) {
+        container.innerHTML = '<div style="padding:14px; text-align:center; color:var(--text-dim); font-size:13px;">No active violators. ✅</div>';
+        return;
+      }
+      list.forEach(function(v) {
+        var row = document.createElement("div");
+        row.className = "da-row";
+        var exceeded = (v.exceededBy !== "" && v.exceededBy !== undefined && v.exceededBy !== null && v.exceededBy !== "N/A") ? (" &bull; Exceeded by " + v.exceededBy + "m") : "";
+        row.innerHTML =
+          '<div class="da-details">' +
+            '<div class="da-title-line"><span>' + escapeHtml(v.daName || v.daId) + '</span><span style="font-size:11px; color:var(--text-dim);">(' + v.daId + ')</span></div>' +
+            '<div class="da-meta-line">Logged ' + (v.timeLogged || "--:--") + exceeded + '</div>' +
+          '</div>' +
+          '<div style="display:flex; align-items:center; gap:6px;">' +
+            '<span class="time-badge tag-violator">' + escapeHtml(v.status || "Violation") + '</span>' +
+            '<button class="btn btn-card" style="padding:5px 10px; font-size:11px; color:var(--red);" onclick="removeViolatorAction(\'' + v.daId + '\')">Remove</button>' +
+          '</div>';
+        container.appendChild(row);
+      });
+    }
+
+    function removeViolatorAction(daId) {
+      initAudio();
+      S.violators = (S.violators || []).filter(function(v) { return String(v.daId).toUpperCase() !== String(daId).toUpperCase(); });
+      renderAll();
+      sendReq("clearViolator", { daId: daId }, function(err, res) {
+        if (err || (res && !res.success)) { playBeep("error"); pollRoster(); }
+        else { playBeep("action"); showBanner("Removed " + daId + " from Violators.", "success", 5); }
+      });
+    }
+
+    function startBreakAction(queryId) {
+      initAudio();
+      var daId = (queryId || document.getElementById("break-inp").value || "").trim();
+      if (!daId || !isScanCooledDown("BRK_" + daId)) return;
+      document.getElementById("break-inp").value = "";
+      var dd = document.getElementById("break-search-results"); if (dd) dd.style.display = "none";
+
+      var daObj = (S.roster || []).find(function(d) { return d.daId.toUpperCase() === daId.toUpperCase(); });
+      var dName = daObj ? daObj.daName : daId;
+
+      delete S.pendingWaiting[String(daId).toUpperCase()];
+      Object.keys(S.waitingBatches || {}).forEach(function(bn) {
+        S.waitingBatches[bn] = (S.waitingBatches[bn] || []).filter(function(x) { return x.daId.toUpperCase() !== daId.toUpperCase(); });
+        if (S.waitingBatches[bn].length === 0) delete S.waitingBatches[bn];
+      });
+      if (daObj) daObj.inBreak = true;
+      S.breaksActive = (S.breaksActive || []).filter(function(b){return b.daId.toUpperCase()!==daId.toUpperCase();});
+      S.breaksActive.push({ daId: daId, daName: dName, startTime: getDubaiHHMM(), ymName: S.ymName });
+
+      playBeep("action");
+      showBanner("☕ " + dName + " sent on Break (removed from Waiting).", "success", 6);
+      renderAll();
+
+      sendReq("startBreak", { daId: daId, ymName: S.ymName }, function(err, res) {
+        if (err || (res && !res.success)) { playBeep("error"); pollRoster(); }
+      });
+    }
+
+    function endBreakAction(daId) {
+      initAudio();
+      var bObj = (S.breaksActive || []).find(function(b){return b.daId.toUpperCase()===daId.toUpperCase();});
+      var rObj = (S.roster || []).find(function(d){return d.daId.toUpperCase()===daId.toUpperCase();});
+      var dName = bObj ? bObj.daName : (rObj ? rObj.daName : daId);
+      var nowStr = getDubaiHHMM();
+
+      S.breaksActive = (S.breaksActive || []).filter(function(b){return b.daId.toUpperCase()!==daId.toUpperCase();});
+      if (rObj) { rObj.inBreak = false; rObj.actionBreak = false; }
+      if (!S.waitingBatches[BREAK_RETURN_BATCH]) S.waitingBatches[BREAK_RETURN_BATCH] = [];
+      S.waitingBatches[BREAK_RETURN_BATCH].push({ daId: daId, daName: dName, batchName: BREAK_RETURN_BATCH, waitTime: nowStr, inBreak: false, breakRange: "" });
+
+      playBeep("action");
+      showBanner("🔄 " + dName + " returned to '" + BREAK_RETURN_BATCH + "' (top of queue).", "success", 6);
+      renderAll();
+
+      sendReq("endBreak", { daId: daId, ymName: S.ymName }, function(err, res) {
+        if (err || (res && !res.success)) { playBeep("error"); pollRoster(); }
+      });
+    }
+
+    function renderReceiveTab() {
+      var sentContainer = document.getElementById("awaiting-da-list");
+      var sentBadge = document.getElementById("awaiting-badge-count");
+      var sent = S.sentList || [];
+      sentBadge.textContent = sent.length;
+      sentContainer.innerHTML = "";
+
+      if (sent.length === 0) {
+        sentContainer.innerHTML = '<div style="padding:14px; text-align:center; color:var(--text-dim); font-size:13px;">No dispatched DAs in transit.</div>';
+      } else {
+        sent.forEach(function(s) {
+          var row = document.createElement("div");
+          row.className = "da-row";
+          row.innerHTML =
+            '<div class="da-details">' +
+              '<div class="da-title-line"><span class="batch-badge">' + s.batchName + '</span> <span>' + escapeHtml(s.daName) + '</span><span style="font-size:11px; color:var(--text-dim);">(' + s.daId + ')</span></div>' +
+              '<div class="da-meta-line">Sent: ' + s.sentTime + ' &bull; YM: ' + (s.ymName || "YM") + '</div>' +
+            '</div>' +
+            '<div style="display:flex; align-items:center; gap:6px;">' +
+              '<span class="time-badge receive-countdown" data-sent="' + (s.sentTime || "") + '" data-daid="' + s.daId + '">--:--</span>' +
+              '<button class="btn btn-green" style="padding:6px 10px; font-size:11px;" onclick="doReceiveScanAction(\'' + s.daId + '\')">&check; Receive</button>' +
+            '</div>';
+          sentContainer.appendChild(row);
+        });
+      }
+
+      var recContainer = document.getElementById("received-da-list");
+      var recBadge = document.getElementById("received-badge-count");
+      var rec = S.receivedList || [];
+      recBadge.textContent = rec.length;
+      recContainer.innerHTML = "";
+
+      if (rec.length === 0) {
+        recContainer.innerHTML = '<div style="padding:14px; text-align:center; color:var(--text-dim); font-size:13px;">No DAs inside warehouse yard.</div>';
+      } else {
+        rec.forEach(function(r) {
+          var row = document.createElement("div");
+          row.className = "da-row";
+          row.innerHTML =
+            '<div class="da-details">' +
+              '<div class="da-title-line"><span class="batch-badge">' + r.batchName + '</span> <span>' + escapeHtml(r.daName) + '</span><span style="font-size:11px; color:var(--text-dim);">(' + r.daId + ')</span></div>' +
+              '<div class="da-meta-line">Scan IN: ' + r.rushInTime + '</div>' +
+            '</div>' +
+            '<div><span class="time-badge" style="color:var(--green); border-color:var(--green);">Inside Yard</span></div>';
+          recContainer.appendChild(row);
+        });
+      }
+      tickReceiveCountdowns();
+    }
+
+    function tickReceiveCountdowns() {
+      var limitMin = (S.settings && S.settings.entryViolationMin) ? S.settings.entryViolationMin : 15;
+      var nowMin = parseHHMM(getDubaiHHMM());
+      var chips = document.querySelectorAll(".receive-countdown");
+      for (var i = 0; i < chips.length; i++) {
+        var chip = chips[i];
+        var sent = chip.getAttribute("data-sent");
+        var sentMin = parseHHMM(sent);
+        if (sentMin < 0) { chip.textContent = "--:--"; continue; }
+        var elapsed = nowMin - sentMin;
+        if (elapsed < 0) elapsed += 24 * 60;
+        var remaining = limitMin - elapsed;
+        if (remaining <= 0) {
+          chip.textContent = "OVERDUE";
+          chip.style.color = "var(--red)";
+          chip.style.borderColor = "var(--red)";
+        } else {
+          chip.textContent = remaining + "m left";
+          if (remaining <= 2) { chip.style.color = "var(--red)"; chip.style.borderColor = "var(--red)"; }
+          else if (remaining <= 5) { chip.style.color = "var(--yellow)"; chip.style.borderColor = "var(--yellow)"; }
+          else { chip.style.color = "var(--green)"; chip.style.borderColor = "var(--green)"; }
+        }
+      }
+    }
+
+    function handleAttendanceCheckIn(queryId) {
+      initAudio();
+      var daId = (queryId || document.getElementById("attend-inp").value || "").trim();
+      if (!daId || !isScanCooledDown("ATT_" + daId)) return;
+      document.getElementById("attend-inp").value = "";
+      document.getElementById("attend-search-results").style.display = "none";
+
+      var daObj = (S.roster || []).find(function(d) { return d.daId.toUpperCase() === daId.toUpperCase(); });
+      if (!daObj) {
+        playBeep("error");
+        showBanner("DA ID " + daId + " not found in today's roster", "danger", 10);
+        return;
+      }
+
+      if (daObj.scanTime && (daObj.status === "Present" || daObj.status === "Late Arrival" || daObj.status === "Replacement Present")) {
+        playBeep("error");
+        showBanner(daObj.daName + " already checked in at " + daObj.scanTime + ". Switched to Waiting Tab.", "warning", 10);
+        switchTab("tab-waiting");
+        return;
+      }
+
+      var nowStr = getDubaiHHMM();
+      var curMins = parseHHMM(nowStr);
+      var waveMins = parseHHMM(daObj.wave);
+
+      if (waveMins > 0 && (waveMins - curMins) > (S.settings.preWaveBlockMin || 30)) {
+        playBeep("error");
+        showBanner("Too Early! Wave is at " + daObj.wave, "warning", 30);
+        return;
+      }
+
+      var newStatus = (waveMins > 0 && curMins > (waveMins + (S.settings.waveGraceMin || 10))) ? "Late Arrival" : "Present";
+      var targetBatch = getNextBatchNameOptimistic();
+
+      daObj.status = newStatus;
+      daObj.scanTime = nowStr;
+      daObj.batchName = targetBatch;
+      daObj.waitTime = nowStr;
+      daObj.dispatchStatus = "Waiting";
+
+      if (!S.waitingBatches[targetBatch]) S.waitingBatches[targetBatch] = [];
+      var _attItem = {
+        daId: daObj.daId,
+        daName: daObj.daName,
+        batchName: targetBatch,
+        waitTime: nowStr,
+        inBreak: daObj.inBreak,
+        breakRange: daObj.breakRange
+      };
+      S.waitingBatches[targetBatch].push(_attItem);
+      markPendingWaiting(daObj.daId, targetBatch, _attItem);
+
+      playBeep("success");
+      showBanner("⚡ Instant Check-In: " + daObj.daName + " (" + newStatus + ") ➔ " + targetBatch, "success", 5);
+      renderAll();
+
+      sendReq("recordCheckIn", { daId: daObj.daId, ymName: S.ymName }, function(err, res) {
+        if (res && res.success && res.clearedViolator) {
+          S.violators = (S.violators || []).filter(function(v){ return String(v.daId).toUpperCase() !== String(daObj.daId).toUpperCase(); });
+          showBanner("⚠️ DA Added from Violator: " + daObj.daName, "warning", 12);
+        }
+        if (err || (res && !res.success)) pollRoster();
+      });
+    }
+
+    function handleWaitingEnqueue(queryId) {
+      initAudio();
+      var daId = (queryId || document.getElementById("waiting-inp").value || "").trim();
+      if (!daId || !isScanCooledDown("WAIT_" + daId)) return;
+      document.getElementById("waiting-inp").value = "";
+      document.getElementById("waiting-search-results").style.display = "none";
+
+      var daObj = (S.roster || []).find(function(d) { return d.daId.toUpperCase() === daId.toUpperCase(); });
+      if (daObj && daObj.inBreak) {
+        playBeep("error");
+        showBanner("Blocked: " + daObj.daName + " is currently on Break (" + daObj.breakRange + ")", "danger", 15);
+        return;
+      }
+
+      var alreadyInBatch = null;
+      Object.keys(S.waitingBatches || {}).forEach(function(bn) {
+        (S.waitingBatches[bn] || []).forEach(function(item) {
+          if (item.daId.toUpperCase() === daId.toUpperCase()) alreadyInBatch = bn;
+        });
+      });
+
+      if (alreadyInBatch) {
+        playBeep("error");
+        showBanner(daId + " is already waiting in " + alreadyInBatch, "warning", 8);
+        return;
+      }
+
+      var nowStr = getDubaiHHMM();
+      var targetBatch = getNextBatchNameOptimistic();
+      var dName = daObj ? daObj.daName : daId;
+
+      if (!S.waitingBatches[targetBatch]) S.waitingBatches[targetBatch] = [];
+      var _waitItem = {
+        daId: daObj ? daObj.daId : daId,
+        daName: dName,
+        batchName: targetBatch,
+        waitTime: nowStr,
+        inBreak: false,
+        breakRange: ""
+      };
+      S.waitingBatches[targetBatch].push(_waitItem);
+      markPendingWaiting((daObj ? daObj.daId : daId), targetBatch, _waitItem);
+
+      playBeep("success");
+      showBanner("⚡ Added " + dName + " to " + targetBatch, "success", 5);
+      renderAll();
+
+      sendReq("addToWaiting", { daId: daId, ymName: S.ymName }, function(err, res) {
+        if (res && res.success && res.clearedViolator) {
+          S.violators = (S.violators || []).filter(function(v){ return String(v.daId).toUpperCase() !== String(daId).toUpperCase(); });
+          showBanner("⚠️ DA Added from Violator: " + dName, "warning", 12);
+        }
+        if (err || (res && !res.success)) {
+          delete S.pendingWaiting[String(daObj ? daObj.daId : daId).toUpperCase()];
+          playBeep("error");
+          if (res && res.error) showBanner(res.error, "danger", 15);
+          pollRoster();
+        }
+      });
+    }
+
+    function toggleSelectAllBatch(bName, checked) {
+      document.querySelectorAll('.da-checkbox[data-batch="' + bName + '"]').forEach(function(cb) {
+        cb.checked = checked;
+      });
+    }
+
+    function sendBatchAction(bName) {
+      initAudio();
+      var daItems = (S.waitingBatches[bName] || []).filter(function(d) { return !d.inBreak; });
+      if (daItems.length === 0) return;
+      var daIds = daItems.map(function(d) { return d.daId; });
+      optimisticSendDAs(daIds);
+    }
+
+    function sendSelectedInBatch(bName) {
+      initAudio();
+      var boxes = document.querySelectorAll('.da-checkbox[data-batch="' + bName + '"]:checked');
+      var daIds = [];
+      boxes.forEach(function(cb) { daIds.push(cb.getAttribute("data-daid")); });
+      if (daIds.length === 0) {
+        showBanner("Select at least 1 DA checkbox to send", "warning", 5);
+        return;
+      }
+      optimisticSendDAs(daIds);
+    }
+
+    function sendSingleDaAction(daId) {
+      initAudio();
+      optimisticSendDAs([daId]);
+    }
+
+    function optimisticSendDAs(daIds) {
+      var nowStr = getDubaiHHMM();
+      var idSet = {};
+      daIds.forEach(function(id) {
+        idSet[id.toUpperCase()] = true;
+        delete S.pendingWaiting[id.toUpperCase()];
+      });
+
+      Object.keys(S.waitingBatches || {}).forEach(function(bName) {
+        var remaining = [];
+        (S.waitingBatches[bName] || []).forEach(function(item) {
+          if (idSet[item.daId.toUpperCase()]) {
+            var _sentItem = {
+              daId: item.daId,
+              daName: item.daName,
+              batchName: bName,
+              sentTime: nowStr,
+              ymName: S.ymName,
+              elapsedMins: 0,
+              isSlaExceeded: false
+            };
+            S.sentList.push(_sentItem);
+            S.pendingSent[String(item.daId).toUpperCase()] = { item: _sentItem, ts: Date.now() };
+          } else {
+            remaining.push(item);
+          }
+        });
+        if (remaining.length === 0) delete S.waitingBatches[bName];
+        else S.waitingBatches[bName] = remaining;
+      });
+
+      playBeep("success");
+      showBanner("⚡ Dispatched " + daIds.length + " DA(s) to Receive queue", "success", 5);
+      renderAll();
+
+      sendReq("sendDA", { daIds: daIds, ymName: S.ymName }, function(err, res) {
+        if (err || (res && !res.success)) {
+          playBeep("error");
+          if (res && res.error) showBanner(res.error, "danger", 15);
+          pollRoster();
+        }
+      });
+    }
+
+    function removeDaAction(daId) {
+      delete S.pendingWaiting[String(daId).toUpperCase()];
+      Object.keys(S.waitingBatches || {}).forEach(function(bName) {
+        S.waitingBatches[bName] = (S.waitingBatches[bName] || []).filter(function(x) {
+          return x.daId.toUpperCase() !== daId.toUpperCase();
+        });
+        if (S.waitingBatches[bName].length === 0) delete S.waitingBatches[bName];
+      });
+      renderAll();
+      sendReq("removeFromWaiting", { daId: daId }, function() {});
+    }
+
+    // 🟢 INSTANT (0ms) OPTIMISTIC RECEIVE SCAN ACTION
+    function doReceiveScanAction(queryId) {
+      initAudio();
+      var daId = (queryId || document.getElementById("receive-inp").value || "").trim();
+      if (!daId || !isScanCooledDown("RUSH_" + daId)) return;
+      document.getElementById("receive-inp").value = "";
+      document.getElementById("receive-search-results").style.display = "none";
+
+      var localViolator = (S.violators || []).find(function(v) {
+        return String(v.daId).toUpperCase() === daId.toUpperCase();
+      });
+      if (localViolator) {
+        playBeep("violation");
+        showBanner("🚫 VIOLATOR: " + (localViolator.daName || daId) + " (" + daId + ") — " + (localViolator.status || "Violation") + ". Receive IN blocked. Send DA back to the OFF-YARD.", "danger", 35);
+        switchTab("tab-violators");
+        return;
+      }
+
+      var nowStr = getDubaiHHMM();
+      var wantUp = daId.toUpperCase();
+
+      var rosterMatch = (S.roster || []).find(function(d) {
+        return d.daId.toUpperCase() === wantUp ||
+               (d.replacement && d.replacement.toUpperCase().indexOf("(" + wantUp + ")") !== -1);
+      });
+      var canonicalId = rosterMatch ? rosterMatch.daId : daId;
+      var canonicalUp = canonicalId.toUpperCase();
+
+      var foundSentIdx = -1;
+      for (var i = 0; i < (S.sentList || []).length; i++) {
+        if (S.sentList[i].daId.toUpperCase() === canonicalUp) {
+          foundSentIdx = i;
+          break;
+        }
+      }
+
+      var waitingEntry = null;
+      if (foundSentIdx === -1) {
+        Object.keys(S.waitingBatches || {}).forEach(function(bn) {
+          (S.waitingBatches[bn] || []).forEach(function(w) {
+            if (w.daId.toUpperCase() === canonicalUp) waitingEntry = w;
+          });
+        });
+      }
+
+      var optimisticRecItem = null;
+      if (foundSentIdx !== -1) {
+        var sentItem = S.sentList.splice(foundSentIdx, 1)[0];
+        delete S.pendingSent[canonicalUp];
+        optimisticRecItem = {
+          daId: sentItem.daId,
+          daName: sentItem.daName,
+          batchName: sentItem.batchName || "Batch 1",
+          rushInTime: nowStr,
+          sentTime: sentItem.sentTime || nowStr,
+          ymName: sentItem.ymName || S.ymName
+        };
+      } else if (waitingEntry) {
+        Object.keys(S.waitingBatches || {}).forEach(function(bn) {
+          S.waitingBatches[bn] = (S.waitingBatches[bn] || []).filter(function(w) {
+            return w.daId.toUpperCase() !== canonicalUp;
+          });
+          if (S.waitingBatches[bn].length === 0) delete S.waitingBatches[bn];
+        });
+        delete S.pendingWaiting[canonicalUp];
+        optimisticRecItem = {
+          daId: waitingEntry.daId,
+          daName: waitingEntry.daName,
+          batchName: waitingEntry.batchName || "Batch 1",
+          rushInTime: nowStr,
+          sentTime: nowStr,
+          ymName: S.ymName
+        };
+      }
+
+      if (optimisticRecItem) {
+        S.receivedList = (S.receivedList || []).filter(function(r) {
+          return r.daId.toUpperCase() !== canonicalUp;
+        });
+        S.receivedList.unshift(optimisticRecItem);
+        S.pendingReceived[canonicalUp] = { item: optimisticRecItem, ts: Date.now() };
+        playBeep("success");
+        showBanner("⚡ Instant Received: " + optimisticRecItem.daName + " (" + optimisticRecItem.batchName + ")", "success", 4);
+        renderAll();
+      }
+
+      sendReq("rushScanIn", { daId: canonicalId, receiverName: S.ymName }, function(err, res) {
+        if (res && res.violatorBlock) {
+          delete S.pendingReceived[canonicalUp];
+          playBeep("violation");
+          showBanner(res.message || "🚫 Violator — Receive IN blocked. Send DA back to off-yard.", "danger", 35);
+          pollRoster();
+          switchTab("tab-violators");
+        } else if (res && res.violation) {
+          delete S.pendingReceived[canonicalUp];
+          playBeep("error");
+          showBanner(res.message, "danger", 20);
+          pollRoster();
+        } else if (err || (res && !res.success)) {
+          delete S.pendingReceived[canonicalUp];
+          playBeep("error");
+          showBanner((res && res.error) || "Receive Scan Error", "danger", 15);
+          pollRoster();
+        } else if (!optimisticRecItem) {
+          playBeep("success");
+          showBanner("✅ Received: " + (res && res.daName ? res.daName : canonicalId), "success", 4);
+          pollRoster();
+        }
+      });
+    }
+
+    function selectAbsentForReplacement(daId, daName) {
+      S.selectedAbsentDa = { daId: daId, daName: daName };
+      document.getElementById("rep-absent-inp").value = daName + " (" + daId + ")";
+      document.getElementById("rep-new-inp").focus();
+    }
+
+    function executeInlineReplacement() {
+      initAudio();
+      if (!S.selectedAbsentDa) {
+        playBeep("error");
+        showBanner("Please select an Absent DA first (Step 1)", "warning", 6);
+        return;
+      }
+      if (!S.selectedReplacementDa) {
+        playBeep("error");
+        showBanner("Please select a Replacement DA from RushData (Step 2)", "warning", 6);
+        return;
+      }
+
+      var orig = S.selectedAbsentDa;
+      var rep = S.selectedReplacementDa;
+      var nowStr = getDubaiHHMM();
+      var targetBatch = getNextBatchNameOptimistic();
+
+      var rObj = (S.roster || []).find(function(d) { return d.daId.toUpperCase() === orig.daId.toUpperCase(); });
+      if (rObj) {
+        rObj.daName = orig.daName + " / 🔁 / " + rep.daName;
+        rObj.status = "Replacement Present";
+        rObj.scanTime = nowStr;
+        rObj.batchName = targetBatch;
+      }
+      if (!S.waitingBatches[targetBatch]) S.waitingBatches[targetBatch] = [];
+      S.waitingBatches[targetBatch].push({
+        daId: orig.daId,
+        daName: orig.daName + " / 🔁 / " + rep.daName,
+        batchName: targetBatch,
+        waitTime: nowStr,
+        inBreak: false,
+        breakRange: ""
+      });
+
+      document.getElementById("rep-absent-inp").value = "";
+      document.getElementById("rep-new-inp").value = "";
+      S.selectedAbsentDa = null;
+      S.selectedReplacementDa = null;
+
+      playBeep("success");
+      showBanner("⚡ Replaced " + orig.daName + " with " + rep.daName + " ➔ " + targetBatch, "success", 8);
+      renderAll();
+
+      sendReq("assignReplacement", {
+        originalDaId: orig.daId,
+        replacementDaId: rep.daId,
+        replacementName: rep.daName
+      }, function(err, res) {
+        if (err || (res && !res.success)) pollRoster();
+      });
+    }
+
+    function bindLiveSearch(inputEl, dropdownEl, listGetter, onSelect) {
+      inputEl.addEventListener("input", function() {
+        var val = inputEl.value.trim().toLowerCase();
+        dropdownEl.innerHTML = "";
+        if (!val) { dropdownEl.style.display = "none"; return; }
+
+        var list = listGetter() || [];
+        var matches = list.filter(function(d) {
+          return String(d.daId || "").toLowerCase().includes(val) || String(d.daName || "").toLowerCase().includes(val);
+        }).slice(0, 12);
+
+        if (matches.length === 0) { dropdownEl.style.display = "none"; return; }
+
+        matches.forEach(function(m) {
+          var div = document.createElement("div");
+          div.className = "dropdown-item";
+          div.innerHTML = '<span><b>' + escapeHtml(m.daName) + '</b> (' + m.daId + ')</span><span style="color:var(--text-dim);">' + (m.status || m.dsp || "") + '</span>';
+          div.onclick = function() {
+            dropdownEl.style.display = "none";
+            onSelect(m);
+          };
+          dropdownEl.appendChild(div);
+        });
+        dropdownEl.style.display = "block";
+      });
+
+      document.addEventListener("click", function(e) {
+        if (!inputEl.contains(e.target) && !dropdownEl.contains(e.target)) {
+          dropdownEl.style.display = "none";
+        }
+      });
+    }
+
+    function fillSettingsInputs() {
+      document.getElementById("cfg-ym-name").value = S.ymName;
+      document.getElementById("cfg-api-url").value = S.api;
+      document.getElementById("cfg-sheet-url").value = S.sheetUrl;
+      document.getElementById("cfg-batch-size").value = S.settings.batchSize;
+      document.getElementById("cfg-rush-timeout").value = S.settings.rushTimeoutMin;
+      document.getElementById("cfg-auto-ofd").value = S.settings.autoOfdMin;
+      document.getElementById("cfg-waiting-lock").value = S.settings.waitingLockMin;
+      document.getElementById("cfg-prewave").value = S.settings.preWaveBlockMin;
+      document.getElementById("cfg-grace").value = S.settings.waveGraceMin;
+      document.getElementById("cfg-entry-violation").value = S.settings.entryViolationMin;
+      updateSoundToggleUi();
+    }
+
+    function updateSoundToggleUi() {
+      var btn = document.getElementById("cfg-sound-toggle");
+      if (!btn) return;
+      btn.textContent = S.soundEnabled ? "🔊 On" : "🔇 Off";
+      btn.style.color = S.soundEnabled ? "var(--green)" : "var(--text-dim)";
+    }
+
+    function toggleSound() {
+      S.soundEnabled = !S.soundEnabled;
+      SAFE_STORE.setItem("dud3_sound", S.soundEnabled ? "on" : "off");
+      updateSoundToggleUi();
+      if (S.soundEnabled) playBeep("success");
+    }
+
+    function saveSettingsAction() {
+      var pin = document.getElementById("cfg-admin-pin").value.trim();
+      if (!pin) { alert("Please enter Admin PIN to save settings."); return; }
+
+      var newYm = document.getElementById("cfg-ym-name").value.trim() || "YM";
+      var newApi = document.getElementById("cfg-api-url").value.trim() || DEFAULT_API;
+      var newSheet = document.getElementById("cfg-sheet-url").value.trim() || DEFAULT_SHEET;
+
+      SAFE_STORE.setItem("dud3_ym", newYm);
+      SAFE_STORE.setItem("dud3_api", newApi);
+      SAFE_STORE.setItem("dud3_sheet", newSheet);
+      S.ymName = newYm; S.api = newApi; S.sheetUrl = newSheet;
+
+      var payload = {
+        sheetUrl: newSheet,
+        apiUrl: newApi,
+        batchSize: parseInt(document.getElementById("cfg-batch-size").value, 10),
+        rushTimeoutMin: parseInt(document.getElementById("cfg-rush-timeout").value, 10),
+        autoOfdMin: parseInt(document.getElementById("cfg-auto-ofd").value, 10),
+        waitingLockMin: parseInt(document.getElementById("cfg-waiting-lock").value, 10),
+        preWaveBlockMin: parseInt(document.getElementById("cfg-prewave").value, 10),
+        waveGraceMin: parseInt(document.getElementById("cfg-grace").value, 10),
+        entryViolationMin: parseInt(document.getElementById("cfg-entry-violation").value, 10)
+      };
+
+      sendReq("saveSettings", payload, function(err, res) {
+        if (!err && res.success) {
+          showBanner("Settings saved globally across all devices", "success", 8);
+          pollRoster();
+        } else {
+          showBanner((res && res.error) || "Failed to save settings", "danger", 20);
+        }
+      });
+    }
+
+    function resetDayAction() {
+      var pin = prompt("Enter Admin PIN to confirm Reset Day:");
+      if (!pin) return;
+      sendReq("resetDay", { pin: pin }, function(err, res) {
+        if (!err && res.success) {
+          S.waitingBatches = {};
+          S.sentList = [];
+          S.receivedList = [];
+          S.pendingWaiting = {};
+          S.pendingSent = {};
+          S.pendingReceived = {};
+          S.highestBatchNum = 0;
+          S.batchAssignedTotals = {};
+          S.serverNextBatchName = "Batch 1";
+          showBanner("Reset Day Successful — Restarted at Batch 1", "success", 10);
+          pollRoster();
+        } else {
+          showBanner((res && res.error) || "Reset Day Failed", "danger", 25);
+        }
+      });
+    }
+
+    var SCANNER_MAP = {
+      "tab-attend":  { id: "qr-reader-attend",  key: "attend",  cb: handleAttendanceCheckIn },
+      "tab-waiting": { id: "qr-reader-waiting", key: "waiting", cb: handleWaitingEnqueue },
+      "tab-receive": { id: "qr-reader-receive", key: "receive", cb: doReceiveScanAction }
     };
-    tickWait();
-    countdownInterval = setInterval(tickWait, 1000);
-  }
-  else if (st === "Sent to OP" && sentRef !== null) {
-    var deadlineSec = sentRef + ((Number(data.rushTimeout) || 20) * 60);
-    timerBox.style.display = "block";
-    timerLabel.textContent = "🚨 Proceed to Rush Queue — Entry Deadline";
-    var tickSent = function() {
-      var rem = deadlineSec - dubaiNowSec();
-      if (rem <= 0) { timerDisplay.style.color = "var(--red)"; timerDisplay.textContent = "SLA EXCEEDED"; }
-      else { timerDisplay.style.color = "var(--green)"; timerDisplay.textContent = formatHMS(rem); }
-    };
-    tickSent();
-    countdownInterval = setInterval(tickSent, 1000);
-  }
-  else if (st === "Received" && rushRef !== null && !data.ofdTime) {
-    var ofdDeadline = rushRef + ((Number(data.autoOfd) || 30) * 60);
-    timerBox.style.display = "block";
-    timerLabel.textContent = "🚚 Inside Station — Auto OFD In";
-    timerDisplay.style.color = "var(--green)";
-    var tickRcv = function() {
-      var rem = Math.max(0, ofdDeadline - dubaiNowSec());
-      timerDisplay.textContent = formatHMS(rem);
-    };
-    tickRcv();
-    countdownInterval = setInterval(tickRcv, 1000);
-  }
-}
-</script>
+
+    function setScannerUi(key, active) {
+      var startBtn = document.getElementById("btn-start-" + key);
+      var stopBtn  = document.getElementById("btn-stop-" + key);
+      var wrap     = document.getElementById(key === "attend" ? "qr-reader-attend" : (key === "waiting" ? "qr-reader-waiting" : "qr-reader-receive"));
+      var chip     = document.getElementById("scanchip-" + key);
+      var chipTxt  = document.getElementById("scantext-" + key);
+      var card     = wrap ? wrap.closest(".scanner-viewport-wrap") : null;
+      if (startBtn) startBtn.style.display = active ? "none" : "";
+      if (stopBtn)  stopBtn.style.display  = active ? "" : "none";
+      if (card) card.classList.toggle("scanner-wrap-active", active);
+      if (chip) chip.classList.toggle("live", active);
+      if (chipTxt) chipTxt.textContent = active ? "Fast Scanning Active — Hold QR steady" : "Camera Off";
+    }
+
+    function startScanner(tabId) {
+      initAudio();
+      if (typeof Html5Qrcode === "undefined") {
+        showBanner("Camera library not loaded. Use the text/search box to enter DA ID.", "warning", 8);
+        return;
+      }
+      var target = SCANNER_MAP[tabId];
+      if (!target) return;
+      if (S.scannerActive[tabId]) return;
+
+      if (!S.scanners[tabId]) {
+        S.scanners[tabId] = new Html5Qrcode(target.id, {
+          experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+          verbose: false
+        });
+      }
+      S.scannerActive[tabId] = true;
+      setScannerUi(target.key, true);
+
+      S.scanners[tabId].start(
+        { facingMode: "environment" },
+        { fps: 30, qrbox: { width: 200, height: 200 }, aspectRatio: 1.0, disableFlip: true },
+        function(decodedText) {
+          target.cb(decodedText, { fromCamera: true, tabId: tabId });
+        },
+        function() {}
+      ).catch(function() {
+        S.scannerActive[tabId] = false;
+        setScannerUi(target.key, false);
+        playBeep("error");
+        showBanner("Could not start camera. Check permissions, or use the text box.", "danger", 10);
+      });
+    }
+
+    function stopScanner(tabId) {
+      var target = SCANNER_MAP[tabId];
+      if (!target) return;
+      var inst = S.scanners[tabId];
+      S.scannerActive[tabId] = false;
+      setScannerUi(target.key, false);
+      if (inst) {
+        inst.stop().then(function() {
+          try { inst.clear(); } catch (e) {}
+        }).catch(function() {});
+      }
+    }
+
+    function switchTab(tabId) {
+      Object.keys(SCANNER_MAP).forEach(function(tid) {
+        if (tid !== tabId && S.scannerActive[tid]) stopScanner(tid);
+      });
+      document.querySelectorAll(".nav-item").forEach(function(el) {
+        el.classList.toggle("active", el.getAttribute("data-tab") === tabId);
+      });
+      document.querySelectorAll(".tab-content").forEach(function(el) {
+        el.classList.toggle("active", el.id === tabId);
+      });
+      S.activeTab = tabId;
+      updateHeaderSubtitle(tabId);
+    }
+
+    document.addEventListener("visibilitychange", function() {
+      if (document.hidden) {
+        Object.keys(SCANNER_MAP).forEach(function(tid) {
+          if (S.scannerActive[tid]) stopScanner(tid);
+        });
+      } else {
+        flushOutbox();
+        scheduleNextSync(200);
+      }
+    });
+    window.addEventListener("pagehide", function() {
+      Object.keys(SCANNER_MAP).forEach(function(tid) { if (S.scannerActive[tid]) stopScanner(tid); });
+    });
+
+    function updateHeaderSubtitle(tabId) {
+      var map = {
+        "tab-attend": "OFF-YARD ATTENDANCE",
+        "tab-waiting": "WAITING & BATCHES",
+        "tab-breaks": "BREAK MANAGEMENT",
+        "tab-violators": "VIOLATION CONTROL",
+        "tab-receive": "RECEIVE — RECEIVED IN",
+        "tab-admin": "GLOBAL CONFIG"
+      };
+      var el = document.getElementById("header-tab-sub");
+      if (el && map[tabId]) el.textContent = map[tabId];
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+      bindLiveSearch(
+        document.getElementById("attend-inp"),
+        document.getElementById("attend-search-results"),
+        function() { return S.roster; },
+        function(item) { handleAttendanceCheckIn(item.daId); }
+      );
+
+      bindLiveSearch(
+        document.getElementById("waiting-inp"),
+        document.getElementById("waiting-search-results"),
+        function() { return S.roster; },
+        function(item) { handleWaitingEnqueue(item.daId); }
+      );
+
+      bindLiveSearch(
+        document.getElementById("receive-inp"),
+        document.getElementById("receive-search-results"),
+        function() { return S.sentList.length > 0 ? S.sentList : S.roster; },
+        function(item) { doReceiveScanAction(item.daId); }
+      );
+
+      bindLiveSearch(
+        document.getElementById("break-inp"),
+        document.getElementById("break-search-results"),
+        function() { return S.roster; },
+        function(item) { startBreakAction(item.daId); }
+      );
+
+      bindLiveSearch(
+        document.getElementById("rep-absent-inp"),
+        document.getElementById("rep-absent-dropdown"),
+        function() { return (S.roster || []).filter(function(d) { return d.status === "Absent" || !d.scanTime; }); },
+        function(item) {
+          S.selectedAbsentDa = { daId: item.daId, daName: item.daName };
+          document.getElementById("rep-absent-inp").value = item.daName + " (" + item.daId + ")";
+        }
+      );
+
+      bindLiveSearch(
+        document.getElementById("rep-new-inp"),
+        document.getElementById("rep-new-dropdown"),
+        function() { return (S.rushData && S.rushData.length > 0) ? S.rushData : S.roster; },
+        function(item) {
+          S.selectedReplacementDa = { daId: item.daId, daName: item.daName };
+          document.getElementById("rep-new-inp").value = item.daName + " (" + item.daId + ")";
+        }
+      );
+
+      document.getElementById("btn-attend-checkin").onclick = function() { handleAttendanceCheckIn(); };
+      document.getElementById("btn-waiting-enqueue").onclick = function() { handleWaitingEnqueue(); };
+      document.getElementById("btn-receive-scanin").onclick = function() { doReceiveScanAction(); };
+      document.getElementById("btn-start-break").onclick = function() { startBreakAction(); };
+      document.getElementById("btn-assign-rep-inline").onclick = executeInlineReplacement;
+      document.getElementById("btn-save-settings").onclick = saveSettingsAction;
+      document.getElementById("btn-reset-day").onclick = resetDayAction;
+      var soundBtn = document.getElementById("cfg-sound-toggle");
+      if (soundBtn) soundBtn.onclick = toggleSound;
+      var installBtn = document.getElementById("install-btn");
+      if (installBtn) installBtn.onclick = triggerInstall;
+
+      document.getElementById("attend-inp").addEventListener("keydown", function(e) { if (e.key === "Enter") handleAttendanceCheckIn(); });
+      document.getElementById("waiting-inp").addEventListener("keydown", function(e) { if (e.key === "Enter") handleWaitingEnqueue(); });
+      document.getElementById("receive-inp").addEventListener("keydown", function(e) { if (e.key === "Enter") doReceiveScanAction(); });
+      document.getElementById("break-inp").addEventListener("keydown", function(e) { if (e.key === "Enter") startBreakAction(); });
+
+      document.querySelectorAll(".nav-item").forEach(function(btn) {
+        btn.addEventListener("click", function() { switchTab(btn.getAttribute("data-tab")); });
+      });
+
+      fillSettingsInputs();
+      updateOutboxBadge(loadOutbox().length);
+      flushOutbox();
+      pollRoster();
+
+      setInterval(flushOutbox, 15000);
+      setInterval(tickReceiveCountdowns, 1000);
+
+      updateHeaderSubtitle(S.activeTab || "tab-attend");
+
+      setTimeout(function() {
+        var splash = document.getElementById("splash-screen");
+        if (splash) {
+          splash.style.opacity = "0";
+          splash.style.visibility = "hidden";
+          setTimeout(function() { splash.remove(); }, 350);
+        }
+      }, 900);
+    });
+  </script>
+
 </body>
 </html>
