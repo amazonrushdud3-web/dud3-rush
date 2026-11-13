@@ -10,12 +10,15 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Rush PRO">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
   <style>
     :root {
       --bg: #0B1118;
-      --bg-grad: radial-gradient(1200px 600px at 100% -10%, rgba(255,153,0,0.08), transparent 55%), radial-gradient(900px 500px at -10% 110%, rgba(35,131,226,0.10), transparent 55%), #0B1118;
+      --bg-grad: radial-gradient(1200px 600px at 100% -10%, rgba(255,153,0,0.08), transparent 55%),
+                 radial-gradient(900px 500px at -10% 110%, rgba(35,131,226,0.10), transparent 55%),
+                 #0B1118;
       --card: #16202C;
       --card-alt: #111B25;
       --card-hi: #1C2938;
@@ -35,22 +38,31 @@
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
+
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; }
     input, select { user-select: text; }
     html { -webkit-text-size-adjust: 100%; max-width: 100%; overflow-x: hidden; }
+    
     body { background: var(--bg-grad); background-attachment: fixed; color: var(--text); height: 100dvh; max-width: 100%; overflow: hidden; display: flex; flex-direction: column; }
-    header { background: linear-gradient(180deg, rgba(22,32,44,0.96), rgba(17,27,37,0.92)); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border-soft); padding: calc(var(--safe-top) + 8px) 16px 10px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; z-index: 100; }
+
+    header {
+      background: linear-gradient(180deg, rgba(22,32,44,0.96), rgba(17,27,37,0.92)); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border-soft); padding: calc(var(--safe-top) + 8px) 16px 10px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; z-index: 100;
+    }
     .brand-wrap { display: flex; align-items: center; gap: 10px; }
     .brand-logo { width: 32px; height: 32px; background: linear-gradient(135deg, #FF9900, #FF6A00); border-radius: 10px; display: grid; place-items: center; font-weight: 900; font-size: 15px; color: #000; box-shadow: 0 4px 14px var(--orange-glow); }
     .brand-title { font-size: 16px; font-weight: 800; letter-spacing: 0.4px; }
     .brand-title span { color: var(--orange); }
     .brand-sub { font-size: 10px; color: var(--text-dim); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+    
     .top-status { display: flex; align-items: center; gap: 8px; }
     .sync-badge { font-size: 11px; padding: 4px 8px; background: #102A1C; color: var(--green); border: 1px solid #1E5030; border-radius: 999px; font-weight: 700; display: flex; align-items: center; gap: 4px; }
     .sync-badge.syncing { background: #2D2513; color: var(--orange); border-color: #554010; }
     .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    
     #pending-holder { display:flex; justify-content:center; }
     #pending-badge { align-items:center; gap:6px; font-size:11px; font-weight:800; color:#201400; background:var(--yellow); padding:3px 12px; border-radius:0 0 10px 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
+
     #banner-holder { position: relative; z-index: 95; }
     .banner { padding: 10px 14px; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: space-between; animation: slideDown 0.2s ease-out; border-bottom: 1px solid rgba(0,0,0,0.2); }
     @keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -58,17 +70,21 @@
     .banner-danger { background: #DC2626; color: #FFF; }
     .banner-success { background: #059669; color: #FFF; }
     .banner-close { cursor: pointer; font-size: 18px; font-weight: 900; padding: 0 6px; }
+
     main { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 12px 14px calc(var(--safe-bottom) + 75px); scroll-behavior: smooth; }
+    
     .tab-content { display: none; flex-direction: column; gap: 12px; animation: fadePane 0.15s ease-out; }
     .tab-content.active { display: flex; }
     @keyframes fadePane { from { opacity: 0.4; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
     .crd, .batch-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 13px; margin-bottom: 11px; box-shadow: var(--shadow-soft); }
     .crd-t { font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; letter-spacing: 0.4px; }
+    
     .batch-card { background: linear-gradient(180deg, var(--card), var(--card-alt)); padding: 0; overflow: hidden; }
     .batch-header { background: #182330; padding: 11px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 8px; }
     .batch-title { font-size: 14px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
     .batch-badge { background: #FF9900; color: #000; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 999px; }
-    .batch-actions { display: flex; gap: 6px; align-items: center; }
+    
     .da-list { display: flex; flex-direction: column; max-height: 55vh; overflow-y: auto; }
     .da-row { display: flex; align-items: center; padding: 10px 14px; border-bottom: 1px solid #182431; gap: 10px; font-size: 13px; }
     .da-row:last-child { border-bottom: none; }
@@ -76,11 +92,10 @@
     .da-details { flex: 1; min-width: 0; }
     .da-title-line { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; }
     .da-meta-line { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+    
     .time-badge { font-size: 11px; font-weight: 700; padding: 3px 6px; border-radius: 6px; background: #121A24; border: 1px solid var(--border); color: #CBD5E1; font-variant-numeric: tabular-nums; }
-    .tag-sla { background: #450A0A; color: #F87171; border: 1px solid #7F1D1D; }
-    .tag-break { background: #3B2404; color: #FBBF24; border: 1px solid #78350F; }
-    .tag-violator { color: var(--red); border-color: var(--red) !important; background: var(--red-soft) !important; }
-    .tag-breakret { color: var(--green); border-color: var(--green) !important; background: var(--green-soft) !important; }
+    
+    /* HARDWARE SCANNER */
     .scanner-card { padding: 12px; display: flex; flex-direction: column; align-items: center; }
     .scanner-viewport-wrap { position: relative; width: 100%; max-width: 300px; aspect-ratio: 1/1; background: #000; border-radius: 14px; overflow: hidden; border: 2px solid #2B3E52; }
     #qr-reader-attend, #qr-reader-waiting, #qr-reader-receive { width: 100% !important; height: 100% !important; }
@@ -90,36 +105,40 @@
     .scanner-wrap-active .laser-line { display: block; }
     .scanner-idle { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; z-index: 12; color: var(--text-dim); text-align: center; background: #05090D; }
     .scanner-wrap-active .scanner-idle { display: none; }
+    
     .scanner-input-bar { width: 100%; margin-top: 10px; display: flex; gap: 8px; position: relative; }
     .text-input { flex: 1; background: var(--card-alt); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; color: #FFF; font-size: 14px; outline: none; min-height: 42px; }
     .text-input:focus { border-color: var(--orange); }
+    
     .btn { background: linear-gradient(180deg, #FFAD1F, #FF8F00); color: #000; font-weight: 800; border: none; border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; justify-content: center; white-space: nowrap; min-height: 42px; }
     .btn:active { transform: scale(0.96); }
-    .btn-green { background: linear-gradient(180deg, #1ED48C, #10B478); color: #03210C; }
+    .btn-green { background: linear-gradient(180deg, #1ED48C, #10B478); color: #052015; }
     .btn-card { background: var(--card-hi); color: #FFF; border: 1px solid #334760; }
+    
     .search-results-dropdown { position: absolute; top: 44px; left: 0; right: 0; background: #1B2634; border: 1px solid var(--orange); border-radius: 8px; max-height: 210px; overflow-y: auto; z-index: 150; box-shadow: 0 10px 28px rgba(0,0,0,0.65); display: none; }
     .dropdown-item { padding: 10px 12px; border-bottom: 1px solid #233142; cursor: pointer; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
+
     .metric-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom:12px; }
     .metric-box { background: linear-gradient(180deg, var(--card-hi), var(--card-alt)); border-radius: 10px; padding: 10px 4px; text-align: center; border: 1px solid var(--border); }
     .metric-val { font-size: 20px; font-weight: 900; font-variant-numeric: tabular-nums; }
     .metric-lbl { font-size: 9px; font-weight: 700; color: var(--text-dim); margin-top: 4px; text-transform: uppercase; }
-    .wave-bar { display: flex; align-items: center; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
-    .wave-pill { padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 800; background: var(--card); border: 1px solid var(--border); color: var(--text-dim); cursor: pointer; white-space: nowrap; transition: all .15s ease; }
-    .wave-pill.active { background: var(--orange); color: #000; border-color: var(--orange); box-shadow: 0 4px 12px var(--orange-glow); }
-    .replacement-box { background: linear-gradient(145deg, #1A2635, #151F2C); border: 1px solid #334960; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
-    .rep-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .violator-banner { background: linear-gradient(135deg, #E03234, #B21F21); color: #fff; border-radius: var(--radius); padding: 14px 16px; font-weight: 800; font-size: 13px; display: flex; gap: 10px; align-items: center; box-shadow: 0 6px 18px rgba(255,77,79,0.28); border: 1px solid #FF6668; }
-    nav { position: fixed; bottom: 0; left: 0; right: 0; height: calc(var(--safe-bottom) + 58px); background: linear-gradient(180deg, rgba(20,29,39,0.96), rgba(13,20,28,0.98)); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-top: 1px solid var(--border-soft); display: grid; grid-template-columns: repeat(6, 1fr); z-index: 100; padding-bottom: var(--safe-bottom); }
+
+    nav {
+      position: fixed; bottom: 0; left: 0; right: 0; height: calc(var(--safe-bottom) + 58px);
+      background: linear-gradient(180deg, rgba(20,29,39,0.96), rgba(13,20,28,0.98)); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border-top: 1px solid var(--border-soft); display: grid; grid-template-columns: repeat(6, 1fr); z-index: 100; padding-bottom: var(--safe-bottom);
+    }
     .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: var(--text-dim); cursor: pointer; font-size: 10px; font-weight: 700; background: transparent; border: none; }
     .nav-item svg { width: 20px; height: 20px; fill: currentColor; }
     .nav-item.active { color: var(--orange); }
+
+    /* Desktop Adjustments */
     @media (min-width: 760px) {
       main { padding-left: 24px; padding-right: 24px; }
       .tab-content { max-width: 1180px; margin: 0 auto; width: 100%; }
       #tab-attend.active, #tab-waiting.active, #tab-receive.active { display: grid; grid-template-columns: 360px 1fr; gap: 18px; align-items: start; }
       .scanner-card { position: sticky; top: 8px; }
       .crd:not(.scanner-card) { grid-column: 2; }
-      .wave-bar, .metric-row, .batch-card, #waiting-batches-container, .replacement-box { grid-column: 2; }
     }
   </style>
 </head>
@@ -130,11 +149,12 @@
       <div class="brand-logo">D3</div>
       <div>
         <div class="brand-title">RUSH <span>PRO</span></div>
-        <div class="brand-sub" id="header-tab-sub">OFF-YARD ATTENDANCE</div>
+        <div class="brand-sub" id="header-tab-sub">DISPATCH ENGINE</div>
       </div>
     </div>
     <div class="top-status">
       <div class="sync-badge" id="sync-status"><span class="sync-dot"></span><span id="sync-text">LIVE</span></div>
+      <div class="clock-display" id="dubai-clock">--:--</div>
     </div>
   </header>
   
@@ -147,26 +167,19 @@
     <div class="tab-content active" id="tab-attend">
       <div class="crd scanner-card">
         <div class="crd-t">📷 DA Attendance Scan</div>
-        <button class="btn btn-green" id="btn-start-attend" onclick="startScanner('tab-attend')" style="width:100%; margin-bottom:10px;">▶ START SCANNER</button>
-        <button class="btn btn-card" id="btn-stop-attend" onclick="stopScanner('tab-attend')" style="width:100%; margin-bottom:10px; display:none;">■ STOP SCANNER</button>
-        <div class="scanner-viewport-wrap"><div id="qr-reader-attend"></div><div class="scanner-idle">Camera Off</div><div class="laser-line"></div></div>
+        <button class="btn btn-green" id="btn-start-attend" style="width:100%; margin-bottom:10px;">▶ START SCANNER</button>
+        <button class="btn btn-card" id="btn-stop-attend" style="width:100%; margin-bottom:10px; display:none;">■ STOP SCANNER</button>
+        <div class="scanner-viewport-wrap">
+          <div id="qr-reader-attend"></div>
+          <div class="scanner-idle"><div class="idle-title">Camera Off</div></div>
+          <div class="laser-line"></div>
+        </div>
         <div class="scanner-input-bar">
           <input type="text" id="attend-inp" class="text-input" placeholder="Scan or Type DA ID..." autocomplete="off">
           <button class="btn" id="btn-attend-checkin">Check In</button>
           <div class="search-results-dropdown" id="attend-search-results"></div>
         </div>
       </div>
-
-      <div class="replacement-box">
-        <div style="font-size:13px; font-weight:800; color:var(--orange);"><span>🔁 Quick Replacement Assignment</span></div>
-        <div class="rep-grid">
-          <div style="position:relative;"><input type="text" id="rep-absent-inp" class="text-input" style="width:100%;" placeholder="1. Search Absent DA..." autocomplete="off"><div class="search-results-dropdown" id="rep-absent-dropdown"></div></div>
-          <div style="position:relative;"><input type="text" id="rep-new-inp" class="text-input" style="width:100%;" placeholder="2. Search Replacement..." autocomplete="off"><div class="search-results-dropdown" id="rep-new-dropdown"></div></div>
-        </div>
-        <button class="btn btn-green" id="btn-assign-rep-inline" style="width:100%; padding:9px;">Assign Replacement &amp; Queue</button>
-      </div>
-
-      <div class="wave-bar" id="wave-pill-bar"></div>
 
       <div class="metric-row">
         <div class="metric-box"><div class="metric-val" id="cnt-present" style="color:var(--green)">0</div><div class="metric-lbl">Present</div></div>
@@ -176,8 +189,10 @@
       </div>
 
       <div class="batch-card">
-        <div class="batch-header"><div class="batch-title"><span id="current-wave-label">🌊 Current Running Wave</span></div></div>
-        <div class="da-list" id="attend-roster-list"><div style="padding:14px; text-align:center; color:var(--text-dim); font-size:13px;">Loading active wave...</div></div>
+        <div class="batch-header">
+          <div class="batch-title">🕒 Recent Check-Ins</div>
+        </div>
+        <div class="da-list" id="recent-att-list"></div>
       </div>
     </div>
 
@@ -185,14 +200,22 @@
     <div class="tab-content" id="tab-waiting">
       <div class="crd scanner-card" style="border-color:var(--green)">
         <div class="crd-t" style="color:var(--green)">📥 Add to Waiting Queue</div>
-        <button class="btn btn-green" id="btn-start-waiting" onclick="startScanner('tab-waiting')" style="width:100%; margin-bottom:10px;">▶ START SCANNER</button>
-        <button class="btn btn-card" id="btn-stop-waiting" onclick="stopScanner('tab-waiting')" style="width:100%; margin-bottom:10px; display:none;">■ STOP SCANNER</button>
-        <div class="scanner-viewport-wrap"><div id="qr-reader-waiting"></div><div class="scanner-idle">Camera Off</div><div class="laser-line"></div></div>
+        <button class="btn btn-green" id="btn-start-waiting" style="width:100%; margin-bottom:10px;">▶ START SCANNER</button>
+        <button class="btn btn-card" id="btn-stop-waiting" style="width:100%; margin-bottom:10px; display:none;">■ STOP SCANNER</button>
+        <div class="scanner-viewport-wrap">
+          <div id="qr-reader-waiting"></div>
+          <div class="scanner-idle"><div class="idle-title">Camera Off</div></div>
+          <div class="laser-line"></div>
+        </div>
         <div class="scanner-input-bar">
           <input type="text" id="waiting-inp" class="text-input" placeholder="Scan DA ID to Queue..." autocomplete="off">
           <button class="btn btn-green" id="btn-waiting-enqueue">Queue</button>
           <div class="search-results-dropdown" id="waiting-search-results"></div>
         </div>
+      </div>
+
+      <div class="crd" style="padding:10px;">
+        <input type="text" id="inp-ym" class="text-input" placeholder="Yard Marshal Name (required to send)" style="width:100%; margin-bottom:8px;">
       </div>
 
       <div id="waiting-batches-container" style="display:flex; flex-direction:column; gap:12px;"></div>
@@ -204,17 +227,18 @@
         <div class="crd-t" style="color:var(--red)">☕ Send DA on Break</div>
         <div class="scanner-input-bar">
           <input type="text" id="break-inp" class="text-input" placeholder="Scan DA ID..." autocomplete="off">
-          <button class="btn" id="btn-start-break" style="background:#FBBF24;color:#000;">Send on Break</button>
+          <button class="btn" id="btn-start-break" style="background:#FBBF24;">Send on Break</button>
           <div class="search-results-dropdown" id="break-search-results"></div>
         </div>
       </div>
-      <div class="batch-card"><div class="batch-header"><div class="batch-title">☕ Currently on Break</div></div><div class="da-list" id="breaks-da-list"></div></div>
-      <div class="batch-card break-return"><div class="batch-header"><div class="batch-title">🔄 DA's from Break — Ready to Dispatch</div></div><div class="da-list" id="breakret-da-list"></div></div>
+      <div class="batch-card">
+        <div class="batch-header"><div class="batch-title">☕ Currently on Break</div><span class="batch-badge" id="break-badge-count">0</span></div>
+        <div class="da-list" id="breaks-da-list"></div>
+      </div>
     </div>
-
+    
     <!-- TAB 4: VIOLATORS -->
     <div class="tab-content" id="tab-violators">
-      <div class="violator-banner"><span>Violators must be sent back to the OFF-YARD. Receive IN is blocked for every DA listed here.</span></div>
       <div class="batch-card" style="border-color:var(--red)">
         <div class="batch-header"><div class="batch-title" style="color:var(--red)">🚫 Active Violators</div><span class="batch-badge" id="violator-badge-count" style="background:var(--red);color:#fff">0</span></div>
         <div class="da-list" id="violators-da-list"></div>
@@ -225,9 +249,13 @@
     <div class="tab-content" id="tab-receive">
       <div class="crd scanner-card" style="border-color:var(--green)">
         <div class="crd-t" style="color:var(--green)">✅ Receive Inside Warehouse</div>
-        <button class="btn btn-green" id="btn-start-receive" onclick="startScanner('tab-receive')" style="width:100%; margin-bottom:10px;">▶ START SCANNER</button>
-        <button class="btn btn-card" id="btn-stop-receive" onclick="stopScanner('tab-receive')" style="width:100%; margin-bottom:10px; display:none;">■ STOP SCANNER</button>
-        <div class="scanner-viewport-wrap"><div id="qr-reader-receive"></div><div class="scanner-idle">Camera Off</div><div class="laser-line"></div></div>
+        <button class="btn btn-green" id="btn-start-receive" style="width:100%; margin-bottom:10px;">▶ START SCANNER</button>
+        <button class="btn btn-card" id="btn-stop-receive" style="width:100%; margin-bottom:10px; display:none;">■ STOP SCANNER</button>
+        <div class="scanner-viewport-wrap">
+          <div id="qr-reader-receive"></div>
+          <div class="scanner-idle"><div class="idle-title">Camera Off</div></div>
+          <div class="laser-line"></div>
+        </div>
         <div class="scanner-input-bar">
           <input type="text" id="receive-inp" class="text-input" placeholder="Scan DA ID at station..." autocomplete="off">
           <button class="btn btn-green" id="btn-receive-scanin">Receive</button>
@@ -235,27 +263,31 @@
         </div>
       </div>
 
-      <div class="batch-card"><div class="batch-header"><div class="batch-title">⏱️ Awaiting Received In Scan</div><span class="batch-badge" id="awaiting-badge-count">0</span></div><div class="da-list" id="sent-list"></div></div>
-      <div class="batch-card"><div class="batch-header"><div class="batch-title">✅ Received Inside</div><span class="batch-badge" id="received-badge-count" style="background:var(--green);color:#000;">0</span></div><div class="da-list" id="recv-list"></div></div>
+      <div class="batch-card">
+        <div class="batch-header"><div class="batch-title">⏱️ Awaiting Received In Scan</div><span class="batch-badge" id="awaiting-badge-count">0</span></div>
+        <div class="da-list" id="sent-list"></div>
+      </div>
+
+      <div class="batch-card">
+        <div class="batch-header"><div class="batch-title">✅ Received Inside</div><span class="batch-badge" id="received-badge-count" style="background:var(--green);color:#000;">0</span></div>
+        <div class="da-list" id="recv-list"></div>
+      </div>
     </div>
 
     <!-- TAB 6: ADMIN -->
     <div class="tab-content" id="tab-admin">
       <div class="crd">
         <div class="crd-t">⚙️ Global Settings</div>
-        <label style="font-size:11px;color:var(--muted)">Yard Marshal Name</label>
-        <input type="text" id="cfg-ym-name" class="text-input" style="width:100%; margin-bottom:8px;">
         <label style="font-size:11px;color:var(--muted)">Active Google Sheet URL</label>
-        <input type="text" id="cfg-sheet-url" class="text-input" style="width:100%; margin-bottom:8px;">
+        <input type="text" id="s-sheet" class="text-input" style="width:100%; margin-bottom:8px;">
         <label style="font-size:11px;color:var(--muted)">Apps Script API URL</label>
-        <input type="text" id="cfg-api-url" class="text-input" style="width:100%; margin-bottom:12px;">
+        <input type="text" id="s-api" class="text-input" style="width:100%; margin-bottom:12px;">
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
-          <div><label style="font-size:11px;color:var(--muted)">Batch Size (DAs)</label><input type="number" id="cfg-batch-size" class="text-input" style="width:100%;"></div>
-          <div><label style="font-size:11px;color:var(--muted)">Admin PIN</label><input type="password" id="cfg-admin-pin" class="text-input" style="width:100%;"></div>
+          <div><label style="font-size:11px;color:var(--muted)">Batch Size</label><input type="number" id="s-batch" class="text-input" style="width:100%;"></div>
+          <div><label style="font-size:11px;color:var(--muted)">Admin PIN</label><input type="password" id="s-pin" class="text-input" style="width:100%;"></div>
         </div>
         <button class="btn btn-green" id="btn-save-settings" style="width:100%; margin-bottom:10px;">💾 Save Settings</button>
         <button class="btn btn-card" id="btn-clear-cache" style="width:100%; margin-bottom:10px;">🗑️ Clear Local Cache</button>
-        <button class="btn" id="btn-reset-day" style="width:100%; background:var(--red); color:#FFF;">🔄 Reset Day</button>
       </div>
     </div>
 
@@ -271,6 +303,7 @@
   </nav>
 
   <script>
+    // --- 1. LOCAL STORAGE SHIM ---
     var SAFE_STORE = (function() {
       var mem = {}, ok = false;
       try { var tk = "__test__"; localStorage.setItem(tk, "1"); localStorage.removeItem(tk); ok = true; } catch (e) { ok = false; }
@@ -281,6 +314,7 @@
       };
     })();
 
+    // --- 2. GLOBAL STATE ---
     var DEFAULT_API = "https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec";
     var DEFAULT_SHEET = "https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit";
     
@@ -292,8 +326,7 @@
       settings: { batchSize: 25 },
       roster: [], waitingBatches: {}, sentList: [], receivedList: [], violators: [], breaksActive: [],
       scanners: {}, scannerActive: {}, scanCooldownMap: {},
-      highestBatchNum: 0, batchAssignedTotals: {}, serverNextBatchName: null,
-      pendingWaiting: {}, pendingSent: {}, pendingReceived: {}
+      highestBatchNum: 0, batchAssignedTotals: {}
     };
 
     function Utilities_formatDate() {
@@ -306,14 +339,12 @@
     }
     function escapeHtml(s) { return String(s||"").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
 
+    // --- 3. AUDIO BEEP ---
     var audioCtx = null;
-    function initAudio() {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      if (audioCtx.state === "suspended") audioCtx.resume();
-    }
     function playBeep(type) {
       try {
-        initAudio();
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === "suspended") audioCtx.resume();
         var osc = audioCtx.createOscillator(), gain = audioCtx.createGain(), t = audioCtx.currentTime;
         osc.connect(gain); gain.connect(audioCtx.destination);
         if (type === "success") { osc.type = "sine"; osc.frequency.setValueAtTime(1800, t); gain.gain.setValueAtTime(0.3, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1); osc.start(t); osc.stop(t + 0.15); if(navigator.vibrate) navigator.vibrate(30); } 
@@ -335,7 +366,8 @@
       S.scanCooldownMap[key] = n; return true;
     }
 
-    // 🟢 SEQUENTIAL OUTBOX QUEUE
+    // --- 4. THE SEQUENTIAL OUTBOX QUEUE ---
+    // Solves the 20-scan race condition by lining up background requests 1-by-1.
     var OUTBOX_KEY = "dud3_outbox_v2";
     function loadOutbox() { try { return JSON.parse(SAFE_STORE.getItem(OUTBOX_KEY)||"[]")||[]; } catch(e){ return []; } }
     function saveOutbox(arr) { try { SAFE_STORE.setItem(OUTBOX_KEY, JSON.stringify(arr)); } catch(e){} updateOutboxBadge(arr.length); }
@@ -360,29 +392,39 @@
       fetch(S.api, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) })
       .then(function(res){ return res.json(); })
       .catch(function(){
+        // Fallback GET
         var u = S.api + "?action=" + encodeURIComponent(item.action) + "&clientId=" + encodeURIComponent(item.clientId) + "&dayTab=" + encodeURIComponent(S.day) + "&sheetUrl=" + encodeURIComponent(S.sheetUrl) + "&payload=" + encodeURIComponent(JSON.stringify(item.payload));
         return fetch(u).then(function(r){ return r.json(); });
       })
       .then(function(data){
-        if (data && data.retry) { _flushing = false; setTimeout(flushOutbox, 1500); return; }
+        if (data && data.retry) {
+          // Server locked. Pause queue and retry later.
+          _flushing = false; setTimeout(flushOutbox, 1500); return;
+        }
+        // Success or explicit rejection -> remove from queue
         outboxRemove(item.clientId);
         _flushing = false;
         if (loadOutbox().length > 0) setTimeout(flushOutbox, 50);
-        else pollRoster(); 
+        else pollRoster(); // Fetch updated sheet once queue is clear
       })
-      .catch(function(err){ _flushing = false; setTimeout(flushOutbox, 3000); });
+      .catch(function(err){
+        _flushing = false; setTimeout(flushOutbox, 3000); // Network error, pause queue
+      });
     }
     window.addEventListener("online", flushOutbox);
 
+    // --- 5. DATA SYNCING ---
     var pollTimer = null;
     function pollRoster() {
-      if (loadOutbox().length > 0) return; 
+      if (loadOutbox().length > 0) return; // Do not interrupt outgoing queue
+      document.getElementById("sync-status").classList.add("syncing");
       
       fetch(S.api + "?action=syncOnly&dayTab=" + encodeURIComponent(S.day) + "&sheetUrl=" + encodeURIComponent(S.sheetUrl))
       .then(function(r){ return r.json(); })
       .then(function(d){
+        document.getElementById("sync-status").classList.remove("syncing");
+        document.getElementById("sync-text").textContent = "LIVE";
         if (d && d.success && d.roster) {
-          if (d.nextBatchName) S.serverNextBatchName = d.nextBatchName;
           S.roster = d.roster;
           S.waitingBatches = d.waitingBatches || {};
           S.sentList = d.sentList || [];
@@ -390,67 +432,35 @@
           S.violators = d.violators || [];
           S.breaksActive = d.breaksActive || [];
           if (d.settings) S.settings = Object.assign(S.settings, d.settings);
-          syncBatchWatermarksFromState();
+          if (d.serverTime) document.getElementById("dubai-clock").textContent = d.serverTime;
           renderAll();
         }
         clearTimeout(pollTimer);
         pollTimer = setTimeout(pollRoster, 3500);
       })
       .catch(function(e){
+        document.getElementById("sync-status").classList.remove("syncing");
+        document.getElementById("sync-text").textContent = "OFFLINE";
         clearTimeout(pollTimer);
         pollTimer = setTimeout(pollRoster, 5000);
       });
     }
 
-    function syncBatchWatermarksFromState() {
-      var maxB = S.highestBatchNum || 0;
-      var counts = {};
-      var bump = function(bName) {
-        if (!bName || bName === "DA's from Break") return;
-        var m = String(bName).match(/(\d+)/);
-        if (!m) return;
-        var n = parseInt(m[1], 10);
-        if (n > maxB) maxB = n;
-        counts[n] = (counts[n] || 0) + 1;
-      };
-
-      Object.keys(S.waitingBatches || {}).forEach(function(bn) { (S.waitingBatches[bn] || []).forEach(function() { bump(bn); }); });
-      (S.sentList || []).forEach(function(s) { bump(s.batchName); });
-      (S.receivedList || []).forEach(function(r) { bump(r.batchName); });
-      (S.roster || []).forEach(function(d) { if (d.dispatchStatus === "OFD" && d.batchName) bump(d.batchName); });
-
-      S.highestBatchNum = maxB;
-      Object.keys(counts).forEach(function(k) { S.batchAssignedTotals[k] = Math.max(S.batchAssignedTotals[k] || 0, counts[k]); });
-    }
-
-    function getNextBatchNameOptimistic() {
-      syncBatchWatermarksFromState();
+    // --- 6. OPTIMISTIC UI ACTIONS ---
+    function getNextBatchName() {
       var cap = S.settings.batchSize || 25;
-      if (S.serverNextBatchName) {
-        var sm = String(S.serverNextBatchName).match(/(\d+)/);
-        if (sm) { var sNum = parseInt(sm[1], 10); if (sNum > S.highestBatchNum) S.highestBatchNum = sNum; }
-      }
-      if (S.highestBatchNum === 0) { S.highestBatchNum = 1; S.batchAssignedTotals[1] = 1; return "Batch 1"; }
-      var curNum = S.highestBatchNum;
-      var curBatchName = "Batch " + curNum;
-      var totalAssigned = S.batchAssignedTotals[curNum] || ((S.waitingBatches[curBatchName] || []).length);
-      var waitingNow = (S.waitingBatches[curBatchName] || []).length;
-      var sentOrRecFromCur = (S.sentList || []).some(function(s){ return s.batchName === curBatchName; }) || (S.receivedList || []).some(function(r){ return r.batchName === curBatchName; });
-
-      if (totalAssigned >= cap || (sentOrRecFromCur && waitingNow === 0)) {
-        curNum = curNum + 1;
-        S.highestBatchNum = curNum;
-        S.batchAssignedTotals[curNum] = 1;
-        S.serverNextBatchName = "Batch " + curNum;
-        return "Batch " + curNum;
-      }
-      S.batchAssignedTotals[curNum] = totalAssigned + 1;
-      return "Batch " + curNum;
+      var maxN = 0, counts = {};
+      Object.keys(S.waitingBatches).forEach(function(bn){
+        var n = parseInt((bn.match(/\d+/) || [0])[0], 10);
+        if (n > maxN) maxN = n;
+        counts[n] = (counts[n] || 0) + S.waitingBatches[bn].length;
+      });
+      if (maxN === 0) return "Batch 1";
+      if ((counts[maxN] || 0) >= cap) return "Batch " + (maxN + 1);
+      return "Batch " + maxN;
     }
 
-    // 🟢 ALL ACTIONS
     function handleAttendanceCheckIn(daIdInput) {
-      initAudio();
       var daId = (daIdInput || document.getElementById("attend-inp").value).trim().toUpperCase();
       if (!daId || !isCooledDown("ATT_"+daId)) return;
       document.getElementById("attend-inp").value = "";
@@ -460,38 +470,31 @@
       if (!da) { playBeep("error"); showBanner("DA not found in roster.", "danger"); return; }
       if (da.scanTime) { playBeep("error"); showBanner(da.daName + " already checked in.", "warning"); return; }
 
+      // Optimistic UI
       playBeep("success");
       var tNow = nowHHMM();
-      var bName = getNextBatchNameOptimistic();
+      var bName = getNextBatchName();
       da.status = "Present"; da.scanTime = tNow; da.batchName = bName; da.waitTime = tNow;
       if (!S.waitingBatches[bName]) S.waitingBatches[bName] = [];
       S.waitingBatches[bName].push(da);
       renderAll();
       showBanner("Checked In: " + da.daName + " ➔ " + bName, "success");
 
+      // Send to Queue
       outboxAdd({ clientId: genCid(), action: "recordCheckIn", payload: { daId: da.daId, ymName: S.ymName, sentStatus: "Present" } });
     }
 
     function handleWaitingEnqueue(daIdInput) {
-      initAudio();
       var daId = (daIdInput || document.getElementById("waiting-inp").value).trim().toUpperCase();
       if (!daId || !isCooledDown("WAIT_"+daId)) return;
       document.getElementById("waiting-inp").value = "";
-      document.getElementById("waiting-search-results").style.display = "none";
       
       var da = S.roster.find(function(d){ return d.daId.toUpperCase() === daId; });
       if (!da) { playBeep("error"); showBanner("DA not found.", "danger"); return; }
-      if (da.inBreak) { playBeep("error"); showBanner("Blocked: " + da.daName + " is on Break", "danger"); return; }
-
-      var alreadyInBatch = null;
-      Object.keys(S.waitingBatches || {}).forEach(function(bn) {
-        (S.waitingBatches[bn] || []).forEach(function(item) { if (item.daId.toUpperCase() === daId) alreadyInBatch = bn; });
-      });
-      if (alreadyInBatch) { playBeep("error"); showBanner(daId + " is already waiting in " + alreadyInBatch, "warning"); return; }
 
       playBeep("success");
       var tNow = nowHHMM();
-      var bName = getNextBatchNameOptimistic();
+      var bName = getNextBatchName();
       da.batchName = bName; da.waitTime = tNow;
       if (!S.waitingBatches[bName]) S.waitingBatches[bName] = [];
       S.waitingBatches[bName].push(da);
@@ -501,41 +504,30 @@
       outboxAdd({ clientId: genCid(), action: "addToWaiting", payload: { daId: da.daId, ymName: S.ymName } });
     }
 
-    // 🟢 OPTIMISTIC RECEIVE SCAN (Blocks receiving directly from waiting queue)
     function doReceiveScanAction(daIdInput) {
-      initAudio();
       var daId = (daIdInput || document.getElementById("receive-inp").value).trim().toUpperCase();
       if (!daId || !isCooledDown("RCV_"+daId)) return;
       document.getElementById("receive-inp").value = "";
-      document.getElementById("receive-search-results").style.display = "none";
-      
-      var found = -1;
-      for (var i=0; i<S.sentList.length; i++) { if (S.sentList[i].daId.toUpperCase() === daId) { found = i; break; } }
-      
-      // 🛑 STRICT FRONTEND BLOCK: Reject if DA is not in Sent List
-      if (found === -1) {
-         playBeep("error");
-         showBanner("DA Currently Not sent from waiting BY Offyard", "danger", 15);
-         return; 
-      }
       
       // Move from Sent to Received instantly
-      var item = S.sentList.splice(found, 1)[0];
-      item.rushInTime = nowHHMM();
-      S.receivedList.unshift(item);
+      var found = -1;
+      for (var i=0; i<S.sentList.length; i++) { if (S.sentList[i].daId.toUpperCase() === daId) { found = i; break; } }
+      if (found > -1) {
+        var item = S.sentList.splice(found, 1)[0];
+        item.rushInTime = nowHHMM();
+        S.receivedList.unshift(item);
+      }
       playBeep("success");
-      showBanner("✅ Received: " + item.daName + " (" + item.batchName + ")", "success");
       renderAll();
-      
       outboxAdd({ clientId: genCid(), action: "rushScanIn", payload: { daId: daId, receiverName: S.ymName } });
     }
 
     function sendBatchAction(bName) {
-      initAudio();
       var daIds = (S.waitingBatches[bName] || []).map(function(d){ return d.daId; });
       if (!daIds.length) return;
       playBeep("success");
       
+      // Optimistic
       var tNow = nowHHMM();
       var items = S.waitingBatches[bName];
       delete S.waitingBatches[bName];
@@ -550,113 +542,13 @@
       outboxAdd({ clientId: genCid(), action: "sendDA", payload: { daIds: daIds, ymName: S.ymName, batchName: bName } });
     }
 
-    function startBreakAction(queryId) {
-      initAudio();
-      var daId = (queryId || document.getElementById("break-inp").value || "").trim();
-      if (!daId || !isCooledDown("BRK_" + daId)) return;
-      document.getElementById("break-inp").value = "";
-      var dd = document.getElementById("break-search-results"); if(dd) dd.style.display="none";
-
-      var daObj = (S.roster || []).find(function(d) { return d.daId.toUpperCase() === daId.toUpperCase(); });
-      var dName = daObj ? daObj.daName : daId;
-
-      Object.keys(S.waitingBatches || {}).forEach(function(bn) {
-        S.waitingBatches[bn] = (S.waitingBatches[bn] || []).filter(function(x) { return x.daId.toUpperCase() !== daId.toUpperCase(); });
-        if (S.waitingBatches[bn].length === 0) delete S.waitingBatches[bn];
-      });
-      if (daObj) daObj.inBreak = true;
-      S.breaksActive = (S.breaksActive || []).filter(function(b){return b.daId.toUpperCase()!==daId.toUpperCase();});
-      S.breaksActive.push({ daId: daId, daName: dName, startTime: nowHHMM(), ymName: S.ymName });
-
-      playBeep("action");
-      showBanner("☕ " + dName + " sent on Break.", "success");
-      renderAll();
-
-      outboxAdd({ clientId: genCid(), action: "startBreak", payload: { daId: daId, ymName: S.ymName } });
-    }
-
-    function endBreakAction(daId) {
-      initAudio();
-      var bObj = (S.breaksActive || []).find(function(b){return b.daId.toUpperCase()===daId.toUpperCase();});
-      var rObj = (S.roster || []).find(function(d){return d.daId.toUpperCase()===daId.toUpperCase();});
-      var dName = bObj ? bObj.daName : (rObj ? rObj.daName : daId);
-      var nowStr = nowHHMM();
-
-      S.breaksActive = (S.breaksActive || []).filter(function(b){return b.daId.toUpperCase()!==daId.toUpperCase();});
-      if (rObj) { rObj.inBreak = false; rObj.actionBreak = false; }
-      
-      if (!S.waitingBatches["DA's from Break"]) S.waitingBatches["DA's from Break"] = [];
-      S.waitingBatches["DA's from Break"].push({ daId: daId, daName: dName, batchName: "DA's from Break", waitTime: nowStr, inBreak: false, breakRange: "" });
-
-      playBeep("action");
-      showBanner("🔄 " + dName + " returned to queue.", "success");
-      renderAll();
-
-      outboxAdd({ clientId: genCid(), action: "endBreak", payload: { daId: daId, ymName: S.ymName } });
-    }
-
-    function removeViolatorAction(daId) {
-      initAudio();
-      S.violators = (S.violators || []).filter(function(v) { return String(v.daId).toUpperCase() !== String(daId).toUpperCase(); });
-      renderAll();
-      outboxAdd({ clientId: genCid(), action: "clearViolator", payload: { daId: daId } });
-      playBeep("action");
-      showBanner("Removed " + daId + " from Violators.", "success");
-    }
-
-    function removeDaAction(daId) {
-      initAudio();
-      Object.keys(S.waitingBatches || {}).forEach(function(bName) {
-        S.waitingBatches[bName] = (S.waitingBatches[bName] || []).filter(function(x) { return x.daId.toUpperCase() !== daId.toUpperCase(); });
-        if (S.waitingBatches[bName].length === 0) delete S.waitingBatches[bName];
-      });
-      renderAll();
-      outboxAdd({ clientId: genCid(), action: "removeFromWaiting", payload: { ids: [daId] } });
-    }
-
-    function executeInlineReplacement() {
-      initAudio();
-      if (!S.selectedAbsentDa || !S.selectedReplacementDa) { playBeep("error"); showBanner("Select both DAs.", "warning"); return; }
-      
-      var orig = S.selectedAbsentDa, rep = S.selectedReplacementDa;
-      var nowStr = nowHHMM();
-      var targetBatch = getNextBatchNameOptimistic();
-
-      var rObj = (S.roster || []).find(function(d) { return d.daId.toUpperCase() === orig.daId.toUpperCase(); });
-      if (rObj) { rObj.daName = orig.daName + " / 🔁 / " + rep.daName; rObj.status = "Replacement Present"; rObj.scanTime = nowStr; rObj.batchName = targetBatch; }
-      
-      if (!S.waitingBatches[targetBatch]) S.waitingBatches[targetBatch] = [];
-      S.waitingBatches[targetBatch].push({ daId: orig.daId, daName: orig.daName + " / 🔁 / " + rep.daName, batchName: targetBatch, waitTime: nowStr, inBreak: false, breakRange: "" });
-
-      document.getElementById("rep-absent-inp").value = ""; document.getElementById("rep-new-inp").value = "";
-      S.selectedAbsentDa = null; S.selectedReplacementDa = null;
-
-      playBeep("success"); showBanner("⚡ Replaced " + orig.daName + " with " + rep.daName, "success");
-      renderAll();
-
-      outboxAdd({ clientId: genCid(), action: "assignReplacement", payload: { originalDaId: orig.daId, replacementDaId: rep.daId, replacementName: rep.daName } });
-    }
-
-    // 7. RENDERING
+    // --- 7. RENDERING ---
     function renderAll() {
-      renderAttend(); renderWaiting(); renderReceive(); renderBreaks(); renderViolators();
+      renderAttend(); renderWaiting(); renderReceive();
     }
     
     function renderAttend() {
       var c = document.getElementById("recent-att-list"); c.innerHTML = "";
-      var pCnt = 0, lCnt = 0, aCnt = 0;
-      
-      S.roster.forEach(function(da) {
-        if (da.status === "Present" || da.status === "Replacement Present") pCnt++;
-        else if (da.status === "Late Arrival") lCnt++;
-        else aCnt++;
-      });
-      
-      document.getElementById("cnt-present").textContent = pCnt;
-      document.getElementById("cnt-late").textContent = lCnt;
-      document.getElementById("cnt-absent").textContent = aCnt;
-      document.getElementById("cnt-total").textContent = S.roster.length;
-
       var recents = S.roster.filter(function(r){ return r.scanTime; }).reverse().slice(0, 50);
       recents.forEach(function(da){
         var r = document.createElement("div"); r.className = "da-row";
@@ -675,56 +567,10 @@
         var list = document.createElement("div"); list.className = "da-list";
         arr.forEach(function(da, i){
           var r = document.createElement("div"); r.className = "da-row";
-          var sendBtn = da.inBreak ? '<button class="btn btn-card" style="padding:5px 10px; font-size:11px; opacity:0.45;" disabled>Send</button>' : '<button class="btn btn-card" style="padding:5px 10px; font-size:11px;" onclick="outboxAdd({ clientId: genCid(), action: \'sendDA\', payload: { daIds: [\''+da.daId+'\'], ymName: S.ymName, batchName: \''+bn+'\' } }); removeDaAction(\''+da.daId+'\');">Send</button>';
-          var breakTag = da.inBreak ? '<span class="time-badge tag-break" style="margin-left:4px;">On Break</span>' : '';
-          
-          r.innerHTML = '<div class="da-details"><div class="da-title-line">#' + (i+1) + ' ' + escapeHtml(da.daName) + breakTag + '</div><div class="da-meta-line">' + da.daId + ' | Wait: ' + (da.waitTime||"") + '</div></div><div style="display:flex; gap:6px;">'+sendBtn+'<button class="btn btn-card" style="padding:5px 8px;font-size:11px;color:var(--red);" onclick="removeDaAction(\''+da.daId+'\')">&times;</button></div>';
+          r.innerHTML = '<div class="da-details"><div class="da-title-line">#' + (i+1) + ' ' + escapeHtml(da.daName) + '</div><div class="da-meta-line">' + da.daId + ' | Wait: ' + (da.waitTime||"") + '</div></div>';
           list.appendChild(r);
         });
         card.appendChild(list); c.appendChild(card);
-      });
-    }
-
-    function renderBreaks() {
-      var container = document.getElementById("breaks-da-list");
-      if (!container) return;
-      container.innerHTML = "";
-
-      var seen = {}; var combined = [];
-      (S.roster || []).forEach(function(d) {
-        if (d.inBreak) { var k = String(d.daId).toUpperCase(); if (!seen[k]) { seen[k] = true; combined.push({ daId: d.daId, daName: d.daName, range: d.breakRange || "On Break", action: !!d.actionBreak }); } }
-      });
-      (S.breaksActive || []).forEach(function(b) {
-        var k = String(b.daId).toUpperCase(); if (!seen[k]) { seen[k] = true; combined.push({ daId: b.daId, daName: b.daName, range: "On Break", action: true }); }
-      });
-
-      combined.forEach(function(da) {
-        var row = document.createElement("div"); row.className = "da-row";
-        var endBtn = da.action ? '<button class="btn btn-green" style="padding:5px 10px; font-size:11px;" onclick="endBreakAction(\'' + da.daId + '\')">End Break</button>' : '<span class="time-badge tag-break">Scheduled</span>';
-        row.innerHTML = '<div class="da-details"><div class="da-title-line">' + escapeHtml(da.daName) + '</div><div class="da-meta-line">' + da.daId + '</div></div><div>' + endBtn + '</div>';
-        container.appendChild(row);
-      });
-
-      var retContainer = document.getElementById("breakret-da-list");
-      if (!retContainer) return;
-      var retList = (S.waitingBatches && S.waitingBatches[BREAK_RETURN_BATCH]) ? S.waitingBatches[BREAK_RETURN_BATCH].filter(function(d){return !d.inBreak;}) : [];
-      retContainer.innerHTML = "";
-      retList.forEach(function(da, idx) {
-        var row = document.createElement("div"); row.className = "da-row";
-        row.innerHTML = '<div class="da-details"><div class="da-title-line">#' + (idx + 1) + ' ' + escapeHtml(da.daName) + '</div><div class="da-meta-line">Wait: ' + (da.waitTime || "") + '</div></div><div><button class="btn btn-green" style="padding:6px 10px; font-size:11px;" onclick="outboxAdd({ clientId: genCid(), action: \'sendDA\', payload: { daIds: [\''+da.daId+'\'], ymName: S.ymName, batchName: \'DA\\\'s from Break\' } }); removeDaAction(\''+da.daId+'\');">Send</button></div>';
-        retContainer.appendChild(row);
-      });
-    }
-
-    function renderViolators() {
-      var container = document.getElementById("violators-da-list");
-      if (!container) return;
-      var list = S.violators || [];
-      container.innerHTML = "";
-      list.forEach(function(v) {
-        var row = document.createElement("div"); row.className = "da-row";
-        row.innerHTML = '<div class="da-details"><div class="da-title-line">' + escapeHtml(v.daName || v.daId) + '</div><div class="da-meta-line">Logged: ' + (v.timeLogged || "") + '</div></div><div><button class="btn btn-card" style="padding:5px 10px; font-size:11px; color:var(--red);" onclick="removeViolatorAction(\'' + v.daId + '\')">Remove</button></div>';
-        container.appendChild(row);
       });
     }
 
@@ -746,32 +592,10 @@
       document.getElementById("received-badge-count").textContent = S.receivedList.length;
     }
 
-    function bindLiveSearch(inputEl, dropdownEl, listGetter, onSelect) {
-      inputEl.addEventListener("input", function() {
-        var val = inputEl.value.trim().toLowerCase();
-        dropdownEl.innerHTML = "";
-        if (!val) { dropdownEl.style.display = "none"; return; }
-
-        var list = listGetter() || [];
-        var matches = list.filter(function(d) { return String(d.daId || "").toLowerCase().includes(val) || String(d.daName || "").toLowerCase().includes(val); }).slice(0, 12);
-        if (matches.length === 0) { dropdownEl.style.display = "none"; return; }
-
-        matches.forEach(function(m) {
-          var div = document.createElement("div"); div.className = "dropdown-item";
-          div.innerHTML = '<span><b>' + escapeHtml(m.daName) + '</b> (' + m.daId + ')</span>';
-          div.onclick = function() { dropdownEl.style.display = "none"; onSelect(m); };
-          dropdownEl.appendChild(div);
-        });
-        dropdownEl.style.display = "block";
-      });
-
-      document.addEventListener("click", function(e) { if (!inputEl.contains(e.target) && !dropdownEl.contains(e.target)) dropdownEl.style.display = "none"; });
-    }
-
+    // --- 8. UI EVENT BINDING ---
     document.addEventListener("DOMContentLoaded", function() {
       document.querySelectorAll(".nav-item").forEach(function(el){
         el.onclick = function() {
-          Object.keys(S.scannerActive).forEach(function(tid) { if (S.scannerActive[tid]) stopScanner(tid); });
           document.querySelectorAll(".nav-item").forEach(function(n){ n.classList.remove("active"); });
           document.querySelectorAll(".tab-content").forEach(function(t){ t.classList.remove("active"); });
           el.classList.add("active");
@@ -789,32 +613,6 @@
 
       document.getElementById("btn-receive-scanin").onclick = function(){ doReceiveScanAction(); };
       document.getElementById("receive-inp").onkeydown = function(e){ if(e.key==="Enter") doReceiveScanAction(); };
-
-      document.getElementById("btn-start-break").onclick = function(){ startBreakAction(); };
-      document.getElementById("break-inp").onkeydown = function(e){ if(e.key==="Enter") startBreakAction(); };
-
-      document.getElementById("btn-reset-day").onclick = function(){
-        var pin = prompt("Enter Admin PIN to confirm Reset Day:");
-        if (!pin) return;
-        outboxAdd({ clientId: genCid(), action: "resetDay", payload: { pin: pin } });
-        showBanner("Reset queued...", "success");
-      };
-
-      bindLiveSearch(document.getElementById("attend-inp"), document.getElementById("attend-search-results"), function() { return S.roster; }, function(item) { handleAttendanceCheckIn(item.daId); });
-      bindLiveSearch(document.getElementById("waiting-inp"), document.getElementById("waiting-search-results"), function() { return S.roster; }, function(item) { handleWaitingEnqueue(item.daId); });
-      bindLiveSearch(document.getElementById("receive-inp"), document.getElementById("receive-search-results"), function() { return S.sentList.length > 0 ? S.sentList : S.roster; }, function(item) { doReceiveScanAction(item.daId); });
-      bindLiveSearch(document.getElementById("break-inp"), document.getElementById("break-search-results"), function() { return S.roster; }, function(item) { startBreakAction(item.daId); });
-
-      bindLiveSearch(document.getElementById("rep-absent-inp"), document.getElementById("rep-absent-dropdown"), function() { return (S.roster || []).filter(function(d) { return d.status === "Absent" || !d.scanTime; }); }, function(item) {
-        S.selectedAbsentDa = { daId: item.daId, daName: item.daName };
-        document.getElementById("rep-absent-inp").value = item.daName + " (" + item.daId + ")";
-      });
-      bindLiveSearch(document.getElementById("rep-new-inp"), document.getElementById("rep-new-dropdown"), function() { return (S.rushData && S.rushData.length > 0) ? S.rushData : S.roster; }, function(item) {
-        S.selectedReplacementDa = { daId: item.daId, daName: item.daName };
-        document.getElementById("rep-new-inp").value = item.daName + " (" + item.daId + ")";
-      });
-      
-      document.getElementById("btn-assign-rep-inline").onclick = executeInlineReplacement;
 
       document.getElementById("btn-save-settings").onclick = function(){
         S.ymName = document.getElementById("cfg-ym-name").value;
@@ -841,38 +639,17 @@
       function startCam(id, inpId, cb) {
         var scanner = new Html5Qrcode(id, { experimentalFeatures: { useBarCodeDetectorIfSupported: true } });
         document.getElementById(id).parentElement.classList.add("scanner-wrap-active");
-        document.getElementById("btn-start-" + id.split("-")[2]).style.display = "none";
-        document.getElementById("btn-stop-" + id.split("-")[2]).style.display = "";
         scanner.start({ facingMode: "environment" }, { fps: 30, qrbox: { width: 200, height: 200 }, disableFlip: true }, function(text){ cb(text); });
         S.scanners[id] = scanner;
-        S.scannerActive[id] = true;
       }
-      function stopScanner(id) {
-        if(S.scanners[id]) { S.scanners[id].stop(); S.scannerActive[id] = false; }
-        document.getElementById(id).parentElement.classList.remove("scanner-wrap-active");
-        document.getElementById("btn-start-" + id.split("-")[2]).style.display = "";
-        document.getElementById("btn-stop-" + id.split("-")[2]).style.display = "none";
-      }
-      
-      document.getElementById("btn-start-attend").onclick = function() { startCam("qr-reader-attend", "attend-inp", handleAttendanceCheckIn); };
-      document.getElementById("btn-stop-attend").onclick = function() { stopScanner("qr-reader-attend"); };
+      document.getElementById("btn-start-attend").onclick = function() { this.style.display="none"; document.getElementById("btn-stop-attend").style.display=""; startCam("qr-reader-attend", "attend-inp", handleAttendanceCheckIn); };
+      document.getElementById("btn-stop-attend").onclick = function() { this.style.display="none"; document.getElementById("btn-start-attend").style.display=""; S.scanners["qr-reader-attend"].stop(); document.getElementById("qr-reader-attend").parentElement.classList.remove("scanner-wrap-active"); };
 
-      document.getElementById("btn-start-waiting").onclick = function() { startCam("qr-reader-waiting", "waiting-inp", handleWaitingEnqueue); };
-      document.getElementById("btn-stop-waiting").onclick = function() { stopScanner("qr-reader-waiting"); };
+      document.getElementById("btn-start-waiting").onclick = function() { this.style.display="none"; document.getElementById("btn-stop-waiting").style.display=""; startCam("qr-reader-waiting", "waiting-inp", handleWaitingEnqueue); };
+      document.getElementById("btn-stop-waiting").onclick = function() { this.style.display="none"; document.getElementById("btn-start-waiting").style.display=""; S.scanners["qr-reader-waiting"].stop(); document.getElementById("qr-reader-waiting").parentElement.classList.remove("scanner-wrap-active"); };
 
-      document.getElementById("btn-start-receive").onclick = function() { startCam("qr-reader-receive", "receive-inp", doReceiveScanAction); };
-      document.getElementById("btn-stop-receive").onclick = function() { stopScanner("qr-reader-receive"); };
-
-      window.stopScanner = stopScanner; // expose for tab switching
-
-      setTimeout(function() {
-        var splash = document.getElementById("splash-screen");
-        if (splash) {
-          splash.style.opacity = "0";
-          splash.style.visibility = "hidden";
-          setTimeout(function() { splash.remove(); }, 350);
-        }
-      }, 900);
+      document.getElementById("btn-start-receive").onclick = function() { this.style.display="none"; document.getElementById("btn-stop-receive").style.display=""; startCam("qr-reader-receive", "receive-inp", doReceiveScanAction); };
+      document.getElementById("btn-stop-receive").onclick = function() { this.style.display="none"; document.getElementById("btn-start-receive").style.display=""; S.scanners["qr-reader-receive"].stop(); document.getElementById("qr-reader-receive").parentElement.classList.remove("scanner-wrap-active"); };
     });
   </script>
 </body>
