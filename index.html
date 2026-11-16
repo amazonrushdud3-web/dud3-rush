@@ -983,6 +983,16 @@
       return activeWave;
     }
 
+    // Map a raw Violations_List status string to a clean banner suffix stating WHY the
+    // DA returned from the Violator list. Entry-timeout is the only route into Violator.
+    function violatorReasonText(rawReason) {
+      var r = String(rawReason || "").toLowerCase();
+      if (r.indexOf("timeout") !== -1 || r.indexOf("time out") !== -1 || r.indexOf("received in") !== -1 || r.indexOf("entry") !== -1) {
+        return " \u2014 Entry Time Out";
+      }
+      return rawReason ? (" \u2014 " + rawReason) : " \u2014 Entry Time Out";
+    }
+
     function showBanner(text, type, timeoutSecs) {
       var holder = document.getElementById("banner-holder");
       if (!holder) return;
@@ -1675,7 +1685,7 @@
       sendReq("recordCheckIn", { daId: daObj.daId, ymName: S.ymName }, function(err, res) {
         if (res && res.success && res.clearedViolator) {
           S.violators = (S.violators || []).filter(function(v){ return String(v.daId).toUpperCase() !== String(daObj.daId).toUpperCase(); });
-          showBanner("⚠️ DA Added from Violator: " + daObj.daName, "warning", 12);
+          showBanner("⚠️ " + daObj.daName + " added from Violator" + violatorReasonText(res.violatorReason), "warning", 12);
         }
         if (err || (res && !res.success)) pollRoster();
       });
@@ -1731,7 +1741,7 @@
       sendReq("addToWaiting", { daId: daId, ymName: S.ymName }, function(err, res) {
         if (res && res.success && res.clearedViolator) {
           S.violators = (S.violators || []).filter(function(v){ return String(v.daId).toUpperCase() !== String(daId).toUpperCase(); });
-          showBanner("⚠️ DA Added from Violator: " + dName, "warning", 12);
+          showBanner("⚠️ " + dName + " added from Violator" + violatorReasonText(res.violatorReason), "warning", 12);
         }
         if (err || (res && !res.success)) {
           delete S.pendingWaiting[String(daObj ? daObj.daId : daId).toUpperCase()];
