@@ -810,6 +810,8 @@
       pendingSent: {},
       pendingReceived: {},
       pendingClearedViolators: {},
+      confirmedWaiting: {},
+      removedFromWaiting: {},
       highestBatchNum: 0,
       batchAssignedTotals: {},
       serverNextBatchName: null
@@ -1150,10 +1152,17 @@
       Object.keys(serverBatches).forEach(function(bn) {
         (serverBatches[bn] || []).forEach(function(it) { serverWaiting[String(it.daId).toUpperCase()] = bn; });
       });
+      // A DA legitimately LEAVES waiting only when actually Sent, Received, or explicitly
+      // removed. We treat those as "moved on". Anything else that merely disappears from a
+      // (possibly stale) server snapshot must NOT drop the name.
       var serverMovedOn = {};
       (S.sentList || []).forEach(function(s) { serverMovedOn[String(s.daId).toUpperCase()] = true; });
       (S.receivedList || []).forEach(function(r) { serverMovedOn[String(r.daId).toUpperCase()] = true; });
+      Object.keys(S.pendingReceived || {}).forEach(function(k){ serverMovedOn[k] = true; });
+      Object.keys(S.pendingSent || {}).forEach(function(k){ serverMovedOn[k] = true; });
+      Object.keys(S.removedFromWaiting || {}).forEach(function(k){ serverMovedOn[k] = true; });
 
+      // 1) Optimistic (pending) waiting entries — merge back until confirmed/moved-on.
       Object.keys(S.pendingWaiting).forEach(function(key) {
         var p = S.pendingWaiting[key];
         if (serverWaiting[key]) { delete S.pendingWaiting[key]; return; }
@@ -1163,24 +1172,98 @@
         var exists = serverBatches[bn].some(function(it){ return String(it.daId).toUpperCase() === key; });
         if (!exists) serverBatches[bn].push(p.item);
       });
+
+      // 2) STALE-SYNC GUARD (Req 1): a DA the client last saw WAITING, whose pending hold is
+      //    already released, must not vanish from a single stale snapshot. Retain them in
+      //    their last-known batch for a short grace window UNLESS they have actually moved on.
+      var GRACE_MS = 9000; // ~3 poll cycles
+      var now = Date.now();
+      // prune stale intentional-removal markers so a DA can re-queue later in the day
+      Object.keys(S.removedFromWaiting || {}).forEach(function(k){
+        if (now - S.removedFromWaiting[k] > 60000) delete S.removedFromWaiting[k];
+      });
+      S.confirmedWaiting = S.confirmedWaiting || {};
+      // refresh confirmations from the current server snapshot
+      Object.keys(serverWaiting).forEach(function(k){
+        S.confirmedWaiting[k] = { batchName: serverWaiting[k], ts: now, item: null };
+      });
+      // capture the item objects so we can re-add if a later snapshot drops them
+      Object.keys(serverBatches).forEach(function(bn){
+        (serverBatches[bn] || []).forEach(function(it){
+          var k = String(it.daId).toUpperCase();
+          if (S.confirmedWaiting[k]) S.confirmedWaiting[k].item = it;
+        });
+      });
+      Object.keys(S.confirmedWaiting).forEach(function(key){
+        var c = S.confirmedWaiting[key];
+        if (serverWaiting[key]) return;           // still present — fine
+        if (serverMovedOn[key]) { delete S.confirmedWaiting[key]; return; } // legitimately gone
+        if (now - c.ts > GRACE_MS) { delete S.confirmedWaiting[key]; return; } // grace expired
+        if (!c.item) return;                      // nothing to re-add
+        var bn = c.batchName || c.item.batchName || "Batch 1";
+        if (!serverBatches[bn]) serverBatches[bn] = [];
+        var exists = serverBatches[bn].some(function(it){ return String(it.daId).toUpperCase() === key; });
+        if (!exists) serverBatches[bn].push(c.item);
+      });
+
       return serverBatches;
     }
 
+    // Minutes elapsed since an HH:mm time today (server/display clock). -1 if unparseable.
+    function hhmmElapsedMins(hhmm) {
+      try {
+        var parts = String(hhmm).trim().split(":");
+        if (parts.length < 2) return -1;
+        var h = parseInt(parts[0], 10), m = parseInt(parts[1], 10);
+        if (isNaN(h) || isNaN(m)) return -1;
+        var nowP = getDubaiHHMM().split(":");
+        var cur = parseInt(nowP[0], 10) * 60 + parseInt(nowP[1], 10);
+        var then = h * 60 + m;
+        var d = cur - then;
+        return d < 0 ? 0 : d; // guard against tiny clock skew
+      } catch (e) { return -1; }
+    }
+
+    // Req 2: a SENT DA stays in the Sent list until RECEIVED-IN or the entry time limit
+    // (settings.entryViolationMin) elapses \u2014 whichever comes first. The pending-sent hold
+    // is therefore released ONLY on a real transition (received / violator), and otherwise
+    // retained up to the entry limit so a briefly-stale server snapshot cannot drop a sent
+    // name early.
     function reconcilePendingSent(serverSent) {
       serverSent = serverSent || [];
+      var now = Date.now();
+      var limitMs = (Number(S.settings && S.settings.entryViolationMin) || 15) * 60 * 1000;
+
       var known = {};
       serverSent.forEach(function(s){ known[String(s.daId).toUpperCase()] = true; });
+
+      // "moved on" = genuinely transitioned OUT of sent: received-in or became a violator.
       var movedOn = {};
       (S.receivedList || []).forEach(function(r){ movedOn[String(r.daId).toUpperCase()] = true; });
       Object.keys(S.pendingReceived).forEach(function(k){ movedOn[k] = true; });
       var nowViolators = {};
       (S.violators || []).forEach(function(v){ nowViolators[String(v.daId).toUpperCase()] = true; });
+
       Object.keys(S.pendingSent).forEach(function(key){
-        if (known[key]) { delete S.pendingSent[key]; return; }
-        if (movedOn[key]) { delete S.pendingSent[key]; return; }
+        var hold = S.pendingSent[key];
+        // Release the hold on a real transition, regardless of time.
+        if (movedOn[key])    { delete S.pendingSent[key]; return; }
         if (nowViolators[key]) { delete S.pendingSent[key]; return; }
-        serverSent.push(S.pendingSent[key].item);
+        // Release once the entry limit has elapsed (server will have moved them to Violator).
+        // Prefer the authoritative sentTime (HH:mm, same across devices); fall back to local ts.
+        var elapsedMs = null;
+        if (hold && hold.item && hold.item.sentTime) {
+          var em = hhmmElapsedMins(hold.item.sentTime);
+          if (em >= 0) elapsedMs = em * 60 * 1000;
+        }
+        if (elapsedMs === null && hold && hold.ts) elapsedMs = now - hold.ts;
+        if (elapsedMs !== null && elapsedMs >= limitMs) { delete S.pendingSent[key]; return; }
+        // Still within the limit and not transitioned: KEEP the name visible. Re-add it if a
+        // (possibly stale) snapshot omitted it.
+        if (!known[key]) serverSent.push(hold.item);
       });
+
+      // Never show a DA in Sent who is already being received.
       return serverSent.filter(function(s) {
         return !S.pendingReceived[String(s.daId).toUpperCase()];
       });
@@ -1229,6 +1312,57 @@
       if (d.rushData) S.rushData = d.rushData;
       syncBatchWatermarksFromState();
       renderAll();
+      persistSnapshot(d); // stale-while-revalidate: keep last-known-good for instant next open/refresh
+    }
+
+    // Save the freshest server snapshot so the next open/refresh paints instantly from cache.
+    function persistSnapshot(d) {
+      try {
+        var snap = {
+          ts: Date.now(),
+          targetTab: d.targetTab || null,
+          settings: S.settings,
+          nextBatchName: S.serverNextBatchName,
+          roster: S.roster,
+          waitingBatches: S.waitingBatches,
+          sentList: S.sentList,
+          receivedList: S.receivedList,
+          breaksActive: S.breaksActive,
+          violators: S.violators,
+          rushData: S.rushData
+        };
+        SAFE_STORE.setItem("dud3_snap_v1", JSON.stringify(snap));
+      } catch (e) {}
+    }
+
+    // Instant first paint: hydrate S from the last saved snapshot (if fresh enough) and
+    // render immediately, BEFORE the first network sync returns. The real sync then
+    // revalidates in the background. Returns true if a cached paint happened.
+    function hydrateFromSnapshot() {
+      try {
+        var raw = SAFE_STORE.getItem("dud3_snap_v1");
+        if (!raw) return false;
+        var snap = JSON.parse(raw);
+        if (!snap || !snap.ts) return false;
+        // Use cache up to 12h old just for first paint (network sync corrects it within seconds).
+        if (Date.now() - snap.ts > 12 * 3600 * 1000) return false;
+        if (snap.settings) S.settings = Object.assign(S.settings, snap.settings);
+        if (snap.nextBatchName) S.serverNextBatchName = snap.nextBatchName;
+        if (snap.roster) S.roster = snap.roster;
+        if (snap.waitingBatches) S.waitingBatches = snap.waitingBatches;
+        if (snap.sentList) S.sentList = snap.sentList;
+        if (snap.receivedList) S.receivedList = snap.receivedList;
+        if (snap.breaksActive) S.breaksActive = snap.breaksActive;
+        if (snap.violators) S.violators = snap.violators;
+        if (snap.rushData) S.rushData = snap.rushData;
+        if (snap.targetTab) {
+          var badge = document.getElementById("roster-badge-date");
+          if (badge) badge.textContent = snap.targetTab;
+        }
+        syncBatchWatermarksFromState();
+        renderAll();
+        return true;
+      } catch (e) { return false; }
     }
 
     function renderAll() {
@@ -1832,7 +1966,10 @@
     }
 
     function removeDaAction(daId) {
-      delete S.pendingWaiting[String(daId).toUpperCase()];
+      var _up = String(daId).toUpperCase();
+      delete S.pendingWaiting[_up];
+      S.removedFromWaiting[_up] = Date.now();           // intentional removal — stale-guard must not re-add
+      delete S.confirmedWaiting[_up];
       Object.keys(S.waitingBatches || {}).forEach(function(bName) {
         S.waitingBatches[bName] = (S.waitingBatches[bName] || []).filter(function(x) {
           return x.daId.toUpperCase() !== daId.toUpperCase();
@@ -1946,9 +2083,23 @@
           playBeep("error");
           showBanner((res && res.error) || "Receive Scan Error", "danger", 15);
           pollRoster();
-        } else if (!optimisticRecItem) {
-          playBeep("success");
-          showBanner("✅ Received: " + (res && res.daName ? res.daName : canonicalId), "success", 4);
+        } else if (res && res.success) {
+          // Server confirmed. Release the pending-received hold under BOTH the local key
+          // and the server's CANONICAL id (replacement scans resolve to the original id
+          // server-side), so a replacement driver never lingers in Pending Received.
+          var srvUp = (res.daId ? String(res.daId) : canonicalId).toUpperCase();
+          delete S.pendingReceived[canonicalUp];
+          delete S.pendingReceived[srvUp];
+          // Re-key the optimistic received item to the canonical id + clean name so the
+          // next sync reconciles it cleanly instead of showing a bare id.
+          if (optimisticRecItem) {
+            optimisticRecItem.daId = res.daId || optimisticRecItem.daId;
+            if (res.daName) optimisticRecItem.daName = res.daName;
+          }
+          if (!optimisticRecItem) {
+            playBeep("success");
+            showBanner("✅ Received: " + (res.daName ? res.daName : canonicalId), "success", 4);
+          }
           pollRoster();
         }
       });
@@ -2330,6 +2481,10 @@
 
       fillSettingsInputs();
       updateOutboxBadge(loadOutbox().length);
+      // STALE-WHILE-REVALIDATE: paint instantly from the last cached snapshot, then
+      // let the first network sync revalidate in the background (no 10-30s blank wait).
+      var _painted = hydrateFromSnapshot();
+      if (_painted) { fillSettingsInputs(true); }
       flushOutbox();
       pollRoster();
 
@@ -2345,7 +2500,7 @@
           splash.style.visibility = "hidden";
           setTimeout(function() { splash.remove(); }, 350);
         }
-      }, 900);
+      }, 350);
     });
   </script>
 
