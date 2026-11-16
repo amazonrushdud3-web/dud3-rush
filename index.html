@@ -1214,6 +1214,10 @@
       if (d.settings) {
         S.settings = Object.assign(S.settings, d.settings);
         document.getElementById("wait-batch-cap").textContent = S.settings.batchSize || 25;
+        // Real-time Settings display sync: refresh the Settings form from the latest
+        // server values on EVERY sync so all devices always show the same global settings.
+        // fromSync=true keeps device-local identity fields (YM/API/Sheet) untouched.
+        try { fillSettingsInputs(true); } catch (eFS) {}
       }
       if (d.nextBatchName) S.serverNextBatchName = d.nextBatchName;
       if (d.roster) S.roster = d.roster;
@@ -2042,17 +2046,30 @@
       });
     }
 
-    function fillSettingsInputs() {
-      document.getElementById("cfg-ym-name").value = S.ymName;
-      document.getElementById("cfg-api-url").value = S.api;
-      document.getElementById("cfg-sheet-url").value = S.sheetUrl;
-      document.getElementById("cfg-batch-size").value = S.settings.batchSize;
-      document.getElementById("cfg-rush-timeout").value = S.settings.rushTimeoutMin;
-      document.getElementById("cfg-auto-ofd").value = S.settings.autoOfdMin;
-      document.getElementById("cfg-waiting-lock").value = S.settings.waitingLockMin;
-      document.getElementById("cfg-prewave").value = S.settings.preWaveBlockMin;
-      document.getElementById("cfg-grace").value = S.settings.waveGraceMin;
-      document.getElementById("cfg-entry-violation").value = S.settings.entryViolationMin;
+    // Populate the Settings form from current state. Safe to call on every sync:
+    // it skips whichever field the user is actively editing so a live refresh never
+    // yanks a value out mid-type, and null-guards each input.
+    // (fromSync=true limits the refresh to the SHARED global settings; the device-local
+    //  identity fields YM/API/Sheet are only set on the initial boot fill.)
+    function setFieldValue(id, val) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      if (document.activeElement === el) return; // don't clobber the field being edited
+      el.value = (val === undefined || val === null) ? "" : val;
+    }
+    function fillSettingsInputs(fromSync) {
+      if (!fromSync) {
+        setFieldValue("cfg-ym-name", S.ymName);
+        setFieldValue("cfg-api-url", S.api);
+        setFieldValue("cfg-sheet-url", S.sheetUrl);
+      }
+      setFieldValue("cfg-batch-size", S.settings.batchSize);
+      setFieldValue("cfg-rush-timeout", S.settings.rushTimeoutMin);
+      setFieldValue("cfg-auto-ofd", S.settings.autoOfdMin);
+      setFieldValue("cfg-waiting-lock", S.settings.waitingLockMin);
+      setFieldValue("cfg-prewave", S.settings.preWaveBlockMin);
+      setFieldValue("cfg-grace", S.settings.waveGraceMin);
+      setFieldValue("cfg-entry-violation", S.settings.entryViolationMin);
       updateSoundToggleUi();
     }
 
