@@ -454,6 +454,9 @@
         <span id="sync-text">LIVE</span>
       </div>
       <div class="clock-display" id="dubai-clock">--:--</div>
+      <div id="ver-chip" title="Frontend / Backend build versions" style="font-size:9px; font-weight:800; letter-spacing:0.3px; color:var(--text-dim); margin-left:8px; line-height:1.2; text-align:right;">
+        <div id="ver-fe">FE --</div><div id="ver-be">BE --</div>
+      </div>
     </div>
   </header>
   <div id="pending-holder" style="display:flex; justify-content:center;">
@@ -1012,6 +1015,9 @@
     }
 
     var OUTBOX_KEY = "dud3_outbox_v1";
+    // Bump on every Index.html change. Shown in the header (FE) next to the backend (BE)
+    // version so you can confirm after deploying that the live app runs the latest code.
+    var FRONTEND_VERSION = "v2026.11.17-1";
 
     function loadOutbox() {
       try { return JSON.parse(SAFE_STORE.getItem(OUTBOX_KEY) || "[]") || []; }
@@ -1179,6 +1185,14 @@
           if (res.serverTime) {
             var clk = document.getElementById("dubai-clock");
             if (clk) clk.textContent = res.serverTime;
+          }
+          // Surface the live backend version so FE vs BE mismatch is visible at a glance.
+          if (res.backendVersion) {
+            var be = document.getElementById("ver-be");
+            if (be) {
+              be.textContent = "BE " + res.backendVersion;
+              be.style.color = (res.backendVersion === FRONTEND_VERSION) ? "var(--green)" : "var(--yellow)";
+            }
           }
           // Apply the full roster only if this read is not older than our latest mutation
           // AND no mutation is currently mid-flight (so we don't clobber optimistic UI).
@@ -2623,6 +2637,7 @@
       });
 
       fillSettingsInputs();
+      try { var fe = document.getElementById("ver-fe"); if (fe) fe.textContent = "FE " + FRONTEND_VERSION; } catch(e){}
       updateOutboxBadge(loadOutbox().length);
       // STALE-WHILE-REVALIDATE: paint instantly from the last cached snapshot, then
       // let the first network sync revalidate in the background (no 10-30s blank wait).
