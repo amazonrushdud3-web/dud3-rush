@@ -1017,7 +1017,7 @@
     var OUTBOX_KEY = "dud3_outbox_v1";
     // Bump on every Index.html change. Shown in the header (FE) next to the backend (BE)
     // version so you can confirm after deploying that the live app runs the latest code.
-    var FRONTEND_VERSION = "v2026.11.17-1";
+    var FRONTEND_VERSION = "v2026.11.17-2";
 
     function loadOutbox() {
       try { return JSON.parse(SAFE_STORE.getItem(OUTBOX_KEY) || "[]") || []; }
@@ -1349,6 +1349,7 @@
     function applyRosterData(d) {
       if (d.serverTime) document.getElementById("dubai-clock").textContent = d.serverTime;
       if (d.targetTab) {
+        S.activeTargetTab = d.targetTab; // remember the displayed tab so clear ops target the SAME date
         var prevTab = document.getElementById("roster-badge-date").textContent;
         if (prevTab && prevTab !== "--" && prevTab !== d.targetTab) {
           // Operational day rolled over at 12:00 AM midnight — reset local batch watermarks to Batch 1
@@ -1695,7 +1696,7 @@
       showBanner("⚡ Removed " + daId + " from Violators.", "success", 5);
       renderAll();
       // 2) Confirm with the server in the background.
-      sendReq("clearViolator", { daId: daId }, function(err, res) {
+      sendReq("clearViolator", { daId: daId, dateTab: S.activeTargetTab || null }, function(err, res) {
         if (!err && res && res.success) {
           // Confirmed on the sheet — pull fresh so the removal reflects instantly everywhere.
           pollRoster(true);
@@ -1724,7 +1725,7 @@
       playBeep("action");
       showBanner("⚡ Removing all violators…", "success", 4);
       renderAll();
-      sendReq("clearAllViolators", {}, function(err, res) {
+      sendReq("clearAllViolators", { dateTab: S.activeTargetTab || null }, function(err, res) {
         if (!err && res && res.success) {
           showBanner("✅ Removed all violators (" + (res.removed != null ? res.removed : "") + " cleared).", "success", 5);
           pollRoster(true);
