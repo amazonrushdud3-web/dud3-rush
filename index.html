@@ -1108,14 +1108,30 @@
       _outboxFlushing = true;
       var i = 0;
       function next() {
-        if (i >= arr.length) { _outboxFlushing = false; pollRoster(); return; }
+        if (i >= arr.length) { _outboxFlushing = false; updateOutboxBadge(loadOutbox().length); pollRoster(true); return; }
         var item = arr[i++];
-        postOnce(item.action, item.payload, item.clientId)
-          .then(function(data) {
-            if (!(data && data.success === false && !data.error)) outboxRemove(item.clientId);
-            next();
-          })
-          .catch(function() { _outboxFlushing = false; });
+        // retry each queued scan a few times on busy-lock / transient error so a single
+        // failure never STALLS the queue behind it (that caused scans to silently never
+        // reach the sheet). Same clientId => server idempotency prevents double-apply.
+        var tries = 0;
+        function trySend() {
+          postOnce(item.action, item.payload, item.clientId)
+            .then(function(data) {
+              if (data && data.retry === true && tries < 4) { tries++; setTimeout(trySend, 400 + tries * 350); return; }
+              // Remove from outbox when the server has definitively handled it (success, or a
+              // definitive non-retry failure like alreadyCheckedIn/not-found). Keep only if it
+              // is a soft/busy failure with no error, so it is retried on the next flush.
+              var softBusy = (data && data.success === false && !data.error && data.retry);
+              if (!softBusy) outboxRemove(item.clientId);
+              next(); // ALWAYS advance — never stall the queue
+            })
+            .catch(function() {
+              if (tries < 4) { tries++; setTimeout(trySend, 400 + tries * 350); return; }
+              // leave this item in the outbox for the NEXT flush, but keep draining the rest
+              next();
+            });
+        }
+        trySend();
       }
       next();
     }
@@ -1844,11 +1860,36 @@
       renderAll();
 
       sendReq("recordCheckIn", { daId: daObj.daId, ymName: S.ymName }, function(err, res) {
-        if (res && res.success && res.clearedViolator) {
-          S.violators = (S.violators || []).filter(function(v){ return String(v.daId).toUpperCase() !== String(daObj.daId).toUpperCase(); });
-          showBanner("⚠️ " + daObj.daName + " added from Violator" + violatorReasonText(res.violatorReason), "warning", 12);
+        if (!err && res && res.success) {
+          // CONFIRMED on the sheet. Adopt the server's authoritative status/batch/time so
+          // the UI matches the sheet exactly, then pull fresh so it reflects instantly.
+          if (res.status) daObj.status = res.status;
+          if (res.scanTime) { daObj.scanTime = res.scanTime; daObj.waitTime = res.scanTime; }
+          if (res.batchName) daObj.batchName = res.batchName;
+          if (res.clearedViolator) {
+            S.violators = (S.violators || []).filter(function(v){ return String(v.daId).toUpperCase() !== String(daObj.daId).toUpperCase(); });
+            showBanner("⚠️ " + daObj.daName + " added from Violator" + violatorReasonText(res.violatorReason), "warning", 12);
+          }
+          pollRoster(true);
+          return;
         }
-        if (err || (res && !res.success)) pollRoster();
+        // "Already checked in" is not a real failure — the sheet already has them.
+        if (res && res.alreadyCheckedIn) { pollRoster(true); switchTab("tab-waiting"); return; }
+        // GENUINE FAILURE (after sendReq auto-retries): the sheet was NOT updated. Roll back
+        // the optimistic entry and LOUDLY tell the operator so the DA is re-scanned \u2014 a DA
+        // must never walk away thinking they are marked when the sheet never saved it.
+        daObj.status = "Absent";
+        daObj.scanTime = "";
+        daObj.dispatchStatus = "Idle";
+        delete S.pendingWaiting[String(daObj.daId).toUpperCase()];
+        Object.keys(S.waitingBatches || {}).forEach(function(bn){
+          S.waitingBatches[bn] = (S.waitingBatches[bn] || []).filter(function(w){ return String(w.daId).toUpperCase() !== String(daObj.daId).toUpperCase(); });
+          if (S.waitingBatches[bn].length === 0) delete S.waitingBatches[bn];
+        });
+        playBeep("error");
+        showBanner("\u26A0\uFE0F NOT SAVED: " + daObj.daName + " (" + daObj.daId + ") \u2014 attendance did NOT reach the sheet. Please RE-SCAN.", "danger", 40);
+        renderAll();
+        pollRoster(true);
       });
     }
 
@@ -2546,7 +2587,7 @@
       flushOutbox();
       pollRoster();
 
-      setInterval(flushOutbox, 15000);
+      setInterval(flushOutbox, 8000);
       setInterval(tickReceiveCountdowns, 1000);
 
       updateHeaderSubtitle(S.activeTab || "tab-attend");
