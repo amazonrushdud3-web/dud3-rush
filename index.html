@@ -605,7 +605,10 @@
       <div class="batch-card">
         <div class="batch-header">
           <div class="batch-title"><span>🚫 Active Violators</span></div>
-          <span class="batch-badge" id="violator-badge-count" style="background:var(--red); color:#fff;">0</span>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="batch-badge" id="violator-badge-count" style="background:var(--red); color:#fff;">0</span>
+            <button id="btn-remove-all-violators" class="btn btn-card" style="display:none; padding:6px 12px; font-size:12px; background:var(--red); color:#fff;" onclick="removeAllViolatorsAction()">Remove All</button>
+          </div>
         </div>
         <div class="da-list" id="violators-da-list"></div>
       </div>
@@ -1629,6 +1632,8 @@
       if (!container || !badge) return;
       var list = S.violators || [];
       badge.textContent = list.length;
+      var allBtn = document.getElementById("btn-remove-all-violators");
+      if (allBtn) allBtn.style.display = (list.length > 0) ? "inline-flex" : "none";
       container.innerHTML = "";
       if (list.length === 0) {
         container.innerHTML = '<div style="padding:14px; text-align:center; color:var(--text-dim); font-size:13px;">No active violators. ✅</div>';
@@ -1691,6 +1696,34 @@
     }
 
     function startBreakAction(queryId) {
+
+    // Remove ALL current-day violators at once: clears them locally + instructs the server
+    // to DELETE every current-day violator row from Violations_List, then force-fresh pull.
+    function removeAllViolatorsAction() {
+      initAudio();
+      var list = (S.violators || []).slice();
+      if (list.length === 0) { showBanner("No violators to remove.", "warning", 4); return; }
+      if (!confirm("Remove ALL " + list.length + " violator(s) for today? This deletes them from the sheet.")) return;
+      // Guard every id so polls can't resurrect them before the server confirms.
+      list.forEach(function(v){ S.pendingClearedViolators[String(v.daId).toUpperCase()] = Date.now(); });
+      S.violators = [];
+      playBeep("action");
+      showBanner("⚡ Removing all violators…", "success", 4);
+      renderAll();
+      sendReq("clearAllViolators", {}, function(err, res) {
+        if (!err && res && res.success) {
+          showBanner("✅ Removed all violators (" + (res.removed != null ? res.removed : "") + " cleared).", "success", 5);
+          pollRoster(true);
+          return;
+        }
+        // genuine failure after auto-retries — resurface real state
+        list.forEach(function(v){ delete S.pendingClearedViolators[String(v.daId).toUpperCase()]; });
+        playBeep("error");
+        showBanner((res && res.error) || "Could not remove all violators — please try again.", "danger", 12);
+        pollRoster(true);
+      });
+    }
+
       initAudio();
       var daId = (queryId || document.getElementById("break-inp").value || "").trim();
       if (!daId || !isScanCooledDown("BRK_" + daId)) return;
