@@ -1066,19 +1066,37 @@
       S.mutationVersion++;
       var currentVersion = S.mutationVersion;
 
+      // Stable clientId across retries so the server's idempotency cache dedupes any
+      // accidental double-apply (safe to re-send the SAME mutation).
       var clientId = genClientId();
       outboxAdd({ clientId: clientId, action: action, payload: payload || {}, ts: Date.now() });
 
-      postOnce(action, payload, clientId)
-        .then(function(data) {
-          S.inflightMutations = Math.max(0, S.inflightMutations - 1);
-          outboxRemove(clientId);
-          if (callback) callback(null, data, currentVersion);
-        })
-        .catch(function(ex) {
-          S.inflightMutations = Math.max(0, S.inflightMutations - 1);
-          if (callback) callback(ex);
-        });
+      // Auto-retry on the server's busy-lock response (retry:true) or a transient transport
+      // error. This is what makes rapid multi-DA receive scans and violator-remove reliable:
+      // instead of surfacing "Server busy" as a hard error, we back off briefly and re-send
+      // the SAME idempotent request up to a few times.
+      var MAX_RETRIES = 4;
+      function attempt(n) {
+        postOnce(action, payload, clientId)
+          .then(function(data) {
+            if (data && data.retry === true && n < MAX_RETRIES) {
+              setTimeout(function(){ attempt(n + 1); }, 400 + n * 350); // 0.4s,0.75s,1.1s,1.45s
+              return;
+            }
+            S.inflightMutations = Math.max(0, S.inflightMutations - 1);
+            outboxRemove(clientId);
+            if (callback) callback(null, data, currentVersion);
+          })
+          .catch(function(ex) {
+            if (n < MAX_RETRIES) {
+              setTimeout(function(){ attempt(n + 1); }, 400 + n * 350);
+              return;
+            }
+            S.inflightMutations = Math.max(0, S.inflightMutations - 1);
+            if (callback) callback(ex);
+          });
+      }
+      attempt(0);
     }
 
     var _outboxFlushing = false;
@@ -1118,7 +1136,7 @@
       }, delayMs || 2800);
     }
 
-    function pollRoster() {
+    function pollRoster(forceFresh) {
       if (S.inflightMutations > 0) {
         scheduleNextSync(1800);
         return;
@@ -1128,7 +1146,9 @@
       if (syncBadge) syncBadge.classList.add("syncing");
       if (syncText) syncText.textContent = "SYNC";
 
-      sendReq("getRoster", { syncOnly: true }, function(err, res, ver) {
+      // forceFresh=true requests a full server rebuild (bypasses the 8s roster snapshot),
+      // used right after a scan/mutation so the sheet's latest state shows instantly.
+      sendReq("getRoster", { syncOnly: !forceFresh }, function(err, res, ver) {
         if (syncBadge) syncBadge.classList.remove("syncing");
         if (syncText) syncText.textContent = err ? "OFF" : "LIVE";
         if (!err && res && res.success) {
@@ -1630,13 +1650,16 @@
       renderAll();
       // 2) Confirm with the server in the background.
       sendReq("clearViolator", { daId: daId }, function(err, res) {
-        if (err || (res && !res.success)) {
-          // Rollback the guard so the real state resurfaces, then resync.
-          delete S.pendingClearedViolators[up];
-          playBeep("error");
-          showBanner((res && res.error) || "Could not remove violator — retrying sync.", "danger", 12);
-          pollRoster();
+        if (!err && res && res.success) {
+          // Confirmed on the sheet — pull fresh so the removal reflects instantly everywhere.
+          pollRoster(true);
+          return;
         }
+        // Genuine transport failure after auto-retries exhausted.
+        delete S.pendingClearedViolators[up];
+        playBeep("error");
+        showBanner((res && res.error) || "Could not remove violator — please try again.", "danger", 12);
+        pollRoster(true);
       });
     }
 
@@ -2135,7 +2158,7 @@
             playBeep("success");
             showBanner("✅ Received: " + (res.daName ? res.daName : canonicalId), "success", 4);
           }
-          pollRoster();
+          pollRoster(true); // instant fresh pull so the receive reflects on the sheet immediately
         }
       });
     }
