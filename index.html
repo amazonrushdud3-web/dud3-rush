@@ -1877,9 +1877,44 @@
       renderAll();
 
       sendReq("addToWaiting", { daId: daId, ymName: S.ymName }, function(err, res) {
-        if (res && res.success && res.clearedViolator) {
-          S.violators = (S.violators || []).filter(function(v){ return String(v.daId).toUpperCase() !== String(daId).toUpperCase(); });
-          showBanner("⚠️ " + dName + " added from Violator" + violatorReasonText(res.violatorReason), "warning", 12);
+        if (res && res.success) {
+          // Re-affirm the optimistic waiting slot under BOTH the scanned id and the server's
+          // CANONICAL id (replacement scans resolve server-side), using the server-assigned
+          // batch. This keeps a returning VIOLATOR in the waiting batch through the
+          // clear->enqueue race instead of letting a stale snapshot drop them.
+          var srvId = res.daId || (daObj ? daObj.daId : daId);
+          var srvUp = String(srvId).toUpperCase();
+          var srvBatch = res.batchName || targetBatch;
+          var keepItem = {
+            daId: srvId,
+            daName: (res.daName || dName),
+            batchName: srvBatch,
+            waitTime: (res.waitTime || nowStr),
+            inBreak: false,
+            breakRange: ""
+          };
+          // ensure it is present in the live batch map right now
+          Object.keys(S.waitingBatches || {}).forEach(function(bn){
+            S.waitingBatches[bn] = (S.waitingBatches[bn] || []).filter(function(w){ return String(w.daId).toUpperCase() !== srvUp && w.daId.toUpperCase() !== String(daId).toUpperCase(); });
+            if (S.waitingBatches[bn].length === 0 && bn !== srvBatch) delete S.waitingBatches[bn];
+          });
+          if (!S.waitingBatches[srvBatch]) S.waitingBatches[srvBatch] = [];
+          if (!S.waitingBatches[srvBatch].some(function(w){ return String(w.daId).toUpperCase() === srvUp; })) {
+            S.waitingBatches[srvBatch].push(keepItem);
+          }
+          markPendingWaiting(srvId, srvBatch, keepItem);
+          // a returning DA is no longer "removed" — allow the guard to retain them
+          delete S.removedFromWaiting[srvUp];
+          delete S.removedFromWaiting[String(daId).toUpperCase()];
+
+          if (res.clearedViolator) {
+            S.violators = (S.violators || []).filter(function(v){
+              var vu = String(v.daId).toUpperCase();
+              return vu !== srvUp && vu !== String(daId).toUpperCase();
+            });
+            showBanner("⚠️ " + (res.daName || dName) + " added from Violator" + violatorReasonText(res.violatorReason), "warning", 12);
+          }
+          renderAll();
         }
         if (err || (res && !res.success)) {
           delete S.pendingWaiting[String(daObj ? daObj.daId : daId).toUpperCase()];
