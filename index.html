@@ -1076,6 +1076,11 @@
       // instead of surfacing "Server busy" as a hard error, we back off briefly and re-send
       // the SAME idempotent request up to a few times.
       var MAX_RETRIES = 4;
+      var _settled = false;
+      function settle() { if (!_settled) { _settled = true; S.inflightMutations = Math.max(0, S.inflightMutations - 1); } }
+      // Watchdog: never let a stuck retry pin inflightMutations > 0 (which would freeze the
+      // full-roster apply). Force-settle after a hard budget regardless of retry state.
+      setTimeout(settle, 12000);
       function attempt(n) {
         postOnce(action, payload, clientId)
           .then(function(data) {
@@ -1083,7 +1088,7 @@
               setTimeout(function(){ attempt(n + 1); }, 400 + n * 350); // 0.4s,0.75s,1.1s,1.45s
               return;
             }
-            S.inflightMutations = Math.max(0, S.inflightMutations - 1);
+            settle();
             outboxRemove(clientId);
             if (callback) callback(null, data, currentVersion);
           })
@@ -1092,7 +1097,7 @@
               setTimeout(function(){ attempt(n + 1); }, 400 + n * 350);
               return;
             }
-            S.inflightMutations = Math.max(0, S.inflightMutations - 1);
+            settle();
             if (callback) callback(ex);
           });
       }
@@ -1153,10 +1158,6 @@
     }
 
     function pollRoster(forceFresh) {
-      if (S.inflightMutations > 0) {
-        scheduleNextSync(1800);
-        return;
-      }
       var syncBadge = document.getElementById("sync-status");
       var syncText = document.getElementById("sync-text");
       if (syncBadge) syncBadge.classList.add("syncing");
@@ -1164,10 +1165,20 @@
 
       // forceFresh=true requests a full server rebuild (bypasses the 8s roster snapshot),
       // used right after a scan/mutation so the sheet's latest state shows instantly.
+      // NOTE: the sync ALWAYS runs (even while a mutation is retrying). The clock + roster
+      // must keep updating; the version gate below is what protects newer optimistic state
+      // from being overwritten by an older in-flight read.
       sendReq("getRoster", { syncOnly: !forceFresh }, function(err, res, ver) {
         if (syncBadge) syncBadge.classList.remove("syncing");
         if (syncText) syncText.textContent = err ? "OFF" : "LIVE";
         if (!err && res && res.success) {
+          // Always keep the clock alive from the freshest server time.
+          if (res.serverTime) {
+            var clk = document.getElementById("dubai-clock");
+            if (clk) clk.textContent = res.serverTime;
+          }
+          // Apply the full roster only if this read is not older than our latest mutation
+          // AND no mutation is currently mid-flight (so we don't clobber optimistic UI).
           if (S.inflightMutations === 0 && ver >= S.mutationVersion) {
             applyRosterData(res);
           }
