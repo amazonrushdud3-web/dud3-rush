@@ -76,6 +76,17 @@
     .status-box { background:rgba(66,165,255,0.10); border:1px solid rgba(66,165,255,0.4); text-align:center; padding:19px; border-radius:14px; margin-top:13px; }
     .status-text { font-size:23px; font-weight:900; color:var(--blue); }
 
+    /* Top status strip (Spec §8): Today's Attendance + Current Status, near the top */
+    .top-status-strip { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px; }
+    .ts-pill { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px 10px; text-align:center;
+      backdrop-filter:var(--glass); -webkit-backdrop-filter:var(--glass); }
+    .ts-lbl { font-size:9px; color:var(--muted); text-transform:uppercase; font-weight:800; letter-spacing:0.8px; margin-bottom:5px; }
+    .ts-val { font-size:15px; font-weight:900; }
+    .ts-val.ok { color:var(--green); }
+    .ts-val.warn { color:var(--yellow); }
+    .ts-val.bad { color:var(--red); }
+    .ts-val.info { color:var(--blue); }
+
     .timer-box { background:rgba(124,108,255,0.12); border:1px dashed var(--brand); text-align:center; padding:16px; border-radius:14px; margin-top:13px; }
     .countdown { font-size:27px; font-weight:900; color:var(--brand-2); font-variant-numeric:tabular-nums; letter-spacing:1px; }
 
@@ -134,6 +145,17 @@
 <div id="loader" class="loader">Syncing live status...</div>
 
 <div id="dashboard">
+  <div class="top-status-strip">
+    <div class="ts-pill">
+      <div class="ts-lbl">Today's Attendance</div>
+      <div class="ts-val info" id="d-attendance">--</div>
+    </div>
+    <div class="ts-pill">
+      <div class="ts-lbl">Current Status</div>
+      <div class="ts-val info" id="d-current-status">--</div>
+    </div>
+  </div>
+
   <div class="card">
     <div class="card-title">Your QR Identity</div>
     <div class="qr-card">
@@ -385,7 +407,9 @@ function adaptResponse(res) {
   if (!found) return { found: false };
 
   var status;
-  if (res.inBreak) status = "On Break";
+  // VIOLATOR takes priority — mirrors the Yard Marshal app's Violator tab. (Spec §8)
+  if (res.violator) status = "Violator";
+  else if (res.inBreak) status = "On Break";
   else {
     switch (res.dispatchState) {
       case "OFD": status = "OFD"; break;
@@ -397,6 +421,12 @@ function adaptResponse(res) {
     }
   }
 
+  // Today's Attendance (Spec §8A): Present / Late Arrival / Replacement Present all count
+  // as "Present" for today; anything else (no scan yet) is "Not Present". Uses the EXISTING
+  // attendance logic/status already written by the Yard Marshal app — nothing new introduced.
+  var attendanceStatus = (info && (info.status === "Present" || info.status === "Late Arrival" || info.status === "Replacement Present"))
+    ? "Present" : "Not Present";
+
   return {
     found: true,
     daId: (info && info.daId) || currentDaId,
@@ -407,6 +437,9 @@ function adaptResponse(res) {
     serverTime: res.serverTime || "",
 
     status: status,
+    attendanceStatus: attendanceStatus,
+    violator: !!res.violator,
+    violatorReason: res.violatorReason || "",
     batchName: res.batchName || "",
     batchPosition: res.batchPosition || res.waitingPosition || 0,
     batchTotal: res.batchTotal || res.totalWaiting || 0,
@@ -417,7 +450,10 @@ function adaptResponse(res) {
     rushInTime: res.rushInTime || "",
     ofdTime: res.ofdTime || "",
 
-    rushTimeout: settings.rushTimeoutMin || 20,
+    // The RECEIVING deadline is the configured Receive Violation timer (entryViolationMin) —
+    // this is the SAME setting that actually moves a driver to Violator on the backend.
+    // (rushTimeoutMin exists in Settings but is not enforced anywhere server-side.)
+    receiveLimitMin: settings.entryViolationMin || 15,
     autoOfd: settings.autoOfdMin || 30,
     turnCount: res.turnCount || 0
   };
@@ -488,12 +524,31 @@ function updateDashboard(data) {
 
   const statusEl = document.getElementById("d-status");
   statusEl.textContent = (st || "Not Checked In").toUpperCase();
-  if (st.indexOf("Absent") !== -1 || st.indexOf("Break") !== -1) statusEl.style.color = "var(--red)";
+  if (st === "Violator" || st.indexOf("Absent") !== -1 || st.indexOf("Break") !== -1) statusEl.style.color = "var(--red)";
   else if (st.indexOf("Received") !== -1 || st.indexOf("OFD") !== -1) statusEl.style.color = "var(--green)";
   else if (st.indexOf("Sent") !== -1) statusEl.style.color = "var(--orange)";
   else if (st.indexOf("Waiting") !== -1) statusEl.style.color = "var(--blue)";
   else statusEl.style.color = "var(--text)";
 
+  // Top strip (Spec §8): Today's Attendance + Current Status, near the top of the Hub.
+  var attEl = document.getElementById("d-attendance");
+  if (attEl) {
+    attEl.textContent = data.attendanceStatus || "Not Present";
+    attEl.className = "ts-val " + (data.attendanceStatus === "Present" ? "ok" : "bad");
+  }
+  var curEl = document.getElementById("d-current-status");
+  if (curEl) {
+    var curLabel = st || "Idle";
+    curEl.textContent = curLabel;
+    var curCls = "info";
+    if (st === "Violator") curCls = "bad";
+    else if (st.indexOf("Received") !== -1 || st.indexOf("OFD") !== -1) curCls = "ok";
+    else if (st.indexOf("Sent") !== -1) curCls = "warn";
+    else if (st === "Waiting") curCls = "info";
+    curEl.className = "ts-val " + curCls;
+  }
+
+  maybeNotifyStatusChange(data);
   setupTimers(data);
 }
 
@@ -509,7 +564,20 @@ function setupTimers(data) {
   var sentRef  = hhmmToSec(data.sentTime);
   var rushRef  = hhmmToSec(data.rushInTime);
 
-  if ((st === "Waiting" || st === "Present" || st.indexOf("Late") !== -1 || st.indexOf("Replacement") !== -1) && startRef !== null) {
+  if (st === "Violator") {
+    timerBox.style.display = "block";
+    timerLabel.textContent = "🚫 VIOLATOR — " + (data.violatorReason || "Receive Timeout");
+    timerLabel.style.color = "var(--red)";
+    timerDisplay.style.color = "var(--red)";
+    var violRef = sentRef !== null ? sentRef : startRef;
+    var tickViol = function() {
+      if (violRef === null) { timerDisplay.textContent = "--:--:--"; return; }
+      timerDisplay.textContent = formatHMS(Math.max(0, dubaiNowSec() - violRef));
+    };
+    tickViol();
+    countdownInterval = setInterval(tickViol, 1000);
+  }
+  else if ((st === "Waiting" || st === "Present" || st.indexOf("Late") !== -1 || st.indexOf("Replacement") !== -1) && startRef !== null) {
     timerBox.style.display = "block";
     timerLabel.textContent = "⏳ Waiting Time in " + (data.batchName || "Queue");
     timerLabel.style.color = "var(--orange)";
@@ -522,13 +590,17 @@ function setupTimers(data) {
     countdownInterval = setInterval(tickWait, 1000);
   }
   else if (st === "Sent to OP" && sentRef !== null) {
-    var deadlineSec = sentRef + ((Number(data.rushTimeout) || 20) * 60);
+    var deadlineSec = sentRef + ((Number(data.receiveLimitMin) || 15) * 60);
     timerBox.style.display = "block";
-    timerLabel.textContent = "🚨 Proceed to Rush Queue — Entry Deadline";
+    timerLabel.textContent = "🚨 Proceed to Receiving — Time Remaining";
     var tickSent = function() {
       var rem = deadlineSec - dubaiNowSec();
-      if (rem <= 0) { timerDisplay.style.color = "var(--red)"; timerDisplay.textContent = "SLA EXCEEDED"; }
-      else { timerDisplay.style.color = "var(--green)"; timerDisplay.textContent = formatHMS(rem); }
+      maybeNotifyReceiveDeadline(data, rem);
+      if (rem <= 0) { timerDisplay.style.color = "var(--red)"; timerDisplay.textContent = "TIME EXPIRED"; }
+      else {
+        timerDisplay.style.color = (rem <= 300) ? "var(--red)" : "var(--green)";
+        timerDisplay.textContent = formatHMS(rem);
+      }
     };
     tickSent();
     countdownInterval = setInterval(tickSent, 1000);
@@ -545,6 +617,81 @@ function setupTimers(data) {
     tickRcv();
     countdownInterval = setInterval(tickRcv, 1000);
   }
+}
+
+/* ===================== Spec 9: Driver Notifications ===================== */
+var _notifiedFiveMin = {};
+var _notifiedExpired = {};
+var _lastKnownStatus = null;
+var _notifPermAsked = false;
+
+function ensureNotifyPermission() {
+  if (_notifPermAsked) return;
+  _notifPermAsked = true;
+  try {
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  } catch (e) {}
+}
+
+function vibrateDevice(pattern) {
+  try { if (navigator.vibrate) navigator.vibrate(pattern || [160, 80, 160]); } catch (e) {}
+}
+
+function playAlertTone() {
+  try {
+    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+    var osc = ctx.createOscillator(); var gain = ctx.createGain();
+    osc.type = "sine"; osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.18, ctx.currentTime);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime + 0.35);
+  } catch (e) {}
+}
+
+function showToast(msg) {
+  var t = document.getElementById("toast-msg");
+  var tx = document.getElementById("toast-txt");
+  if (!t || !tx) return;
+  tx.textContent = msg;
+  t.className = "show";
+  setTimeout(function(){ t.className = ""; }, 7000);
+}
+
+function fireDriverNotification(title, body) {
+  showToast(title + " — " + body);
+  vibrateDevice();
+  playAlertTone();
+  try {
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification(title, { body: body, tag: "dud3-driver-" + title });
+    }
+  } catch (e) {}
+}
+
+function maybeNotifyReceiveDeadline(data, remainingSec) {
+  var key = data.daId + "_" + (data.sentTime || "");
+  if (remainingSec <= 300 && remainingSec > 0) {
+    if (!_notifiedFiveMin[key]) {
+      _notifiedFiveMin[key] = true;
+      fireDriverNotification("⏰ 5 Minutes Left", "Arrive and complete the receiving scan within the remaining time, or you will be moved to Violator.");
+    }
+  } else if (remainingSec <= 0) {
+    if (!_notifiedExpired[key]) {
+      _notifiedExpired[key] = true;
+      fireDriverNotification("⚠️ Receiving Time Expired", "Your receiving window has expired. Your status will move to Violator.");
+    }
+  }
+}
+
+function maybeNotifyStatusChange(data) {
+  ensureNotifyPermission();
+  var st = String(data.status || "");
+  if (st === "Violator" && _lastKnownStatus !== "Violator") {
+    fireDriverNotification("🚫 Moved to Violator", "You were not received within the configured time limit. Please see the Yard Marshal.");
+  }
+  _lastKnownStatus = st;
 }
 </script>
 
