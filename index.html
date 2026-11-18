@@ -801,7 +801,7 @@ a { color: var(--color-link, var(--color-primary)); }</style>
     </div>
   </div>
 
-<div id="app-root" style="display:none;">
+<div id="app-root" style="display:none; flex-direction:column; height:100dvh; overflow:hidden;">
     <header>
     <div class="brand-wrap">
       <div class="brand-logo">D3</div>
@@ -1420,7 +1420,7 @@ a { color: var(--color-link, var(--color-primary)); }</style>
     var OUTBOX_KEY = "dud3_outbox_v1";
     // Bump on every Index.html change. Shown in the header (FE) next to the backend (BE)
     // version so you can confirm after deploying that the live app runs the latest code.
-    var FRONTEND_VERSION = "v2026.11.18-3";
+    var FRONTEND_VERSION = "v2026.11.18-4";
 
     function loadOutbox() {
       try { return JSON.parse(SAFE_STORE.getItem(OUTBOX_KEY) || "[]") || []; }
@@ -3143,7 +3143,7 @@ a { color: var(--color-link, var(--color-primary)); }</style>
 
     function enterApp() {
       document.getElementById("login-screen").style.display = "none";
-      document.getElementById("app-root").style.display = "block";
+      document.getElementById("app-root").style.display = "flex";
       applySessionToUi();
       bootApp();
     }
