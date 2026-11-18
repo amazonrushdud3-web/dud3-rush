@@ -1367,7 +1367,7 @@ a { color: var(--color-link, var(--color-primary)); }</style>
     var OUTBOX_KEY = "dud3_outbox_v1";
     // Bump on every Index.html change. Shown in the header (FE) next to the backend (BE)
     // version so you can confirm after deploying that the live app runs the latest code.
-    var FRONTEND_VERSION = "v2026.11.18-1";
+    var FRONTEND_VERSION = "v2026.11.18-2";
 
     function loadOutbox() {
       try { return JSON.parse(SAFE_STORE.getItem(OUTBOX_KEY) || "[]") || []; }
@@ -1508,12 +1508,20 @@ a { color: var(--color-link, var(--color-primary)); }</style>
       showBanner("Offline — scans are saved and will sync automatically when reconnected.", "warning", 6);
     });
 
+    // 2026-11-18: 1-second continuous sync across all devices (user requirement).
+    // Safe because: (1) getRoster no longer competes for the global script lock (fixed
+    // separately), and (2) the backend serves an 8s rolling cache snapshot for syncOnly
+    // polls, so most of these 1s ticks are cheap cache reads, not full sheet rebuilds —
+    // the cache is invalidated instantly on any real mutation so changes still show up
+    // immediately on every device, not after a stale 8s wait.
+    var SYNC_INTERVAL_MS = 1000;       // active/visible tab: 1s continuous sync
+    var SYNC_INTERVAL_HIDDEN_MS = 4000; // backgrounded tab: slower, saves battery/data
     function scheduleNextSync(delayMs) {
       if (S.pollTimer) clearTimeout(S.pollTimer);
       S.pollTimer = setTimeout(function() {
-        if (document.hidden) { scheduleNextSync(3000); return; }
+        if (document.hidden) { scheduleNextSync(SYNC_INTERVAL_HIDDEN_MS); return; }
         pollRoster();
-      }, delayMs || 2800);
+      }, delayMs || SYNC_INTERVAL_MS);
     }
 
     function pollRoster(forceFresh) {
@@ -1550,7 +1558,7 @@ a { color: var(--color-link, var(--color-primary)); }</style>
             applyRosterData(res);
           }
         }
-        scheduleNextSync(2800);
+        scheduleNextSync(SYNC_INTERVAL_MS);
       });
     }
 
@@ -3051,5 +3059,6 @@ a { color: var(--color-link, var(--color-primary)); }</style>
       }, 350);
     });
   </script>
-</body>
-</html>
+
+
+</body></html>
