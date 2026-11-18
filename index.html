@@ -783,7 +783,26 @@ a { color: var(--color-link, var(--color-primary)); }</style>
     <div class="splash-dots"><i></i><i></i><i></i></div>
   </div>
 
-  <header>
+  <!-- ===== LOGIN GATE (2026-11-18) — wraps the entire app; main-content/nav stay hidden
+       until a valid session exists. Does not touch any scanning/sync logic below. ===== -->
+  <div id="login-screen" style="display:none; position:fixed; inset:0; z-index:9000; background:radial-gradient(900px 500px at 50% 0%, rgba(124,108,255,0.14), transparent 60%), #0A0E1A; align-items:center; justify-content:center; padding:20px;">
+    <div style="width:100%; max-width:380px; background:rgba(23,29,48,0.9); border:1px solid rgba(124,140,180,0.22); border-radius:20px; padding:28px 24px; box-shadow:0 20px 50px rgba(0,0,0,0.5); backdrop-filter:blur(16px);">
+      <div style="text-align:center; margin-bottom:20px;">
+        <div style="font-size:20px; font-weight:900; letter-spacing:1px; color:#EEF2FB;">RUSH <span style="background:linear-gradient(135deg,#7C6CFF,#22D3EE); -webkit-background-clip:text; background-clip:text; color:transparent;">PRO</span></div>
+        <div style="font-size:11px; color:#93A1BF; font-weight:700; letter-spacing:1.5px; margin-top:4px;">SIGN IN TO CONTINUE</div>
+      </div>
+      <div id="login-error" style="display:none; background:rgba(255,92,122,0.12); border:1px solid rgba(255,92,122,0.4); color:#FF5C7A; font-size:12px; font-weight:700; padding:10px 12px; border-radius:10px; margin-bottom:14px; text-align:center;"></div>
+      <label class="metric-lbl" style="display:block; margin-bottom:5px;">Username</label>
+      <input type="text" id="login-username" class="text-input" style="width:100%; margin-bottom:12px;" autocomplete="username" placeholder="Enter your username">
+      <label class="metric-lbl" style="display:block; margin-bottom:5px;">Password</label>
+      <input type="password" id="login-password" class="text-input" style="width:100%; margin-bottom:18px;" autocomplete="current-password" placeholder="Enter your password">
+      <button class="btn btn-green" id="btn-do-login" style="width:100%;" onclick="doLoginAction()">Sign In</button>
+      <div style="font-size:10.5px; color:#93A1BF; text-align:center; margin-top:14px;">Accounts are created and managed by your Admin.</div>
+    </div>
+  </div>
+
+<div id="app-root" style="display:none;">
+    <header>
     <div class="brand-wrap">
       <div class="brand-logo">D3</div>
       <div>
@@ -803,6 +822,10 @@ a { color: var(--color-link, var(--color-primary)); }</style>
       <div class="clock-display" id="dubai-clock">--:--</div>
       <div id="ver-chip" title="Frontend / Backend build versions" style="font-size:9px; font-weight:800; letter-spacing:0.3px; color:var(--text-dim); margin-left:8px; line-height:1.2; text-align:right;">
         <div id="ver-fe">FE --</div><div id="ver-be">BE --</div>
+      </div>
+      <div id="user-chip" title="Logged in as" style="display:flex; align-items:center; gap:6px; margin-left:8px; font-size:10px; font-weight:800; color:var(--text-dim);">
+        <span id="user-chip-name">--</span>
+        <button id="btn-logout" class="btn btn-card" style="padding:4px 9px; font-size:10px;" onclick="doLogoutAction()" title="Log out">Logout</button>
       </div>
     </div>
   </header>
@@ -1050,6 +1073,31 @@ a { color: var(--color-link, var(--color-primary)); }</style>
           <button class="btn btn-danger" id="btn-reset-day">Reset Day</button>
         </div>
       </div>
+
+      <!-- Admin-only: User Management (2026-11-18). Hidden entirely for regular users. -->
+      <div class="batch-card" id="admin-user-mgmt" style="display:none; padding:15px; margin-top:13px; flex-direction:column; gap:13px;">
+        <div class="batch-title" style="margin-bottom:2px;">🔒 Manage User Accounts (Admin Only)</div>
+
+        <div style="display:flex; flex-direction:column; gap:9px; background:rgba(16,21,36,0.5); border:1px solid var(--border); border-radius:12px; padding:12px;">
+          <div class="metric-lbl">Create New User</div>
+          <input type="text" id="new-user-username" class="text-input" style="width:100%;" placeholder="Username (min 3 chars)">
+          <input type="password" id="new-user-password" class="text-input" style="width:100%;" placeholder="Password (min 4 chars)">
+          <input type="text" id="new-user-displayname" class="text-input" style="width:100%;" placeholder="Display Name (optional)">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <label class="metric-lbl" style="margin:0;">Role:</label>
+            <select id="new-user-role" class="text-input" style="flex:1; width:auto;">
+              <option value="user" selected>Regular User</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <button class="btn btn-green" onclick="adminCreateUserAction()">Create User</button>
+        </div>
+
+        <div>
+          <div class="metric-lbl" style="margin-bottom:8px;">Existing Users</div>
+          <div id="admin-user-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+        </div>
+      </div>
     </div>
 
   </main>
@@ -1080,6 +1128,7 @@ a { color: var(--color-link, var(--color-primary)); }</style>
       <span>Admin</span>
     </button>
   </nav>
+</div>
 
   <script>
     var SAFE_STORE = (function() {
@@ -1144,6 +1193,10 @@ a { color: var(--color-link, var(--color-primary)); }</style>
       sheetUrl: SAFE_STORE.getItem("dud3_sheet") || DEFAULT_SHEET,
       ymName: SAFE_STORE.getItem("dud3_ym") || "YM-1",
       soundEnabled: SAFE_STORE.getItem("dud3_sound") !== "off",
+      authToken: SAFE_STORE.getItem("dud3_auth_token") || "",
+      authRole: SAFE_STORE.getItem("dud3_auth_role") || "",
+      authUsername: SAFE_STORE.getItem("dud3_auth_username") || "",
+      authDisplayName: SAFE_STORE.getItem("dud3_auth_displayname") || "",
       activeTab: "tab-attend",
       selectedWave: null,
       roster: [],
@@ -1367,7 +1420,7 @@ a { color: var(--color-link, var(--color-primary)); }</style>
     var OUTBOX_KEY = "dud3_outbox_v1";
     // Bump on every Index.html change. Shown in the header (FE) next to the backend (BE)
     // version so you can confirm after deploying that the live app runs the latest code.
-    var FRONTEND_VERSION = "v2026.11.18-2";
+    var FRONTEND_VERSION = "v2026.11.18-3";
 
     function loadOutbox() {
       try { return JSON.parse(SAFE_STORE.getItem(OUTBOX_KEY) || "[]") || []; }
@@ -1397,7 +1450,12 @@ a { color: var(--color-link, var(--color-primary)); }</style>
     }
 
     function postOnce(action, payload, clientId) {
-      var bodyData = { action: action, sheetUrl: S.sheetUrl, clientId: clientId, payload: payload || {} };
+      // Auto-attach the logged-in session token to every request's payload (server-side
+      // admin actions require it; other actions simply ignore it). Keeps every existing
+      // call site unchanged.
+      var _payload = Object.assign({}, payload || {});
+      if (S.authToken && !_payload.token) _payload.token = S.authToken;
+      var bodyData = { action: action, sheetUrl: S.sheetUrl, clientId: clientId, payload: _payload };
       return fetch(S.api, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -1407,7 +1465,7 @@ a { color: var(--color-link, var(--color-primary)); }</style>
         .catch(function() {
           var url = S.api + "?action=" + encodeURIComponent(action) +
                     "&clientId=" + encodeURIComponent(clientId) +
-                    "&payload=" + encodeURIComponent(JSON.stringify(payload || {}));
+                    "&payload=" + encodeURIComponent(JSON.stringify(_payload));
           return fetch(url).then(function(res) { return res.json(); });
         });
     }
@@ -2964,7 +3022,7 @@ a { color: var(--color-link, var(--color-primary)); }</style>
       return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
 
-    document.addEventListener("DOMContentLoaded", function() {
+    function bootApp() {
       bindLiveSearch(
         document.getElementById("attend-inp"),
         document.getElementById("attend-search-results"),
@@ -3057,6 +3115,177 @@ a { color: var(--color-link, var(--color-primary)); }</style>
           setTimeout(function() { splash.remove(); }, 350);
         }
       }, 350);
+    }
+
+    /* ===================== AUTH GATE (2026-11-18) =====================
+     * On load: if a stored session token exists, verify it with the server before
+     * showing the app (so an expired/cleared session correctly falls back to login).
+     * Only after a verified session does bootApp() run — nothing below this point
+     * touches scanning/sync/roster logic; it only decides WHEN bootApp() is called. */
+    function showLoginScreen(errorMsg) {
+      var splash = document.getElementById("splash-screen");
+      if (splash) { splash.style.opacity = "0"; splash.style.visibility = "hidden"; setTimeout(function(){ splash.remove(); }, 350); }
+      document.getElementById("app-root").style.display = "none";
+      var ls = document.getElementById("login-screen");
+      ls.style.display = "flex";
+      var errEl = document.getElementById("login-error");
+      if (errorMsg) { errEl.textContent = errorMsg; errEl.style.display = "block"; }
+      else { errEl.style.display = "none"; }
+    }
+
+    function applySessionToUi() {
+      var chip = document.getElementById("user-chip-name");
+      if (chip) chip.textContent = (S.authDisplayName || S.authUsername || "") + (S.authRole === "admin" ? " (Admin)" : "");
+      var adminPanel = document.getElementById("admin-user-mgmt");
+      if (adminPanel) adminPanel.style.display = (S.authRole === "admin") ? "flex" : "none";
+      if (S.authRole === "admin") adminLoadUsers();
+    }
+
+    function enterApp() {
+      document.getElementById("login-screen").style.display = "none";
+      document.getElementById("app-root").style.display = "block";
+      applySessionToUi();
+      bootApp();
+    }
+
+    function doLoginAction() {
+      var btn = document.getElementById("btn-do-login");
+      var username = document.getElementById("login-username").value.trim();
+      var password = document.getElementById("login-password").value;
+      if (!username || !password) { showLoginScreen("Please enter both username and password."); return; }
+      btn.disabled = true; btn.textContent = "Signing in\u2026";
+      sendReq("authLogin", { username: username, password: password }, function(err, res) {
+        btn.disabled = false; btn.textContent = "Sign In";
+        if (!err && res && res.success) {
+          S.authToken = res.token; S.authRole = res.role; S.authUsername = res.username; S.authDisplayName = res.displayName;
+          SAFE_STORE.setItem("dud3_auth_token", res.token);
+          SAFE_STORE.setItem("dud3_auth_role", res.role);
+          SAFE_STORE.setItem("dud3_auth_username", res.username);
+          SAFE_STORE.setItem("dud3_auth_displayname", res.displayName || res.username);
+          document.getElementById("login-password").value = "";
+          enterApp();
+        } else {
+          showLoginScreen((res && res.error) || "Login failed. Please try again.");
+        }
+      });
+    }
+
+/* ===================== Admin: Manage User Accounts (2026-11-18) ===================== */
+    function adminLoadUsers() {
+      var listEl = document.getElementById("admin-user-list");
+      if (!listEl) return;
+      listEl.innerHTML = '<div style="font-size:11px; color:var(--text-dim); text-align:center; padding:8px;">Loading users\u2026</div>';
+      sendReq("adminListUsers", {}, function(err, res) {
+        if (err || !res || !res.success) {
+          listEl.innerHTML = '<div style="font-size:11px; color:var(--red); text-align:center; padding:8px;">' + escapeHtml((res && res.error) || "Could not load users.") + '</div>';
+          return;
+        }
+        renderAdminUserList(res.users || []);
+      });
+    }
+
+    function renderAdminUserList(users) {
+      var listEl = document.getElementById("admin-user-list");
+      if (!listEl) return;
+      listEl.innerHTML = "";
+      if (users.length === 0) {
+        listEl.innerHTML = '<div style="font-size:11px; color:var(--text-dim); text-align:center; padding:8px;">No users yet.</div>';
+        return;
+      }
+      users.forEach(function(u) {
+        var row = document.createElement("div");
+        row.style.cssText = "display:flex; align-items:center; justify-content:space-between; gap:8px; background:rgba(16,21,36,0.6); border:1px solid var(--border); border-radius:10px; padding:9px 11px;";
+        var roleTag = u.role === "admin" ? '<span style="font-size:9px; font-weight:800; color:var(--brand-2); border:1px solid var(--brand-2); border-radius:6px; padding:1px 6px; margin-left:6px;">ADMIN</span>' : "";
+        var statusTag = u.active ? "" : '<span style="font-size:9px; font-weight:800; color:var(--red); border:1px solid var(--red); border-radius:6px; padding:1px 6px; margin-left:6px;">DISABLED</span>';
+        row.innerHTML =
+          '<div style="min-width:0;">' +
+            '<div style="font-size:13px; font-weight:800; color:var(--text);">' + escapeHtml(u.displayName || u.username) + roleTag + statusTag + '</div>' +
+            '<div style="font-size:10.5px; color:var(--text-dim); margin-top:2px;">@' + escapeHtml(u.username) + '</div>' +
+          '</div>' +
+          '<div style="display:flex; gap:5px; flex-shrink:0;">' +
+            '<button class="btn btn-card" style="padding:5px 8px; font-size:10px;" onclick="adminToggleUserActiveAction(\'' + escapeHtml(u.username) + '\', ' + (!u.active) + ')">' + (u.active ? "Disable" : "Enable") + '</button>' +
+            '<button class="btn btn-card" style="padding:5px 8px; font-size:10px;" onclick="adminResetUserPasswordAction(\'' + escapeHtml(u.username) + '\')">Reset</button>' +
+            '<button class="btn btn-card" style="padding:5px 8px; font-size:10px; color:var(--red);" onclick="adminDeleteUserAction(\'' + escapeHtml(u.username) + '\')">Delete</button>' +
+          '</div>';
+        listEl.appendChild(row);
+      });
+    }
+
+    function adminCreateUserAction() {
+      var username = document.getElementById("new-user-username").value.trim();
+      var password = document.getElementById("new-user-password").value;
+      var displayName = document.getElementById("new-user-displayname").value.trim();
+      var role = document.getElementById("new-user-role").value;
+      if (!username || !password) { showBanner("Username and password are required.", "warning", 6); return; }
+      sendReq("adminCreateUser", { newUsername: username, newPassword: password, newDisplayName: displayName, newRole: role }, function(err, res) {
+        if (!err && res && res.success) {
+          showBanner("\u2705 " + res.message, "success", 6);
+          document.getElementById("new-user-username").value = "";
+          document.getElementById("new-user-password").value = "";
+          document.getElementById("new-user-displayname").value = "";
+          adminLoadUsers();
+        } else {
+          showBanner((res && res.error) || "Could not create user.", "danger", 10);
+        }
+      });
+    }
+
+    function adminToggleUserActiveAction(username, nextActive) {
+      sendReq("adminSetUserActive", { targetUsername: username, active: nextActive }, function(err, res) {
+        if (!err && res && res.success) { showBanner(res.message, "success", 5); adminLoadUsers(); }
+        else showBanner((res && res.error) || "Could not update user.", "danger", 10);
+      });
+    }
+
+    function adminResetUserPasswordAction(username) {
+      var newPass = prompt("Enter a new password for " + username + " (min 4 characters):");
+      if (!newPass) return;
+      if (newPass.length < 4) { showBanner("Password must be at least 4 characters.", "warning", 6); return; }
+      sendReq("adminResetUserPassword", { targetUsername: username, newPassword: newPass }, function(err, res) {
+        if (!err && res && res.success) showBanner(res.message, "success", 6);
+        else showBanner((res && res.error) || "Could not reset password.", "danger", 10);
+      });
+    }
+
+    function adminDeleteUserAction(username) {
+      if (!confirm("Permanently delete user \"" + username + "\"? This cannot be undone.")) return;
+      sendReq("adminDeleteUser", { targetUsername: username }, function(err, res) {
+        if (!err && res && res.success) { showBanner(res.message, "success", 6); adminLoadUsers(); }
+        else showBanner((res && res.error) || "Could not delete user.", "danger", 10);
+      });
+    }
+
+        function doLogoutAction() {
+      if (!confirm("Log out of Rush PRO?")) return;
+      var token = S.authToken;
+      S.authToken = ""; S.authRole = ""; S.authUsername = ""; S.authDisplayName = "";
+      SAFE_STORE.removeItem("dud3_auth_token");
+      SAFE_STORE.removeItem("dud3_auth_role");
+      SAFE_STORE.removeItem("dud3_auth_username");
+      SAFE_STORE.removeItem("dud3_auth_displayname");
+      if (S.pollTimer) clearTimeout(S.pollTimer);
+      sendReq("authLogout", { token: token }, function(){});
+      window.location.reload();
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+      var loginBtnPwInput = document.getElementById("login-password");
+      if (loginBtnPwInput) loginBtnPwInput.addEventListener("keydown", function(e){ if (e.key === "Enter") doLoginAction(); });
+      var loginUserInput = document.getElementById("login-username");
+      if (loginUserInput) loginUserInput.addEventListener("keydown", function(e){ if (e.key === "Enter") doLoginAction(); });
+
+      if (!S.authToken) { showLoginScreen(); return; }
+      sendReq("authCheckSession", { token: S.authToken }, function(err, res) {
+        if (!err && res && res.success) {
+          S.authRole = res.role; S.authUsername = res.username; S.authDisplayName = res.displayName;
+          SAFE_STORE.setItem("dud3_auth_role", res.role);
+          SAFE_STORE.setItem("dud3_auth_displayname", res.displayName || res.username);
+          enterApp();
+        } else {
+          S.authToken = ""; SAFE_STORE.removeItem("dud3_auth_token");
+          showLoginScreen("Your session expired. Please sign in again.");
+        }
+      });
     });
   </script>
 
