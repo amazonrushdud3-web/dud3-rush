@@ -54,7 +54,7 @@
       z-index:10000; box-shadow:0 10px 28px rgba(0,0,0,0.6); transition:transform .3s; background:var(--brand-grad); color:#06080F; }
     #toast-msg.show { transform:translateX(-50%) translateY(0); }
 
-    .card { background:var(--card); border:1px solid var(--border); padding:10px 12px; border-radius:14px; margin-bottom:8px;
+    .card { background:var(--card); border:1px solid var(--border); padding:8px 10px; border-radius:14px; margin-bottom:6px;
       box-shadow:0 8px 20px rgba(0,0,0,0.32); backdrop-filter:var(--glass); -webkit-backdrop-filter:var(--glass); }
     .card-title { font-size:9px; color:var(--muted); text-transform:uppercase; font-weight:800; margin-bottom:6px; letter-spacing:0.7px; }
 
@@ -66,21 +66,21 @@
     .btn:active { transform:translateY(1px) scale(.98); }
     .btn-outline { background:transparent; border:1px solid var(--border); color:var(--muted); padding:8px; margin-top:8px; font-size:11px; box-shadow:none; }
 
-    /* Compact Identity row: small QR thumbnail + profile fields side by side */
+    /* Identity row: larger QR thumbnail + profile fields side by side */
     .identity-row { display:flex; align-items:center; gap:10px; }
-    .qr-thumb-wrap { flex:0 0 auto; background:#fff; border-radius:10px; padding:5px; display:flex; }
-    .qr-thumb-wrap canvas, .qr-thumb-wrap img { display:block; width:62px !important; height:62px !important; }
+    .qr-thumb-wrap { flex:0 0 auto; background:#fff; border-radius:12px; padding:6px; display:flex; }
+    .qr-thumb-wrap canvas, .qr-thumb-wrap img { display:block; width:104px !important; height:104px !important; }
     .identity-fields { flex:1 1 auto; min-width:0; }
-    .id-alias { font-size:15px; font-weight:900; color:var(--text); line-height:1.15; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .id-sub { font-size:10.5px; color:var(--muted); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .id-sub b { color:var(--brand-2); font-weight:700; }
+    .id-alias { font-size:16px; font-weight:900; color:var(--text); line-height:1.2; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:4px; }
+    .id-sub-line { display:block; font-size:11px; color:var(--muted); line-height:1.5; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .id-sub-line b { color:var(--brand-2); font-weight:800; font-size:12.5px; }
 
     .profile-row { display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding:6px 0; font-size:12px; }
     .profile-row:last-of-type { border-bottom:none; }
     .val { font-size:12px; font-weight:800; color:var(--brand-2); }
 
-    .batch-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
-    .batch-pill { background:rgba(16,21,36,0.78); border:1px solid var(--border); border-radius:10px; padding:8px 6px; text-align:center; }
+    .batch-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:6px; }
+    .batch-pill { background:rgba(16,21,36,0.78); border:1px solid var(--border); border-radius:10px; padding:6px 6px; text-align:center; }
     .bp-lbl { font-size:8.5px; color:var(--muted); text-transform:uppercase; font-weight:800; margin-bottom:3px; }
     .bp-val { font-size:16px; font-weight:900; background:var(--brand-grad); -webkit-background-clip:text; background-clip:text; color:transparent; }
 
@@ -166,12 +166,18 @@
     </div>
   </div>
 
+  <button id="btn-enable-notify" class="btn" style="display:none; margin-bottom:8px; background:var(--yellow); color:#1a1300;" onclick="requestNotifyPermission()">
+    🔔 Tap to Enable Alerts
+  </button>
+
   <div class="card">
     <div class="identity-row">
       <div class="qr-thumb-wrap" id="qr-box"></div>
       <div class="identity-fields">
         <div class="id-alias" id="d-alias">--</div>
-        <div class="id-sub"><b id="d-id">--</b> &middot; <span id="d-dsp-inline">DUD3</span> &middot; Wave <span id="d-wave">--</span></div>
+        <span class="id-sub-line"><b id="d-id">--</b></span>
+        <span class="id-sub-line" id="d-dsp-inline">DUD3</span>
+        <span class="id-sub-line">Wave: <span id="d-wave">--</span></span>
       </div>
     </div>
     <button class="btn btn-outline" onclick="logout()">Change Driver</button>
@@ -312,7 +318,7 @@ function renderQr(daId) {
   
   try {
     if (typeof QRCode !== "undefined") {
-      new QRCode(box, { text: daIdStr, width: 62, height: 62, colorDark: "#0F151C", colorLight: "#FFFFFF", correctLevel: QRCode.CorrectLevel.M });
+      new QRCode(box, { text: daIdStr, width: 104, height: 104, colorDark: "#0F151C", colorLight: "#FFFFFF", correctLevel: QRCode.CorrectLevel.M });
       lastRenderedQrId = daIdStr;
     } else {
       box.innerHTML = '<div style="color:#888;font-size:12px;padding:20px;">QR unavailable</div>';
@@ -346,6 +352,7 @@ function login() {
   var dd = document.getElementById("search-dropdown");
   if (dd) dd.style.display = "none";
   document.getElementById("login-sec").style.display = "none";
+  refreshNotifyButton();
   fetchData(daId);
   if (refreshInterval) clearInterval(refreshInterval);
   refreshInterval = setInterval(function(){ fetchData(daId); }, 10000);
@@ -360,6 +367,8 @@ function logout() {
   document.getElementById("da-id-input").value = "";
   document.getElementById("qr-box").innerHTML = "";
   lastRenderedQrId = "";
+  var nb = document.getElementById("btn-enable-notify");
+  if (nb) nb.style.display = "none";
 }
 
 function fetchData(daId) {
@@ -623,17 +632,43 @@ function setupTimers(data) {
 var _notifiedFiveMin = {};
 var _notifiedExpired = {};
 var _lastKnownStatus = null;
-var _notifPermAsked = false;
 
-function ensureNotifyPermission() {
-  if (_notifPermAsked) return;
-  _notifPermAsked = true;
+// Mobile browsers block Notification.requestPermission() unless it is called directly
+// inside a user-initiated tap (a silent background call is usually a no-op / denied).
+// So instead of asking silently, show a one-tap "Enable Alerts" button whenever
+// permission is not already granted, and let the driver explicitly turn it on.
+function refreshNotifyButton() {
+  var btn = document.getElementById("btn-enable-notify");
+  if (!btn) return;
   try {
-    if ("Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission();
+    if ("Notification" in window && Notification.permission !== "granted") {
+      btn.style.display = "block";
+    } else {
+      btn.style.display = "none";
     }
+  } catch (e) { btn.style.display = "none"; }
+}
+
+function requestNotifyPermission() {
+  try {
+    if (!("Notification" in window)) {
+      showToast("Notifications are not supported on this browser.");
+      return;
+    }
+    Notification.requestPermission().then(function(perm) {
+      refreshNotifyButton();
+      if (perm === "granted") {
+        showToast("\u2705 Alerts enabled \u2014 you will be notified before your receiving time expires.");
+        vibrateDevice([100]);
+      } else {
+        showToast("Alerts are off. You can still watch the on-screen timer and banner.");
+      }
+    });
   } catch (e) {}
 }
+
+// Back-compat alias (kept so any existing call sites still work).
+function ensureNotifyPermission() { refreshNotifyButton(); }
 
 function vibrateDevice(pattern) {
   try { if (navigator.vibrate) navigator.vibrate(pattern || [160, 80, 160]); } catch (e) {}
