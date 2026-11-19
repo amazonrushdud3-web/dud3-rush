@@ -433,9 +433,19 @@ a { color: var(--color-link, var(--color-primary)); }</style>
       border-bottom: 1px solid var(--border-soft);
       padding: calc(var(--safe-top) + 10px) 16px 12px;
       display: flex; align-items: center; justify-content: space-between;
-      flex-shrink: 0; z-index: 100;
+      flex-shrink: 0; z-index: 100; flex-wrap: wrap; gap: 8px;
     }
     .brand-wrap { display: flex; align-items: center; gap: 11px; }
+    /* 2026-11-19: on narrow phones, let the header's right-side cluster wrap onto
+       its own line instead of squeezing every chip (version numbers, user name,
+       logout) into one cramped row. Hide the FE/BE debug version chip on very
+       narrow screens -- it is diagnostic info, not needed for daily operation --
+       so the Sync badge / clock / user name / Logout stay fully readable. */
+    @media (max-width: 480px) {
+      .top-status { flex-wrap: wrap; justify-content: flex-end; row-gap: 6px; }
+      #ver-chip { display: none; }
+      .install-btn span, .install-btn { font-size: 10px; }
+    }
     .brand-logo {
       width: 38px; height: 38px; background: var(--brand-grad);
       border-radius: 12px; display: grid; place-items: center;
@@ -624,6 +634,17 @@ a { color: var(--color-link, var(--color-primary)); }</style>
     .da-row:last-child { border-bottom: none; }
     .da-checkbox { width: 18px; height: 18px; accent-color: var(--brand); cursor: pointer; }
     .da-details { flex: 1; min-width: 0; }
+
+    /* 2026-11-19: Violators tab row -- wraps onto two lines on narrow/mobile screens
+       so the long status pill never squeezes the DA name/meta text. On wide screens
+       (desktop) it still lays out as one single row like every other .da-row. */
+    .violator-row { flex-wrap: wrap; }
+    .violator-row-actions { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+    @media (max-width: 480px) {
+      .violator-row { align-items: flex-start; }
+      .violator-row-actions { flex: 1 1 100%; justify-content: flex-end; margin-top: 8px; margin-left: 28px; }
+      .violator-row .time-badge.tag-violator { white-space: normal; text-align: left; flex: 1 1 auto; }
+    }
     .da-title-line { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; min-width: 0; }
     .da-meta-line { font-size: 11px; color: var(--text-dim); margin-top: 3px; }
     .time-badge {
@@ -1443,7 +1464,7 @@ a { color: var(--color-link, var(--color-primary)); }</style>
     var OUTBOX_KEY = "dud3_outbox_v1";
     // Bump on every Index.html change. Shown in the header (FE) next to the backend (BE)
     // version so you can confirm after deploying that the live app runs the latest code.
-    var FRONTEND_VERSION = "v2026.11.19-4";
+    var FRONTEND_VERSION = "v2026.11.19-5";
 
     function loadOutbox() {
       try { return JSON.parse(SAFE_STORE.getItem(OUTBOX_KEY) || "[]") || []; }
@@ -2101,7 +2122,16 @@ a { color: var(--color-link, var(--color-primary)); }</style>
       }
       list.forEach(function(v) {
         var row = document.createElement("div");
-        row.className = "da-row";
+        // 2026-11-19: on narrow/mobile screens the previous single rigid flex row
+        // forced the long status pill ("Receive Timeout (no Received In scan)") to
+        // claim its full natural width (flex:0 0 auto, never shrinking), leaving the
+        // name/details column almost no space -- which is what made the DA name
+        // disappear and the meta line ("Logged 10:41 - Exceeded by 3m") wrap one
+        // word per line. Switched this row to wrap onto two lines on narrow
+        // viewports: top line = checkbox + name/ID, bottom line = status pill +
+        // Remove button, each given the FULL row width so nothing gets squeezed.
+        // Desktop/wide screens are unaffected (row still fits on one line there).
+        row.className = "da-row violator-row";
         var exceeded = (v.exceededBy !== "" && v.exceededBy !== undefined && v.exceededBy !== null && v.exceededBy !== "N/A") ? (" &bull; Exceeded by " + v.exceededBy + "m") : "";
         row.innerHTML =
           '<input type="checkbox" class="da-checkbox violator-checkbox" data-daid="' + v.daId + '">' +
@@ -2112,9 +2142,9 @@ a { color: var(--color-link, var(--color-primary)); }</style>
             '</div>' +
             '<div class="da-meta-line">Logged ' + (v.timeLogged || "--:--") + exceeded + '</div>' +
           '</div>' +
-          '<div style="display:flex; align-items:center; gap:6px; flex:0 0 auto;">' +
+          '<div class="violator-row-actions">' +
             '<span class="time-badge tag-violator">' + escapeHtml(v.status || "Violation") + '</span>' +
-            '<button class="btn btn-card" style="padding:5px 10px; font-size:11px; color:var(--red);" onclick="removeViolatorAction(\'' + v.daId + '\')">Remove</button>' +
+            '<button class="btn btn-card" style="padding:5px 10px; font-size:11px; color:var(--red); white-space:nowrap;" onclick="removeViolatorAction(\'' + v.daId + '\')">Remove</button>' +
           '</div>';
         container.appendChild(row);
       });
