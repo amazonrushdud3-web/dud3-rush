@@ -377,12 +377,17 @@ function login() {
   fetchData(daId);
   if (refreshInterval) clearInterval(refreshInterval);
   refreshInterval = setInterval(function(){ fetchData(daId); }, 10000);
+  registerDriverServiceWorker().then(function(reg) {
+    tryRegisterPeriodicSync(reg);
+    startBackgroundNotifyTicker(daId);
+  });
 }
 
 function logout() {
   SAFE_STORE.removeItem("dud3_driver_id");
   if (refreshInterval) clearInterval(refreshInterval);
   if (countdownInterval) clearInterval(countdownInterval);
+  if (_swTickInterval) { clearInterval(_swTickInterval); _swTickInterval = null; }
   document.getElementById("dashboard").classList.remove("show");
   document.getElementById("login-sec").style.display = "block";
   document.getElementById("da-id-input").value = "";
@@ -691,6 +696,64 @@ function requestNotifyPermission() {
 // Back-compat alias (kept so any existing call sites still work).
 function ensureNotifyPermission() { refreshNotifyButton(); }
 
+/* ============================================================================
+ * Background / closed-app notifications (2026-11-19)
+ * See driver-sw.js for the full honest explanation of what is and is not
+ * possible on a static web page without a push server. Summary:
+ *  - Reliable while the Driver Hub tab is open OR backgrounded/minimized
+ *    (phone in pocket, screen off, switched to another app) as long as the
+ *    browser itself keeps running.
+ *  - On Android Chrome/Edge, if the driver taps "Install" / Add to Home
+ *    Screen, Periodic Background Sync additionally lets checks run even
+ *    while the Driver Hub is not open at all (every few minutes, OS-permitting).
+ *  - On iOS Safari there is currently no way to notify after the app/tab is
+ *    fully force-closed without a push server -- this is a Safari/WebKit
+ *    platform limitation, not something fixable from this page's code.
+ * ========================================================================= */
+var _swRegistration = null;
+var _swTickInterval = null;
+
+function registerDriverServiceWorker() {
+  if (!("serviceWorker" in navigator)) return Promise.resolve(null);
+  return navigator.serviceWorker.register("./driver-sw.js")
+    .then(function(reg) {
+      _swRegistration = reg;
+      tryRegisterPeriodicSync(reg);
+      return reg;
+    })
+    .catch(function() { return null; });
+}
+
+// Periodic Background Sync requires the page to be an installed PWA AND the
+// permission to be explicitly granted -- both are optional/best-effort, so
+// this silently no-ops on browsers/platforms that do not support it (iOS
+// Safari, non-installed Chrome, etc.) instead of showing an error.
+function tryRegisterPeriodicSync(reg) {
+  try {
+    if (!reg || !reg.periodicSync || !currentDaId) return;
+    navigator.permissions.query({ name: "periodic-background-sync" }).then(function(status) {
+      if (status.state === "granted") {
+        reg.periodicSync.register("dud3-check-" + currentDaId, { minInterval: 5 * 60 * 1000 }).catch(function(){});
+      }
+    }).catch(function(){});
+  } catch (e) {}
+}
+
+// Primary, always-reliable mechanism: while the Driver Hub is open (including
+// backgrounded/minimized), periodically ask the SERVICE WORKER to run a check
+// and fire the OS notification itself -- this avoids browsers that suppress
+// page-level `new Notification()` calls when the tab is not the active
+// foreground tab.
+function startBackgroundNotifyTicker(daId) {
+  if (_swTickInterval) clearInterval(_swTickInterval);
+  function tick() {
+    if (!_swRegistration || !_swRegistration.active) return;
+    try { _swRegistration.active.postMessage({ type: "DUD3_CHECK_NOW", daId: daId }); } catch (e) {}
+  }
+  tick();
+  _swTickInterval = setInterval(tick, 60 * 1000); // every 60s, independent of the page-level 10s UI refresh
+}
+
 function vibrateDevice(pattern) {
   try { if (navigator.vibrate) navigator.vibrate(pattern || [160, 80, 160]); } catch (e) {}
 }
@@ -726,12 +789,19 @@ function fireDriverNotification(title, body) {
   } catch (e) {}
 }
 
+// 2026-11-19: repeat the receiving reminder roughly every 5 MINUTES for as long as
+// the timer is running (not just once at the 5-min-left mark), mirroring the same
+// cadence the service worker uses in the background. _notifiedFiveMin now stores a
+// per-send-event timestamp of the last reminder instead of a one-shot boolean.
 function maybeNotifyReceiveDeadline(data, remainingSec) {
   var key = data.daId + "_" + (data.sentTime || "");
-  if (remainingSec <= 300 && remainingSec > 0) {
-    if (!_notifiedFiveMin[key]) {
-      _notifiedFiveMin[key] = true;
-      fireDriverNotification("⏰ 5 Minutes Left", "Arrive and complete the receiving scan within the remaining time, or you will be moved to Violator.");
+  var REMIND_EVERY_MS = 5 * 60 * 1000;
+  if (remainingSec > 0) {
+    var lastAt = _notifiedFiveMin[key] || 0;
+    if (Date.now() - lastAt >= REMIND_EVERY_MS) {
+      _notifiedFiveMin[key] = Date.now();
+      var remMin = Math.max(1, Math.round(remainingSec / 60));
+      fireDriverNotification("⏰ Receiving Reminder", "You have about " + remMin + " more minute(s) to complete receiving, or you will be moved to Violator.");
     }
   } else if (remainingSec <= 0) {
     if (!_notifiedExpired[key]) {
@@ -741,9 +811,20 @@ function maybeNotifyReceiveDeadline(data, remainingSec) {
   }
 }
 
+var _lastNotifiedSentTime = null;
+
 function maybeNotifyStatusChange(data) {
   ensureNotifyPermission();
   var st = String(data.status || "");
+
+  // Spec #1: "Batch Sent from Waiting" -- notify + remind the moment the batch is
+  // actually sent (status flips to "Sent to OP" with a NEW sentTime), matching the
+  // same event the service worker's background check fires on.
+  if (st === "Sent to OP" && data.sentTime && data.sentTime !== _lastNotifiedSentTime) {
+    _lastNotifiedSentTime = data.sentTime;
+    fireDriverNotification("🚚 Batch Sent — Proceed to Receiving", "Your batch has been sent from Waiting. Head to the receiving point now.");
+  }
+
   if (st === "Violator" && _lastKnownStatus !== "Violator") {
     fireDriverNotification("🚫 Moved to Violator", "You were not received within the configured time limit. Please see the Yard Marshal.");
   }
