@@ -5,6 +5,7 @@
   <title>DUD3 Driver Hub</title>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="theme-color" content="#0A0E1A">
+  <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%20%22DUD3%20Driver%20Hub%22%2C%20%22short_name%22%3A%20%22Driver%20Hub%22%2C%20%22start_url%22%3A%20%22.%22%2C%20%22scope%22%3A%20%22.%22%2C%20%22display%22%3A%20%22standalone%22%2C%20%22orientation%22%3A%20%22any%22%2C%20%22background_color%22%3A%20%22%230A0E1A%22%2C%20%22theme_color%22%3A%20%22%230A0E1A%22%2C%20%22categories%22%3A%20%5B%22productivity%22%2C%20%22business%22%5D%7D">
   <style>
     :root { --bg:#0A0E1A; --card:rgba(23,29,48,0.72); --card-solid:#141A2B; --brand:#7C6CFF; --brand-2:#22D3EE; --brand-3:#EC4899;
       --brand-grad:linear-gradient(135deg,#7C6CFF,#22D3EE); --green:#34E0A1; --red:#FF5C7A; --purple:#BB86FC; --yellow:#FFCB5B;
@@ -52,6 +53,11 @@
       background:var(--card); color:var(--brand-2); display:flex; align-items:center; justify-content:center; cursor:pointer;
       transition:transform .4s ease, background .15s; }
     .refresh-fab:active { transform:scale(0.9); }
+    .install-fab { position:absolute; right:38px; top:2px; width:30px; height:30px; border-radius:50%; border:1px solid var(--border);
+      background:var(--card); color:var(--green); display:none; align-items:center; justify-content:center; cursor:pointer;
+      transition:transform .15s ease; }
+    .install-fab.show { display:flex; }
+    .install-fab:active { transform:scale(0.9); }
     .refresh-fab.spin svg { animation:spin 0.6s linear; }
 
     #toast-msg { position:fixed; top:8px; left:50%; transform:translateX(-50%) translateY(-200%); width:calc(100% - 20px); max-width:400px;
@@ -150,6 +156,9 @@
 
 <header>
   <h1>DUD3 <span>DRIVER HUB</span></h1>
+  <button id="btn-install-app" class="install-fab" onclick="triggerDriverInstall()" title="Install Driver Hub">
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 3v10.59l3.3-3.3 1.4 1.42L12 17.4l-4.7-4.7 1.4-1.4 3.3 3.29V3h2zM5 19h14v2H5z"></path></svg>
+  </button>
   <button id="btn-refresh-app" class="refresh-fab" onclick="manualRefresh()" title="Refresh">
     <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
   </button>
@@ -235,6 +244,41 @@ var SAFE_STORE = (function () {
     removeItem: function (k) { if (ok) { try { window.localStorage.removeItem(k); return; } catch (e) {} } delete mem[k]; }
   };
 })();
+
+// 2026-11-19: Install prompt wiring (same pattern as the main Rush PRO app). Chrome
+// only fires beforeinstallprompt once the page has BOTH a valid manifest (added above)
+// AND a registered service worker -- the Driver Hub previously had neither, which is
+// why no install option ever appeared. driver-sw.js (registered in login()) plus the
+// manifest link above are what make this button actually show up now.
+var _deferredInstallPrompt = null;
+window.addEventListener("beforeinstallprompt", function(e) {
+  e.preventDefault();
+  _deferredInstallPrompt = e;
+  var b = document.getElementById("btn-install-app");
+  if (b) b.classList.add("show");
+});
+window.addEventListener("appinstalled", function() {
+  _deferredInstallPrompt = null;
+  var b = document.getElementById("btn-install-app");
+  if (b) b.classList.remove("show");
+});
+function triggerDriverInstall() {
+  if (!_deferredInstallPrompt) {
+    var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    if (isIOS) {
+      alert("To install: tap the Share icon, then \"Add to Home Screen\".");
+    } else {
+      alert("Install isn't available yet on this device/browser. Make sure you opened the Driver Hub from its hosted URL (not a shared link) and try again in a moment.");
+    }
+    return;
+  }
+  _deferredInstallPrompt.prompt();
+  _deferredInstallPrompt.userChoice.finally(function() {
+    _deferredInstallPrompt = null;
+    var b = document.getElementById("btn-install-app");
+    if (b) b.classList.remove("show");
+  });
+}
 
 let currentDaId = "";
 let currentAlias = "";
@@ -361,6 +405,13 @@ window.onload = function() {
     var dd = document.getElementById("search-dropdown");
     if (wrap && dd && !wrap.contains(e.target)) { dd.style.display = "none"; }
   });
+  // 2026-11-19: instant refresh the moment the driver switches back to this tab/app
+  // (phone woken up, app re-foregrounded) instead of waiting out the rest of the 3s
+  // tick -- this is what makes "coming back to the app" feel instant, same idea as
+  // the main Rush PRO app's visibilitychange handler.
+  document.addEventListener("visibilitychange", function() {
+    if (!document.hidden && currentDaId) { fetchData(currentDaId); }
+  });
 };
 
 function login() {
@@ -376,7 +427,10 @@ function login() {
   refreshNotifyButton();
   fetchData(daId);
   if (refreshInterval) clearInterval(refreshInterval);
-  refreshInterval = setInterval(function(){ fetchData(daId); }, 10000);
+  // 2026-11-19: sped up from 10s -> 3s. getDaStatus is a lightweight single-DA lookup
+  // (not a full roster rebuild), so polling faster here is safe and makes the Driver
+  // Hub feel as responsive as the main Rush PRO app's 1s sync.
+  refreshInterval = setInterval(function(){ fetchData(daId); }, 3000);
   registerDriverServiceWorker().then(function(reg) {
     tryRegisterPeriodicSync(reg);
     startBackgroundNotifyTicker(daId);
