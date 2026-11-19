@@ -471,6 +471,14 @@ a { color: var(--color-link, var(--color-primary)); }</style>
       font-weight: 800; display: flex; align-items: center; gap: 5px; backdrop-filter: blur(6px);
     }
     .sync-badge.syncing { background: var(--yellow-soft); color: var(--yellow); border-color: rgba(255,203,91,0.30); }
+    .force-sync-btn {
+      width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border-soft);
+      background: var(--card-hi); color: var(--brand-2); display: flex; align-items: center;
+      justify-content: center; cursor: pointer; padding: 0; transition: transform .4s ease, background .15s;
+    }
+    .force-sync-btn:active { transform: scale(0.88); }
+    .force-sync-btn.spinning svg { animation: fsSpin 0.7s linear; }
+    @keyframes fsSpin { to { transform: rotate(360deg); } }
     .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 8px currentColor; }
     .clock-display {
       font-size: 13px; font-weight: 800; color: #FFF; font-variant-numeric: tabular-nums;
@@ -848,6 +856,9 @@ a { color: var(--color-link, var(--color-primary)); }</style>
         <span class="sync-dot"></span>
         <span id="sync-text">LIVE</span>
       </div>
+      <button id="btn-force-sync" class="force-sync-btn" onclick="forceSyncAllDevices()" title="Force sync all devices + clear old cache">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M17.65 6.35A7.95 7.95 0 0012 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+      </button>
       <div class="clock-display" id="dubai-clock">--:--</div>
       <div id="ver-chip" title="Frontend / Backend build versions" style="font-size:9px; font-weight:800; letter-spacing:0.3px; color:var(--text-dim); margin-left:8px; line-height:1.2; text-align:right;">
         <div id="ver-fe">FE --</div><div id="ver-be">BE --</div>
@@ -1464,7 +1475,7 @@ a { color: var(--color-link, var(--color-primary)); }</style>
     var OUTBOX_KEY = "dud3_outbox_v1";
     // Bump on every Index.html change. Shown in the header (FE) next to the backend (BE)
     // version so you can confirm after deploying that the live app runs the latest code.
-    var FRONTEND_VERSION = "v2026.11.19-5";
+    var FRONTEND_VERSION = "v2026.11.19-6";
 
     function loadOutbox() {
       try { return JSON.parse(SAFE_STORE.getItem(OUTBOX_KEY) || "[]") || []; }
@@ -3344,6 +3355,37 @@ function togglePwVisibility(inputId, btnEl) {
       var waUrl = "https://api.whatsapp.com/send?text=" + encodeURIComponent(text);
       window.open(waUrl, "_blank");
       showBanner("WhatsApp opened — tap \"DUD3 Yard Marshal 🏍️\" to send the request.", "success", 8);
+    }
+
+// 2026-11-19: "Force Sync" button. Three things, in order:
+    //  1) Clear THIS device's own stale client caches (the stale-while-revalidate
+    //     snapshot + any leftover outbox entries) WITHOUT touching the login session
+    //     (dud3_auth_* keys survive, so this never logs the user out).
+    //  2) Tell the SERVER to drop its cached roster/settings snapshot, so every OTHER
+    //     connected device's very next poll also rebuilds fresh instead of serving a
+    //     stale cache hit -- not just this device.
+    //  3) Immediately force-pull fresh data on this device so the effect is instant
+    //     here too, instead of waiting for the next 1s tick.
+    function forceSyncAllDevices() {
+      var btn = document.getElementById("btn-force-sync");
+      if (btn) { btn.classList.remove("spinning"); void btn.offsetWidth; btn.classList.add("spinning"); }
+
+      try { SAFE_STORE.removeItem("dud3_snap_v1"); } catch (e) {}
+      // IMPORTANT: never wipe the outbox here -- it may hold genuinely unsent scans.
+      // Flush (retry) them instead so nothing is lost; only the STALE READ cache
+      // (the snapshot above) is cleared.
+      try { flushOutbox(); } catch (e) {}
+
+      showBanner("\u26A1 Force-syncing all devices \u2014 clearing old cache\u2026", "success", 5);
+
+      sendReq("forceSync", {}, function(err, res) {
+        if (!err && res && res.success) {
+          showBanner("\u2705 Cache cleared. All devices will refresh within their next sync tick.", "success", 6);
+        } else {
+          showBanner((res && res.error) || "Force sync request failed \u2014 please try again.", "danger", 10);
+        }
+        pollRoster(true);
+      });
     }
 
     function doLogoutAction() {
