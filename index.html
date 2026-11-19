@@ -914,6 +914,10 @@ a { color: var(--color-link, var(--color-primary)); }</style>
 
     <!-- ================= TAB 2: WAITING ================= -->
     <div class="tab-content" id="tab-waiting">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; background:rgba(124,108,255,0.12); border:1px solid rgba(124,108,255,0.4); border-radius:14px; padding:12px 16px;">
+        <div style="font-size:12px; font-weight:800; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px;">Total Waiting Headcount</div>
+        <div id="wait-headcount-badge" style="font-size:22px; font-weight:900; color:var(--brand-2);">0</div>
+      </div>
       <div class="scanner-card">
         <div class="scanner-viewport-wrap">
           <div id="qr-reader-waiting"></div>
@@ -1439,7 +1443,7 @@ a { color: var(--color-link, var(--color-primary)); }</style>
     var OUTBOX_KEY = "dud3_outbox_v1";
     // Bump on every Index.html change. Shown in the header (FE) next to the backend (BE)
     // version so you can confirm after deploying that the live app runs the latest code.
-    var FRONTEND_VERSION = "v2026.11.19-2";
+    var FRONTEND_VERSION = "v2026.11.19-4";
 
     function loadOutbox() {
       try { return JSON.parse(SAFE_STORE.getItem(OUTBOX_KEY) || "[]") || []; }
@@ -2004,6 +2008,8 @@ a { color: var(--color-link, var(--color-primary)); }</style>
 
       document.getElementById("wait-total-das").textContent = totalWaitingCount;
       document.getElementById("wait-active-batches").textContent = activeBatchCards;
+      var hcBadge = document.getElementById("wait-headcount-badge");
+      if (hcBadge) hcBadge.textContent = totalWaitingCount;
 
       if (activeBatchCards === 0) {
         container.innerHTML = '<div class="batch-card" style="padding:20px; text-align:center; color:var(--text-dim); font-size:13px;">No DAs currently waiting in batches. Scan on Attendance or scan above to queue into the active batch.</div>';
@@ -2633,7 +2639,7 @@ a { color: var(--color-link, var(--color-primary)); }</style>
       });
       if (localViolator) {
         playBeep("violation");
-        showBanner("🚫 VIOLATOR: " + (localViolator.daName || daId) + " (" + daId + ") — " + (localViolator.status || "Violation") + ". Receive IN blocked. Send DA back to the OFF-YARD.", "danger", 35);
+        showBanner("(" + (localViolator.daName || daId) + ") Sent Back to Off Yard – Receive Time Exceeded.", "danger", 35);
         switchTab("tab-violators");
         return;
       }
@@ -2656,6 +2662,13 @@ a { color: var(--color-link, var(--color-primary)); }</style>
         }
       }
 
+      // 2026-11-19 FIX: a DA who is still sitting in Waiting (never sent by the Yard
+      // Marshal) must NEVER be optimistically marked Received client-side. Previously
+      // this case fell into the same "optimisticRecItem" fast-path as a truly-sent DA,
+      // flashing a green "Instant Received" success banner + success beep BEFORE the
+      // server's correct rejection arrived a moment later — which is exactly what made
+      // it look like "the system still allows them to be received." The backend has
+      // always correctly blocked this; now the frontend no longer lies about it first.
       var waitingEntry = null;
       if (foundSentIdx === -1) {
         Object.keys(S.waitingBatches || {}).forEach(function(bn) {
@@ -2663,6 +2676,11 @@ a { color: var(--color-link, var(--color-primary)); }</style>
             if (w.daId.toUpperCase() === canonicalUp) waitingEntry = w;
           });
         });
+      }
+      if (foundSentIdx === -1 && waitingEntry) {
+        playBeep("error");
+        showBanner((waitingEntry.daName || daId) + " is still Waiting in " + (waitingEntry.batchName || "a batch") + " — not yet sent from Waiting. Send the DA first, then Receive.", "danger", 20);
+        return;
       }
 
       var optimisticRecItem = null;
@@ -2676,22 +2694,6 @@ a { color: var(--color-link, var(--color-primary)); }</style>
           rushInTime: nowStr,
           sentTime: sentItem.sentTime || nowStr,
           ymName: sentItem.ymName || S.ymName
-        };
-      } else if (waitingEntry) {
-        Object.keys(S.waitingBatches || {}).forEach(function(bn) {
-          S.waitingBatches[bn] = (S.waitingBatches[bn] || []).filter(function(w) {
-            return w.daId.toUpperCase() !== canonicalUp;
-          });
-          if (S.waitingBatches[bn].length === 0) delete S.waitingBatches[bn];
-        });
-        delete S.pendingWaiting[canonicalUp];
-        optimisticRecItem = {
-          daId: waitingEntry.daId,
-          daName: waitingEntry.daName,
-          batchName: waitingEntry.batchName || "Batch 1",
-          rushInTime: nowStr,
-          sentTime: nowStr,
-          ymName: S.ymName
         };
       }
 
@@ -2710,7 +2712,7 @@ a { color: var(--color-link, var(--color-primary)); }</style>
         if (res && res.violatorBlock) {
           delete S.pendingReceived[canonicalUp];
           playBeep("violation");
-          showBanner(res.message || "🚫 Violator — Receive IN blocked. Send DA back to off-yard.", "danger", 35);
+          showBanner("(" + (res.daName || canonicalId) + ") Sent Back to Off Yard – Receive Time Exceeded.", "danger", 35);
           pollRoster();
           switchTab("tab-violators");
         } else if (res && res.violation) {
