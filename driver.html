@@ -254,10 +254,13 @@ var SAFE_STORE = (function () {
 })();
 
 // 2026-11-19: Install prompt wiring (same pattern as the main Rush PRO app). Chrome
-// only fires beforeinstallprompt once the page has BOTH a valid manifest (added above)
-// AND a registered service worker -- the Driver Hub previously had neither, which is
-// why no install option ever appeared. driver-sw.js (registered in login()) plus the
-// manifest link above are what make this button actually show up now.
+// only fires beforeinstallprompt once it decides the page meets its own installability
+// heuristics (a valid manifest, like the one linked above, is required; a service
+// worker often helps but is not strictly required in every Chrome version). A
+// separate service worker (driver-sw.js) was tried here for background
+// notifications but caused the Driver Hub to hang/get stuck for the user in
+// production, so it was REMOVED on 2026-11-19 -- the Install button below works
+// from the manifest alone and no longer depends on any service worker.
 var _deferredInstallPrompt = null;
 
 // Detect "already running as an installed app" so the button can hide itself instead
@@ -438,7 +441,6 @@ window.onload = function() {
   // why the Install button never appeared. Register it immediately on page load
   // instead, independent of login state, so installability is established as early
   // as possible.
-  registerDriverServiceWorker();
   if (isRunningAsInstalledApp()) {
     var ib = document.getElementById("btn-install-app");
     if (ib) ib.classList.add("hide");
@@ -476,17 +478,12 @@ function login() {
   // (not a full roster rebuild), so polling faster here is safe and makes the Driver
   // Hub feel as responsive as the main Rush PRO app's 1s sync.
   refreshInterval = setInterval(function(){ fetchData(daId); }, 3000);
-  registerDriverServiceWorker().then(function(reg) {
-    tryRegisterPeriodicSync(reg);
-    startBackgroundNotifyTicker(daId);
-  });
 }
 
 function logout() {
   SAFE_STORE.removeItem("dud3_driver_id");
   if (refreshInterval) clearInterval(refreshInterval);
   if (countdownInterval) clearInterval(countdownInterval);
-  if (_swTickInterval) { clearInterval(_swTickInterval); _swTickInterval = null; }
   document.getElementById("dashboard").classList.remove("show");
   document.getElementById("login-sec").style.display = "block";
   document.getElementById("da-id-input").value = "";
@@ -795,72 +792,17 @@ function requestNotifyPermission() {
 // Back-compat alias (kept so any existing call sites still work).
 function ensureNotifyPermission() { refreshNotifyButton(); }
 
-/* ============================================================================
- * Background / closed-app notifications (2026-11-19)
- * See driver-sw.js for the full honest explanation of what is and is not
- * possible on a static web page without a push server. Summary:
- *  - Reliable while the Driver Hub tab is open OR backgrounded/minimized
- *    (phone in pocket, screen off, switched to another app) as long as the
- *    browser itself keeps running.
- *  - On Android Chrome/Edge, if the driver taps "Install" / Add to Home
- *    Screen, Periodic Background Sync additionally lets checks run even
- *    while the Driver Hub is not open at all (every few minutes, OS-permitting).
- *  - On iOS Safari there is currently no way to notify after the app/tab is
- *    fully force-closed without a push server -- this is a Safari/WebKit
- *    platform limitation, not something fixable from this page's code.
- * ========================================================================= */
-var _swRegistration = null;
-var _swTickInterval = null;
+// 2026-11-19: Service-worker-based background notifications REMOVED. The user
+// deployed driver-sw.js to GitHub Pages and reported the app got stuck/hanging for
+// a long time until they deleted that file -- deleting it immediately fixed it.
+// Rather than re-attempt a service worker (which is clearly causing a real problem
+// in this deployment, likely the registration call or a periodicsync permission
+// query hanging/blocking), notifications now rely ONLY on the in-page notifier
+// (fireDriverNotification / maybeNotifyReceiveDeadline / maybeNotifyStatusChange
+// below), which works reliably whenever the Driver Hub tab itself is open. This
+// does not cover the app being fully closed/backgrounded for long periods -- see
+// the honest limitations note further down.
 
-function registerDriverServiceWorker() {
-  // 2026-11-19: wrapped the registration call itself in try/catch. Some embedded/
-  // sandboxed preview contexts (not a real top-level HTTPS origin) throw a SYNCHRONOUS
-  // SecurityError the instant navigator.serviceWorker.register() is called -- before
-  // any .then()/.catch() chain can attach -- which otherwise surfaces as an uncaught
-  // runtime error on page load even though the rest of the app is unaffected.
-  try {
-    if (!("serviceWorker" in navigator)) return Promise.resolve(null);
-    return navigator.serviceWorker.register("./driver-sw.js")
-      .then(function(reg) {
-        _swRegistration = reg;
-        tryRegisterPeriodicSync(reg);
-        return reg;
-      })
-      .catch(function() { return null; });
-  } catch (e) {
-    return Promise.resolve(null);
-  }
-}
-
-// Periodic Background Sync requires the page to be an installed PWA AND the
-// permission to be explicitly granted -- both are optional/best-effort, so
-// this silently no-ops on browsers/platforms that do not support it (iOS
-// Safari, non-installed Chrome, etc.) instead of showing an error.
-function tryRegisterPeriodicSync(reg) {
-  try {
-    if (!reg || !reg.periodicSync || !currentDaId) return;
-    navigator.permissions.query({ name: "periodic-background-sync" }).then(function(status) {
-      if (status.state === "granted") {
-        reg.periodicSync.register("dud3-check-" + currentDaId, { minInterval: 5 * 60 * 1000 }).catch(function(){});
-      }
-    }).catch(function(){});
-  } catch (e) {}
-}
-
-// Primary, always-reliable mechanism: while the Driver Hub is open (including
-// backgrounded/minimized), periodically ask the SERVICE WORKER to run a check
-// and fire the OS notification itself -- this avoids browsers that suppress
-// page-level `new Notification()` calls when the tab is not the active
-// foreground tab.
-function startBackgroundNotifyTicker(daId) {
-  if (_swTickInterval) clearInterval(_swTickInterval);
-  function tick() {
-    if (!_swRegistration || !_swRegistration.active) return;
-    try { _swRegistration.active.postMessage({ type: "DUD3_CHECK_NOW", daId: daId }); } catch (e) {}
-  }
-  tick();
-  _swTickInterval = setInterval(tick, 60 * 1000); // every 60s, independent of the page-level 10s UI refresh
-}
 
 function vibrateDevice(pattern) {
   try { if (navigator.vibrate) navigator.vibrate(pattern || [160, 80, 160]); } catch (e) {}
