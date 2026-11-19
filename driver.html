@@ -53,10 +53,18 @@
       background:var(--card); color:var(--brand-2); display:flex; align-items:center; justify-content:center; cursor:pointer;
       transition:transform .4s ease, background .15s; }
     .refresh-fab:active { transform:scale(0.9); }
+    /* 2026-11-19 FIX: always-visible by default (display:flex), not hidden until
+       Chrome's beforeinstallprompt fires. Chrome applies its own silent engagement
+       heuristics (repeat visits, time on site) before offering that event, which can
+       take several visits -- leaving the button invisible the whole time otherwise.
+       Showing it immediately and handling "no native prompt yet" gracefully inside
+       triggerDriverInstall() (clear manual instructions) is far more useful than a
+       button that may never appear. If/when the native prompt IS available, tapping
+       it still uses the real one-tap native install flow. */
     .install-fab { position:absolute; right:38px; top:2px; width:30px; height:30px; border-radius:50%; border:1px solid var(--border);
-      background:var(--card); color:var(--green); display:none; align-items:center; justify-content:center; cursor:pointer;
+      background:var(--card); color:var(--green); display:flex; align-items:center; justify-content:center; cursor:pointer;
       transition:transform .15s ease; }
-    .install-fab.show { display:flex; }
+    .install-fab.hide { display:none; }
     .install-fab:active { transform:scale(0.9); }
     .refresh-fab.spin svg { animation:spin 0.6s linear; }
 
@@ -251,33 +259,59 @@ var SAFE_STORE = (function () {
 // why no install option ever appeared. driver-sw.js (registered in login()) plus the
 // manifest link above are what make this button actually show up now.
 var _deferredInstallPrompt = null;
+
+// Detect "already running as an installed app" so the button can hide itself instead
+// of offering to install something that's already installed.
+function isRunningAsInstalledApp() {
+  try {
+    if (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) return true;
+    if (window.navigator && window.navigator.standalone) return true; // iOS Home Screen
+  } catch (e) {}
+  return false;
+}
+
 window.addEventListener("beforeinstallprompt", function(e) {
   e.preventDefault();
   _deferredInstallPrompt = e;
-  var b = document.getElementById("btn-install-app");
-  if (b) b.classList.add("show");
 });
 window.addEventListener("appinstalled", function() {
   _deferredInstallPrompt = null;
   var b = document.getElementById("btn-install-app");
-  if (b) b.classList.remove("show");
+  if (b) b.classList.add("hide");
 });
+
+// 2026-11-19 FIX: the button is now ALWAYS visible (see CSS) instead of waiting for
+// Chrome's silent engagement heuristics to decide whether beforeinstallprompt ever
+// fires. Tapping it:
+//  - Uses the REAL native one-tap install prompt if Chrome/Edge/Brave has already
+//    made it available (_deferredInstallPrompt is set) -- true one-click install.
+//  - Otherwise gives the exact manual step for the platform (iOS Share-sheet steps,
+//    or Chrome's "Add to Home screen" menu item) so install is always reachable even
+//    before Chrome's own prompt becomes available.
 function triggerDriverInstall() {
-  if (!_deferredInstallPrompt) {
-    var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-    if (isIOS) {
-      alert("To install: tap the Share icon, then \"Add to Home Screen\".");
-    } else {
-      alert("Install isn't available yet on this device/browser. Make sure you opened the Driver Hub from its hosted URL (not a shared link) and try again in a moment.");
-    }
+  if (isRunningAsInstalledApp()) {
+    alert("Driver Hub is already installed on this device.");
+    var b = document.getElementById("btn-install-app");
+    if (b) b.classList.add("hide");
     return;
   }
-  _deferredInstallPrompt.prompt();
-  _deferredInstallPrompt.userChoice.finally(function() {
-    _deferredInstallPrompt = null;
-    var b = document.getElementById("btn-install-app");
-    if (b) b.classList.remove("show");
-  });
+  if (_deferredInstallPrompt) {
+    _deferredInstallPrompt.prompt();
+    _deferredInstallPrompt.userChoice.finally(function() {
+      _deferredInstallPrompt = null;
+    });
+    return;
+  }
+  var ua = navigator.userAgent || "";
+  var isIOS = /iphone|ipad|ipod/i.test(ua);
+  var isAndroid = /android/i.test(ua);
+  if (isIOS) {
+    alert("To install Driver Hub on iPhone/iPad:\n\n1. Tap the Share icon (square with an arrow) in Safari's toolbar.\n2. Scroll down and tap \"Add to Home Screen\".\n3. Tap \"Add\" in the top right.");
+  } else if (isAndroid) {
+    alert("To install Driver Hub on Android:\n\n1. Tap the \u22ee menu (3 dots) in Chrome's toolbar.\n2. Tap \"Add to Home screen\" or \"Install app\".\n3. Confirm by tapping \"Install\" / \"Add\".\n\n(Chrome may also offer this automatically after you have used the app a couple of times.)");
+  } else {
+    alert("To install Driver Hub: open your browser's menu and look for \"Install app\" or \"Add to Home screen\".");
+  }
 }
 
 let currentDaId = "";
@@ -405,6 +439,10 @@ window.onload = function() {
   // instead, independent of login state, so installability is established as early
   // as possible.
   registerDriverServiceWorker();
+  if (isRunningAsInstalledApp()) {
+    var ib = document.getElementById("btn-install-app");
+    if (ib) ib.classList.add("hide");
+  }
   var savedId = SAFE_STORE.getItem("dud3_driver_id");
   if (savedId) { currentDaId = savedId; document.getElementById("da-id-input").value = savedId; login(); }
   document.addEventListener("click", function(e){
@@ -775,14 +813,23 @@ var _swRegistration = null;
 var _swTickInterval = null;
 
 function registerDriverServiceWorker() {
-  if (!("serviceWorker" in navigator)) return Promise.resolve(null);
-  return navigator.serviceWorker.register("./driver-sw.js")
-    .then(function(reg) {
-      _swRegistration = reg;
-      tryRegisterPeriodicSync(reg);
-      return reg;
-    })
-    .catch(function() { return null; });
+  // 2026-11-19: wrapped the registration call itself in try/catch. Some embedded/
+  // sandboxed preview contexts (not a real top-level HTTPS origin) throw a SYNCHRONOUS
+  // SecurityError the instant navigator.serviceWorker.register() is called -- before
+  // any .then()/.catch() chain can attach -- which otherwise surfaces as an uncaught
+  // runtime error on page load even though the rest of the app is unaffected.
+  try {
+    if (!("serviceWorker" in navigator)) return Promise.resolve(null);
+    return navigator.serviceWorker.register("./driver-sw.js")
+      .then(function(reg) {
+        _swRegistration = reg;
+        tryRegisterPeriodicSync(reg);
+        return reg;
+      })
+      .catch(function() { return null; });
+  } catch (e) {
+    return Promise.resolve(null);
+  }
 }
 
 // Periodic Background Sync requires the page to be an installed PWA AND the
