@@ -398,6 +398,13 @@ function getTodayTab(){
 
 window.onload = function() {
   loadRushRoster();
+  // 2026-11-19 FIX: the service worker was previously only registered INSIDE login(),
+  // so on the login/search screen (before any driver has logged in) Chrome had no
+  // service worker to evaluate yet, and never fired beforeinstallprompt -- which is
+  // why the Install button never appeared. Register it immediately on page load
+  // instead, independent of login state, so installability is established as early
+  // as possible.
+  registerDriverServiceWorker();
   var savedId = SAFE_STORE.getItem("dud3_driver_id");
   if (savedId) { currentDaId = savedId; document.getElementById("da-id-input").value = savedId; login(); }
   document.addEventListener("click", function(e){
