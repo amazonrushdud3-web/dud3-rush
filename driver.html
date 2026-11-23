@@ -328,7 +328,7 @@ let lastRenderedQrId = "";
 
 function loadRushRoster() {
   var url = API_URL + "?action=getRushRoster&sheetUrl=" + encodeURIComponent(SHEET_URL);
-  fetch(url, { cache: "no-store" })
+  fetchWithTimeout(url, { cache: "no-store" }, 15000)
     .then(function(r){ return r.json(); })
     .then(function(res){ if (res && res.success && res.roster) rushRoster = res.roster; })
     .catch(function(){});
@@ -493,18 +493,31 @@ function logout() {
   if (nb) nb.style.display = "none";
 }
 
+// 2026-11-23 CRITICAL FIX: browsers put NO default timeout on fetch(). If a request
+// to Apps Script hangs (cold start / flaky network), the Promise never settles, and
+// the loading spinner would spin forever with no error -- the exact "stuck" symptom
+// reported. Wrapping every fetch with a hard client-side timeout guarantees it
+// always resolves or rejects within a bounded time.
+function fetchWithTimeout(url, options, timeoutMs) {
+  var controller = (typeof AbortController !== "undefined") ? new AbortController() : null;
+  var opts = Object.assign({}, options || {});
+  if (controller) opts.signal = controller.signal;
+  var timer = controller ? setTimeout(function(){ controller.abort(); }, timeoutMs) : null;
+  return fetch(url, opts).finally(function(){ if (timer) clearTimeout(timer); });
+}
+
 function fetchData(daId) {
   if (!daId) return;
   document.getElementById("loader").style.display = "block";
 
   var payload = { action: 'getDaStatus', daId: daId, sheetUrl: SHEET_URL, dayTab: getTodayTab() };
 
-  fetch(API_URL, {
+  fetchWithTimeout(API_URL, {
     method: 'POST',
     headers: { "Content-Type": "text/plain;charset=utf-8" },
     body: JSON.stringify(payload),
     cache: 'no-store'
-  })
+  }, 15000)
   .then(function(res){ return res.json(); })
   .then(function(res){ handleStatusResponse(res); })
   .catch(function(){
@@ -512,7 +525,7 @@ function fetchData(daId) {
       + "&daId=" + encodeURIComponent(daId)
       + "&sheetUrl=" + encodeURIComponent(SHEET_URL)
       + "&dayTab=" + encodeURIComponent(getTodayTab());
-    fetch(url, { method: 'GET', cache: 'no-store' })
+    fetchWithTimeout(url, { method: 'GET', cache: 'no-store' }, 15000)
       .then(function(res){ return res.json(); })
       .then(function(res){ handleStatusResponse(res); })
       .catch(function(err){
