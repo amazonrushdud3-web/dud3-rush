@@ -539,6 +539,14 @@ a { color: var(--color-link, var(--color-primary)); }</style>
       display: flex; align-items: center; justify-content: center;
       cursor: pointer; font-size: 13px; font-weight: 900; line-height: 1;
     }
+    /* 2026-11-23: labeled "Dismiss" button variant (used for the Violator-on-Receive
+       banner specifically, per request) instead of the small "X" icon. */
+    .scan-card-dismiss-btn {
+      position: absolute; top: 8px; right: 8px; z-index: 2;
+      border: none; border-radius: 999px; background: rgba(255,255,255,0.32);
+      color: inherit; font-size: 11px; font-weight: 800; padding: 5px 10px; cursor: pointer;
+    }
+    .scan-card-dismiss-btn:active { transform: scale(0.95); }
     .scan-card-countdown {
       position: absolute; bottom: 7px; right: 10px; z-index: 2;
       font-size: 10px; font-weight: 800; opacity: 0.75; font-variant-numeric: tabular-nums;
@@ -553,6 +561,18 @@ a { color: var(--color-link, var(--color-primary)); }</style>
     .scan-card.theme-present .scan-card-title, .scan-card.theme-present .scan-card-sub, .scan-card.theme-present .scan-card-close, .scan-card.theme-present .scan-card-countdown { color: #04240F; }
     .scan-card.theme-late { background: linear-gradient(120deg, rgba(225,165,40,0.94), rgba(255,230,160,0.9)); }
     .scan-card.theme-late .scan-card-title, .scan-card.theme-late .scan-card-sub, .scan-card.theme-late .scan-card-close, .scan-card.theme-late .scan-card-countdown { color: #2B1E02; }
+    /* 2026-11-23: dedicated DARK ORANGE theme for "DA was not sent from OFFYARD" --
+       per request, text color chosen for strong readability against the dark-orange
+       background (near-white, not a near-black that would wash out). */
+    .scan-card.theme-notoffyard { background: linear-gradient(120deg, rgba(180,90,10,0.96), rgba(230,140,40,0.92)); }
+    .scan-card.theme-notoffyard .scan-card-title, .scan-card.theme-notoffyard .scan-card-sub, .scan-card.theme-notoffyard .scan-card-close, .scan-card.theme-notoffyard .scan-card-countdown { color: #FFF4E8; }
+    /* "Already scanned / Already Received" -- neutral slate, distinct from error reds */
+    .scan-card.theme-duplicate { background: linear-gradient(120deg, rgba(90,100,120,0.95), rgba(150,160,175,0.9)); }
+    .scan-card.theme-duplicate .scan-card-title, .scan-card.theme-duplicate .scan-card-sub, .scan-card.theme-duplicate .scan-card-close, .scan-card.theme-duplicate .scan-card-countdown { color: #F5F7FA; }
+    /* dedicated RED theme for "Violator scanned at Receive" per explicit request
+       (red banner, 5s, Dismiss button, closes on next scan) */
+    .scan-card.theme-violator { background: linear-gradient(120deg, rgba(200,30,40,0.96), rgba(235,90,70,0.92)); }
+    .scan-card.theme-violator .scan-card-title, .scan-card.theme-violator .scan-card-sub, .scan-card.theme-violator .scan-card-close, .scan-card.theme-violator .scan-card-countdown { color: #FFF1EE; }
 
     main {
       flex: 1; overflow-y: auto; overflow-x: hidden;
@@ -1374,8 +1394,10 @@ a { color: var(--color-link, var(--color-primary)); }</style>
           playTone([1568, 2093], 0.3, [0.06, 0.09], "sine");
           if (navigator.vibrate) navigator.vibrate(35);
         } else if (type === "violation") {
-          playTone([180, 150, 120], 0.42, [0.14, 0.14, 0.2], "square");
-          if (navigator.vibrate) navigator.vibrate([120, 60, 120, 60, 160]);
+          // 2026-11-23: louder + more insistent per explicit "loud warning sound"
+          // request -- higher gain and an extra vibration pulse.
+          playTone([180, 150, 120], 0.55, [0.16, 0.16, 0.24], "square");
+          if (navigator.vibrate) navigator.vibrate([140, 60, 140, 60, 140, 60, 200]);
         } else if (type === "action") {
           playTone([880], 0.26, [0.08], "triangle");
           if (navigator.vibrate) navigator.vibrate(25);
@@ -1384,6 +1406,11 @@ a { color: var(--color-link, var(--color-primary)); }</style>
           // the harsh violation/error tones, matching the softer banner style requested.
           playTone([660, 494], 0.34, [0.1, 0.16], "sine");
           if (navigator.vibrate) navigator.vibrate([90, 50, 90]);
+        } else if (type === "error") {
+          // 2026-11-23: louder per explicit "loud warning sound" request -- used by
+          // the new NOT_SENT_FROM_OFFYARD / ALREADY_RECEIVED scan-block cards.
+          playTone([320, 200], 0.5, [0.14, 0.24], "sawtooth");
+          if (navigator.vibrate) navigator.vibrate([120, 60, 160]);
         } else {
           playTone([320, 200], 0.4, [0.12, 0.2], "sawtooth");
           if (navigator.vibrate) navigator.vibrate([100, 40, 100]);
@@ -1559,23 +1586,46 @@ a { color: var(--color-link, var(--color-primary)); }</style>
     // here so every existing call site keeps working unchanged). theme = one of
     // "break" | "notsent" | "overdue" | "present" | "late". durationSecs controls
     // both the auto-close timer AND the visible countdown number, per spec.
-    function showScanCard(theme, icon, title, sub, durationSecs) {
+    // 2026-11-23: tracks every currently-visible scan card so a NEW scan (any tab) can
+    // auto-dismiss old ones first, per the "banner should also close automatically if
+    // a new QR scan is performed" requirement.
+    var _activeScanCards = [];
+    function dismissAllScanCards() {
+      _activeScanCards.forEach(function(entry) {
+        try { clearInterval(entry.tick); clearTimeout(entry.timer); if (entry.card.parentNode) entry.card.remove(); } catch (e) {}
+      });
+      _activeScanCards = [];
+    }
+
+    // showDismissButton=true renders a labeled "Dismiss" pill instead of the small
+    // "X" icon, per the explicit request for the Violator-on-Receive banner.
+    function showScanCard(theme, icon, title, sub, durationSecs, showDismissButton) {
       var holder = document.getElementById("break-card-holder");
       if (!holder) return;
       var secs = durationSecs || 15;
 
       var card = document.createElement("div");
       card.className = "scan-card theme-" + theme;
+      var closeHtml = showDismissButton
+        ? '<button type="button" class="scan-card-dismiss-btn">Dismiss</button>'
+        : '<span class="scan-card-close">&times;</span>';
       card.innerHTML =
         '<div class="scan-card-icon">' + icon + '</div>' +
         '<div class="scan-card-body">' +
           '<div class="scan-card-title">' + escapeHtml(title) + '</div>' +
           (sub ? '<div class="scan-card-sub">' + escapeHtml(sub) + '</div>' : '') +
         '</div>' +
-        '<span class="scan-card-close">&times;</span>' +
+        closeHtml +
         '<span class="scan-card-countdown">' + secs + 's</span>';
-      var closeEl = card.querySelector(".scan-card-close");
-      if (closeEl) closeEl.onclick = function() { card.remove(); };
+
+      function removeThisCard() {
+        clearInterval(tick);
+        clearTimeout(autoTimer);
+        if (card.parentNode) card.remove();
+        _activeScanCards = _activeScanCards.filter(function(e){ return e.card !== card; });
+      }
+      var closeEl = card.querySelector(".scan-card-close") || card.querySelector(".scan-card-dismiss-btn");
+      if (closeEl) closeEl.onclick = removeThisCard;
 
       var countdownEl = card.querySelector(".scan-card-countdown");
       var remaining = secs;
@@ -1586,7 +1636,8 @@ a { color: var(--color-link, var(--color-primary)); }</style>
       }, 1000);
 
       holder.appendChild(card);
-      setTimeout(function() { clearInterval(tick); if (card.parentNode) card.remove(); }, secs * 1000);
+      var autoTimer = setTimeout(removeThisCard, secs * 1000);
+      _activeScanCards.push({ card: card, tick: tick, timer: autoTimer });
     }
 
     function showBreakCard(daName, breakRange, breakEndsAt) {
@@ -1613,13 +1664,25 @@ a { color: var(--color-link, var(--color-primary)); }</style>
     // tab -- covers both (a) a DA scanned at Receive who was never Sent at all, and
     // (b) a DA whose turn already Auto-OFD'd (expired) before they were Received.
     function showReceiveBlockedCard(violationType, daName, extra) {
-      if (violationType === "AUTO_OFD_EXPIRED") {
+      if (violationType === "NOT_SENT_FROM_OFFYARD" || violationType === "AUTO_OFD_EXPIRED") {
+        // 2026-11-23: exact requested message + dedicated dark-orange theme. Covers
+        // both "never sent" and "already Auto-OFD'd" (Received-but-not-yet-sent-
+        // again) -- both must scan into WAITING next, never directly into Receive.
         showScanCard(
-          "overdue",
-          "⏱️⚠️",
-          "DA OVERDUE (Turn Expired)",
-          (daName || "DA") + " was Auto-OFD\'d at " + (extra || "--:--") + " without being Received. Send again from Waiting.",
-          15
+          "notoffyard",
+          "🚚❌",
+          "DA was not sent from OFFYARD",
+          "Send back to OFFYARD" + (daName ? " — " + daName : ""),
+          5
+        );
+      } else if (violationType === "ALREADY_RECEIVED") {
+        // 2026-11-23: duplicate-scan guard -- same QR scanned twice in a row.
+        showScanCard(
+          "duplicate",
+          "ℹ️",
+          "Already Scanned",
+          (daName || "This DA") + " is already Received In" + (extra ? " at " + extra : "") + ".",
+          5
         );
       } else {
         showScanCard(
@@ -1635,7 +1698,7 @@ a { color: var(--color-link, var(--color-primary)); }</style>
     var OUTBOX_KEY = "dud3_outbox_v1";
     // Bump on every Index.html change. Shown in the header (FE) next to the backend (BE)
     // version so you can confirm after deploying that the live app runs the latest code.
-    var FRONTEND_VERSION = "v2026.11.23-4";
+    var FRONTEND_VERSION = "v2026.11.23-5";
 
     function loadOutbox() {
       try { return JSON.parse(SAFE_STORE.getItem(OUTBOX_KEY) || "[]") || []; }
@@ -2457,6 +2520,7 @@ function postOnce(action, payload, clientId) {
       initAudio();
       var daId = (queryId || document.getElementById("break-inp").value || "").trim();
       if (!daId || !isScanCooledDown("BRK_" + daId)) return;
+      dismissAllScanCards();
       document.getElementById("break-inp").value = "";
       var dd = document.getElementById("break-search-results"); if (dd) dd.style.display = "none";
 
@@ -2584,6 +2648,7 @@ function postOnce(action, payload, clientId) {
       initAudio();
       var daId = (queryId || document.getElementById("attend-inp").value || "").trim();
       if (!daId || !isScanCooledDown("ATT_" + daId)) return;
+      dismissAllScanCards();
       document.getElementById("attend-inp").value = "";
       document.getElementById("attend-search-results").style.display = "none";
 
@@ -2674,6 +2739,7 @@ function postOnce(action, payload, clientId) {
       initAudio();
       var daId = (queryId || document.getElementById("waiting-inp").value || "").trim();
       if (!daId || !isScanCooledDown("WAIT_" + daId)) return;
+      dismissAllScanCards();
       document.getElementById("waiting-inp").value = "";
       document.getElementById("waiting-search-results").style.display = "none";
 
@@ -2861,6 +2927,7 @@ function postOnce(action, payload, clientId) {
       initAudio();
       var daId = (queryId || document.getElementById("receive-inp").value || "").trim();
       if (!daId || !isScanCooledDown("RUSH_" + daId)) return;
+      dismissAllScanCards();
       document.getElementById("receive-inp").value = "";
       document.getElementById("receive-search-results").style.display = "none";
 
@@ -2960,20 +3027,34 @@ function postOnce(action, payload, clientId) {
 
       sendReq("rushScanIn", { daId: canonicalId, receiverName: S.ymName }, function(err, res) {
         if (res && res.violatorBlock) {
+          // 2026-11-23: dedicated RED banner, 5s auto-close, labeled Dismiss button,
+          // loud warning sound + vibration -- per the explicit request for Violator
+          // scanned at Receive. dismissAllScanCards() already ran at the top of this
+          // handler for the NEXT scan; this card itself still auto-closes after 5s
+          // or on Dismiss, whichever comes first.
           delete S.pendingReceived[canonicalUp];
           playBeep("violation");
-          showBanner("(" + (res.daName || canonicalId) + ") Sent Back to Off Yard – Receive Time Exceeded.", "danger", 35);
+          showScanCard("violator", "\uD83D\uDEAB", "VIOLATOR — Receive Blocked",
+            (res.daName || canonicalId) + " was Sent Back to Off Yard — Receive Time Exceeded.",
+            5, true);
           pollRoster();
           switchTab("tab-violators");
-        } else if (res && res.violation && (res.violationType === "AUTO_OFD_EXPIRED" || res.violationType === "NOT_SENT")) {
-          // 2026-11-23: themed scan-notice card for these two specific rejection
-          // reasons (Auto-OFD'd/expired turn, or never Sent at all) instead of the
-          // plain banner -- all OTHER violation types keep the existing plain-banner
-          // behavior in the branch below, unchanged.
+        } else if (res && res.violation && (res.violationType === "NOT_SENT_FROM_OFFYARD" || res.violationType === "AUTO_OFD_EXPIRED" || res.violationType === "NOT_SENT")) {
+          // 2026-11-23: themed scan-notice card for these rejection reasons (never
+          // Sent at all, or already Auto-OFD'd / not re-sent from OFFYARD) instead of
+          // the plain banner -- all OTHER violation types keep the existing
+          // plain-banner behavior in the branch below, unchanged.
           delete S.pendingReceived[canonicalUp];
           playBeep("error");
           showReceiveBlockedCard(res.violationType, res.daName || canonicalId, res.ofdTime);
           pollRoster();
+        } else if (res && res.violation && res.violationType === "ALREADY_RECEIVED") {
+          // 2026-11-23 NEW: duplicate-scan guard -- same QR scanned twice. Does NOT
+          // treat this as a real failure that needs a sheet-sync rollback beyond the
+          // pending-received cleanup, since the DA genuinely IS already Received.
+          delete S.pendingReceived[canonicalUp];
+          playBeep("error");
+          showReceiveBlockedCard(res.violationType, res.daName || canonicalId, res.rushInTime);
         } else if (res && res.violation) {
           delete S.pendingReceived[canonicalUp];
           playBeep("error");
