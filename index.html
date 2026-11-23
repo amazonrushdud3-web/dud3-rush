@@ -499,6 +499,31 @@ a { color: var(--color-link, var(--color-primary)); }</style>
     .banner-success { background: linear-gradient(90deg,#128A5E,#1BA574); color: #FFF; }
     .banner-close { cursor: pointer; font-size: 18px; font-weight: 900; padding: 0 6px; opacity:.85; }
 
+    /* 2026-11-23: "On Break" scan-warning card -- a distinct, rounded gradient-card
+       style (per the reference screenshot) separate from the existing thin top-strip
+       .banner system. Used ONLY for the new break-scan warnings below; nothing
+       about the existing .banner/.banner-* styles above is changed. */
+    #break-card-holder { position: fixed; top: calc(var(--safe-top) + 10px); left: 12px; right: 12px; z-index: 9500; pointer-events: none; }
+    .break-card {
+      pointer-events: auto;
+      display: flex; align-items: center; gap: 13px;
+      padding: 14px 16px; border-radius: 18px; margin-bottom: 10px;
+      background: linear-gradient(120deg, rgba(66,165,255,0.92), rgba(255,180,90,0.88));
+      box-shadow: 0 14px 34px rgba(0,0,0,0.38);
+      backdrop-filter: blur(10px);
+      animation: breakCardIn 0.3s cubic-bezier(.2,.9,.3,1.3);
+    }
+    @keyframes breakCardIn { from { transform: translateY(-16px) scale(0.97); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+    .break-card-icon {
+      flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%;
+      background: rgba(255,255,255,0.28); display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+    .break-card-body { flex: 1; min-width: 0; }
+    .break-card-title { font-size: 14px; font-weight: 900; color: #06240F; line-height: 1.3; }
+    .break-card-sub { font-size: 11.5px; font-weight: 700; color: #0A2A14; opacity: 0.85; margin-top: 2px; }
+    .break-card-close { flex: 0 0 auto; cursor: pointer; font-size: 16px; font-weight: 900; color: #06240F; opacity: 0.7; padding: 2px 6px; }
+
     main {
       flex: 1; overflow-y: auto; overflow-x: hidden;
       padding: 14px 14px calc(var(--safe-bottom) + 80px);
@@ -874,6 +899,7 @@ a { color: var(--color-link, var(--color-primary)); }</style>
   </div>
 
   <div id="banner-holder"></div>
+  <div id="break-card-holder"></div>
 
   <main id="main-content">
 
@@ -1323,6 +1349,11 @@ a { color: var(--color-link, var(--color-primary)); }</style>
         } else if (type === "action") {
           playTone([880], 0.26, [0.08], "triangle");
           if (navigator.vibrate) navigator.vibrate(25);
+        } else if (type === "break") {
+          // 2026-11-23: distinct "on break" alert tone — noticeable but gentler than
+          // the harsh violation/error tones, matching the softer banner style requested.
+          playTone([660, 494], 0.34, [0.1, 0.16], "sine");
+          if (navigator.vibrate) navigator.vibrate([90, 50, 90]);
         } else {
           playTone([320, 200], 0.4, [0.12, 0.2], "sawtooth");
           if (navigator.vibrate) navigator.vibrate([100, 40, 100]);
@@ -1472,10 +1503,63 @@ a { color: var(--color-link, var(--color-primary)); }</style>
       setTimeout(function() { if (b.parentNode) b.remove(); }, secs * 1000);
     }
 
+    // 2026-11-23: formats minutes-of-day (0-1439) as "HH:MM", used only by the new
+    // break-scan warning card below -- does not touch any existing time formatting.
+    function _minsToHHMMLocal(mins) {
+      if (mins == null || isNaN(mins)) return "--:--";
+      var m = ((mins % 1440) + 1440) % 1440;
+      var h = Math.floor(m / 60), mm = m % 60;
+      return (h < 10 ? "0" + h : h) + ":" + (mm < 10 ? "0" + mm : mm);
+    }
+
+    // 2026-11-23: "On Break" scan-warning card. Shown when a DA on break is scanned
+    // in Waiting or Receive -- separate from the existing showBanner() top-strip
+    // system per the requested rounded-card style (reference screenshot). Does not
+    // replace or alter showBanner/playBeep for any other existing scenario.
+    //   daName:      driver's display name
+    //   breakRange:  raw "HH:MM-HH:MM" string from the roster (may be "On Break" for
+    //                a manual action-break with no fixed schedule)
+    //   breakEndsAt: minutes-of-day the scheduled break ends (undefined/null for an
+    //                open-ended action break -- falls back gracefully, no countdown)
+    function showBreakCard(daName, breakRange, breakEndsAt) {
+      var holder = document.getElementById("break-card-holder");
+      if (!holder) return;
+
+      var rangeParts = String(breakRange || "").split("-");
+      var startStr = rangeParts.length === 2 ? rangeParts[0].trim() : "";
+      var endStr = rangeParts.length === 2 ? rangeParts[1].trim() : "";
+
+      var remainingTxt = "";
+      if (breakEndsAt !== undefined && breakEndsAt !== null && !isNaN(breakEndsAt)) {
+        var nowMins = parseHHMM(getDubaiHHMM());
+        var remaining = breakEndsAt - nowMins;
+        if (remaining < 0) remaining += 24 * 60;
+        remainingTxt = (remaining < 10 ? "0" + remaining : remaining) + "M remaining";
+      }
+
+      var titleTxt = (startStr && endStr)
+        ? (daName + " is Currently on BREAK " + startStr + " to " + endStr + (remainingTxt ? " - " + remainingTxt : ""))
+        : (daName + " is Currently on BREAK" + (breakRange ? " (" + breakRange + ")" : ""));
+
+      var card = document.createElement("div");
+      card.className = "break-card";
+      card.innerHTML =
+        '<div class="break-card-icon">☕</div>' +
+        '<div class="break-card-body">' +
+          '<div class="break-card-title">' + escapeHtml(titleTxt) + '</div>' +
+          '<div class="break-card-sub">Scan blocked while this DA is on break.</div>' +
+        '</div>' +
+        '<span class="break-card-close">&times;</span>';
+      var closeEl = card.querySelector(".break-card-close");
+      if (closeEl) closeEl.onclick = function() { card.remove(); };
+      holder.appendChild(card);
+      setTimeout(function() { if (card.parentNode) card.remove(); }, 15000);
+    }
+
     var OUTBOX_KEY = "dud3_outbox_v1";
     // Bump on every Index.html change. Shown in the header (FE) next to the backend (BE)
     // version so you can confirm after deploying that the live app runs the latest code.
-    var FRONTEND_VERSION = "v2026.11.19-7";
+    var FRONTEND_VERSION = "v2026.11.23-2";
 
     function loadOutbox() {
       try { return JSON.parse(SAFE_STORE.getItem(OUTBOX_KEY) || "[]") || []; }
@@ -1504,24 +1588,40 @@ a { color: var(--color-link, var(--color-primary)); }</style>
       return "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
     }
 
-    function postOnce(action, payload, clientId) {
+    // 2026-11-23 CRITICAL FIX: browsers put NO default timeout on fetch(). If a POST to
+// Apps Script ever hangs (a well-known real-world occurrence right after a fresh
+// deployment / "cold start", or a flaky network), the fetch Promise NEVER resolves
+// or rejects -- it just hangs forever. That left sendReq's retry chain waiting
+// indefinitely, so "Signing in..." (or any other mutating action) could freeze the
+// UI permanently with no error ever shown, exactly as reported. Fixed by wrapping
+// every fetch with a hard client-side timeout (AbortController) so it ALWAYS
+// settles one way or another within a bounded time.
+function fetchWithTimeout(url, options, timeoutMs) {
+  var controller = (typeof AbortController !== "undefined") ? new AbortController() : null;
+  var opts = Object.assign({}, options || {});
+  if (controller) opts.signal = controller.signal;
+  var timer = controller ? setTimeout(function(){ controller.abort(); }, timeoutMs) : null;
+  return fetch(url, opts).finally(function(){ if (timer) clearTimeout(timer); });
+}
+
+function postOnce(action, payload, clientId) {
       // Auto-attach the logged-in session token to every request's payload (server-side
       // admin actions require it; other actions simply ignore it). Keeps every existing
       // call site unchanged.
       var _payload = Object.assign({}, payload || {});
       if (S.authToken && !_payload.token) _payload.token = S.authToken;
       var bodyData = { action: action, sheetUrl: S.sheetUrl, clientId: clientId, payload: _payload };
-      return fetch(S.api, {
+      return fetchWithTimeout(S.api, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify(bodyData)
-      })
+      }, 15000)
         .then(function(res) { return res.json(); })
         .catch(function() {
           var url = S.api + "?action=" + encodeURIComponent(action) +
                     "&clientId=" + encodeURIComponent(clientId) +
                     "&payload=" + encodeURIComponent(JSON.stringify(_payload));
-          return fetch(url).then(function(res) { return res.json(); });
+          return fetchWithTimeout(url, {}, 15000).then(function(res) { return res.json(); });
         });
     }
 
@@ -1550,9 +1650,17 @@ a { color: var(--color-link, var(--color-primary)); }</style>
       var MAX_RETRIES = 4;
       var _settled = false;
       function settle() { if (!_settled) { _settled = true; S.inflightMutations = Math.max(0, S.inflightMutations - 1); } }
-      // Watchdog: never let a stuck retry pin inflightMutations > 0 (which would freeze the
-      // full-roster apply). Force-settle after a hard budget regardless of retry state.
-      setTimeout(settle, 12000);
+      // 2026-11-23 FIX: the watchdog previously only called settle() -- it reset the
+      // internal inflightMutations counter but NEVER told the caller anything went
+      // wrong, so a hung fetch (see fetchWithTimeout above) left the UI stuck showing
+      // "Signing in..." / a disabled button forever with no error ever surfacing.
+      // Now it also fires the callback with a timeout error so every caller's UI
+      // (e.g. doLoginAction's btn.disabled=false / "Sign In" reset) always recovers.
+      setTimeout(function() {
+        if (_settled) return;
+        settle();
+        if (callback) callback(new Error("Request timed out. Please check your connection and try again."));
+      }, 12000);
       function attempt(n) {
         postOnce(action, payload, clientId)
           .then(function(data) {
@@ -1560,6 +1668,10 @@ a { color: var(--color-link, var(--color-primary)); }</style>
               setTimeout(function(){ attempt(n + 1); }, 400 + n * 350); // 0.4s,0.75s,1.1s,1.45s
               return;
             }
+            // Guard: if the watchdog already force-settled (callback already fired
+            // with a timeout error), do not fire it again when this late response
+            // finally arrives -- just clean up the outbox silently.
+            if (_settled) { outboxRemove(clientId); return; }
             settle();
             outboxRemove(clientId);
             if (callback) callback(null, data, currentVersion);
@@ -1569,6 +1681,7 @@ a { color: var(--color-link, var(--color-primary)); }</style>
               setTimeout(function(){ attempt(n + 1); }, 400 + n * 350);
               return;
             }
+            if (_settled) return;
             settle();
             if (callback) callback(ex);
           });
@@ -2490,8 +2603,8 @@ a { color: var(--color-link, var(--color-primary)); }</style>
 
       var daObj = (S.roster || []).find(function(d) { return d.daId.toUpperCase() === daId.toUpperCase(); });
       if (daObj && daObj.inBreak) {
-        playBeep("error");
-        showBanner("Blocked: " + daObj.daName + " is currently on Break (" + daObj.breakRange + ")", "danger", 15);
+        playBeep("break");
+        showBreakCard(daObj.daName || daId, daObj.breakRange, daObj.breakEndsAt);
         return;
       }
 
@@ -2682,6 +2795,17 @@ a { color: var(--color-link, var(--color-primary)); }</style>
         playBeep("violation");
         showBanner("(" + (localViolator.daName || daId) + ") Sent Back to Off Yard – Receive Time Exceeded.", "danger", 35);
         switchTab("tab-violators");
+        return;
+      }
+
+      // 2026-11-23: NEW -- the Receive tab previously had NO break check at all, so a
+      // DA on break could be scanned into Receive with no warning whatsoever. Added
+      // here, same priority position as the Violator check above (checked before any
+      // Sent/Waiting lookup), per the requested matching break-warning card/sound.
+      var _recvBreakObj = (S.roster || []).find(function(d) { return d.daId.toUpperCase() === daId.toUpperCase(); });
+      if (_recvBreakObj && _recvBreakObj.inBreak) {
+        playBeep("break");
+        showBreakCard(_recvBreakObj.daName || daId, _recvBreakObj.breakRange, _recvBreakObj.breakEndsAt);
         return;
       }
 
