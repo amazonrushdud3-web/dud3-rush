@@ -1520,17 +1520,21 @@ a { color: var(--color-link, var(--color-primary)); }</style>
       return rawReason ? (" \u2014 " + rawReason) : " \u2014 Entry Time Out";
     }
 
+    // 2026-11-23: showBanner() now renders through the SAME themed scan-card system
+    // as the break/violator/overdue cards -- this upgrades every existing call site
+    // (61 of them across the app) to the new rounded dual-tone-gradient look with
+    // zero changes to any caller or any app logic/scan processing. The color/icon
+    // ADAPTS automatically from the existing "type" argument callers already pass
+    // (danger/warning/success), so nothing about how/when a banner is shown changes --
+    // only how it LOOKS. Unrecognized/legacy "info" type falls back to a neutral theme.
     function showBanner(text, type, timeoutSecs) {
-      var holder = document.getElementById("banner-holder");
-      if (!holder) return;
-      var b = document.createElement("div");
-      b.className = "banner banner-" + (type || "warning");
-      b.innerHTML = '<span>' + text + '</span><span class="banner-close">&times;</span>';
-      var closeEl = b.querySelector(".banner-close");
-      if (closeEl) closeEl.onclick = function() { b.remove(); };
-      holder.appendChild(b);
-      var secs = timeoutSecs || (type === "danger" ? 30 : 6);
-      setTimeout(function() { if (b.parentNode) b.remove(); }, secs * 1000);
+      var t = type || "warning";
+      var secs = timeoutSecs || (t === "danger" ? 30 : 6);
+      var theme, icon;
+      if (t === "danger") { theme = "overdue"; icon = "⚠️"; }
+      else if (t === "success") { theme = "present"; icon = "✅"; }
+      else { theme = "late"; icon = "⚠️"; } // warning / default
+      showScanCard(theme, icon, text, "", secs);
     }
 
     // 2026-11-23: formats minutes-of-day (0-1439) as "HH:MM", used only by the new
@@ -1566,7 +1570,7 @@ a { color: var(--color-link, var(--color-primary)); }</style>
         '<div class="scan-card-icon">' + icon + '</div>' +
         '<div class="scan-card-body">' +
           '<div class="scan-card-title">' + escapeHtml(title) + '</div>' +
-          '<div class="scan-card-sub">' + escapeHtml(sub) + '</div>' +
+          (sub ? '<div class="scan-card-sub">' + escapeHtml(sub) + '</div>' : '') +
         '</div>' +
         '<span class="scan-card-close">&times;</span>' +
         '<span class="scan-card-countdown">' + secs + 's</span>';
@@ -1631,7 +1635,7 @@ a { color: var(--color-link, var(--color-primary)); }</style>
     var OUTBOX_KEY = "dud3_outbox_v1";
     // Bump on every Index.html change. Shown in the header (FE) next to the backend (BE)
     // version so you can confirm after deploying that the live app runs the latest code.
-    var FRONTEND_VERSION = "v2026.11.23-3";
+    var FRONTEND_VERSION = "v2026.11.23-4";
 
     function loadOutbox() {
       try { return JSON.parse(SAFE_STORE.getItem(OUTBOX_KEY) || "[]") || []; }
@@ -2860,36 +2864,45 @@ function postOnce(action, payload, clientId) {
       document.getElementById("receive-inp").value = "";
       document.getElementById("receive-search-results").style.display = "none";
 
-      var localViolator = (S.violators || []).find(function(v) {
-        return String(v.daId).toUpperCase() === daId.toUpperCase();
-      });
-      if (localViolator) {
-        playBeep("violation");
-        showBanner("(" + (localViolator.daName || daId) + ") Sent Back to Off Yard – Receive Time Exceeded.", "danger", 35);
-        switchTab("tab-violators");
-        return;
-      }
-
-      // 2026-11-23: NEW -- the Receive tab previously had NO break check at all, so a
-      // DA on break could be scanned into Receive with no warning whatsoever. Added
-      // here, same priority position as the Violator check above (checked before any
-      // Sent/Waiting lookup), per the requested matching break-warning card/sound.
-      var _recvBreakObj = (S.roster || []).find(function(d) { return d.daId.toUpperCase() === daId.toUpperCase(); });
-      if (_recvBreakObj && _recvBreakObj.inBreak) {
-        playBeep("break");
-        showBreakCard(_recvBreakObj.daName || daId, _recvBreakObj.breakRange, _recvBreakObj.breakEndsAt);
-        return;
-      }
-
       var nowStr = getDubaiHHMM();
       var wantUp = daId.toUpperCase();
 
+      // 2026-11-23 FIX: resolve the CANONICAL id (handles a scan via a replacement
+      // QR, which differs from the roster's own DA id) BEFORE checking the local
+      // violator list. The violator record always stores the canonical id -- a
+      // raw/replacement-id scan was previously checked against S.violators using the
+      // UNRESOLVED id, so a violator scanned via their replacement QR silently slipped
+      // past this pre-check and fell straight into the optimistic "Instant Received"
+      // path (flashing success before the server's own correct rejection arrived a
+      // moment later) -- this is what made it look like "violators aren't blocked on
+      // Receive" even though the backend has always rejected them correctly.
       var rosterMatch = (S.roster || []).find(function(d) {
         return d.daId.toUpperCase() === wantUp ||
                (d.replacement && d.replacement.toUpperCase().indexOf("(" + wantUp + ")") !== -1);
       });
       var canonicalId = rosterMatch ? rosterMatch.daId : daId;
       var canonicalUp = canonicalId.toUpperCase();
+
+      var localViolator = (S.violators || []).find(function(v) {
+        return String(v.daId).toUpperCase() === canonicalUp || String(v.daId).toUpperCase() === wantUp;
+      });
+      if (localViolator) {
+        playBeep("violation");
+        showBanner("(" + (localViolator.daName || canonicalId) + ") Sent Back to Off Yard – Receive Time Exceeded.", "danger", 35);
+        switchTab("tab-violators");
+        return;
+      }
+
+      // 2026-11-23: the Receive tab previously had NO break check at all, so a
+      // DA on break could be scanned into Receive with no warning whatsoever. Added
+      // here, same priority position as the Violator check above (checked before any
+      // Sent/Waiting lookup), per the requested matching break-warning card/sound.
+      var _recvBreakObj = rosterMatch || (S.roster || []).find(function(d) { return d.daId.toUpperCase() === wantUp; });
+      if (_recvBreakObj && _recvBreakObj.inBreak) {
+        playBeep("break");
+        showBreakCard(_recvBreakObj.daName || daId, _recvBreakObj.breakRange, _recvBreakObj.breakEndsAt);
+        return;
+      }
 
       var foundSentIdx = -1;
       for (var i = 0; i < (S.sentList || []).length; i++) {
