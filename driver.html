@@ -217,6 +217,10 @@
     🔔 Tap to Enable Alerts
   </button>
 
+  <button id="btn-link-telegram" class="btn" style="margin-bottom:8px; background:linear-gradient(135deg,#2AABEE,#229ED9); color:#fff;" onclick="linkTelegramAction()">
+    ✈️ Get Loud Alerts on Telegram
+  </button>
+
   <div class="card identity-card">
     <div class="qr-thumb-wrap" id="qr-box"></div>
     <div class="id-alias" id="d-alias">--</div>
@@ -803,6 +807,24 @@ function refreshNotifyButton() {
       if (typeof registerDriverSW === "function" && !_driverSW) registerDriverSW();
     }
   } catch (e) { btn.style.display = "none"; }
+}
+
+// 2026-11-24: one-tap Telegram linking. Opens the bot with a deep-link that
+// pre-fills "/start <DA ID>", so when the driver taps Start, the backend webhook
+// (handleTelegramUpdate) instantly links their Telegram chat to their DA ID and they
+// start receiving loud "batch sent" alerts -- which work even when the phone is
+// locked or they're in another app (Telegram is a native app). TELEGRAM_BOT_USERNAME
+// must match the bot you created (@DUD3_YARD_BOT).
+var TELEGRAM_BOT_USERNAME = "DUD3_YARD_BOT";
+function linkTelegramAction() {
+  var daId = (currentDaId || "").trim();
+  if (!daId) {
+    showToast("Please log in first, then tap Get Loud Alerts.", "warn");
+    return;
+  }
+  var url = "https://t.me/" + TELEGRAM_BOT_USERNAME + "?start=" + encodeURIComponent(daId);
+  showToast("Opening Telegram -- tap START to link, then set a loud tone for the chat.", "info");
+  try { window.open(url, "_blank"); } catch (e) { location.href = url; }
 }
 
 function requestNotifyPermission() {
