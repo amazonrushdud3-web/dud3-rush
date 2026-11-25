@@ -1,0 +1,22 @@
+{
+  "id": "./index.html?app=rushpro",
+  "name": "DUD3 Rush PRO",
+  "short_name": "Rush PRO",
+  "description": "DUD3 Rush PRO — yard dispatch: attendance, waiting batches, breaks, violators and Received-In scanning.",
+  "start_url": "./index.html?app=rushpro",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0A0E1A",
+  "theme_color": "#0A0E1A",
+  "categories": ["productivity", "business"],
+  "prefer_related_applications": false,
+  "related_applications": [
+    { "platform": "webapp", "url": "https://amazonrushdud3-web.github.io/dud3-rush/rushpro.webmanifest" }
+  ],
+  "icons": [
+    { "src": "./rushpro-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./rushpro-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./rushpro-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

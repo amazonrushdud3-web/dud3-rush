@@ -1,0 +1,135 @@
+/* ============================================================================
+ * DUD3 shared styles — design tokens, reset, splash, install sheet.
+ * Used by both index.html (Yard Marshal) and driver.html (Driver Hub).
+ * ========================================================================= */
+:root {
+  color-scheme: dark;
+  --bg: #0A0E1A;
+  --bg-grad:
+    radial-gradient(1100px 620px at 88% -8%, rgba(124,108,255,0.18), transparent 55%),
+    radial-gradient(900px 560px at -8% 108%, rgba(34,211,238,0.13), transparent 55%),
+    #0A0E1A;
+  --surface: #121829;           /* solid card */
+  --surface-2: #171E33;         /* raised / hover */
+  --surface-3: #0E1322;         /* inset / inputs */
+  --card: rgba(20,26,44,0.86);
+  --card-solid: #141A2B;
+  --card-alt: #0F1424;
+  --card-hi: #1C2440;
+  --border: rgba(124,140,180,0.16);
+  --border-soft: rgba(124,140,180,0.09);
+  --border-strong: rgba(124,140,180,0.28);
+
+  --brand: #7C6CFF;
+  --brand-2: #22D3EE;
+  --brand-3: #EC4899;
+  --brand-grad: linear-gradient(135deg, #7C6CFF 0%, #22D3EE 100%);
+  --brand-glow: rgba(124,108,255,0.38);
+
+  --green: #34E0A1;  --green-soft: rgba(52,224,161,0.13);
+  --red: #FF5C7A;    --red-soft: rgba(255,92,122,0.13);
+  --yellow: #FFCB5B; --yellow-soft: rgba(255,203,91,0.13);
+  --orange: #FF9F45; --orange-soft: rgba(255,159,69,0.13);
+  --blue: #42A5FF;   --blue-soft: rgba(66,165,255,0.13);
+  --purple: #BB86FC;
+
+  --text: #EEF2FB;
+  --text-dim: #93A1BF;
+  --muted: #93A1BF;
+  --radius: 18px;
+  --radius-sm: 12px;
+  --shadow: 0 18px 44px rgba(0,0,0,0.5);
+  --shadow-soft: 0 8px 22px rgba(0,0,0,0.32);
+  --glass: blur(16px) saturate(140%);
+  --glass-blur: blur(16px) saturate(140%);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --font: "Inter", "Segoe UI Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { font-family: var(--font); color: var(--text); background: var(--bg-grad); background-color: var(--bg); }
+button, input, select, textarea { font: inherit; color: inherit; }
+img, svg, video { max-width: 100%; }
+:focus-visible { outline: 2px solid var(--brand-2); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* ---------- Opening animation (shared) ---------- */
+.splash {
+  position: fixed; inset: 0; z-index: 9999;
+  background: radial-gradient(640px 440px at 50% 40%, rgba(124,108,255,0.16), transparent 62%), #070A12;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  transition: opacity .4s ease, visibility .4s ease; overflow: hidden;
+}
+.splash.hide { opacity: 0; visibility: hidden; }
+.splash-grid {
+  position: absolute; inset: 0; opacity: .35;
+  background-image: linear-gradient(rgba(124,108,255,0.08) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(124,108,255,0.08) 1px, transparent 1px);
+  background-size: 42px 42px; mask-image: radial-gradient(circle at 50% 42%, #000 20%, transparent 72%);
+  -webkit-mask-image: radial-gradient(circle at 50% 42%, #000 20%, transparent 72%);
+  animation: gridPan 6s linear infinite;
+}
+@keyframes gridPan { to { background-position: 42px 42px; } }
+.splash-core { position: relative; display: grid; place-items: center; width: 140px; height: 140px; }
+.splash-ring { position: absolute; border-radius: 50%; border: 2px solid transparent; border-top-color: var(--brand); border-right-color: var(--brand-2); }
+.splash-ring.r1 { width: 140px; height: 140px; animation: spin 2.4s linear infinite; }
+.splash-ring.r2 { width: 104px; height: 104px; border-top-color: var(--brand-2); border-right-color: var(--brand-3); animation: spin 1.6s linear infinite reverse; opacity: .8; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.splash-cube {
+  width: 52px; height: 52px; border-radius: 14px; background: var(--brand-grad); display: grid; place-items: center; z-index: 2;
+  box-shadow: 0 0 32px var(--brand-glow), inset 0 1px 2px rgba(255,255,255,0.5); animation: cubeFloat 2.2s ease-in-out infinite;
+}
+.splash-cube svg { width: 28px; height: 28px; }
+@keyframes cubeFloat { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-5px) scale(1.06); } }
+.splash-sweep {
+  position: absolute; width: 140px; height: 3px; z-index: 3; border-radius: 3px;
+  background: linear-gradient(90deg, transparent, var(--brand-2), transparent); box-shadow: 0 0 16px var(--brand-2);
+  animation: sweep 1.5s ease-in-out infinite;
+}
+@keyframes sweep { 0%,100% { transform: translateY(-64px); opacity: .2; } 50% { transform: translateY(64px); opacity: 1; } }
+.splash-text {
+  margin-top: 28px; font-size: 21px; font-weight: 900; letter-spacing: 3px;
+  background: linear-gradient(90deg, #EEF2FB, #7C6CFF, #22D3EE, #EEF2FB); background-size: 240% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent; animation: shimmer 2.6s linear infinite;
+}
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.splash-sub { font-size: 10.5px; color: var(--brand-2); font-weight: 800; letter-spacing: 2.5px; margin-top: 7px; }
+
+/* ---------- Install sheet (shared; markup injected by core.js) ---------- */
+#install-sheet {
+  position: fixed; inset: 0; z-index: 9000; display: none; align-items: flex-end; justify-content: center;
+  background: rgba(4,6,12,0.72); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+}
+#install-sheet.show { display: flex; }
+.is-panel {
+  width: 100%; max-width: 460px; background: var(--card-solid); border: 1px solid var(--border); border-bottom: none;
+  border-radius: 22px 22px 0 0; padding: 20px 18px calc(18px + var(--safe-bottom)); text-align: center;
+  animation: isUp .28s ease-out; box-shadow: 0 -20px 50px rgba(0,0,0,0.5);
+}
+@media (min-width: 720px) {
+  #install-sheet { align-items: center; }
+  .is-panel { border-radius: 22px; border-bottom: 1px solid var(--border); }
+}
+@keyframes isUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.is-icon { width: 72px; height: 72px; border-radius: 18px; margin: 0 auto 10px; display: block; box-shadow: 0 8px 22px rgba(0,0,0,0.4); }
+.is-title { font-size: 19px; font-weight: 900; margin-bottom: 4px; }
+.is-sub { font-size: 13px; color: var(--text-dim); margin-bottom: 14px; line-height: 1.45; }
+.is-steps {
+  text-align: left; font-size: 14px; line-height: 1.5; background: rgba(124,108,255,0.10); border: 1px solid var(--border);
+  border-radius: 12px; padding: 10px 12px; margin-bottom: 14px;
+}
+.is-steps ol { padding-left: 20px; }
+.is-steps li { margin: 4px 0; }
+.is-steps b { color: var(--brand-2); }
+.is-action {
+  width: 100%; padding: 13px; border-radius: 12px; border: none; background: var(--brand-grad); color: #06080F;
+  font-size: 15px; font-weight: 900; cursor: pointer; box-shadow: 0 8px 20px rgba(124,108,255,0.3);
+}
+.is-later { background: none; border: none; color: var(--text-dim); font-size: 13px; font-weight: 700; margin-top: 8px; padding: 8px; cursor: pointer; }
+
+/* ---------- Accessibility / low-power ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}

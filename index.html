@@ -1,1324 +1,707 @@
 <!DOCTYPE html>
-<html lang="en"><head><style id="qw-theme">:root {
-  --color-bg: #121218;
-  --color-text: #e4e4ed;
-  --color-navbar-bg: #1a1a24;
-  --color-bg-chat-view: #121218;
-  --color-bg-secondary: #1a1a24;
-  --color-bg-tertiary: #1e1e2a;
-  --color-bg-hover: #2a2a38;
-  --color-surface: #1e1e2a;
-  --color-surface-hover: #2a2a38;
-  --color-surface-active: #353546;
-  --color-border: #ffffff1f;
-  --color-border-light: #ffffff0f;
-  --color-border-strong: #3a3a4e;
-  --color-primary: #8575ff;
-  --color-primary-dark: #4200db;
-  --color-primary-light: #8575ff;
-  --color-primary-bg: color-mix(in srgb, #8575ff 15%, transparent);
-  --color-primary-hover-border: #4200db;
-  --color-nav-icon-active: #8575ff;
-  --color-nav-hover-border: #8575ff;
-  --color-primary-alpha-3: color-mix(in srgb, #8575ff 3%, transparent);
-  --color-primary-alpha-5: color-mix(in srgb, #8575ff 5%, transparent);
-  --color-primary-alpha-8: color-mix(in srgb, #8575ff 8%, transparent);
-  --color-primary-alpha-12: color-mix(in srgb, #8575ff 12%, transparent);
-  --color-primary-alpha-15: color-mix(in srgb, #8575ff 15%, transparent);
-  --color-primary-alpha-20: color-mix(in srgb, #8575ff 20%, transparent);
-  --color-primary-alpha-25: color-mix(in srgb, #8575ff 25%, transparent);
-  --color-primary-alpha-30: color-mix(in srgb, #8575ff 30%, transparent);
-  --color-primary-alpha-40: color-mix(in srgb, #8575ff 40%, transparent);
-  --color-primary-alpha-50: color-mix(in srgb, #8575ff 50%, transparent);
-  --color-primary-alpha-60: color-mix(in srgb, #8575ff 60%, transparent);
-  --color-primary-subtle: color-mix(in srgb, #8575ff 25%, transparent);
-  --color-primary-border: color-mix(in srgb, #8575ff 50%, transparent);
-  --color-focus-ring: color-mix(in srgb, #8575ff 60%, transparent);
-  --color-sidebar-hover: color-mix(in srgb, #8575ff 15%, transparent);
-  --block-hover-outline: 1px dashed color-mix(in srgb, #8575ff 50%, transparent);
-  --block-selected-outline: 1px solid #8575ff;
-  --block-selection-outline-offset: 2px;
-  --block-selected-halo: 0 0 8px color-mix(in srgb, #8575ff 40%, transparent);
-  --color-accent: #8575ff;
-  --color-accent-foreground: #8575ff;
-  --color-accent-dark: #4200db;
-  --color-accent-light: color-mix(in srgb, #8575ff 15%, transparent);
-  --color-accent-inverse: #fff;
-  --color-link: #8575ff;
-  --color-primary-gradient-end: color-mix(in srgb, #8575ff 35%, transparent);
-  --color-primary-bg-solid: #1a1530;
-  --color-user-bubble: #333843;
-  --color-user-bubble-text: #e4e4ed;
-  --color-text-secondary: #a0a0b4;
-  --color-text-tertiary: #8a8a9a;
-  --color-text-muted: #6e6e82;
-  --color-text-on-primary: #fff;
-  --color-success: #4ade80;
-  --color-success-dark: #00802f;
-  --color-success-light: #d9ffd6;
-  --color-success-hover: #005c26;
-  --color-success-bg: #1c2c22;
-  --color-success-border: #0e3d1c;
-  --color-success-foreground: #4ade80;
-  --color-success-dark-foreground: #00802f;
-  --color-success-text: #4ade80;
-  --color-error: #ff6b6b;
-  --color-error-dark: #db0000;
-  --color-error-light: #ffe0e0;
-  --color-error-hover: #3b1a24;
-  --color-error-bg: #3b1a24;
-  --color-error-border: #5e1a24;
-  --color-error-active-border: #db0000;
-  --color-error-foreground: #ff6b6b;
-  --color-error-dark-foreground: #db0000;
-  --color-error-inverse: #fff;
-  --color-error-text: #ff6b6b;
-  --color-warning: #fbbf24;
-  --color-warning-dark: #573a00;
-  --color-warning-light: #fffbbd;
-  --color-warning-hover: #db9200;
-  --color-warning-bg: #3d3520;
-  --color-warning-border: #5e4a1a;
-  --color-warning-foreground: #fbbf24;
-  --color-warning-dark-foreground: #573a00;
-  --color-warning-inverse: #573a00;
-  --color-surface-warning: #fffbbd;
-  --color-text-warning: #573a00;
-  --color-info: #60a5fa;
-  --color-info-dark: #006ce0;
-  --color-info-light: #d1f1ff;
-  --color-info-hover: #003b8f;
-  --color-info-bg: #1a2a42;
-  --color-info-border: #0f3d6e;
-  --color-info-foreground: #60a5fa;
-  --color-info-dark-foreground: #002a66;
-  --color-info-inverse: #fff;
-  --color-overlay: #000000b3;
-  --color-shadow: #0000004d;
-  --color-hover: #ffffff0d;
-  --color-tooltip-bg: #1e1e2af2;
-  --color-tooltip-text: #e4e4ed;
-  --color-voice-purple: #8575ff;
-  --color-voice-purple-dark: #4200db;
-  --color-voice-purple-light: #8575ff;
-  --color-voice-red: #ff6b6b;
-  --color-voice-red-dark: #db0000;
-  --color-voice-amber: #fbbf24;
-  --color-voice-purple-glow: #8575ff66;
-  --color-voice-red-glow: #db000066;
-  --font-sans: "Amazon Ember", "Helvetica Neue", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: "SF Mono", "Monaco", "Menlo", "Consolas", monospace;
-  --text-2xs: .5625rem;
-  --text-xs: .625rem;
-  --text-sm: .6875rem;
-  --text-base: .75rem;
-  --text-md: .8125rem;
-  --text-lg: .875rem;
-  --text-xl: 1rem;
-  --text-2xl: 1.125rem;
-  --text-3xl: 1.25rem;
-  --text-4xl: 1.5rem;
-  --text-5xl: 2rem;
-  --spacing-1: calc(.25rem * 1);
-  --spacing-1-5: calc(.25rem * 1.5);
-  --spacing-2: calc(.25rem * 2);
-  --spacing-3: calc(.25rem * 3);
-  --spacing-4: calc(.25rem * 4);
-  --spacing-5: calc(.25rem * 5);
-  --spacing-6: calc(.25rem * 6);
-  --spacing-7: calc(.25rem * 7);
-  --spacing-8: calc(.25rem * 8);
-  --spacing-9: calc(.25rem * 9);
-  --spacing-10: calc(.25rem * 10);
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-card: 12px;
-  --radius-lg: 16px;
-  --radius-pill: 8px;
-  --shadow-sm: 0 1px 2px #0003;
-  --shadow-md: 0 4px 12px #0000004d;
-  --color-success-bg-solid: #1a3d28;
-  --color-error-bg-solid: #4a2028;
-  --color-error-border-solid: #5e1a24;
-  --color-warning-bg-solid: #4a3a1e;
-  --color-warning-text: #fbbf24;
-  --color-info-bg-solid: #1a3050;
-  --color-info-bg-solid-alt: #222240;
-  --color-info-text: #60a5fa;
-  --color-info-text-alt: #818cf8;
-  --color-emerald: #34d399;
-  --color-teal: #5eead4;
-  --color-code-bg: #1e1e2a;
-  --color-code-header-bg: #252535;
-  --color-code-text: #e4e4ed;
-  --color-code-border: #2e2e3e;
-  --color-code-muted: #6e6e82;
-  --color-inline-code-bg: #1e1e2a;
-  --color-inline-code-text: #e4e4ed;
-  --color-inline-code-border: #2e2e3e;
-  --color-scrollbar-thumb: #3a3a4e;
-  --color-scrollbar-track: transparent;
-  --color-graph-node-text: #e4e4ed;
-  --color-graph-node-text-dim: #6e6e82;
-  --color-graph-edge-default: #6e6e82;
-  --color-graph-edge-cross: #f39c12;
-  --color-graph-edge-text: #a0a0b4;
-  --color-graph-edge-stroke: #1a1a24;
-  --color-graph-highlight-bg: #ff6b6b;
-  --color-graph-highlight-border: #e74c3c;
-  --color-graph-search-bg: gold;
-  --color-graph-search-border: orange;
-  --color-graph-focus-border: #f44;
-  --color-graph-external-border: #6e6e82;
-  --color-graph-cat-file: #5dade2;
-  --color-graph-cat-folder: #aab7b8;
-  --color-graph-cat-file-aggregate: #5499c7;
-  --color-graph-cat-class: #bb8fce;
-  --color-graph-cat-function: #58d68d;
-  --color-graph-cat-method: #48c9b0;
-  --color-graph-cat-variable: #f5b041;
-  --color-graph-cat-import: #eb984e;
-  --color-graph-cat-module: #7e8ce0;
-  --color-graph-cat-concept: #ec7063;
-  --color-graph-cat-person: #ff8a8a;
-  --color-graph-cat-org: #76d7c4;
-  --color-graph-cat-organization: #76d7c4;
-  --color-graph-cat-product: #b8b0fe;
-  --color-graph-cat-metric: #fea0c0;
-  --color-graph-cat-location: #7e9bb5;
-  --color-graph-cat-date: #f092c0;
-  --color-graph-cat-code: #5dade2;
-  --color-graph-cat-doc: #aab7b8;
-  --color-graph-cat-url: #45d6b5;
-  --color-graph-cat-email: #8e7cf7;
-  --color-graph-cat-unknown: #d5dbdb;
-  --color-graph-rel-contains: #d5dbdb;
-  --color-graph-rel-extends: #bb8fce;
-  --color-graph-rel-implements: #5dade2;
-  --color-graph-rel-imports: #eb984e;
-  --color-graph-rel-uses: #58d68d;
-  --color-graph-rel-calls: #52be80;
-  --color-graph-rel-references: #f5b041;
-  --color-graph-rel-related-to: #aab7b8;
-  --color-graph-rel-works-on: #ec7063;
-  --color-graph-rel-owns: #48c9b0;
-  --color-graph-rel-depends-on: #eb984e;
-  --color-graph-rel-parent-of: #d5dbdb;
-  --qs-content: #fff;
-  --qs-main: #fff;
-  --qs-primary-foreground: #131920;
-  --qs-secondary-foreground: #656871;
-  --qs-tertiary-foreground: #6e6e82;
-  --qs-placeholder-foreground: #8c8c94;
-  --qs-divider: #dedee3;
-  --qs-default-border: #8c8c94;
-  --qs-neutral-soft: #b4b4bb;
-  --qs-neutral-gray-50: #1e1e2a;
-  --qs-tertiary-background: #1e1e2a;
-  --qs-action-hover: #f3f3f7;
-  --qs-primary-default: #4200db;
-  --qs-primary-dark: #35009e;
-  --qs-primary-light: #e8e6ff;
-  --qs-success-default: #00802f;
-  --qs-error-default: #db0000;
-  --qs-font-sans: "Amazon Ember", "Helvetica Neue", "Segoe UI", Helvetica, Arial, sans-serif;
-  --safe-top: 0px;
-  --safe-bottom: 0px;
-  --safe-left: 0px;
-  --safe-right: 0px;
-  --qs-font-family: "Amazon Ember", "Helvetica Neue", "Segoe UI", Helvetica, Arial, sans-serif;
-  --qs-font-base-letter-spacing: .15px;
-  --qs-shadow-sm: 0 0 2px 0 #00000029, 0 0 4px 0 #00000029;
-  --qs-shadow-md: 0 0 2px 0 #00000029, 0 2px 8px 1px #00000029;
-  --qs-shadow-lg: 0 4px 16px 4px #00000029, 0 2px 6px 1px #00000029;
-  --qs-shadow-xl: 0 4px 8px 2px #00000029, 0 6px 20px 4px #00000029;
-  --qs-width-modal-sm: 384px;
-  --qs-width-modal-md: 600px;
-  --qs-width-modal-lg: 1136px;
-  --qs-grid-gap: 16px;
-  --qs-grid-gap-xl: 24px;
-  --qs-primary-medium: #8575ff;
-  --qs-primary-inverse: #fff;
-  --qs-neutral-lightest: #f9f9fb;
-  --qs-neutral-light: #f3f3f7;
-  --qs-neutral-default: #dedee3;
-  --qs-neutral-medium: #8c8c94;
-  --qs-neutral-deep: #656871;
-  --qs-neutral-dark: #333843;
-  --qs-neutral-strong: #131920;
-  --qs-neutral-white: #fff;
-  --qs-neutral-black: #000;
-  --qs-success-medium: #005c26;
-  --qs-success-dark: #00471e;
-  --qs-success-light: #d9ffd6;
-  --qs-success-inverse: #fff;
-  --qs-info-default: #006ce0;
-  --qs-info-medium: #003b8f;
-  --qs-info-dark: #002a66;
-  --qs-info-light: #d1f1ff;
-  --qs-info-inverse: #fff;
-  --qs-warning-default: #f2b100;
-  --qs-warning-medium: #db9200;
-  --qs-warning-dark: #573a00;
-  --qs-warning-light: #fffbbd;
-  --qs-warning-inverse: #573a00;
-  --qs-warning-experimental: #f2b100;
-  --qs-warning-experimental-light: #fffbbd;
-  --qs-warning-experimental-light-foreground: #fffbbd;
-  --qs-error-medium: #900;
-  --qs-error-dark: #700000;
-  --qs-error-light: #ffe0e0;
-  --qs-error-inverse: #fff;
-  --qs-connection-default: #db3300;
-  --qs-connection-soft: #ff997a;
-  --qs-connection-light: #ffe0d6;
-  --qs-connection-dark: #661800;
-  --qs-automation-default: #b3008f;
-  --qs-automation-medium: #d600ba;
-  --qs-automation-soft: #ff94f1;
-  --qs-automation-light: #ffe0fb;
-  --qs-automation-dark: #660052;
-  --qs-insight-default: #a000b8;
-  --qs-insight-soft: #f299ff;
-  --qs-insight-light: #fce6ff;
-  --qs-insight-dark: #590066;
-  --qs-visualization-default: #7300e5;
-  --qs-visualization-soft: #d4a8ff;
-  --qs-visualization-light: #f2e5ff;
-  --qs-visualization-dark: #45008a;
-  --qs-spice: #ff9800;
-  --qs-coachmark: #006ce0;
-  --qs-brand: #fff;
-  --qs-brand-foreground: #131920;
-  --qs-brand-navbar: #131920;
-  --qs-brand-navbar-foreground: #fff;
-  --qs-brand-navbar-light: #dedee3;
-  --qs-brand-navbar-dark: #000;
-  --qs-application-navbar: #4200db;
-  --qs-application-navbar-foreground: #fff;
-  --qs-application-navbar-light: #e8e6ff;
-  --qs-application-navbar-dark: #35009e;
-  --qs-dimension: #4200db;
-  --qs-dimension-foreground: #fff;
-  --qs-dimension-experimental: #4200db;
-  --qs-dimension-experimental-foreground: #4200db;
-  --qs-measure: #00802f;
-  --qs-measure-foreground: #fff;
-  --qs-measure-experimental: #f2b100;
-  --qs-measure-experimental-foreground: #f2b100;
-  --qs-content-inverse: #333843;
-  --qs-content-inverse-active: #131920;
-  --qs-secondary: #dedee3;
-  --qs-disabled: #8c8c94;
-  --qs-divider-light: #f3f3f7;
-  --qs-hover-border: #333843;
-  --qs-active-border: #4200db;
-  --qs-disabled-border: #dedee3;
-  --qs-error-border: #ffe0e0;
-  --qs-error-active-border: #db0000;
-  --qs-disabled-foreground: #b4b4bb;
-  --qs-primary-inverse-foreground: #fff;
-  --qs-error-foreground: #db0000;
-  --qs-contrast-foreground: #131920;
-  --qs-main-foreground: #131920;
-  --qs-main-secondary-foreground: #656871;
-  --qs-action-disabled: #f3f3f7;
-  --qs-action-active: #e8e6ff;
-  --qs-default-badge: #dedee3;
-  --qs-tag-default: #dedee3;
-  --qs-tag-soft-border: #b4b4bb;
-  --qs-focus-offset: 1px;
-  --qs-toggle-tile-sm: calc(.25rem * 8);
-  --qs-toggle-tile-md: calc(.25rem * 12);
-  --qs-toggle-tile-lg: calc(.25rem * 15);
-  --qs-shadow-pin-right: inset 4px 0 4px -4px #00000029;
-  --qs-shadow-pin-left: inset -4px 0 4px -4px #00000029;
-  --react-pdf-text-layer: 1;
-  --highlight-bg-color: #b400aa;
-  --highlight-selected-bg-color: #006400;
-  --react-pdf-annotation-layer: 1;
-  --annotation-unfocused-field-background: url("data:image/svg+xml;charset=UTF-8,<svg width='1px' height='1px' xmlns='http://www.w3.org/2000/svg'><rect width='100%' height='100%' style='fill:rgba(0, 54, 255, 0.13);'/></svg>");
-  --input-focus-border-color: Highlight;
-  --input-focus-outline: 1px solid Canvas;
-  --input-unfocused-border-color: transparent;
-  --input-disabled-border-color: transparent;
-  --input-hover-border-color: black;
-  --link-outline: none;
-  color-scheme: dark;
-}
-body { background: var(--color-bg); color: var(--color-text); }
-a { color: var(--color-link, var(--color-primary)); }</style>
+<html lang="en">
+<head>
   <meta charset="UTF-8">
-  <title>DUD3 Rush PRO &amp; ANOW Last-Mile Dispatch</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#6D5BFF">
+  <title>DUD3 Rush PRO — Yard Dispatch</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0A0E1A">
   <meta name="color-scheme" content="dark">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Rush PRO">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="application-name" content="Rush PRO">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20512%20512%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%237C6CFF%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2322D3EE%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width%3D%22512%22%20height%3D%22512%22%20rx%3D%22112%22%20fill%3D%22%230A0E1A%22/%3E%3Cpath%20d%3D%22M256%2096%20L400%20170%20L400%20342%20L256%20416%20L112%20342%20L112%20170%20Z%22%20fill%3D%22none%22%20stroke%3D%22url%28%23g%29%22%20stroke-width%3D%2226%22%20stroke-linejoin%3D%22round%22/%3E%3Cpath%20d%3D%22M112%20170%20L256%20244%20L400%20170%20M256%20244%20L256%20416%22%20fill%3D%22none%22%20stroke%3D%22url%28%23g%29%22%20stroke-width%3D%2220%22%20stroke-linejoin%3D%22round%22%20opacity%3D%220.65%22/%3E%3Cpath%20d%3D%22M180%20262%20c40%2046%20112%2046%20152%200%22%20fill%3D%22none%22%20stroke%3D%22%2322D3EE%22%20stroke-width%3D%2222%22%20stroke-linecap%3D%22round%22/%3E%3C/svg%3E">
-  <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20512%20512%22%3E%3Crect%20width%3D%22512%22%20height%3D%22512%22%20rx%3D%22112%22%20fill%3D%22%230A0E1A%22/%3E%3Cpath%20d%3D%22M256%2096%20L400%20170%20L400%20342%20L256%20416%20L112%20342%20L112%20170%20Z%22%20fill%3D%22none%22%20stroke%3D%22%237C6CFF%22%20stroke-width%3D%2226%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E">
-  <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%20%22DUD3%20Rush%20PRO%22%2C%20%22short_name%22%3A%20%22Rush%20PRO%22%2C%20%22id%22%3A%20%22./Index.html%3Fapp%3Drushpro%22%2C%20%22start_url%22%3A%20%22./Index.html%3Fapp%3Drushpro%22%2C%20%22scope%22%3A%20%22.%22%2C%20%22display%22%3A%20%22standalone%22%2C%20%22orientation%22%3A%20%22any%22%2C%20%22background_color%22%3A%20%22%230A0E1A%22%2C%20%22theme_color%22%3A%20%22%236D5BFF%22%2C%20%22categories%22%3A%20%5B%22productivity%22%2C%20%22business%22%5D%7D">
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-
+  <link rel="manifest" href="./rushpro.webmanifest">
+  <link rel="icon" type="image/png" href="./rushpro-icon-192.png">
+  <link rel="apple-touch-icon" href="./rushpro-icon-192.png">
+  <link rel="preconnect" href="https://script.google.com">
+  <link rel="preconnect" href="https://script.googleusercontent.com">
+  <link rel="stylesheet" href="./assets/base.css?v=3">
+  <script src="./assets/core.js?v=3"></script>
   <style>
-    :root {
-      /* ===== AURORA GLASS THEME (new look) ===== */
-      --bg: #0A0E1A;
-      --bg-grad:
-        radial-gradient(1100px 620px at 88% -8%, rgba(124,108,255,0.20), transparent 55%),
-        radial-gradient(900px 560px at -8% 108%, rgba(34,211,238,0.16), transparent 55%),
-        radial-gradient(700px 500px at 50% 120%, rgba(236,72,153,0.10), transparent 60%),
-        #0A0E1A;
-      --card: rgba(23,29,48,0.72);
-      --card-solid: #141A2B;
-      --card-alt: rgba(16,21,36,0.78);
-      --card-hi: rgba(32,40,66,0.85);
-      --border: rgba(124,140,180,0.18);
-      --border-soft: rgba(124,140,180,0.10);
-      --glass-blur: blur(18px) saturate(140%);
+    /* ===================== LAYOUT ===================== */
+    body { height: 100dvh; overflow: hidden; user-select: none; }
+    input, textarea, select { user-select: text; }
+    .hide { display: none !important; }
 
-      --brand: #7C6CFF;
-      --brand-2: #22D3EE;
-      --brand-3: #EC4899;
-      --brand-grad: linear-gradient(135deg, #7C6CFF 0%, #22D3EE 100%);
-      --brand-glow: rgba(124,108,255,0.42);
+    #app-root { display: none; flex-direction: column; height: 100dvh; overflow: hidden; }
 
-      --green: #34E0A1;
-      --green-soft: rgba(52,224,161,0.14);
-      --red: #FF5C7A;
-      --red-soft: rgba(255,92,122,0.14);
-      --yellow: #FFCB5B;
-      --yellow-soft: rgba(255,203,91,0.14);
-      --blue: #42A5FF;
-
-      --text: #EEF2FB;
-      --text-dim: #93A1BF;
-      --radius: 20px;
-      --radius-sm: 13px;
-      --shadow: 0 18px 48px rgba(0,0,0,0.55);
-      --shadow-soft: 0 10px 28px rgba(0,0,0,0.38);
-      --safe-top: env(safe-area-inset-top, 0px);
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
-    }
-
-    * {
-      box-sizing: border-box; margin: 0; padding: 0;
-      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      -webkit-tap-highlight-color: transparent; user-select: none;
-    }
-    html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; max-width: 100%; overflow-x: hidden; }
-    img, svg, video { max-width: 100%; height: auto; }
-
-    body {
-      background: var(--bg-grad); background-attachment: fixed;
-      color: var(--text); height: 100dvh; max-width: 100%; overflow: hidden;
-      display: flex; flex-direction: column;
-    }
-    /* subtle animated aurora drift */
-    body::before {
-      content: ""; position: fixed; inset: -20%; z-index: -1; pointer-events: none;
-      background:
-        radial-gradient(420px 420px at 20% 30%, rgba(124,108,255,0.10), transparent 60%),
-        radial-gradient(380px 380px at 80% 70%, rgba(34,211,238,0.08), transparent 60%);
-      animation: auroraDrift 18s ease-in-out infinite alternate;
-    }
-    @keyframes auroraDrift { 0%{transform:translate3d(0,0,0) scale(1);} 100%{transform:translate3d(3%,-3%,0) scale(1.08);} }
-
-    header {
-      background: linear-gradient(180deg, rgba(16,21,36,0.86), rgba(10,14,26,0.68));
-      backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+    header.topbar {
+      background: rgba(12,16,28,0.88);
+      backdrop-filter: var(--glass); -webkit-backdrop-filter: var(--glass);
       border-bottom: 1px solid var(--border-soft);
-      padding: calc(var(--safe-top) + 10px) 16px 12px;
-      display: flex; align-items: center; justify-content: space-between;
-      flex-shrink: 0; z-index: 100; flex-wrap: wrap; gap: 8px;
+      padding: calc(var(--safe-top) + 10px) 16px 10px;
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      flex-shrink: 0; z-index: 100;
     }
-    .brand-wrap { display: flex; align-items: center; gap: 11px; }
-    /* 2026-11-19: on narrow phones, let the header's right-side cluster wrap onto
-       its own line instead of squeezing every chip (version numbers, user name,
-       logout) into one cramped row. Hide the FE/BE debug version chip on very
-       narrow screens -- it is diagnostic info, not needed for daily operation --
-       so the Sync badge / clock / user name / Logout stay fully readable. */
-    @media (max-width: 480px) {
-      .top-status { flex-wrap: wrap; justify-content: flex-end; row-gap: 6px; }
-      #ver-chip { display: none; }
-      .install-btn span, .install-btn { font-size: 10px; }
-    }
+    .brand-wrap { display: flex; align-items: center; gap: 11px; min-width: 0; }
     .brand-logo {
-      width: 38px; height: 38px; background: var(--brand-grad);
-      border-radius: 12px; display: grid; place-items: center;
-      font-weight: 900; font-size: 15px; color: #06080F; letter-spacing: .5px;
-      box-shadow: 0 6px 20px var(--brand-glow), inset 0 1px 1px rgba(255,255,255,0.35);
-      position: relative; overflow: hidden;
+      width: 38px; height: 38px; border-radius: 11px; flex: 0 0 auto; display: grid; place-items: center;
+      background: var(--brand-grad); color: #06080F; font-weight: 900; font-size: 14px; letter-spacing: .5px;
+      box-shadow: 0 6px 18px var(--brand-glow), inset 0 1px 1px rgba(255,255,255,0.35);
     }
-    .brand-logo::after {
-      content:""; position:absolute; inset:0;
-      background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.55) 50%, transparent 70%);
-      transform: translateX(-120%); animation: logoSheen 4.5s ease-in-out infinite;
+    .brand-title { font-size: 16px; font-weight: 900; letter-spacing: .3px; line-height: 1.1; white-space: nowrap; }
+    .brand-title span { background: var(--brand-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .brand-sub { font-size: 9.5px; color: var(--text-dim); font-weight: 800; letter-spacing: 1.3px; margin-top: 2px; white-space: nowrap; }
+
+    .top-status { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 11px; border-radius: 999px;
+      font-size: 11px; font-weight: 800; white-space: nowrap; border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
     }
-    @keyframes logoSheen { 0%,70%{transform:translateX(-120%);} 85%,100%{transform:translateX(120%);} }
-    .brand-title { font-size: 17px; font-weight: 800; letter-spacing: 0.3px; }
-    .brand-title span {
-      background: var(--brand-grad); -webkit-background-clip: text; background-clip: text; color: transparent;
-    }
-    .brand-sub { font-size: 9.5px; color: var(--text-dim); font-weight: 700; letter-spacing: 1.4px; margin-top: 1px; }
-    .top-status { display: flex; align-items: center; gap: 8px; }
-    .sync-badge {
-      font-size: 11px; padding: 5px 10px; background: var(--green-soft);
-      color: var(--green); border: 1px solid rgba(52,224,161,0.30); border-radius: 999px;
-      font-weight: 800; display: flex; align-items: center; gap: 5px; backdrop-filter: blur(6px);
-    }
+    .sync-badge { background: var(--green-soft); color: var(--green); border-color: rgba(52,224,161,0.30); }
     .sync-badge.syncing { background: var(--yellow-soft); color: var(--yellow); border-color: rgba(255,203,91,0.30); }
-    .force-sync-btn {
-      width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border-soft);
-      background: var(--card-hi); color: var(--brand-2); display: flex; align-items: center;
-      justify-content: center; cursor: pointer; padding: 0; transition: transform .4s ease, background .15s;
-    }
-    .force-sync-btn:active { transform: scale(0.88); }
-    .force-sync-btn.spinning svg { animation: fsSpin 0.7s linear; }
-    @keyframes fsSpin { to { transform: rotate(360deg); } }
+    .sync-badge.off { background: var(--red-soft); color: var(--red); border-color: rgba(255,92,122,0.35); }
     .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 8px currentColor; }
-    .clock-display {
-      font-size: 13px; font-weight: 800; color: #FFF; font-variant-numeric: tabular-nums;
-      background: var(--card-hi); padding: 5px 10px; border-radius: 10px; border: 1px solid var(--border);
-      backdrop-filter: blur(6px);
+    .clock-display { font-size: 13px; font-variant-numeric: tabular-nums; }
+    .icon-btn {
+      width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface-2);
+      color: var(--brand-2); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; flex: 0 0 auto;
     }
+    .icon-btn:hover { background: var(--card-hi); }
+    .icon-btn svg { width: 15px; height: 15px; fill: currentColor; }
+    .force-sync-btn.spinning svg { animation: spin .7s linear; }
+    .install-btn { display: none; color: var(--brand-2); border-color: rgba(124,108,255,0.5); background: rgba(124,108,255,0.12); cursor: pointer; }
+    .install-btn.show { display: inline-flex; }
+    .install-btn svg { width: 14px; height: 14px; fill: currentColor; }
+    .user-chip { gap: 8px; padding-right: 4px; }
+    .user-chip .btn-logout {
+      height: 22px; padding: 0 9px; border-radius: 999px; border: none; background: var(--card-hi); color: var(--text-dim);
+      font-size: 10px; font-weight: 800; cursor: pointer;
+    }
+    .user-chip .btn-logout:hover { color: var(--red); }
+    #ver-chip { font-size: 9px; font-weight: 800; color: var(--text-dim); line-height: 1.25; text-align: right; }
 
-    #banner-holder { position: relative; z-index: 95; }
-    .banner {
-      padding: 11px 15px; font-size: 13px; font-weight: 700;
-      display: flex; align-items: center; justify-content: space-between;
-      animation: slideDown 0.24s cubic-bezier(.2,.9,.3,1.3); border-bottom: 1px solid rgba(0,0,0,0.2);
-      backdrop-filter: blur(6px);
+    #pending-holder { display: flex; justify-content: center; position: relative; z-index: 90; }
+    #pending-badge {
+      display: none; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; color: #1A1200;
+      background: var(--yellow); padding: 4px 14px; border-radius: 0 0 12px 12px;
     }
-    @keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    .banner-warning { background: linear-gradient(90deg,#B4791A,#D9950B); color: #FFF; }
-    .banner-danger  { background: linear-gradient(90deg,#C63050,#E0344F); color: #FFF; }
-    .banner-success { background: linear-gradient(90deg,#128A5E,#1BA574); color: #FFF; }
-    .banner-close { cursor: pointer; font-size: 18px; font-weight: 900; padding: 0 6px; opacity:.85; }
-
-    /* 2026-11-23: Themed scan-notice card system -- rounded dual-tone gradient cards
-       with a matching icon, close button, and auto-close countdown, per the supplied
-       design spec. Separate from the existing thin top-strip .banner system; nothing
-       about the existing .banner/.banner-* styles is changed. One shared markup/CSS
-       structure (.scan-card) is reused across all themed variants (break, not-sent,
-       overdue, present-on-time, late-arrival) via a theme class + inline gradient. */
-    #break-card-holder { position: fixed; top: calc(var(--safe-top) + 10px); left: 12px; right: 12px; z-index: 9500; pointer-events: none; display: flex; flex-direction: column; }
-    .scan-card {
-      position: relative;
-      pointer-events: auto;
-      display: flex; align-items: center; gap: 13px;
-      padding: 14px 40px 18px 16px; border-radius: 18px; margin-bottom: 10px;
-      box-shadow: 0 14px 34px rgba(0,0,0,0.38);
-      backdrop-filter: blur(10px);
-      animation: breakCardIn 0.3s cubic-bezier(.2,.9,.3,1.3);
-      overflow: hidden;
-    }
-    @keyframes breakCardIn { from { transform: translateY(-16px) scale(0.97); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
-    .scan-card::before {
-      content: ""; position: absolute; right: -18px; top: -22px; width: 90px; height: 90px;
-      border-radius: 50%; background: rgba(255,255,255,0.14); pointer-events: none;
-    }
-    .scan-card::after {
-      content: ""; position: absolute; right: 22px; bottom: -26px; width: 60px; height: 60px;
-      border-radius: 50%; background: rgba(255,255,255,0.10); pointer-events: none;
-    }
-    .scan-card-icon {
-      flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%;
-      background: rgba(255,255,255,0.28); display: flex; align-items: center; justify-content: center;
-      font-size: 20px; z-index: 1;
-    }
-    .scan-card-body { flex: 1; min-width: 0; z-index: 1; }
-    .scan-card-title { font-size: 14px; font-weight: 900; line-height: 1.3; }
-    .scan-card-sub { font-size: 11.5px; font-weight: 700; opacity: 0.85; margin-top: 2px; }
-    .scan-card-close {
-      position: absolute; top: 8px; right: 8px; z-index: 2;
-      width: 20px; height: 20px; border-radius: 50%; background: rgba(255,255,255,0.3);
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; font-size: 13px; font-weight: 900; line-height: 1;
-    }
-    /* 2026-11-23: labeled "Dismiss" button variant (used for the Violator-on-Receive
-       banner specifically, per request) instead of the small "X" icon. */
-    .scan-card-dismiss-btn {
-      position: absolute; top: 8px; right: 8px; z-index: 2;
-      border: none; border-radius: 999px; background: rgba(255,255,255,0.32);
-      color: inherit; font-size: 11px; font-weight: 800; padding: 5px 10px; cursor: pointer;
-    }
-    .scan-card-dismiss-btn:active { transform: scale(0.95); }
-    .scan-card-countdown {
-      position: absolute; bottom: 7px; right: 10px; z-index: 2;
-      font-size: 10px; font-weight: 800; opacity: 0.75; font-variant-numeric: tabular-nums;
-    }
-    .scan-card.theme-break { background: linear-gradient(120deg, rgba(120,200,210,0.92), rgba(255,190,140,0.88)); }
-    .scan-card.theme-break .scan-card-title, .scan-card.theme-break .scan-card-sub, .scan-card.theme-break .scan-card-close, .scan-card.theme-break .scan-card-countdown { color: #05261A; }
-    .scan-card.theme-notsent { background: linear-gradient(120deg, rgba(74,94,122,0.94), rgba(190,196,206,0.9)); }
-    .scan-card.theme-notsent .scan-card-title, .scan-card.theme-notsent .scan-card-sub, .scan-card.theme-notsent .scan-card-close, .scan-card.theme-notsent .scan-card-countdown { color: #F3F5F8; }
-    .scan-card.theme-overdue { background: linear-gradient(120deg, rgba(230,80,80,0.95), rgba(255,190,150,0.9)); }
-    .scan-card.theme-overdue .scan-card-title, .scan-card.theme-overdue .scan-card-sub, .scan-card.theme-overdue .scan-card-close, .scan-card.theme-overdue .scan-card-countdown { color: #2A0808; }
-    .scan-card.theme-present { background: linear-gradient(120deg, rgba(40,170,110,0.94), rgba(170,230,200,0.9)); }
-    .scan-card.theme-present .scan-card-title, .scan-card.theme-present .scan-card-sub, .scan-card.theme-present .scan-card-close, .scan-card.theme-present .scan-card-countdown { color: #04240F; }
-    .scan-card.theme-late { background: linear-gradient(120deg, rgba(225,165,40,0.94), rgba(255,230,160,0.9)); }
-    .scan-card.theme-late .scan-card-title, .scan-card.theme-late .scan-card-sub, .scan-card.theme-late .scan-card-close, .scan-card.theme-late .scan-card-countdown { color: #2B1E02; }
-    /* 2026-11-23: dedicated DARK ORANGE theme for "DA was not sent from OFFYARD" --
-       per request, text color chosen for strong readability against the dark-orange
-       background (near-white, not a near-black that would wash out). */
-    .scan-card.theme-notoffyard { background: linear-gradient(120deg, rgba(180,90,10,0.96), rgba(230,140,40,0.92)); }
-    .scan-card.theme-notoffyard .scan-card-title, .scan-card.theme-notoffyard .scan-card-sub, .scan-card.theme-notoffyard .scan-card-close, .scan-card.theme-notoffyard .scan-card-countdown { color: #FFF4E8; }
-    /* "Already scanned / Already Received" -- neutral slate, distinct from error reds */
-    .scan-card.theme-duplicate { background: linear-gradient(120deg, rgba(90,100,120,0.95), rgba(150,160,175,0.9)); }
-    .scan-card.theme-duplicate .scan-card-title, .scan-card.theme-duplicate .scan-card-sub, .scan-card.theme-duplicate .scan-card-close, .scan-card.theme-duplicate .scan-card-countdown { color: #F5F7FA; }
-    /* dedicated RED theme for "Violator scanned at Receive" per explicit request
-       (red banner, 5s, Dismiss button, closes on next scan) */
-    .scan-card.theme-violator { background: linear-gradient(120deg, rgba(200,30,40,0.96), rgba(235,90,70,0.92)); }
-    .scan-card.theme-violator .scan-card-title, .scan-card.theme-violator .scan-card-sub, .scan-card.theme-violator .scan-card-close, .scan-card.theme-violator .scan-card-countdown { color: #FFF1EE; }
 
     main {
-      flex: 1; overflow-y: auto; overflow-x: hidden;
-      padding: 14px 14px calc(var(--safe-bottom) + 80px);
-      -webkit-overflow-scrolling: touch; scroll-behavior: smooth;
+      flex: 1; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain;
+      padding: 14px 14px calc(var(--safe-bottom) + 84px);
     }
-    .tab-content { display: none; flex-direction: column; gap: 13px; }
-    .tab-content.active { display: flex; animation: fadeInUp .32s ease; }
-    @keyframes fadeInUp { from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+    .tab-content { display: none; flex-direction: column; gap: 14px; }
+    .tab-content.active { display: flex; animation: fadeInUp .25s ease; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    .col-side, .col-main { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 
-    .scanner-card, .batch-card, .replacement-box, .metric-box {
-      border-radius: var(--radius); border: 1px solid var(--border);
+    /* ===================== CARDS ===================== */
+    .card, .scanner-card, .batch-card, .replacement-box, .metric-box {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
       box-shadow: var(--shadow-soft);
-      transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
-      backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
     }
-    .scanner-card { background: var(--card); padding: 14px; display: flex; flex-direction: column; align-items: center; }
+    .card { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .card-title { font-size: 14px; font-weight: 900; display: flex; align-items: center; gap: 8px; }
+    .card-sub { font-size: 11.5px; color: var(--text-dim); font-weight: 600; line-height: 1.4; }
+    .section-label { font-size: 10px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: .7px; }
+
+    /* ===================== SCANNER ===================== */
+    .scanner-card { padding: 14px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .scanner-head { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .scanner-viewport-wrap {
-      position: relative; width: 100%; max-width: 300px; height: auto; aspect-ratio: 1 / 1;
-      background: #05070D; border-radius: 16px; overflow: hidden;
-      border: 1.5px solid rgba(124,108,255,0.35);
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04), 0 10px 30px rgba(124,108,255,0.14);
+      position: relative; width: 100%; max-width: 320px; aspect-ratio: 1 / 1;
+      background: #05070D; border-radius: 16px; overflow: hidden; border: 1.5px solid rgba(124,108,255,0.32);
     }
-    #qr-reader-attend, #qr-reader-waiting, #qr-reader-receive { width: 100% !important; height: 100% !important; }
-    #qr-reader-attend video, #qr-reader-waiting video, #qr-reader-receive video {
-      object-fit: cover !important; width: 100% !important; height: 100% !important;
-    }
+    .scanner-viewport-wrap > div[id^="qr-reader-"] { width: 100% !important; height: 100% !important; }
+    .scanner-viewport-wrap video { object-fit: cover !important; width: 100% !important; height: 100% !important; }
     .scanner-idle {
-      position: absolute; inset: 0; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 10px; z-index: 12;
-      color: var(--text-dim); text-align: center; padding: 16px;
-      background: radial-gradient(140px 140px at 50% 42%, rgba(124,108,255,0.10), transparent 70%), #05070D;
+      position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 9px; z-index: 12; color: var(--text-dim); text-align: center; padding: 16px;
+      background: radial-gradient(150px 150px at 50% 42%, rgba(124,108,255,0.12), transparent 70%), #05070D;
     }
-    .scanner-idle svg { width: 50px; height: 50px; fill: url(#iconGrad); opacity: 0.95; }
-    .scanner-idle .idle-title { font-size: 13px; font-weight: 800; color: var(--text); letter-spacing: .3px; }
+    .scanner-idle svg { width: 48px; height: 48px; fill: url(#iconGrad); }
+    .scanner-idle .idle-title { font-size: 13px; font-weight: 800; color: var(--text); }
     .scanner-idle .idle-sub { font-size: 11px; font-weight: 600; }
     .scanner-wrap-active .scanner-idle { display: none; }
-    .scanner-wrap-active .laser-line, .scanner-wrap-active .corner-bracket { display: block; }
     .laser-line, .corner-bracket { display: none; }
+    .scanner-wrap-active .laser-line, .scanner-wrap-active .corner-bracket { display: block; }
     .laser-line {
-      position: absolute; width: 100%; height: 3px;
-      background: linear-gradient(90deg, transparent, #7C6CFF, #22D3EE, transparent);
-      box-shadow: 0 0 14px #7C6CFF; top: 0; left: 0;
-      animation: scanLaser 1.6s infinite ease-in-out; pointer-events: none; z-index: 10;
+      position: absolute; left: 0; width: 100%; height: 3px; z-index: 10; pointer-events: none;
+      background: linear-gradient(90deg, transparent, #7C6CFF, #22D3EE, transparent); box-shadow: 0 0 14px #7C6CFF;
+      animation: scanLaser 1.6s infinite ease-in-out;
     }
-    @keyframes scanLaser { 0%{top:6%; opacity:.25;} 50%{top:92%; opacity:1;} 100%{top:6%; opacity:.25;} }
-    .corner-bracket { position: absolute; width: 22px; height: 22px; border-color: var(--brand-2); border-style: solid; pointer-events: none; z-index: 9; filter: drop-shadow(0 0 4px rgba(34,211,238,.6)); }
+    @keyframes scanLaser { 0%,100% { top: 6%; opacity: .25; } 50% { top: 92%; opacity: 1; } }
+    .corner-bracket { position: absolute; width: 22px; height: 22px; border-color: var(--brand-2); border-style: solid; pointer-events: none; z-index: 9; }
     .cb-tl { top: 10px; left: 10px; border-width: 3px 0 0 3px; border-radius: 6px 0 0 0; }
     .cb-tr { top: 10px; right: 10px; border-width: 3px 3px 0 0; border-radius: 0 6px 0 0; }
     .cb-bl { bottom: 10px; left: 10px; border-width: 0 0 3px 3px; border-radius: 0 0 0 6px; }
     .cb-br { bottom: 10px; right: 10px; border-width: 0 3px 3px 0; border-radius: 0 0 6px 0; }
-
-    .scanner-controls { display: flex; gap: 9px; width: 100%; max-width: 300px; margin-top: 12px; }
-    .scanner-controls .btn { flex: 1; padding: 12px 10px; font-size: 13px; }
+    .scanner-controls { display: flex; gap: 9px; width: 100%; max-width: 320px; }
+    .scanner-controls .btn { flex: 1; }
     .scan-status-chip {
-      display: inline-flex; align-items: center; gap: 7px; margin-top: 9px;
-      font-size: 11px; font-weight: 700; color: var(--text-dim);
-      padding: 5px 12px; border-radius: 999px; background: var(--card-alt); border: 1px solid var(--border);
+      display: inline-flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 700; color: var(--text-dim);
+      padding: 5px 12px; border-radius: 999px; background: var(--surface-3); border: 1px solid var(--border);
     }
     .scan-status-chip .dot { width: 7px; height: 7px; border-radius: 50%; background: #55697E; }
     .scan-status-chip.live { color: var(--green); border-color: rgba(52,224,161,.35); background: var(--green-soft); }
     .scan-status-chip.live .dot { background: var(--green); box-shadow: 0 0 10px var(--green); animation: pulseDot 1.1s infinite; }
-    @keyframes pulseDot { 0%,100%{opacity:1;} 50%{opacity:.35;} }
+    @keyframes pulseDot { 50% { opacity: .35; } }
+    .scanner-input-bar { width: 100%; display: flex; gap: 9px; position: relative; }
 
-    .scanner-input-bar { width: 100%; margin-top: 12px; display: flex; gap: 9px; position: relative; }
+    /* ===================== CONTROLS ===================== */
     .text-input {
-      flex: 1; background: var(--card-alt); border: 1px solid var(--border);
-      border-radius: var(--radius-sm); padding: 12px 14px; color: #FFF;
-      font-size: 14px; outline: none; user-select: text; min-height: 44px;
-      transition: border-color .15s ease, box-shadow .15s ease; backdrop-filter: blur(6px);
+      flex: 1; min-width: 0; background: var(--surface-3); border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 11px 13px; color: #fff; font-size: 14px; outline: none; min-height: 44px; width: 100%;
+      transition: border-color .15s, box-shadow .15s;
     }
     .text-input::placeholder { color: var(--text-dim); }
-    .text-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-glow); }
+    .text-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(124,108,255,0.25); }
+    select.text-input { appearance: none; cursor: pointer; }
+    .field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+    .field label, .metric-lbl { font-size: 10px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: .6px; }
+    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+
     .btn {
-      background: var(--brand-grad); color: #06080F; font-weight: 800;
-      border: none; border-radius: var(--radius-sm); padding: 12px 16px; min-height: 44px;
-      font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; justify-content: center;
-      white-space: nowrap; box-shadow: 0 8px 20px rgba(124,108,255,0.28);
-      transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease, filter .12s ease;
+      background: var(--brand-grad); color: #06080F; font-weight: 800; font-size: 13px;
+      border: none; border-radius: var(--radius-sm); padding: 11px 16px; min-height: 44px; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap;
+      transition: transform .12s ease, filter .12s ease, background .12s ease;
     }
-    .btn:hover { filter: brightness(1.07); }
-    .btn:active { transform: translateY(1px) scale(0.98); opacity: 0.92; }
-    .btn-green { background: linear-gradient(135deg,#34E0A1,#14B98A); color: #032015; box-shadow: 0 8px 20px rgba(52,224,161,0.26); }
-    .btn-card { background: var(--card-hi); color: #FFF; border: 1px solid var(--border); box-shadow: none; backdrop-filter: blur(6px); }
-    .btn-card:hover { background: rgba(44,54,86,0.95); }
-    .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); box-shadow: none; }
-    .btn-danger { background: linear-gradient(135deg,#FF5C7A,#E0344F); color: #fff; box-shadow: 0 8px 20px rgba(255,92,122,0.26); }
+    .btn:hover { filter: brightness(1.08); }
+    .btn:active { transform: translateY(1px) scale(0.98); }
+    .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+    .btn-green { background: linear-gradient(135deg, #34E0A1, #14B98A); color: #032015; }
+    .btn-amber { background: linear-gradient(135deg, #FFCB5B, #F59E0B); color: #201400; }
+    .btn-danger { background: linear-gradient(135deg, #FF5C7A, #E0344F); color: #fff; }
+    .btn-card { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
+    .btn-card:hover { background: var(--card-hi); filter: none; }
+    .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .btn-sm { min-height: 32px; padding: 6px 12px; font-size: 12px; border-radius: 10px; }
+    .btn-xs { min-height: 28px; padding: 4px 10px; font-size: 11px; border-radius: 9px; }
+    .btn-text-red { color: var(--red); }
+    .btn-whatsapp { color: #25D366; }
 
     .search-results-dropdown {
-      position: absolute; top: 48px; left: 0; right: 0;
-      background: var(--card-solid); border: 1px solid var(--brand);
-      border-radius: 12px; max-height: 210px; overflow-y: auto;
-      z-index: 150; box-shadow: 0 16px 34px rgba(0,0,0,0.7); display: none; backdrop-filter: blur(12px);
+      position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 150; display: none;
+      background: var(--card-solid); border: 1px solid var(--brand); border-radius: 12px; max-height: 260px; overflow-y: auto;
+      box-shadow: 0 16px 34px rgba(0,0,0,0.7);
     }
     .dropdown-item {
-      padding: 11px 13px; border-bottom: 1px solid var(--border-soft);
-      cursor: pointer; font-size: 13px; display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 13px; border-bottom: 1px solid var(--border-soft); cursor: pointer; font-size: 13px;
+      display: flex; justify-content: space-between; align-items: center; gap: 10px;
     }
-    .dropdown-item:active { background: rgba(124,108,255,0.14); }
+    .dropdown-item:last-child { border-bottom: none; }
+    .dropdown-item:hover, .dropdown-item:active { background: rgba(124,108,255,0.14); }
+    .dropdown-item .dd-meta { color: var(--text-dim); font-size: 11.5px; white-space: nowrap; }
 
-    .wave-bar { display: flex; align-items: center; gap: 7px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+    /* ===================== METRICS / WAVES ===================== */
+    .metric-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .metric-row.cols-3 { grid-template-columns: repeat(3, 1fr); }
+    .metric-box { padding: 13px 10px 12px; text-align: center; position: relative; overflow: hidden; }
+    .metric-box::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--accent, var(--brand-grad)); opacity: .9; }
+    .metric-val { font-size: 24px; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -0.5px; line-height: 1.1; }
+    .metric-lbl { margin-top: 4px; display: block; }
+    .wave-bar { display: flex; align-items: center; gap: 7px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
     .wave-bar::-webkit-scrollbar { display: none; }
     .wave-pill {
-      padding: 7px 14px; border-radius: 999px; font-size: 12px; font-weight: 800;
-      background: var(--card); border: 1px solid var(--border); color: var(--text-dim);
-      cursor: pointer; white-space: nowrap; transition: all .18s ease; backdrop-filter: blur(6px);
+      padding: 7px 14px; border-radius: 999px; font-size: 12px; font-weight: 800; white-space: nowrap; cursor: pointer;
+      background: var(--surface); border: 1px solid var(--border); color: var(--text-dim);
     }
-    .wave-pill.active { background: var(--brand-grad); color: #06080F; border-color: transparent; box-shadow: 0 6px 16px var(--brand-glow); }
+    .wave-pill.active { background: var(--brand-grad); color: #06080F; border-color: transparent; }
 
-    .metric-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; }
-    .metric-box { background: var(--card); padding: 14px 8px; text-align: center; }
-    .metric-val { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
-    .metric-lbl { font-size: 10px; font-weight: 700; color: var(--text-dim); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.6px; }
-
-    .replacement-box {
-      background: linear-gradient(145deg, rgba(36,30,66,0.75), rgba(21,26,43,0.8));
-      border: 1px solid rgba(124,108,255,0.28); padding: 14px;
-      display: flex; flex-direction: column; gap: 9px;
-    }
+    .replacement-box { padding: 14px; display: flex; flex-direction: column; gap: 10px; border-color: rgba(124,108,255,0.28);
+      background: linear-gradient(160deg, rgba(36,30,66,0.55), var(--surface) 60%); }
     .rep-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
-    @media (max-width: 420px) { .rep-grid { grid-template-columns: 1fr; } }
+    .rep-grid > div { position: relative; }
 
-    .batch-card { background: var(--card); overflow: hidden; }
-    .batch-card:hover { border-color: rgba(124,108,255,0.35); box-shadow: var(--shadow); }
-    .batch-card.break-return { border-color: rgba(52,224,161,0.35); box-shadow: 0 8px 22px rgba(52,224,161,0.16); }
-    .batch-card.break-return .batch-header { background: linear-gradient(90deg, rgba(18,80,58,0.55), rgba(16,36,30,0.4)); }
+    /* ===================== LISTS ===================== */
+    .batch-card { overflow: hidden; }
+    .batch-card.break-return { border-color: rgba(52,224,161,0.35); }
+    .batch-card.break-return .batch-header { background: linear-gradient(90deg, rgba(18,80,58,0.5), rgba(16,36,30,0.3)); }
     .batch-header {
-      background: rgba(28,35,58,0.6); padding: 12px 15px; display: flex;
-      justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);
-      flex-wrap: wrap; gap: 8px; min-width: 0;
+      background: var(--surface-2); padding: 11px 14px; display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 8px;
     }
-    .batch-title { font-size: 14px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
-    .batch-badge { background: var(--brand-grad); color: #06080F; font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 999px; }
-    .batch-actions { display: flex; gap: 6px; align-items: center; }
+    .batch-title { font-size: 14px; font-weight: 900; display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .batch-badge {
+      background: var(--brand-grad); color: #06080F; font-size: 11px; font-weight: 900; padding: 3px 9px; border-radius: 999px; white-space: nowrap;
+    }
+    .badge-green { background: var(--green); color: #032015; }
+    .badge-red { background: var(--red); color: #fff; }
+    .badge-yellow { background: var(--yellow); color: #201400; }
+    .batch-actions, .row-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
     .da-list { display: flex; flex-direction: column; }
     .da-row {
-      display: flex; align-items: center; padding: 11px 15px;
-      border-bottom: 1px solid var(--border-soft); gap: 10px; font-size: 13px;
-      min-width: 0; transition: background .12s ease;
+      display: flex; align-items: center; padding: 10px 14px; gap: 11px; font-size: 13px; min-width: 0;
+      border-bottom: 1px solid var(--border-soft);
     }
-    .da-row:hover { background: rgba(255,255,255,0.03); }
+    .da-row:hover { background: rgba(255,255,255,0.025); }
     .da-row:last-child { border-bottom: none; }
-    .da-checkbox { width: 18px; height: 18px; accent-color: var(--brand); cursor: pointer; }
+    .da-checkbox { width: 18px; height: 18px; accent-color: var(--brand); cursor: pointer; flex: 0 0 auto; }
+    .avatar {
+      width: 34px; height: 34px; border-radius: 50%; flex: 0 0 auto; display: grid; place-items: center;
+      font-size: 12px; font-weight: 900; color: #06080F; background: var(--av, #5B6B8C);
+    }
+    .avatar.ok { --av: linear-gradient(135deg, #34E0A1, #14B98A); }
+    .avatar.warn { --av: linear-gradient(135deg, #FFCB5B, #F59E0B); }
+    .avatar.bad { --av: linear-gradient(135deg, #FF5C7A, #E0344F); color: #fff; }
+    .avatar.info { --av: var(--brand-grad); }
+    .avatar.idle { --av: #3A4663; color: var(--text); }
     .da-details { flex: 1; min-width: 0; }
-
-    /* 2026-11-19: Violators tab row -- wraps onto two lines on narrow/mobile screens
-       so the long status pill never squeezes the DA name/meta text. On wide screens
-       (desktop) it still lays out as one single row like every other .da-row. */
-    .violator-row { flex-wrap: wrap; }
-    .violator-row-actions { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
-    @media (max-width: 480px) {
-      .violator-row { align-items: flex-start; }
-      .violator-row-actions { flex: 1 1 100%; justify-content: flex-end; margin-top: 8px; margin-left: 28px; }
-      .violator-row .time-badge.tag-violator { white-space: normal; text-align: left; flex: 1 1 auto; }
-    }
-    .da-title-line { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; min-width: 0; }
-    .da-meta-line { font-size: 11px; color: var(--text-dim); margin-top: 3px; }
+    .da-title-line { font-weight: 800; display: flex; align-items: center; gap: 6px; min-width: 0; }
+    .da-title-line .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+    .da-title-line .id { font-size: 11px; color: var(--text-dim); font-weight: 600; white-space: nowrap; }
+    .da-title-line .pos { color: var(--orange); font-weight: 900; }
+    .da-meta-line { font-size: 11.5px; color: var(--text-dim); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .da-meta-line b { color: var(--text); font-weight: 700; }
     .time-badge {
-      font-size: 11px; font-weight: 700; padding: 4px 7px; border-radius: 7px;
-      background: var(--card-hi); border: 1px solid var(--border); color: #CBD5E1; font-variant-numeric: tabular-nums;
+      font-size: 11px; font-weight: 800; padding: 4px 8px; border-radius: 8px; white-space: nowrap;
+      background: var(--surface-2); border: 1px solid var(--border); color: #CBD5E1; font-variant-numeric: tabular-nums;
     }
-    .tag-sla { background: var(--red-soft); color: var(--red); border: 1px solid rgba(255,92,122,.4); }
-    .tag-break { background: var(--yellow-soft); color: var(--yellow); border: 1px solid rgba(255,203,91,.4); }
-    .tag-violator { color: var(--red); border-color: var(--red) !important; background: var(--red-soft) !important; }
-    .tag-breakret { color: var(--green); border-color: var(--green) !important; background: var(--green-soft) !important; }
+    .tag-ok { color: var(--green); border-color: rgba(52,224,161,.45); background: var(--green-soft); }
+    .tag-warn, .tag-break { color: var(--yellow); border-color: rgba(255,203,91,.45); background: var(--yellow-soft); }
+    .tag-bad, .tag-sla, .tag-violator { color: var(--red); border-color: rgba(255,92,122,.45); background: var(--red-soft); }
+    .tag-info { color: var(--brand-2); border-color: rgba(34,211,238,.4); background: rgba(34,211,238,.1); }
+    .empty { padding: 22px 14px; text-align: center; color: var(--text-dim); font-size: 13px; }
+    .empty .em { font-size: 22px; display: block; margin-bottom: 6px; }
 
+    .violator-row { flex-wrap: wrap; }
     .violator-banner {
-      background: linear-gradient(135deg, #E0344F, #B21F3F);
-      color: #fff; border-radius: var(--radius); padding: 15px 16px;
-      font-weight: 800; font-size: 13px; display: flex; gap: 11px; align-items: center;
-      box-shadow: 0 10px 24px rgba(255,92,122,0.28); border: 1px solid #FF6B86;
+      background: linear-gradient(135deg, #E0344F, #B21F3F); color: #fff; border-radius: var(--radius); padding: 14px 16px;
+      font-weight: 800; font-size: 13px; display: flex; gap: 11px; align-items: center; border: 1px solid #FF6B86;
     }
-    .violator-banner svg { width: 24px; height: 24px; fill: #fff; flex-shrink: 0; }
+    .violator-banner svg { width: 22px; height: 22px; fill: #fff; flex-shrink: 0; }
 
+    #waiting-batches-container { display: flex; flex-direction: column; gap: 12px; }
+
+    /* ===================== ADMIN ===================== */
+    .user-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      background: var(--surface-3); border: 1px solid var(--border); border-radius: 12px; padding: 9px 11px;
+    }
+    .user-row .u-name { font-size: 13px; font-weight: 800; }
+    .user-row .u-handle { font-size: 10.5px; color: var(--text-dim); margin-top: 2px; }
+    .pill-tag { font-size: 9px; font-weight: 900; border: 1px solid currentColor; border-radius: 6px; padding: 1px 6px; margin-left: 6px; }
+    .pw-field-wrap { position: relative; }
+    .pw-eye-btn { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-dim); cursor: pointer; padding: 4px; }
+    .pw-eye-btn svg { width: 18px; height: 18px; fill: currentColor; }
+
+    /* ===================== LOGIN ===================== */
+    #login-screen {
+      display: none; position: fixed; inset: 0; z-index: 9000; padding: 20px; align-items: center; justify-content: center;
+      background: radial-gradient(900px 500px at 50% 0%, rgba(124,108,255,0.16), transparent 60%), var(--bg);
+    }
+    .login-card {
+      width: 100%; max-width: 380px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 22px;
+      padding: 28px 24px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 12px;
+    }
+    .login-brand { text-align: center; margin-bottom: 6px; }
+    .login-brand .brand-logo { margin: 0 auto 12px; width: 52px; height: 52px; font-size: 18px; border-radius: 15px; }
+    .login-brand .t { font-size: 21px; font-weight: 900; letter-spacing: 1px; }
+    .login-brand .t span { background: var(--brand-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .login-brand .s { font-size: 11px; color: var(--text-dim); font-weight: 800; letter-spacing: 1.5px; margin-top: 4px; }
+    #login-error {
+      display: none; background: var(--red-soft); border: 1px solid rgba(255,92,122,0.4); color: var(--red);
+      font-size: 12px; font-weight: 700; padding: 10px 12px; border-radius: 10px; text-align: center;
+    }
+    .login-foot { font-size: 11px; color: var(--text-dim); text-align: center; }
+    .link-btn { background: none; border: none; color: var(--brand-2); font-size: 11.5px; font-weight: 700; cursor: pointer; padding: 0; }
+
+    /* ===================== NAV ===================== */
     nav {
-      position: fixed; bottom: 0; left: 0; right: 0;
-      height: calc(var(--safe-bottom) + 62px);
-      background: linear-gradient(180deg, rgba(16,21,36,0.82), rgba(10,14,26,0.94));
-      backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
-      border-top: 1px solid var(--border-soft); display: grid;
-      grid-template-columns: repeat(6, 1fr); z-index: 100; padding-bottom: var(--safe-bottom);
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+      height: calc(var(--safe-bottom) + 64px); padding-bottom: var(--safe-bottom);
+      background: rgba(12,16,28,0.94); backdrop-filter: var(--glass); -webkit-backdrop-filter: var(--glass);
+      border-top: 1px solid var(--border-soft); display: grid; grid-template-columns: repeat(6, 1fr);
     }
     .nav-item {
-      min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 4px; color: var(--text-dim); cursor: pointer; font-size: 11px; font-weight: 700;
-      border: none; background: transparent; outline: none; position: relative; transition: color .18s ease;
+      min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+      color: var(--text-dim); cursor: pointer; font-size: 10.5px; font-weight: 800; border: none; background: transparent; position: relative;
     }
-    .nav-item svg { width: 21px; height: 21px; fill: currentColor; }
+    .nav-item svg { width: 22px; height: 22px; fill: currentColor; }
     .nav-item.active { color: var(--brand-2); }
     .nav-item.active::before {
-      content:""; position:absolute; top:6px; width: 34px; height: 30px; border-radius: 10px;
-      background: radial-gradient(circle, rgba(124,108,255,0.22), transparent 70%);
+      content: ""; position: absolute; top: 7px; width: 44px; height: 30px; border-radius: 12px; background: rgba(124,108,255,0.16); z-index: -1;
     }
+    .nav-badge {
+      position: absolute; top: 5px; left: calc(50% + 6px); min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px;
+      background: var(--brand); color: #fff; font-size: 10px; font-weight: 900; display: none; align-items: center; justify-content: center;
+      font-variant-numeric: tabular-nums; box-shadow: 0 0 0 2px #0C101C;
+    }
+    .nav-badge.show { display: inline-flex; }
+    .nav-badge.red { background: var(--red); }
+    .nav-badge.green { background: #14B98A; }
 
-    /* ===== NEW OPENING ANIMATION ===== */
-    #splash-screen {
-      position: fixed; inset: 0; z-index: 999;
-      background:
-        radial-gradient(700px 480px at 50% 40%, rgba(124,108,255,0.16), transparent 62%),
-        radial-gradient(500px 400px at 50% 120%, rgba(34,211,238,0.10), transparent 60%),
-        #070A12;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      transition: opacity 0.45s ease-out, visibility 0.45s ease-out; overflow: hidden;
+    /* ===================== SCAN CARDS (notifications) ===================== */
+    #banner-holder { position: relative; z-index: 95; }
+    #break-card-holder {
+      position: fixed; top: calc(var(--safe-top) + 10px); left: 12px; right: 12px; z-index: 9500; pointer-events: none;
+      display: flex; flex-direction: column; align-items: center;
     }
-    .splash-grid {
-      position: absolute; inset: 0; opacity: .35;
-      background-image: linear-gradient(rgba(124,108,255,0.08) 1px, transparent 1px),
-                        linear-gradient(90deg, rgba(124,108,255,0.08) 1px, transparent 1px);
-      background-size: 42px 42px; mask-image: radial-gradient(circle at 50% 42%, #000 20%, transparent 72%);
-      animation: gridPan 6s linear infinite;
+    .scan-card {
+      position: relative; pointer-events: auto; width: 100%; max-width: 560px;
+      display: flex; align-items: center; gap: 13px; padding: 14px 44px 18px 16px; border-radius: 18px; margin-bottom: 10px;
+      box-shadow: 0 14px 34px rgba(0,0,0,0.42); animation: breakCardIn .28s cubic-bezier(.2,.9,.3,1.3); overflow: hidden;
     }
-    @keyframes gridPan { to { background-position: 42px 42px; } }
-    .splash-core { position: relative; display: grid; place-items: center; width: 150px; height: 150px; }
-    .ring {
-      position: absolute; border-radius: 50%; border: 2px solid transparent;
-      border-top-color: var(--brand); border-right-color: var(--brand-2);
+    @keyframes breakCardIn { from { transform: translateY(-14px) scale(.97); opacity: 0; } to { transform: none; opacity: 1; } }
+    .scan-card::before { content: ""; position: absolute; right: -18px; top: -22px; width: 90px; height: 90px; border-radius: 50%; background: rgba(255,255,255,0.14); pointer-events: none; }
+    .scan-card-icon { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.28); display: flex; align-items: center; justify-content: center; font-size: 19px; }
+    .scan-card-body { flex: 1; min-width: 0; }
+    .scan-card-title { font-size: 14px; font-weight: 900; line-height: 1.3; }
+    .scan-card-sub { font-size: 11.5px; font-weight: 700; opacity: .88; margin-top: 2px; }
+    .scan-card-close {
+      position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,0.3);
+      display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; font-weight: 900; line-height: 1;
     }
-    .ring.r1 { width: 150px; height: 150px; animation: spin 2.4s linear infinite; }
-    .ring.r2 { width: 112px; height: 112px; border-top-color: var(--brand-2); border-right-color: var(--brand-3); animation: spin 1.7s linear infinite reverse; opacity:.8; }
-    .ring.r3 { width: 74px; height: 74px; border-top-color: var(--brand-3); border-right-color: var(--brand); animation: spin 1.1s linear infinite; opacity:.65; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .splash-cube {
-      width: 54px; height: 54px; border-radius: 14px; background: var(--brand-grad);
-      display: grid; place-items: center; z-index: 2;
-      box-shadow: 0 0 34px var(--brand-glow), inset 0 1px 2px rgba(255,255,255,0.5);
-      animation: cubeFloat 2.2s ease-in-out infinite;
-    }
-    @keyframes cubeFloat { 0%,100%{transform:translateY(0) scale(1);} 50%{transform:translateY(-5px) scale(1.06);} }
-    .splash-cube svg { width: 30px; height: 30px; }
-    .scan-sweep {
-      position: absolute; width: 150px; height: 3px; z-index: 3;
-      background: linear-gradient(90deg, transparent, var(--brand-2), transparent);
-      box-shadow: 0 0 16px var(--brand-2); border-radius: 3px;
-      animation: sweep 1.5s ease-in-out infinite;
-    }
-    @keyframes sweep { 0%{transform:translateY(-70px); opacity:.2;} 50%{transform:translateY(70px); opacity:1;} 100%{transform:translateY(-70px); opacity:.2;} }
-    .splash-text {
-      margin-top: 30px; font-size: 22px; font-weight: 900; letter-spacing: 3px;
-      background: linear-gradient(90deg,#EEF2FB,#7C6CFF,#22D3EE,#EEF2FB);
-      background-size: 240% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
-      animation: shimmer 2.6s linear infinite;
-    }
-    @keyframes shimmer { 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
-    .splash-sub { font-size: 10.5px; color: var(--brand-2); font-weight: 800; letter-spacing: 2.5px; margin-top: 7px; opacity:.9; }
-    .splash-dots { display:flex; gap:7px; margin-top: 22px; }
-    .splash-dots i { width:8px; height:8px; border-radius:50%; background: var(--brand); display:block; animation: dotPulse 1.2s ease-in-out infinite; }
-    .splash-dots i:nth-child(2){ animation-delay:.18s; background: var(--brand-2); }
-    .splash-dots i:nth-child(3){ animation-delay:.36s; background: var(--brand-3); }
-    @keyframes dotPulse { 0%,100%{transform:scale(.6); opacity:.4;} 50%{transform:scale(1.15); opacity:1;} }
+    .scan-card-dismiss-btn { position: absolute; top: 8px; right: 8px; border: none; border-radius: 999px; background: rgba(255,255,255,0.32); color: inherit; font-size: 11px; font-weight: 800; padding: 5px 10px; cursor: pointer; }
+    .scan-card-countdown { position: absolute; bottom: 6px; right: 11px; font-size: 10px; font-weight: 800; opacity: .75; font-variant-numeric: tabular-nums; }
+    .scan-card.theme-break      { background: linear-gradient(120deg, #78C8D2, #FFBE8C); color: #05261A; }
+    .scan-card.theme-notsent    { background: linear-gradient(120deg, #4A5E7A, #BEC4CE); color: #F3F5F8; }
+    .scan-card.theme-overdue    { background: linear-gradient(120deg, #E65050, #FFBE96); color: #2A0808; }
+    .scan-card.theme-present    { background: linear-gradient(120deg, #28AA6E, #AAE6C8); color: #04240F; }
+    .scan-card.theme-late       { background: linear-gradient(120deg, #E1A528, #FFE6A0); color: #2B1E02; }
+    .scan-card.theme-notoffyard { background: linear-gradient(120deg, #B45A0A, #E68C28); color: #FFF4E8; }
+    .scan-card.theme-duplicate  { background: linear-gradient(120deg, #5A6478, #96A0AF); color: #F5F7FA; }
+    .scan-card.theme-violator   { background: linear-gradient(120deg, #C81E28, #EB5A46); color: #FFF1EE; }
 
-    .install-btn {
-      display: none; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; padding: 6px 11px;
-      border-radius: 999px; border: 1px solid var(--brand); color: var(--brand-2);
-      background: rgba(124,108,255,0.10); cursor: pointer; white-space: nowrap; backdrop-filter: blur(6px);
+    /* ===================== RESPONSIVE ===================== */
+    @media (max-width: 560px) {
+      header.topbar { padding-left: 12px; padding-right: 12px; }
+      .brand-sub { display: none; }
+      #ver-chip, .user-chip .u-label, .install-btn .lbl { display: none; }
+      .chip { padding: 0 9px; }
+      .metric-row { grid-template-columns: repeat(2, 1fr); }
+      .metric-row.cols-3 { grid-template-columns: repeat(3, 1fr); }
+      .rep-grid, .field-grid { grid-template-columns: 1fr; }
+      .text-input { font-size: 16px; } /* stops iOS zooming into inputs */
+      .violator-row .row-actions { flex: 1 1 100%; justify-content: flex-end; }
     }
-    .install-btn.show { display: inline-flex; }
-    .install-btn svg { width: 14px; height: 14px; fill: currentColor; }
-
+    @media (max-width: 380px) {
+      .user-chip { display: none; }
+    }
+    @media (max-width: 759px) {
+      /* Phones: while the camera is off the scanner is a short strip, so the lists
+         are visible without scrolling. It turns square when the camera starts. */
+      .scanner-viewport-wrap:not(.scanner-wrap-active) { aspect-ratio: auto; height: 104px; max-width: none; }
+      .scanner-viewport-wrap:not(.scanner-wrap-active) .scanner-idle { flex-direction: row; gap: 12px; }
+      .scanner-viewport-wrap:not(.scanner-wrap-active) .scanner-idle svg { width: 34px; height: 34px; }
+      .scanner-viewport-wrap:not(.scanner-wrap-active) .idle-sub { display: none; }
+      .scanner-controls { max-width: none; }
+    }
     @media (min-width: 760px) {
-      main { padding-left: 24px; padding-right: 24px; }
-      .tab-content { max-width: 1180px; margin: 0 auto; width: 100%; }
-      #tab-attend.active, #tab-waiting.active, #tab-receive.active {
-        display: grid; grid-template-columns: 360px 1fr; gap: 18px; align-items: start;
-      }
-      #tab-attend .scanner-card, #tab-waiting .scanner-card, #tab-receive .scanner-card { position: sticky; top: 8px; }
-      #tab-attend .replacement-box { grid-column: 1 / -1; }
-      #tab-attend .wave-bar, #tab-attend .metric-row, #tab-attend .batch-card,
-      #tab-waiting .metric-row, #tab-waiting #waiting-batches-container,
-      #tab-receive .batch-card { grid-column: 2; }
-      #tab-attend .scanner-card { grid-row: span 3; }
-      .metric-val { font-size: 25px; }
-      nav { gap: 6px; }
-      .nav-item { border-radius: 12px; }
-      .nav-item:hover { background: rgba(255,255,255,0.04); }
+      main { padding: 18px 22px calc(var(--safe-bottom) + 90px); }
+      .tab-grid.active { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 18px; align-items: start; }
+      .tab-grid > .col-side { position: sticky; top: 0; }
+      .tab-wide.active { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
+      .tab-content { max-width: 1440px; width: 100%; margin: 0 auto; }
     }
-    @media (min-width: 1024px) { nav { max-width: 1180px; left: 50%; transform: translateX(-50%); border-radius: 20px 20px 0 0; } }
-    @media (min-width: 1440px) {
-      .tab-content { max-width: 1320px; }
-      #tab-attend.active, #tab-waiting.active, #tab-receive.active { grid-template-columns: 400px 1fr; gap: 22px; }
-      .metric-val { font-size: 27px; }
+    @media (min-width: 1024px) {
+      /* Desktop: the bottom bar becomes a left rail */
+      #app-root { padding-left: 92px; }
+      nav {
+        top: 0; right: auto; width: 92px; height: auto; padding: calc(var(--safe-top) + 72px) 8px 16px;
+        grid-template-columns: 1fr; grid-auto-rows: 70px; align-content: start; gap: 6px;
+        border-top: none; border-right: 1px solid var(--border-soft);
+      }
+      .nav-item { border-radius: 14px; font-size: 11px; }
+      .nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+      .nav-item.active { background: rgba(124,108,255,0.14); }
+      .nav-item.active::before { display: none; }
+      .nav-badge { top: 8px; left: calc(50% + 8px); box-shadow: 0 0 0 2px #0C101C; }
+      main { padding-bottom: 28px; }
+      #waiting-batches-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(440px, 1fr)); align-items: start; }
+      .tab-grid.active { grid-template-columns: 380px minmax(0, 1fr); gap: 22px; }
+    }
+    @media (min-width: 1600px) {
+      .tab-grid.active { grid-template-columns: 420px minmax(0, 1fr); }
+      .metric-val { font-size: 28px; }
     }
     @media (max-height: 560px) and (max-width: 760px) {
-      .scanner-viewport-wrap { max-width: 180px; }
-      .scanner-controls { max-width: 180px; }
+      .scanner-viewport-wrap, .scanner-controls { max-width: 190px; }
     }
-    @media (display-mode: standalone) { header { padding-top: calc(var(--safe-top) + 14px); } body { overscroll-behavior: none; } }
+    @media (display-mode: standalone) { body { overscroll-behavior: none; } }
   </style>
 </head>
 <body>
-
-  <!-- shared SVG gradient for idle icons -->
-  <svg width="0" height="0" style="position:absolute;"><defs>
-    <linearGradient id="iconGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#7C6CFF"></stop><stop offset="1" stop-color="#22D3EE"></stop>
-    </linearGradient>
+  <!-- shared SVG gradient for the scanner idle icon -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <linearGradient id="iconGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7C6CFF"/><stop offset="1" stop-color="#22D3EE"/></linearGradient>
   </defs></svg>
 
-  <!-- ===== NEW OPENING ANIMATION ===== -->
-  <div id="splash-screen">
+  <div id="splash-screen" class="splash">
     <div class="splash-grid"></div>
     <div class="splash-core">
-      <div class="ring r1"></div>
-      <div class="ring r2"></div>
-      <div class="ring r3"></div>
-      <div class="scan-sweep"></div>
-      <div class="splash-cube">
-        <svg viewBox="0 0 24 24" fill="#06080F"><path d="M21 16.5l-9 5.2-9-5.2V7.5l9-5.2 9 5.2v9zM12 4.2L5.5 8 12 11.8 18.5 8 12 4.2zM4.5 9.7v5.6l6.5 3.8v-5.6L4.5 9.7zm15 0l-6.5 3.8v5.6l6.5-3.8V9.7z"></path></svg>
-      </div>
+      <div class="splash-ring r1"></div><div class="splash-ring r2"></div><div class="splash-sweep"></div>
+      <div class="splash-cube"><svg viewBox="0 0 24 24" fill="#06080F"><path d="M21 16.5l-9 5.2-9-5.2V7.5l9-5.2 9 5.2v9zM12 4.2L5.5 8 12 11.8 18.5 8 12 4.2zM4.5 9.7v5.6l6.5 3.8v-5.6L4.5 9.7zm15 0l-6.5 3.8v5.6l6.5-3.8V9.7z"/></svg></div>
     </div>
     <div class="splash-text">RUSH&nbsp;PRO&nbsp;DUD3</div>
     <div class="splash-sub">INSTANT DISPATCH ENGINE</div>
-    <div class="splash-dots"><i></i><i></i><i></i></div>
   </div>
 
-  <!-- ===== LOGIN GATE (2026-11-18) — wraps the entire app; main-content/nav stay hidden
-       until a valid session exists. Does not touch any scanning/sync logic below. ===== -->
-  <div id="login-screen" style="display:none; position:fixed; inset:0; z-index:9000; background:radial-gradient(900px 500px at 50% 0%, rgba(124,108,255,0.14), transparent 60%), #0A0E1A; align-items:center; justify-content:center; padding:20px;">
-    <div style="width:100%; max-width:380px; background:rgba(23,29,48,0.9); border:1px solid rgba(124,140,180,0.22); border-radius:20px; padding:28px 24px; box-shadow:0 20px 50px rgba(0,0,0,0.5); backdrop-filter:blur(16px);">
-      <div style="text-align:center; margin-bottom:20px;">
-        <div style="font-size:20px; font-weight:900; letter-spacing:1px; color:#EEF2FB;">RUSH <span style="background:linear-gradient(135deg,#7C6CFF,#22D3EE); -webkit-background-clip:text; background-clip:text; color:transparent;">PRO</span></div>
-        <div style="font-size:11px; color:#93A1BF; font-weight:700; letter-spacing:1.5px; margin-top:4px;">SIGN IN TO CONTINUE</div>
+  <!-- ===== LOGIN ===== -->
+  <div id="login-screen">
+    <form class="login-card" onsubmit="doLoginAction(); return false;">
+      <div class="login-brand">
+        <div class="brand-logo">D3</div>
+        <div class="t">RUSH <span>PRO</span></div>
+        <div class="s">SIGN IN TO CONTINUE</div>
       </div>
-      <div id="login-error" style="display:none; background:rgba(255,92,122,0.12); border:1px solid rgba(255,92,122,0.4); color:#FF5C7A; font-size:12px; font-weight:700; padding:10px 12px; border-radius:10px; margin-bottom:14px; text-align:center;"></div>
-      <label class="metric-lbl" style="display:block; margin-bottom:5px;">Username</label>
-      <input type="text" id="login-username" class="text-input" style="width:100%; margin-bottom:12px;" autocomplete="username" placeholder="Enter your username">
-      <label class="metric-lbl" style="display:block; margin-bottom:5px;">Password</label>
-      <div class="pw-field-wrap" style="position:relative; margin-bottom:10px;">
-        <input type="password" id="login-password" class="text-input" style="width:100%;" autocomplete="current-password" placeholder="Enter your password">
-        <button type="button" class="pw-eye-btn" onclick="togglePwVisibility('login-password', this)" title="Show/Hide password" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-dim); cursor:pointer; padding:4px;">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"></path></svg>
+      <div id="login-error"></div>
+      <div class="field">
+        <label for="login-username">Username</label>
+        <input type="text" id="login-username" class="text-input" autocomplete="username" placeholder="Enter your username" autocapitalize="off">
+      </div>
+      <div class="field">
+        <label for="login-password">Password</label>
+        <div class="pw-field-wrap">
+          <input type="password" id="login-password" class="text-input" autocomplete="current-password" placeholder="Enter your password">
+          <button type="button" class="pw-eye-btn" onclick="togglePwVisibility('login-password', this)" title="Show / hide password"><svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></button>
+        </div>
+      </div>
+      <div style="text-align:right;"><button type="button" class="link-btn" onclick="showForgotPasswordPrompt()">Forgot password?</button></div>
+      <button type="submit" class="btn btn-green" id="btn-do-login">Sign In</button>
+      <div class="login-foot">Accounts are created and managed by your Admin.</div>
+    </form>
+  </div>
+
+  <div id="app-root">
+    <header class="topbar">
+      <div class="brand-wrap">
+        <div class="brand-logo">D3</div>
+        <div>
+          <div class="brand-title">RUSH <span>PRO</span></div>
+          <div class="brand-sub" id="header-tab-sub">OFF-YARD ATTENDANCE</div>
+        </div>
+      </div>
+      <div class="top-status">
+        <button class="chip install-btn" id="install-btn" title="Install app">
+          <svg viewBox="0 0 24 24"><path d="M12 3v10.59l3.3-3.3 1.4 1.42L12 17.4l-4.7-4.7 1.4-1.4 3.3 3.29V3h2zM5 19h14v2H5z"/></svg><span class="lbl">Install</span>
         </button>
-      </div>
-      <div style="text-align:right; margin-bottom:14px;">
-        <a href="javascript:void(0)" onclick="showForgotPasswordPrompt()" style="font-size:11px; color:var(--brand-2); font-weight:700;">Forgot password?</a>
-      </div>
-      <button class="btn btn-green" id="btn-do-login" style="width:100%;" onclick="doLoginAction()">Sign In</button>
-      <div style="font-size:10.5px; color:#93A1BF; text-align:center; margin-top:14px;">Accounts are created and managed by your Admin.</div>
-    </div>
-  </div>
-
-<div id="app-root" style="display:none; flex-direction:column; height:100dvh; overflow:hidden;">
-    <header>
-    <div class="brand-wrap">
-      <div class="brand-logo">D3</div>
-      <div>
-        <div class="brand-title">RUSH <span>PRO</span></div>
-        <div class="brand-sub" id="header-tab-sub">OFF-YARD ATTENDANCE</div>
-      </div>
-    </div>
-    <div class="top-status">
-      <button class="install-btn" id="install-btn" title="Install app">
-        <svg viewBox="0 0 24 24"><path d="M12 3v10.59l3.3-3.3 1.4 1.42L12 17.4l-4.7-4.7 1.4-1.4 3.3 3.29V3h2zM5 19h14v2H5z"></path></svg>
-        Install
-      </button>
-      <div class="sync-badge" id="sync-status">
-        <span class="sync-dot"></span>
-        <span id="sync-text">LIVE</span>
-      </div>
-      <button id="btn-force-sync" class="force-sync-btn" onclick="forceSyncAllDevices()" title="Force sync all devices + clear old cache">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M17.65 6.35A7.95 7.95 0 0012 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
-      </button>
-      <div class="clock-display" id="dubai-clock">--:--</div>
-      <div id="ver-chip" title="Frontend / Backend build versions" style="font-size:9px; font-weight:800; letter-spacing:0.3px; color:var(--text-dim); margin-left:8px; line-height:1.2; text-align:right;">
-        <div id="ver-fe">FE --</div><div id="ver-be">BE --</div>
-      </div>
-      <div id="user-chip" title="Logged in as" style="display:flex; align-items:center; gap:6px; margin-left:8px; font-size:10px; font-weight:800; color:var(--text-dim);">
-        <span id="user-chip-name">--</span>
-        <button id="btn-logout" class="btn btn-card" style="padding:4px 9px; font-size:10px;" onclick="doLogoutAction()" title="Log out">Logout</button>
-      </div>
-    </div>
-  </header>
-  <div id="pending-holder" style="display:flex; justify-content:center;">
-    <span id="pending-badge" style="display:none; align-items:center; gap:6px; font-size:11px; font-weight:800; color:#06080F; background:var(--yellow); padding:4px 14px; border-radius:0 0 12px 12px;"></span>
-  </div>
-
-  <div id="banner-holder"></div>
-  <div id="break-card-holder"></div>
-
-  <main id="main-content">
-
-    <!-- ================= TAB 1: ATTENDANCE ================= -->
-    <div class="tab-content active" id="tab-attend">
-      <div class="scanner-card">
-        <div class="scanner-viewport-wrap">
-          <div id="qr-reader-attend"></div>
-          <div class="scanner-idle" id="idle-attend">
-            <svg viewBox="0 0 24 24"><path d="M9.5 6.5v3h-3v-3h3M11 5H5v6h6V5zm-1.5 9.5v3h-3v-3h3M11 13H5v6h6v-6zm6.5-6.5v3h-3v-3h3M19 5h-6v6h6V5zm-6 8h1.5v1.5H13V13zm1.5 1.5H16V16h-1.5v-1.5zM16 13h1.5v1.5H16V13zm-3 3h1.5v1.5H13V16zm1.5 1.5H16V19h-1.5v-1.5zM16 16h1.5v1.5H16V16zm1.5-1.5H19V16h-1.5v-1.5zm0 3H19V19h-1.5v-1.5z"></path></svg>
-            <div class="idle-title">Scanner is Off</div>
-            <div class="idle-sub">Tap “Start Scanner” to activate the camera</div>
-          </div>
-          <div class="laser-line"></div>
-          <div class="corner-bracket cb-tl"></div>
-          <div class="corner-bracket cb-tr"></div>
-          <div class="corner-bracket cb-bl"></div>
-          <div class="corner-bracket cb-br"></div>
-        </div>
-        <div class="scanner-controls">
-          <button class="btn btn-green" id="btn-start-attend" onclick="startScanner('tab-attend')">▶ Start Scanner</button>
-          <button class="btn btn-ghost" id="btn-stop-attend" onclick="stopScanner('tab-attend')" style="display:none;">■ Stop Scanner</button>
-        </div>
-        <div class="scan-status-chip" id="scanchip-attend"><span class="dot"></span><span id="scantext-attend">Camera Off</span></div>
-        <div class="scanner-input-bar">
-          <input type="text" id="attend-inp" class="text-input" placeholder="Instant Scan or Search DA ID / Name..." autocomplete="off">
-          <button class="btn" id="btn-attend-checkin">Check In</button>
-          <div class="search-results-dropdown" id="attend-search-results"></div>
+        <div class="chip sync-badge" id="sync-status" title="Live sync status"><span class="sync-dot"></span><span id="sync-text">LIVE</span></div>
+        <button id="btn-force-sync" class="icon-btn force-sync-btn" onclick="forceSyncAllDevices()" title="Force sync all devices">
+          <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.95 7.95 0 0012 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+        </button>
+        <div class="chip clock-display" id="dubai-clock" title="Dubai time">--:--</div>
+        <div id="ver-chip" title="Frontend / backend versions"><div id="ver-fe">FE --</div><div id="ver-be">BE --</div></div>
+        <div class="chip user-chip" title="Logged in as">
+          <span class="u-label" id="user-chip-name">--</span>
+          <button id="btn-logout" class="btn-logout" onclick="doLogoutAction()" title="Log out">Logout</button>
         </div>
       </div>
+    </header>
+    <div id="pending-holder"><span id="pending-badge"></span></div>
+    <div id="banner-holder"></div>
+    <div id="break-card-holder"></div>
 
-      <div class="replacement-box">
-        <div style="font-size:13px; font-weight:800; color:var(--brand-2);">
-          <span>🔁 Quick Replacement Assignment (Absent DA ➔ RushData DA)</span>
-        </div>
-        <div class="rep-grid">
-          <div style="position:relative;">
-            <input type="text" id="rep-absent-inp" class="text-input" style="width:100%;" placeholder="1. Search Absent DA..." autocomplete="off">
-            <div class="search-results-dropdown" id="rep-absent-dropdown"></div>
-          </div>
-          <div style="position:relative;">
-            <input type="text" id="rep-new-inp" class="text-input" style="width:100%;" placeholder="2. Search Replacement (RushData)..." autocomplete="off">
-            <div class="search-results-dropdown" id="rep-new-dropdown"></div>
+    <main id="main-content">
+
+      <!-- ================= ATTENDANCE ================= -->
+      <section class="tab-content tab-grid active" id="tab-attend">
+        <div class="col-side">
+          <div class="scanner-card" data-scanner="attend"></div>
+          <div class="replacement-box">
+            <div class="card-title" style="color:var(--brand-2);">🔁 Quick Replacement</div>
+            <div class="card-sub">Pick an absent DA, then the replacement from RushData.</div>
+            <div class="rep-grid">
+              <div>
+                <input type="text" id="rep-absent-inp" class="text-input" placeholder="1. Absent DA…" autocomplete="off">
+                <div class="search-results-dropdown" id="rep-absent-dropdown"></div>
+              </div>
+              <div>
+                <input type="text" id="rep-new-inp" class="text-input" placeholder="2. Replacement…" autocomplete="off">
+                <div class="search-results-dropdown" id="rep-new-dropdown"></div>
+              </div>
+            </div>
+            <button class="btn btn-green" id="btn-assign-rep-inline">Assign Replacement &amp; Queue</button>
           </div>
         </div>
-        <button class="btn btn-green" id="btn-assign-rep-inline" style="width:100%; padding:11px;">Assign Replacement &amp; Queue to Batch</button>
-      </div>
-
-      <div class="wave-bar" id="wave-pill-bar"></div>
-
-      <div class="metric-row">
-        <div class="metric-box"><div class="metric-val" id="cnt-present" style="color:var(--green)">0</div><div class="metric-lbl">Wave Present</div></div>
-        <div class="metric-box"><div class="metric-val" id="cnt-late" style="color:var(--yellow)">0</div><div class="metric-lbl">Wave Late</div></div>
-        <div class="metric-box"><div class="metric-val" id="cnt-absent" style="color:var(--red)">0</div><div class="metric-lbl">Wave Absent</div></div>
-        <div class="metric-box"><div class="metric-val" id="cnt-total">0</div><div class="metric-lbl">Wave Total</div></div>
-      </div>
-
-      <div class="batch-card">
-        <div class="batch-header">
-          <div class="batch-title">
-            <span id="current-wave-label">🌊 Current Running Wave</span>
-            <span class="batch-badge" id="roster-badge-date">--</span>
+        <div class="col-main">
+          <div class="wave-bar" id="wave-pill-bar"></div>
+          <div class="metric-row">
+            <div class="metric-box" style="--accent:var(--green)"><div class="metric-val" id="cnt-present" style="color:var(--green)">0</div><span class="metric-lbl">Present</span></div>
+            <div class="metric-box" style="--accent:var(--yellow)"><div class="metric-val" id="cnt-late" style="color:var(--yellow)">0</div><span class="metric-lbl">Late</span></div>
+            <div class="metric-box" style="--accent:var(--red)"><div class="metric-val" id="cnt-absent" style="color:var(--red)">0</div><span class="metric-lbl">Absent</span></div>
+            <div class="metric-box"><div class="metric-val" id="cnt-total">0</div><span class="metric-lbl">Wave Total</span></div>
+          </div>
+          <div class="batch-card">
+            <div class="batch-header">
+              <div class="batch-title"><span id="current-wave-label">🌊 Current Running Wave</span></div>
+              <span class="batch-badge" id="roster-badge-date">--</span>
+            </div>
+            <div class="da-list" id="attend-roster-list"><div class="empty">Loading active wave…</div></div>
           </div>
         </div>
-        <div class="da-list" id="attend-roster-list">
-          <div style="padding:14px; text-align:center; color:var(--text-dim); font-size:13px;">Loading active wave...</div>
-        </div>
-      </div>
-    </div>
+      </section>
 
-    <!-- ================= TAB 2: WAITING ================= -->
-    <div class="tab-content" id="tab-waiting">
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; background:rgba(124,108,255,0.12); border:1px solid rgba(124,108,255,0.4); border-radius:14px; padding:12px 16px;">
-        <div style="font-size:12px; font-weight:800; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px;">Total Waiting Headcount</div>
-        <div id="wait-headcount-badge" style="font-size:22px; font-weight:900; color:var(--brand-2);">0</div>
-      </div>
-      <div class="scanner-card">
-        <div class="scanner-viewport-wrap">
-          <div id="qr-reader-waiting"></div>
-          <div class="scanner-idle" id="idle-waiting">
-            <svg viewBox="0 0 24 24"><path d="M9.5 6.5v3h-3v-3h3M11 5H5v6h6V5zm-1.5 9.5v3h-3v-3h3M11 13H5v6h6v-6zm6.5-6.5v3h-3v-3h3M19 5h-6v6h6V5zm-6 8h1.5v1.5H13V13zm1.5 1.5H16V16h-1.5v-1.5zM16 13h1.5v1.5H16V13zm-3 3h1.5v1.5H13V16zm1.5 1.5H16V19h-1.5v-1.5zM16 16h1.5v1.5H16V16zm1.5-1.5H19V16h-1.5v-1.5zm0 3H19V19h-1.5v-1.5z"></path></svg>
-            <div class="idle-title">Scanner is Off</div>
-            <div class="idle-sub">Tap “Start Scanner” to activate the camera</div>
+      <!-- ================= WAITING ================= -->
+      <section class="tab-content tab-grid" id="tab-waiting">
+        <div class="col-side">
+          <div class="scanner-card" data-scanner="waiting"></div>
+        </div>
+        <div class="col-main">
+          <div class="metric-row cols-3">
+            <div class="metric-box"><div class="metric-val" id="wait-total-das" style="color:var(--brand-2)">0</div><span class="metric-lbl">Waiting DAs</span></div>
+            <div class="metric-box"><div class="metric-val" id="wait-active-batches">0</div><span class="metric-lbl">Active Batches</span></div>
+            <div class="metric-box"><div class="metric-val" id="wait-batch-cap">25</div><span class="metric-lbl">Batch Cap</span></div>
           </div>
-          <div class="laser-line"></div>
-          <div class="corner-bracket cb-tl"></div>
-          <div class="corner-bracket cb-tr"></div>
-          <div class="corner-bracket cb-bl"></div>
-          <div class="corner-bracket cb-br"></div>
+          <div id="waiting-batches-container"></div>
         </div>
-        <div class="scanner-controls">
-          <button class="btn btn-green" id="btn-start-waiting" onclick="startScanner('tab-waiting')">▶ Start Scanner</button>
-          <button class="btn btn-ghost" id="btn-stop-waiting" onclick="stopScanner('tab-waiting')" style="display:none;">■ Stop Scanner</button>
-        </div>
-        <div class="scan-status-chip" id="scanchip-waiting"><span class="dot"></span><span id="scantext-waiting">Camera Off</span></div>
-        <div class="scanner-input-bar">
-          <input type="text" id="waiting-inp" class="text-input" placeholder="Scan or Search DA to Add to Waiting Batch..." autocomplete="off">
-          <button class="btn btn-green" id="btn-waiting-enqueue">+ Add to Batch</button>
-          <div class="search-results-dropdown" id="waiting-search-results"></div>
-        </div>
-      </div>
+      </section>
 
-      <div class="metric-row" style="grid-template-columns: repeat(3, 1fr);">
-        <div class="metric-box"><div class="metric-val" id="wait-total-das" style="color:var(--brand-2)">0</div><div class="metric-lbl">Waiting DAs</div></div>
-        <div class="metric-box"><div class="metric-val" id="wait-active-batches">0</div><div class="metric-lbl">Active Batches</div></div>
-        <div class="metric-box"><div class="metric-val" id="wait-batch-cap">25</div><div class="metric-lbl">Batch Cap</div></div>
-      </div>
-
-      <div id="waiting-batches-container" style="display:flex; flex-direction:column; gap:12px;"></div>
-    </div>
-
-    <!-- ================= TAB 3: BREAKS ================= -->
-    <div class="tab-content" id="tab-breaks">
-      <div class="replacement-box">
-        <div style="font-size:13px; font-weight:800; color:var(--brand-2);">☕ Break Control (Yard Marshal)</div>
-        <div class="scanner-input-bar" style="margin-top:0; position:relative;">
-          <input type="text" id="break-inp" class="text-input" placeholder="Scan or search DA to send on Break..." autocomplete="off">
-          <button class="btn" id="btn-start-break" style="background:linear-gradient(135deg,#FFCB5B,#F59E0B); color:#201400;">Send on Break</button>
-          <div class="search-results-dropdown" id="break-search-results"></div>
-        </div>
-      </div>
-
-      <div class="batch-card">
-        <div class="batch-header">
-          <div class="batch-title"><span>☕ Currently on Break</span></div>
-          <span class="batch-badge" id="break-badge-count" style="background:var(--yellow); color:#201400;">0 DAs</span>
-        </div>
-        <div class="da-list" id="breaks-da-list"></div>
-      </div>
-
-      <div class="batch-card break-return">
-        <div class="batch-header">
-          <div class="batch-title"><span>🔄 DA's from Break — Ready to Dispatch</span></div>
-          <span class="batch-badge" id="breakret-badge-count" style="background:var(--green); color:#032015;">0</span>
-        </div>
-        <div class="da-list" id="breakret-da-list"></div>
-      </div>
-    </div>
-
-    <!-- ================= TAB: VIOLATORS ================= -->
-    <div class="tab-content" id="tab-violators">
-      <div class="violator-banner">
-        <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"></path></svg>
-        <span>Violators must be sent back to the OFF-YARD. Receive IN is blocked for every DA listed here.</span>
-      </div>
-      <div class="batch-card">
-        <div class="batch-header">
-          <div class="batch-title">
-            <input type="checkbox" class="da-checkbox" id="violator-select-all" onchange="toggleSelectAllViolators(this.checked)" title="Select all violators">
-            <span>🚫 Active Violators</span>
-          </div>
-          <div style="display:flex; align-items:center; gap:8px;">
-            <span class="batch-badge" id="violator-badge-count" style="background:var(--red); color:#fff;">0</span>
-            <button id="btn-remove-selected-violators" class="btn btn-card" style="display:none; padding:6px 12px; font-size:12px; color:var(--red);" onclick="removeSelectedViolatorsAction()">Remove Selected</button>
-            <button id="btn-remove-all-violators" class="btn btn-card" style="display:none; padding:6px 12px; font-size:12px; background:var(--red); color:#fff;" onclick="removeAllViolatorsAction()">Remove All</button>
+      <!-- ================= BREAKS ================= -->
+      <section class="tab-content tab-grid" id="tab-breaks">
+        <div class="col-side">
+          <div class="card">
+            <div class="card-title" style="color:var(--yellow);">☕ Break Control</div>
+            <div class="card-sub">Sending a DA on break removes them from their waiting batch. When the break ends they go to the top of the queue.</div>
+            <div class="scanner-input-bar">
+              <input type="text" id="break-inp" class="text-input" placeholder="Scan or search DA…" autocomplete="off">
+              <button class="btn btn-amber" id="btn-start-break">Send on Break</button>
+              <div class="search-results-dropdown" id="break-search-results"></div>
+            </div>
           </div>
         </div>
-        <div class="da-list" id="violators-da-list"></div>
-      </div>
-    </div>
-
-    <!-- ================= TAB 4: RECEIVE ================= -->
-    <div class="tab-content" id="tab-receive">
-      <div class="scanner-card">
-        <div class="scanner-viewport-wrap">
-          <div id="qr-reader-receive"></div>
-          <div class="scanner-idle" id="idle-receive">
-            <svg viewBox="0 0 24 24"><path d="M9.5 6.5v3h-3v-3h3M11 5H5v6h6V5zm-1.5 9.5v3h-3v-3h3M11 13H5v6h6v-6zm6.5-6.5v3h-3v-3h3M19 5h-6v6h6V5zm-6 8h1.5v1.5H13V13zm1.5 1.5H16V16h-1.5v-1.5zM16 13h1.5v1.5H16V13zm-3 3h1.5v1.5H13V16zm1.5 1.5H16V19h-1.5v-1.5zM16 16h1.5v1.5H16V16zm1.5-1.5H19V16h-1.5v-1.5zm0 3H19V19h-1.5v-1.5z"></path></svg>
-            <div class="idle-title">Scanner is Off</div>
-            <div class="idle-sub">Tap “Start Scanner” to activate the Received In camera</div>
+        <div class="col-main">
+          <div class="batch-card">
+            <div class="batch-header">
+              <div class="batch-title">☕ Currently on Break</div>
+              <span class="batch-badge badge-yellow" id="break-badge-count">0 DAs</span>
+            </div>
+            <div class="da-list" id="breaks-da-list"></div>
           </div>
-          <div class="laser-line"></div>
-          <div class="corner-bracket cb-tl"></div>
-          <div class="corner-bracket cb-tr"></div>
-          <div class="corner-bracket cb-bl"></div>
-          <div class="corner-bracket cb-br"></div>
-        </div>
-        <div class="scanner-controls">
-          <button class="btn btn-green" id="btn-start-receive" onclick="startScanner('tab-receive')">▶ Start Scanner</button>
-          <button class="btn btn-ghost" id="btn-stop-receive" onclick="stopScanner('tab-receive')" style="display:none;">■ Stop Scanner</button>
-        </div>
-        <div class="scan-status-chip" id="scanchip-receive"><span class="dot"></span><span id="scantext-receive">Camera Off</span></div>
-        <div class="scanner-input-bar">
-          <input type="text" id="receive-inp" class="text-input" placeholder="Scan DA at Received In station..." autocomplete="off">
-          <button class="btn btn-green" id="btn-receive-scanin">Received In</button>
-          <div class="search-results-dropdown" id="receive-search-results"></div>
-        </div>
-      </div>
-
-      <div class="batch-card">
-        <div class="batch-header">
-          <div class="batch-title"><span>⏱️ Sent from Waiting — Awaiting Received In (scan before time limit)</span></div>
-          <div style="display:flex; align-items:center; gap:8px;">
-            <span class="batch-badge" id="awaiting-badge-count">0</span>
-            <button id="btn-whatsapp-notify" class="btn btn-card" style="padding:6px 10px; font-size:12px; display:none; color:#25D366;" onclick="requestNextBatchViaWhatsApp()" title="Request next batch via WhatsApp">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" style="vertical-align:-3px; margin-right:4px;"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0012.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.19 8.19 0 012.41 5.83c0 4.55-3.7 8.25-8.24 8.25-1.48 0-2.93-.4-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 01-1.26-4.39c0-4.55 3.7-8.25 8.25-8.25M8.53 7.33c-.16 0-.43.06-.62.27-.2.2-.76.74-.76 1.81 0 1.06.78 2.09.89 2.23.11.15 1.58 2.52 3.95 3.44 1.97.76 2.37.61 2.8.57.42-.04 1.36-.56 1.56-1.1.2-.54.2-1 .14-1.1-.06-.1-.23-.16-.48-.28-.25-.13-1.47-.73-1.7-.81-.23-.09-.4-.13-.56.13-.17.25-.65.81-.8.98-.14.16-.3.19-.5.08-.21-.11-1.57-.58-2.5-1.48-.75-.74-1.17-1.6-1.3-1.86-.13-.25-.01-.4.11-.52.11-.11.25-.3.38-.44.13-.15.17-.25.26-.42.08-.17.04-.32-.03-.44-.07-.13-.56-1.37-.78-1.84-.16-.33-.33-.33-.46-.33z"></path></svg>
-              Request Batch
-            </button>
+          <div class="batch-card break-return">
+            <div class="batch-header">
+              <div class="batch-title">🔄 Back from Break — Ready to Dispatch</div>
+              <span class="batch-badge badge-green" id="breakret-badge-count">0</span>
+            </div>
+            <div class="da-list" id="breakret-da-list"></div>
           </div>
         </div>
-        <div class="da-list" id="awaiting-da-list"></div>
-      </div>
+      </section>
 
-      <div class="batch-card">
-        <div class="batch-header">
-          <div class="batch-title"><span>✅ Received In (confirmed by YM)</span></div>
-          <span class="batch-badge" id="received-badge-count" style="background:var(--green); color:#032015;">0</span>
+      <!-- ================= VIOLATORS ================= -->
+      <section class="tab-content" id="tab-violators">
+        <div class="violator-banner">
+          <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+          <span>Violators must go back to the OFF-YARD. Receive In is blocked for every DA listed here — scanning them at Waiting clears them.</span>
         </div>
-        <div class="da-list" id="received-da-list"></div>
-      </div>
-    </div>
-
-    <!-- ================= TAB 5: ADMIN ================= -->
-    <div class="tab-content" id="tab-admin">
-      <div class="batch-card" style="padding:15px; display:flex; flex-direction:column; gap:13px;">
-        <div class="batch-title" style="margin-bottom:6px;">⚙️ Global Dispatch &amp; Cloud Config</div>
-        <div>
-          <label class="metric-lbl">Yard Marshal Name (Local Device)</label>
-          <input type="text" id="cfg-ym-name" class="text-input" style="width:100%; margin-top:5px;">
-        </div>
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:4px 0;">
-          <label class="metric-lbl" style="margin:0;">Scanning Sounds &amp; Audio Feedback</label>
-          <button id="cfg-sound-toggle" class="btn btn-card" type="button" style="padding:9px 15px; min-width:94px;">🔊 On</button>
-        </div>
-        <div>
-          <label class="metric-lbl">Google Apps Script Web App API URL</label>
-          <input type="text" id="cfg-api-url" class="text-input" style="width:100%; margin-top:5px;">
-        </div>
-        <div>
-          <label class="metric-lbl">Active Google Sheet URL (Monthly Switching)</label>
-          <input type="text" id="cfg-sheet-url" class="text-input" style="width:100%; margin-top:5px;">
-        </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:11px;">
-          <div><label class="metric-lbl">Batch Size (DAs)</label><input type="number" id="cfg-batch-size" class="text-input" style="width:100%; margin-top:5px;" value="25"></div>
-          <div><label class="metric-lbl">Receive Timeout (Min)</label><input type="number" id="cfg-rush-timeout" class="text-input" style="width:100%; margin-top:5px;" value="15"></div>
-          <div><label class="metric-lbl">Auto-OFD Timer (Min)</label><input type="number" id="cfg-auto-ofd" class="text-input" style="width:100%; margin-top:5px;" value="30"></div>
-            <div><label class="metric-lbl">Pre-Wave Block (Min)</label><input type="number" id="cfg-prewave" class="text-input" style="width:100%; margin-top:5px;" value="30"></div>
-          <div><label class="metric-lbl">Wave Grace Period (Min)</label><input type="number" id="cfg-grace" class="text-input" style="width:100%; margin-top:5px;" value="10"></div>
-          <div><label class="metric-lbl">Receive Violation (Min)</label><input type="number" id="cfg-entry-violation" class="text-input" style="width:100%; margin-top:5px;" value="15"></div>
-        </div>
-        <div>
-          <label class="metric-lbl">Admin PIN</label>
-          <input type="password" id="cfg-admin-pin" class="text-input" style="width:100%; margin-top:5px;" placeholder="****">
-        </div>
-        <div style="display:flex; gap:9px; margin-top:6px;">
-          <button class="btn btn-green" id="btn-save-settings" style="flex:1;">Save Settings</button>
-          <button class="btn btn-danger" id="btn-reset-day">Reset Day</button>
-        </div>
-      </div>
-
-      <!-- Admin-only: User Management (2026-11-18). Hidden entirely for regular users. -->
-      <div class="batch-card" id="admin-user-mgmt" style="display:none; padding:15px; margin-top:13px; flex-direction:column; gap:13px;">
-        <div class="batch-title" style="margin-bottom:2px;">🔒 Manage User Accounts (Admin Only)</div>
-
-        <div style="display:flex; flex-direction:column; gap:9px; background:rgba(16,21,36,0.5); border:1px solid var(--border); border-radius:12px; padding:12px;">
-          <div class="metric-lbl">Create New User</div>
-          <input type="text" id="new-user-username" class="text-input" style="width:100%;" placeholder="Username (min 3 chars)">
-          <div class="pw-field-wrap" style="position:relative;">
-            <input type="password" id="new-user-password" class="text-input" style="width:100%;" placeholder="Password (min 4 chars)">
-            <button type="button" class="pw-eye-btn" onclick="togglePwVisibility('new-user-password', this)" title="Show/Hide password" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-dim); cursor:pointer; padding:4px;">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"></path></svg>
-            </button>
+        <div class="batch-card">
+          <div class="batch-header">
+            <div class="batch-title">
+              <input type="checkbox" class="da-checkbox" id="violator-select-all" title="Select all">
+              <span>🚫 Active Violators</span>
+              <span class="batch-badge badge-red" id="violator-badge-count">0</span>
+            </div>
+            <div class="batch-actions">
+              <button id="btn-remove-selected-violators" class="btn btn-card btn-sm btn-text-red" style="display:none;">Remove Selected</button>
+              <button id="btn-remove-all-violators" class="btn btn-danger btn-sm" style="display:none;">Remove All</button>
+            </div>
           </div>
-          <input type="text" id="new-user-displayname" class="text-input" style="width:100%;" placeholder="Display Name (optional)">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <label class="metric-lbl" style="margin:0;">Role:</label>
-            <select id="new-user-role" class="text-input" style="flex:1; width:auto;">
-              <option value="user" selected>Regular User</option>
-              <option value="admin">Admin</option>
-            </select>
+          <div class="da-list" id="violators-da-list"></div>
+        </div>
+      </section>
+
+      <!-- ================= RECEIVE ================= -->
+      <section class="tab-content tab-grid" id="tab-receive">
+        <div class="col-side">
+          <div class="scanner-card" data-scanner="receive"></div>
+        </div>
+        <div class="col-main">
+          <div class="batch-card">
+            <div class="batch-header">
+              <div class="batch-title">⏱️ Awaiting Received In <span class="batch-badge" id="awaiting-badge-count">0</span></div>
+              <button id="btn-whatsapp-notify" class="btn btn-card btn-sm btn-whatsapp" style="display:none;" onclick="requestNextBatchViaWhatsApp()" title="Ask OFFYARD for the next batch on WhatsApp">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0012.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.19 8.19 0 012.41 5.83c0 4.55-3.7 8.25-8.24 8.25-1.48 0-2.93-.4-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 01-1.26-4.39c0-4.55 3.7-8.25 8.25-8.25z"/></svg>
+                Request Batch
+              </button>
+            </div>
+            <div class="da-list" id="awaiting-da-list"></div>
           </div>
-          <button class="btn btn-green" onclick="adminCreateUserAction()">Create User</button>
+          <div class="batch-card">
+            <div class="batch-header">
+              <div class="batch-title">✅ Received In</div>
+              <span class="batch-badge badge-green" id="received-badge-count">0</span>
+            </div>
+            <div class="da-list" id="received-da-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= ADMIN ================= -->
+      <section class="tab-content tab-wide" id="tab-admin">
+        <div class="card">
+          <div class="card-title">⚙️ Dispatch Settings</div>
+          <div class="field"><label for="cfg-ym-name">Yard Marshal name (this device)</label><input type="text" id="cfg-ym-name" class="text-input"></div>
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+            <span class="metric-lbl">Scan sounds &amp; vibration</span>
+            <button id="cfg-sound-toggle" class="btn btn-card btn-sm" type="button" style="min-width:90px;">🔊 On</button>
+          </div>
+          <div class="field-grid">
+            <div class="field"><label for="cfg-batch-size">Batch size (DAs)</label><input type="number" id="cfg-batch-size" class="text-input" value="25"></div>
+            <div class="field"><label for="cfg-entry-violation">Receive violation (min)</label><input type="number" id="cfg-entry-violation" class="text-input" value="15"></div>
+            <div class="field"><label for="cfg-auto-ofd">Auto-OFD timer (min)</label><input type="number" id="cfg-auto-ofd" class="text-input" value="30"></div>
+            <div class="field"><label for="cfg-prewave">Pre-wave block (min)</label><input type="number" id="cfg-prewave" class="text-input" value="30"></div>
+            <div class="field"><label for="cfg-grace">Wave grace period (min)</label><input type="number" id="cfg-grace" class="text-input" value="10"></div>
+            <div class="field"><label for="cfg-rush-timeout">Receive timeout (min)</label><input type="number" id="cfg-rush-timeout" class="text-input" value="15"></div>
+          </div>
+          <details>
+            <summary class="metric-lbl" style="cursor:pointer; padding:4px 0;">Advanced: backend &amp; sheet</summary>
+            <div style="display:flex; flex-direction:column; gap:11px; margin-top:10px;">
+              <div class="field"><label for="cfg-api-url">Apps Script web app URL</label><input type="text" id="cfg-api-url" class="text-input"></div>
+              <div class="field"><label for="cfg-sheet-url">Active Google Sheet URL (monthly switch)</label><input type="text" id="cfg-sheet-url" class="text-input"></div>
+            </div>
+          </details>
+          <div class="field"><label for="cfg-admin-pin">Admin PIN (needed to save unless you are an admin)</label><input type="password" id="cfg-admin-pin" class="text-input" placeholder="••••" autocomplete="off"></div>
+          <div style="display:flex; gap:9px;">
+            <button class="btn btn-green" id="btn-save-settings" style="flex:1;">Save Settings</button>
+            <button class="btn btn-danger" id="btn-reset-day">Reset Day</button>
+          </div>
         </div>
 
-        <div>
-          <div class="metric-lbl" style="margin-bottom:8px;">Existing Users</div>
+        <div class="card" id="admin-user-mgmt" style="display:none;">
+          <div class="card-title">🔒 User Accounts</div>
+          <div class="card" style="background:var(--surface-3); box-shadow:none; padding:12px;">
+            <span class="section-label">Create new user</span>
+            <input type="text" id="new-user-username" class="text-input" placeholder="Username (min 3 characters)" autocapitalize="off">
+            <div class="pw-field-wrap">
+              <input type="password" id="new-user-password" class="text-input" placeholder="Password (min 4 characters)">
+              <button type="button" class="pw-eye-btn" onclick="togglePwVisibility('new-user-password', this)" title="Show / hide password"><svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></button>
+            </div>
+            <input type="text" id="new-user-displayname" class="text-input" placeholder="Display name (optional)">
+            <select id="new-user-role" class="text-input"><option value="user" selected>Regular user</option><option value="admin">Admin</option></select>
+            <button class="btn btn-green" onclick="adminCreateUserAction()">Create User</button>
+          </div>
+          <span class="section-label">Existing users</span>
           <div id="admin-user-list" style="display:flex; flex-direction:column; gap:8px;"></div>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
 
-  </main>
-
-  <nav>
-    <button class="nav-item active" data-tab="tab-attend">
-      <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"></path></svg>
-      <span>Attend</span>
-    </button>
-    <button class="nav-item" data-tab="tab-waiting">
-      <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"></path></svg>
-      <span>Waiting</span>
-    </button>
-    <button class="nav-item" data-tab="tab-breaks">
-      <svg viewBox="0 0 24 24"><path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 5h-2V5h2v3zM4 19h16v2H4z"></path></svg>
-      <span>Breaks</span>
-    </button>
-    <button class="nav-item" data-tab="tab-violators">
-      <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"></path></svg>
-      <span>Violators</span>
-    </button>
-    <button class="nav-item" data-tab="tab-receive">
-      <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path></svg>
-      <span>Receive</span>
-    </button>
-    <button class="nav-item" data-tab="tab-admin">
-      <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"></path></svg>
-      <span>Admin</span>
-    </button>
-  </nav>
-</div>
+    <nav aria-label="Sections">
+      <button class="nav-item active" data-tab="tab-attend">
+        <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
+        <span>Attend</span>
+      </button>
+      <button class="nav-item" data-tab="tab-waiting">
+        <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/></svg>
+        <span>Waiting</span><span class="nav-badge" id="nb-waiting"></span>
+      </button>
+      <button class="nav-item" data-tab="tab-breaks">
+        <svg viewBox="0 0 24 24"><path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 5h-2V5h2v3zM4 19h16v2H4z"/></svg>
+        <span>Breaks</span><span class="nav-badge" id="nb-breaks"></span>
+      </button>
+      <button class="nav-item" data-tab="tab-violators">
+        <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+        <span>Violators</span><span class="nav-badge red" id="nb-violators"></span>
+      </button>
+      <button class="nav-item" data-tab="tab-receive">
+        <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+        <span>Receive</span><span class="nav-badge green" id="nb-receive"></span>
+      </button>
+      <button class="nav-item" data-tab="tab-admin">
+        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+        <span>Admin</span>
+      </button>
+    </nav>
+  </div>
 
   <script>
-    var SAFE_STORE = (function() {
-      var mem = {}, ok = false;
-      try {
-        var tk = "__dud3_test__";
-        window.localStorage.setItem(tk, "1");
-        window.localStorage.removeItem(tk);
-        ok = true;
-      } catch (e) { ok = false; }
-      return {
-        getItem: function(k) {
-          if (ok) { try { return window.localStorage.getItem(k); } catch (e) {} }
-          return (k in mem) ? mem[k] : null;
-        },
-        setItem: function(k, v) {
-          if (ok) { try { window.localStorage.setItem(k, v); return; } catch (e) {} }
-          mem[k] = String(v);
-        },
-        removeItem: function(k) {
-          if (ok) { try { window.localStorage.removeItem(k); return; } catch (e) {} }
-          delete mem[k];
-        }
-      };
-    })();
-
-    var _deferredInstallPrompt = null;
-    window.addEventListener("beforeinstallprompt", function(e) {
-      e.preventDefault();
-      _deferredInstallPrompt = e;
-      var b = document.getElementById("install-btn");
-      if (b) b.classList.add("show");
-    });
-    window.addEventListener("appinstalled", function() {
-      _deferredInstallPrompt = null;
-      var b = document.getElementById("install-btn");
-      if (b) b.classList.remove("show");
-    });
-    function triggerInstall() {
-      if (!_deferredInstallPrompt) {
-        var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-        if (isIOS) {
-          showBanner("To install: tap the Share icon, then \"Add to Home Screen\".", "warning", 12);
-        } else {
-          showBanner("App install isn't available here. Open this app from its hosted URL to install.", "warning", 10);
-        }
-        return;
-      }
-      _deferredInstallPrompt.prompt();
-      _deferredInstallPrompt.userChoice.finally(function() {
-        _deferredInstallPrompt = null;
-        var b = document.getElementById("install-btn");
-        if (b) b.classList.remove("show");
-      });
-    }
-
-    var DEFAULT_API = "https://script.google.com/macros/s/AKfycbwjKBYUa4e4MLAVSOG7deemoWWZIx5gNWnEdbA6E4QFUxRCaTuNGhSIvM9mGrI1y6Lzdg/exec";
-    var DEFAULT_SHEET = "https://docs.google.com/spreadsheets/d/1xmoLxFOyKipL7acCXu9ZG90d1nDpSag7xdkfP0v9wGQ/edit";
-
+    // Shared helpers — SAFE_STORE, fetchWithTimeout, escapeHtml, DUD3.api and the
+    // install sheet (DUD3.install) — live in assets/core.js, shared with the Driver Hub.
+    var DEFAULT_API = DUD3.CONFIG.API_URL;
+    var DEFAULT_SHEET = DUD3.CONFIG.SHEET_URL;
     var S = {
       api: SAFE_STORE.getItem("dud3_api") || DEFAULT_API,
       sheetUrl: SAFE_STORE.getItem("dud3_sheet") || DEFAULT_SHEET,
@@ -1354,7 +737,10 @@ a { color: var(--color-link, var(--color-primary)); }</style>
       removedFromWaiting: {},
       highestBatchNum: 0,
       batchAssignedTotals: {},
-      serverNextBatchName: null
+      serverNextBatchName: null,
+      rushFetchedAt: 0,      // RushData is only re-downloaded every few minutes
+      lastRosterSig: "",     // skip re-rendering when a sync returns identical data
+      authExpired: false
     };
 
     var audioCtx = null;
@@ -1698,7 +1084,7 @@ a { color: var(--color-link, var(--color-primary)); }</style>
     var OUTBOX_KEY = "dud3_outbox_v1";
     // Bump on every Index.html change. Shown in the header (FE) next to the backend (BE)
     // version so you can confirm after deploying that the live app runs the latest code.
-    var FRONTEND_VERSION = "v2026.11.23-5";
+    var FRONTEND_VERSION = "v2026.11.25-v3";
 
     function loadOutbox() {
       try { return JSON.parse(SAFE_STORE.getItem(OUTBOX_KEY) || "[]") || []; }
@@ -1727,137 +1113,106 @@ a { color: var(--color-link, var(--color-primary)); }</style>
       return "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
     }
 
-    // 2026-11-23 CRITICAL FIX: browsers put NO default timeout on fetch(). If a POST to
-// Apps Script ever hangs (a well-known real-world occurrence right after a fresh
-// deployment / "cold start", or a flaky network), the fetch Promise NEVER resolves
-// or rejects -- it just hangs forever. That left sendReq's retry chain waiting
-// indefinitely, so "Signing in..." (or any other mutating action) could freeze the
-// UI permanently with no error ever shown, exactly as reported. Fixed by wrapping
-// every fetch with a hard client-side timeout (AbortController) so it ALWAYS
-// settles one way or another within a bounded time.
-function fetchWithTimeout(url, options, timeoutMs) {
-  var controller = (typeof AbortController !== "undefined") ? new AbortController() : null;
-  var opts = Object.assign({}, options || {});
-  if (controller) opts.signal = controller.signal;
-  var timer = controller ? setTimeout(function(){ controller.abort(); }, timeoutMs) : null;
-  return fetch(url, opts).finally(function(){ if (timer) clearTimeout(timer); });
-}
+    /* ===================== NETWORK LAYER =====================
+     * Only real yard actions go through the offline outbox — they are safe to
+     * re-send because the server de-duplicates by clientId. Logins, admin actions,
+     * settings and Reset Day are sent once and are never stored on the device. */
+    var OUTBOX_ACTIONS = {
+      recordCheckIn: 1, addToWaiting: 1, sendDA: 1, rushScanIn: 1, removeFromWaiting: 1,
+      assignReplacement: 1, startBreak: 1, endBreak: 1, clearViolator: 1, clearAllViolators: 1
+    };
+    var OUTBOX_MAX_AGE_MS = 6 * 3600 * 1000; // never replay a scan older than 6 h
+    S.inflightIds = {};
 
-function postOnce(action, payload, clientId) {
-      // Auto-attach the logged-in session token to every request's payload (server-side
-      // admin actions require it; other actions simply ignore it). Keeps every existing
-      // call site unchanged.
-      var _payload = Object.assign({}, payload || {});
-      if (S.authToken && !_payload.token) _payload.token = S.authToken;
-      var bodyData = { action: action, sheetUrl: S.sheetUrl, clientId: clientId, payload: _payload };
-      return fetchWithTimeout(S.api, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(bodyData)
-      }, 15000)
-        .then(function(res) { return res.json(); })
-        .catch(function() {
-          var url = S.api + "?action=" + encodeURIComponent(action) +
-                    "&clientId=" + encodeURIComponent(clientId) +
-                    "&payload=" + encodeURIComponent(JSON.stringify(_payload));
-          return fetchWithTimeout(url, {}, 15000).then(function(res) { return res.json(); });
-        });
+    function postOnce(action, payload, clientId) {
+      var p = Object.assign({}, payload || {});
+      if (S.authToken && !p.token && action !== "authLogin") p.token = S.authToken;
+      return DUD3.api(action, p, { apiUrl: S.api, clientId: clientId }).then(function(data) {
+        if (data && data.authError && action !== "authCheckSession" && action !== "authLogout") onAuthExpired();
+        return data;
+      });
     }
 
     function sendReq(action, payload, callback) {
-      if (action === "getRoster") {
+      callback = callback || function() {};
+      if (!OUTBOX_ACTIONS[action]) {
         var readVersion = S.mutationVersion;
         postOnce(action, payload, genClientId())
-          .then(function(data) { if (callback) callback(null, data, readVersion); })
-          .catch(function(ex) { if (callback) callback(ex); });
+          .then(function(data) { callback(null, data, readVersion); })
+          .catch(function(ex) { callback(ex); });
         return;
       }
 
       S.inflightMutations++;
       S.mutationVersion++;
       var currentVersion = S.mutationVersion;
-
-      // Stable clientId across retries so the server's idempotency cache dedupes any
-      // accidental double-apply (safe to re-send the SAME mutation).
+      // Same clientId on every retry, so the server never applies it twice.
       var clientId = genClientId();
       outboxAdd({ clientId: clientId, action: action, payload: payload || {}, ts: Date.now() });
+      S.inflightIds[clientId] = true;
 
-      // Auto-retry on the server's busy-lock response (retry:true) or a transient transport
-      // error. This is what makes rapid multi-DA receive scans and violator-remove reliable:
-      // instead of surfacing "Server busy" as a hard error, we back off briefly and re-send
-      // the SAME idempotent request up to a few times.
       var MAX_RETRIES = 4;
-      var _settled = false;
-      function settle() { if (!_settled) { _settled = true; S.inflightMutations = Math.max(0, S.inflightMutations - 1); } }
-      // 2026-11-23 FIX: the watchdog previously only called settle() -- it reset the
-      // internal inflightMutations counter but NEVER told the caller anything went
-      // wrong, so a hung fetch (see fetchWithTimeout above) left the UI stuck showing
-      // "Signing in..." / a disabled button forever with no error ever surfacing.
-      // Now it also fires the callback with a timeout error so every caller's UI
-      // (e.g. doLoginAction's btn.disabled=false / "Sign In" reset) always recovers.
-      setTimeout(function() {
-        if (_settled) return;
-        settle();
-        if (callback) callback(new Error("Request timed out. Please check your connection and try again."));
-      }, 12000);
+      var settled = false;
+      function settle() {
+        if (settled) return;
+        settled = true;
+        S.inflightMutations = Math.max(0, S.inflightMutations - 1);
+      }
+      function queuedNotice() {
+        showBanner("Slow connection — saved on this device, it will sync automatically.", "warning", 6);
+      }
+      // Slow network: after 30 s stop holding the screen. The action stays in the
+      // outbox ("⏳ N pending") and flushOutbox re-sends it; a late answer still arrives.
+      setTimeout(function() { if (!settled) { settle(); queuedNotice(); } }, 30000);
+
       function attempt(n) {
-        postOnce(action, payload, clientId)
-          .then(function(data) {
-            if (data && data.retry === true && n < MAX_RETRIES) {
-              setTimeout(function(){ attempt(n + 1); }, 400 + n * 350); // 0.4s,0.75s,1.1s,1.45s
-              return;
-            }
-            // Guard: if the watchdog already force-settled (callback already fired
-            // with a timeout error), do not fire it again when this late response
-            // finally arrives -- just clean up the outbox silently.
-            if (_settled) { outboxRemove(clientId); return; }
-            settle();
-            outboxRemove(clientId);
-            if (callback) callback(null, data, currentVersion);
-          })
-          .catch(function(ex) {
-            if (n < MAX_RETRIES) {
-              setTimeout(function(){ attempt(n + 1); }, 400 + n * 350);
-              return;
-            }
-            if (_settled) return;
-            settle();
-            if (callback) callback(ex);
-          });
+        postOnce(action, payload, clientId).then(function(data) {
+          if (data && data.retry === true && n < MAX_RETRIES) { setTimeout(function() { attempt(n + 1); }, 400 + n * 350); return; }
+          delete S.inflightIds[clientId];
+          settle();
+          if (data && data.authError) return; // kept in the outbox; re-sent after sign-in
+          outboxRemove(clientId);
+          callback(null, data, currentVersion);
+        }).catch(function() {
+          if (n < MAX_RETRIES) { setTimeout(function() { attempt(n + 1); }, 400 + n * 350); return; }
+          // Network down: keep it queued (no rollback, no "NOT SAVED") — flushOutbox retries.
+          delete S.inflightIds[clientId];
+          if (!settled) { settle(); queuedNotice(); }
+        });
       }
       attempt(0);
     }
 
     var _outboxFlushing = false;
     function flushOutbox() {
-      if (_outboxFlushing) return;
-      if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+      if (_outboxFlushing || S.authExpired || !S.authToken) return;
+      if (navigator.onLine === false) return;
+      var now = Date.now();
       var arr = loadOutbox();
+      var stale = arr.filter(function(x) { return now - (x.ts || 0) > OUTBOX_MAX_AGE_MS; });
+      if (stale.length) { stale.forEach(function(x) { outboxRemove(x.clientId); }); arr = loadOutbox(); }
+      arr = arr.filter(function(x) { return !S.inflightIds[x.clientId]; }); // sendReq is still on it
       if (arr.length === 0) return;
       _outboxFlushing = true;
       var i = 0;
       function next() {
-        if (i >= arr.length) { _outboxFlushing = false; updateOutboxBadge(loadOutbox().length); pollRoster(true); return; }
+        if (i >= arr.length) { _outboxFlushing = false; pollRoster(true); return; }
         var item = arr[i++];
-        // retry each queued scan a few times on busy-lock / transient error so a single
-        // failure never STALLS the queue behind it (that caused scans to silently never
-        // reach the sheet). Same clientId => server idempotency prevents double-apply.
         var tries = 0;
         function trySend() {
           postOnce(item.action, item.payload, item.clientId)
             .then(function(data) {
+              if (data && data.authError) { _outboxFlushing = false; return; } // resume after sign-in
               if (data && data.retry === true && tries < 4) { tries++; setTimeout(trySend, 400 + tries * 350); return; }
-              // Remove from outbox when the server has definitively handled it (success, or a
-              // definitive non-retry failure like alreadyCheckedIn/not-found). Keep only if it
-              // is a soft/busy failure with no error, so it is retried on the next flush.
-              var softBusy = (data && data.success === false && !data.error && data.retry);
-              if (!softBusy) outboxRemove(item.clientId);
-              next(); // ALWAYS advance — never stall the queue
+              outboxRemove(item.clientId);
+              if (data && data.success === false && data.error) {
+                showBanner("A queued action was rejected when it synced: " + data.error, "danger", 12);
+              }
+              next(); // never stall the queue
             })
             .catch(function() {
               if (tries < 4) { tries++; setTimeout(trySend, 400 + tries * 350); return; }
-              // leave this item in the outbox for the NEXT flush, but keep draining the rest
-              next();
+              next(); // stays in the outbox for the next flush
             });
         }
         trySend();
@@ -1870,19 +1225,31 @@ function postOnce(action, payload, clientId) {
       flushOutbox();
     });
     window.addEventListener("offline", function() {
+      setSyncBadge("off");
       showBanner("Offline — scans are saved and will sync automatically when reconnected.", "warning", 6);
     });
 
-    // 2026-11-18: 1-second continuous sync across all devices (user requirement).
-    // Safe because: (1) getRoster no longer competes for the global script lock (fixed
-    // separately), and (2) the backend serves an 8s rolling cache snapshot for syncOnly
-    // polls, so most of these 1s ticks are cheap cache reads, not full sheet rebuilds —
-    // the cache is invalidated instantly on any real mutation so changes still show up
-    // immediately on every device, not after a stale 8s wait.
-    var SYNC_INTERVAL_MS = 1000;       // active/visible tab: 1s continuous sync
-    var SYNC_INTERVAL_HIDDEN_MS = 4000; // backgrounded tab: slower, saves battery/data
+    /* ===================== LIVE SYNC =====================
+     * 1 s while visible (most ticks are answered from the server's 8 s cache and
+     * skipped entirely here when nothing changed), 5 s in the background, and a
+     * 3 s back-off after an error. RushData is only re-downloaded every 5 min. */
+    var SYNC_INTERVAL_MS = 1000;
+    var SYNC_INTERVAL_HIDDEN_MS = 5000;
+    var SYNC_ERROR_BACKOFF_MS = 3000;
+    var RUSHDATA_REFRESH_MS = 5 * 60 * 1000;
+
+    function setSyncBadge(state) {
+      var badge = document.getElementById("sync-status");
+      var txt = document.getElementById("sync-text");
+      if (!badge || !txt) return;
+      badge.classList.toggle("syncing", state === "sync");
+      badge.classList.toggle("off", state === "off");
+      txt.textContent = state === "off" ? "OFFLINE" : (state === "sync" ? "SYNC" : "LIVE");
+    }
+
     function scheduleNextSync(delayMs) {
       if (S.pollTimer) clearTimeout(S.pollTimer);
+      if (S.authExpired) return;
       S.pollTimer = setTimeout(function() {
         if (document.hidden) { scheduleNextSync(SYNC_INTERVAL_HIDDEN_MS); return; }
         pollRoster();
@@ -1890,40 +1257,24 @@ function postOnce(action, payload, clientId) {
     }
 
     function pollRoster(forceFresh) {
-      var syncBadge = document.getElementById("sync-status");
-      var syncText = document.getElementById("sync-text");
-      if (syncBadge) syncBadge.classList.add("syncing");
-      if (syncText) syncText.textContent = "SYNC";
-
-      // forceFresh=true requests a full server rebuild (bypasses the 8s roster snapshot),
-      // used right after a scan/mutation so the sheet's latest state shows instantly.
-      // NOTE: the sync ALWAYS runs (even while a mutation is retrying). The clock + roster
-      // must keep updating; the version gate below is what protects newer optimistic state
-      // from being overwritten by an older in-flight read.
-      sendReq("getRoster", { syncOnly: !forceFresh }, function(err, res, ver) {
-        if (syncBadge) syncBadge.classList.remove("syncing");
-        if (syncText) syncText.textContent = err ? "OFF" : "LIVE";
-        if (!err && res && res.success) {
-          // Always keep the clock alive from the freshest server time.
-          if (res.serverTime) {
-            var clk = document.getElementById("dubai-clock");
-            if (clk) clk.textContent = res.serverTime;
-          }
-          // Surface the live backend version so FE vs BE mismatch is visible at a glance.
+      if (S.authExpired || !S.authToken) return;
+      setSyncBadge("sync");
+      var needRush = !(S.rushData && S.rushData.length) || (Date.now() - S.rushFetchedAt) > RUSHDATA_REFRESH_MS;
+      // forceFresh=true asks the server for a full rebuild (used right after a scan).
+      sendReq("getRoster", { syncOnly: !forceFresh, includeRushData: needRush }, function(err, res, ver) {
+        var good = !err && res && res.success;
+        setSyncBadge(good ? "live" : "off");
+        if (good) {
+          if (res.serverTime) document.getElementById("dubai-clock").textContent = res.serverTime;
           if (res.backendVersion) {
             var be = document.getElementById("ver-be");
-            if (be) {
-              be.textContent = "BE " + res.backendVersion;
-              be.style.color = (res.backendVersion === FRONTEND_VERSION) ? "var(--green)" : "var(--yellow)";
-            }
+            if (be) be.textContent = "BE " + res.backendVersion;
           }
-          // Apply the full roster only if this read is not older than our latest mutation
-          // AND no mutation is currently mid-flight (so we don't clobber optimistic UI).
-          if (S.inflightMutations === 0 && ver >= S.mutationVersion) {
-            applyRosterData(res);
-          }
+          if (res.rushData) S.rushFetchedAt = Date.now();
+          // Don't let an older read overwrite newer optimistic changes.
+          if (S.inflightMutations === 0 && ver >= S.mutationVersion) applyRosterData(res);
         }
-        scheduleNextSync(SYNC_INTERVAL_MS);
+        scheduleNextSync(good ? SYNC_INTERVAL_MS : SYNC_ERROR_BACKOFF_MS);
       });
     }
 
@@ -2069,8 +1420,21 @@ function postOnce(action, payload, clientId) {
       return serverReceived;
     }
 
+    function hasPendingOptimistic() {
+      return Object.keys(S.pendingWaiting).length || Object.keys(S.pendingSent).length ||
+             Object.keys(S.pendingReceived).length || Object.keys(S.pendingClearedViolators).length ||
+             Object.keys(S.removedFromWaiting).length;
+    }
+
     function applyRosterData(d) {
       if (d.serverTime) document.getElementById("dubai-clock").textContent = d.serverTime;
+      // Most 1-second syncs return exactly what is already on screen. Skip the whole
+      // rebuild then (keeps ticked checkboxes, scroll and battery), unless optimistic
+      // changes are waiting for confirmation, or it's been 30 s (time-based labels).
+      var sig = JSON.stringify([d.targetTab, d.nextBatchName, d.settings, d.roster, d.waitingBatches,
+                                d.sentList, d.receivedList, d.violators, d.breaksActive]);
+      if (sig === S.lastRosterSig && !d.rushData && !hasPendingOptimistic() && (Date.now() - (S.lastRenderAt || 0)) < 30000) return;
+      S.lastRosterSig = sig;
       if (d.targetTab) {
         S.activeTargetTab = d.targetTab; // remember the displayed tab so clear ops target the SAME date
         var prevTab = document.getElementById("roster-badge-date").textContent;
@@ -2153,70 +1517,94 @@ function postOnce(action, payload, clientId) {
       } catch (e) { return false; }
     }
 
+    /* ===================== RENDERING =====================
+     * Each list is built as one HTML string (fast). Buttons carry data-act /
+     * data-id / data-batch attributes and are handled by ONE delegated listener
+     * (bindListActions) — safe for names like O'Neil and for "DA's from Break",
+     * which used to break the inline onclick="...('...')" handlers. */
+    function esc(s) { return escapeHtml(s == null ? "" : String(s)); }
+    function initials(name) {
+      var parts = String(name || "").replace(/[^A-Za-z0-9 ]/g, " ").trim().split(/\s+/);
+      return ((parts[0] || "?").charAt(0) + (parts.length > 1 ? parts[parts.length - 1].charAt(0) : "")).toUpperCase();
+    }
+    function toneOf(status) {
+      if (status === "Present" || status === "Replacement Present") return "ok";
+      if (status === "Late Arrival") return "warn";
+      if (status === "Absent") return "bad";
+      return "idle";
+    }
+    function actBtn(act, attrs, label, cls, disabled) {
+      return '<button type="button" class="btn btn-xs ' + (cls || "btn-card") + '" data-act="' + act + '"' + attrs + (disabled ? " disabled" : "") + '>' + label + '</button>';
+    }
+    function idAttr(id) { return ' data-id="' + esc(id) + '"'; }
+    function batchAttr(b) { return ' data-batch="' + esc(b) + '"'; }
+    function emptyHtml(icon, text) { return '<div class="empty"><span class="em">' + icon + '</span>' + text + '</div>'; }
+    /**
+     * One list row. o = { check, tone, avatar, pos, name, id, tags, meta, right, cls }
+     */
+    function rowHtml(o) {
+      return '<div class="da-row' + (o.cls ? " " + o.cls : "") + '">' +
+        (o.check || "") +
+        '<div class="avatar ' + (o.tone || "idle") + '">' + esc(o.avatar || initials(o.name)) + '</div>' +
+        '<div class="da-details">' +
+          '<div class="da-title-line">' + (o.pos ? '<span class="pos">#' + o.pos + '</span>' : "") +
+            '<span class="nm">' + esc(o.name) + '</span><span class="id">' + esc(o.id) + '</span>' + (o.tags || "") + '</div>' +
+          (o.meta ? '<div class="da-meta-line">' + o.meta + '</div>' : "") +
+        '</div>' +
+        (o.right ? '<div class="row-actions">' + o.right + '</div>' : "") +
+      '</div>';
+    }
+    // Remember which boxes were ticked so a refresh doesn't clear them.
+    function checkedSet(container, selector) {
+      var set = {};
+      container.querySelectorAll(selector).forEach(function(cb) {
+        if (cb.checked) set[(cb.getAttribute("data-batch") || "") + "|" + cb.getAttribute("data-daid")] = true;
+      });
+      return set;
+    }
+    function setNavBadge(id, n) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = n > 99 ? "99+" : String(n);
+      el.classList.toggle("show", n > 0);
+    }
+
     function renderAll() {
       var steps = [renderAttendanceTab, renderWaitingTab, renderBreaksTab, renderViolatorsTab, renderReceiveTab];
       for (var i = 0; i < steps.length; i++) {
-        try { steps[i](); } catch (e) {}
+        try { steps[i](); } catch (e) { if (window.console) console.error(e); }
       }
+      S.lastRenderAt = Date.now();
     }
 
     function renderAttendanceTab() {
       var list = S.roster || [];
       var waves = [];
-      list.forEach(function(d) {
-        if (d.wave && waves.indexOf(d.wave) === -1) waves.push(d.wave);
-      });
+      list.forEach(function(d) { if (d.wave && waves.indexOf(d.wave) === -1) waves.push(d.wave); });
       waves.sort(function(a, b) { return parseHHMM(a) - parseHHMM(b); });
 
       var autoWave = determineCurrentRunningWave();
       var activeWave = S.selectedWave || autoWave;
-
-      var waveBar = document.getElementById("wave-pill-bar");
-      waveBar.innerHTML = "";
-      waves.forEach(function(w) {
-        var pill = document.createElement("button");
-        pill.className = "wave-pill" + (w === activeWave ? " active" : "");
-        pill.textContent = (w === autoWave ? "⚡ Current Wave " : "Wave ") + w;
-        pill.onclick = function() {
-          S.selectedWave = w;
-          renderAttendanceTab();
-        };
-        waveBar.appendChild(pill);
-      });
-
-      document.getElementById("current-wave-label").textContent = activeWave ? ("🌊 Running Wave: " + activeWave) : "🌊 Current Running Wave";
+      document.getElementById("wave-pill-bar").innerHTML = waves.map(function(w) {
+        return '<button type="button" class="wave-pill' + (w === activeWave ? " active" : "") + '" data-act="wave" data-id="' + esc(w) + '">' +
+          (w === autoWave ? "⚡ Now · " : "Wave ") + esc(w) + '</button>';
+      }).join("");
+      document.getElementById("current-wave-label").textContent = activeWave ? ("🌊 Wave " + activeWave) : "🌊 Current Running Wave";
 
       var waveRoster = activeWave ? list.filter(function(d) { return d.wave === activeWave; }) : list;
       var pCnt = 0, lCnt = 0, aCnt = 0;
-      var container = document.getElementById("attend-roster-list");
-      container.innerHTML = "";
-
-      if (waveRoster.length === 0) {
-        container.innerHTML = '<div style="padding:14px; text-align:center; color:var(--text-dim); font-size:13px;">No DAs scheduled in this wave.</div>';
-      }
-
-      waveRoster.forEach(function(da) {
-        var st = da.status || "Absent";
-        if (st === "Present" || st === "Replacement Present") pCnt++;
-        else if (st === "Late Arrival") lCnt++;
-        else aCnt++;
-
-        var row = document.createElement("div");
-        row.className = "da-row";
-        var statusColor = (st === "Present" || st === "Replacement Present") ? "var(--green)" : (st === "Late Arrival" ? "var(--yellow)" : "var(--red)");
-        var quickPickBtn = (st === "Absent") ? '<button class="btn btn-card" style="font-size:11px; padding:4px 8px;" onclick="selectAbsentForReplacement(\'' + da.daId + '\', \'' + escapeHtml(da.daName) + '\')">🔁 Select</button>' : '';
-
-        row.innerHTML =
-          '<div class="da-details">' +
-            '<div class="da-title-line"><span>' + escapeHtml(da.daName) + '</span><span style="font-size:11px; color:var(--text-dim);">(' + da.daId + ')</span></div>' +
-            '<div class="da-meta-line">Wave: <b>' + (da.wave || "--:--") + '</b> &bull; DSP: ' + (da.dsp || "DSP") + (da.batchName ? (' &bull; <b style="color:var(--orange);">' + da.batchName + '</b>') : '') + '</div>' +
-          '</div>' +
-          '<div style="display:flex; align-items:center; gap:6px;">' +
-            '<span class="time-badge" style="color:' + statusColor + '; border-color:' + statusColor + ';">' + st + (da.scanTime ? (' ' + da.scanTime) : '') + '</span>' +
-            quickPickBtn +
-          '</div>';
-        container.appendChild(row);
-      });
+      var html = waveRoster.map(function(da) {
+        var st = da.status || "";
+        var tone = toneOf(st);
+        if (tone === "ok") pCnt++; else if (tone === "warn") lCnt++; else if (tone === "bad") aCnt++;
+        var label = st || "Not in yet";
+        var meta = 'Wave <b>' + esc(da.wave || "--:--") + '</b> · ' + esc(da.dsp || "DSP") +
+                   (da.batchName ? ' · <b style="color:var(--orange)">' + esc(da.batchName) + '</b>' : "");
+        var right = '<span class="time-badge tag-' + tone + '">' + esc(label) + (da.scanTime ? " " + esc(da.scanTime) : "") + '</span>' +
+                    (st === "Absent" ? actBtn("pick-absent", idAttr(da.daId), "🔁 Replace") : "");
+        return rowHtml({ tone: tone, name: da.daName, id: da.daId, meta: meta, right: right });
+      }).join("");
+      document.getElementById("attend-roster-list").innerHTML = html || emptyHtml("🗓️", "No DAs scheduled in this wave.");
 
       document.getElementById("cnt-present").textContent = pCnt;
       document.getElementById("cnt-late").textContent = lCnt;
@@ -2226,191 +1614,108 @@ function postOnce(action, payload, clientId) {
 
     function renderWaitingTab() {
       var container = document.getElementById("waiting-batches-container");
-      container.innerHTML = "";
+      var keep = checkedSet(container, ".da-checkbox[data-daid]");
       var batches = S.waitingBatches || {};
-      var batchNames = getSortedBatchKeys(batches);
+      var cap = S.settings.batchSize || 25;
+      var total = 0, active = 0;
 
-      var totalWaitingCount = 0;
-      var activeBatchCards = 0;
-
-      batchNames.forEach(function(bName) {
+      var html = getSortedBatchKeys(batches).map(function(bName) {
         var daArr = batches[bName] || [];
-        if (daArr.length === 0) return;
-
-        totalWaitingCount += daArr.length;
-        activeBatchCards++;
-
-        var card = document.createElement("div");
-        card.className = "batch-card";
-
-        var header = document.createElement("div");
-        header.className = "batch-header";
-        header.innerHTML =
-          '<div class="batch-title">' +
-            '<input type="checkbox" class="da-checkbox" onchange="toggleSelectAllBatch(\'' + bName + '\', this.checked)">' +
-            '<span>📦 ' + bName + '</span>' +
-            '<span class="batch-badge">' + daArr.length + ' / ' + (S.settings.batchSize || 25) + ' DAs</span>' +
-          '</div>' +
-          '<div class="batch-actions">' +
-            '<button class="btn btn-card" style="padding:6px 10px; font-size:12px;" onclick="sendSelectedInBatch(\'' + bName + '\')">Send Selected</button>' +
-            '<button class="btn btn-green" style="padding:6px 12px; font-size:12px;" onclick="sendBatchAction(\'' + bName + '\')">Send ' + bName + '</button>' +
-          '</div>';
-        card.appendChild(header);
-
-        var listEl = document.createElement("div");
-        listEl.className = "da-list";
-
-        daArr.forEach(function(da, idx) {
-          var row = document.createElement("div");
-          row.className = "da-row";
+        if (!daArr.length) return "";
+        total += daArr.length; active++;
+        var isBreak = bName === BREAK_RETURN_BATCH;
+        var rows = daArr.map(function(da, idx) {
           var onBreak = !!da.inBreak;
-          var breakTag = onBreak ? '<span class="time-badge tag-break" style="margin-left:4px;">On Break' + (da.breakRange ? " " + escapeHtml(da.breakRange) : "") + '</span>' : '';
-          var sendBtn = onBreak
-            ? '<button class="btn btn-card" style="padding:5px 10px; font-size:11px; opacity:0.45;" disabled>Send</button>'
-            : '<button class="btn btn-card" style="padding:5px 10px; font-size:11px;" onclick="sendSingleDaAction(\'' + da.daId + '\')">Send</button>';
-          row.innerHTML =
-            '<input type="checkbox" class="da-checkbox" data-batch="' + bName + '" data-daid="' + da.daId + '"' + (onBreak ? ' disabled' : '') + '>' +
-            '<div class="da-details">' +
-              '<div class="da-title-line">' +
-                '<span style="color:var(--orange); font-weight:900;">#' + (idx + 1) + '</span>' +
-                '<span>' + escapeHtml(da.daName) + '</span>' +
-                '<span style="font-size:11px; color:var(--text-dim);">(' + da.daId + ')</span>' +
-                breakTag +
-              '</div>' +
-              '<div class="da-meta-line">Queued at: <b>' + (da.waitTime || "--:--") + '</b> &bull; FIFO Slot #' + (idx + 1) + ' in ' + bName + '</div>' +
+          var ticked = keep[bName + "|" + da.daId];
+          var check = '<input type="checkbox" class="da-checkbox"' + batchAttr(bName) + ' data-daid="' + esc(da.daId) + '"' +
+                      (onBreak ? " disabled" : "") + (ticked && !onBreak ? " checked" : "") + '>';
+          var tags = onBreak ? '<span class="time-badge tag-break">On Break' + (da.breakRange ? " " + esc(da.breakRange) : "") + '</span>' : "";
+          var right = actBtn("send-one", idAttr(da.daId), "Send", "btn-card", onBreak) +
+                      actBtn("remove-waiting", idAttr(da.daId), "&times;", "btn-card btn-text-red");
+          return rowHtml({ check: check, tone: isBreak ? "ok" : "info", pos: idx + 1, name: da.daName, id: da.daId, tags: tags,
+                           meta: 'Queued <b>' + esc(da.waitTime || "--:--") + '</b>', right: right });
+        }).join("");
+        return '<div class="batch-card' + (isBreak ? " break-return" : "") + '">' +
+          '<div class="batch-header">' +
+            '<div class="batch-title"><input type="checkbox" class="da-checkbox" data-act="toggle-batch"' + batchAttr(bName) + ' title="Select all">' +
+              '<span>' + (isBreak ? "🔄 " : "📦 ") + esc(bName) + '</span>' +
+              '<span class="batch-badge' + (isBreak ? " badge-green" : "") + '">' + daArr.length + (isBreak ? "" : " / " + cap) + '</span></div>' +
+            '<div class="batch-actions">' +
+              actBtn("send-selected", batchAttr(bName), "Send Selected", "btn-card btn-sm") +
+              actBtn("send-batch", batchAttr(bName), "Send All", "btn-green btn-sm") +
             '</div>' +
-            '<div style="display:flex; align-items:center; gap:6px;">' +
-              sendBtn +
-              '<button class="btn btn-card" style="padding:5px 8px; font-size:11px; color:var(--red);" onclick="removeDaAction(\'' + da.daId + '\')">&times;</button>' +
-            '</div>';
-          listEl.appendChild(row);
-        });
+          '</div><div class="da-list">' + rows + '</div></div>';
+      }).join("");
 
-        card.appendChild(listEl);
-        container.appendChild(card);
-      });
-
-      document.getElementById("wait-total-das").textContent = totalWaitingCount;
-      document.getElementById("wait-active-batches").textContent = activeBatchCards;
-      var hcBadge = document.getElementById("wait-headcount-badge");
-      if (hcBadge) hcBadge.textContent = totalWaitingCount;
-
-      if (activeBatchCards === 0) {
-        container.innerHTML = '<div class="batch-card" style="padding:20px; text-align:center; color:var(--text-dim); font-size:13px;">No DAs currently waiting in batches. Scan on Attendance or scan above to queue into the active batch.</div>';
-      }
+      container.innerHTML = html || '<div class="batch-card">' + emptyHtml("📭", "No DAs waiting. Check DAs in on Attendance, or scan here to queue them into the active batch.") + '</div>';
+      document.getElementById("wait-total-das").textContent = total;
+      document.getElementById("wait-active-batches").textContent = active;
+      setNavBadge("nb-waiting", total);
     }
 
     function renderBreaksTab() {
       var container = document.getElementById("breaks-da-list");
       var badge = document.getElementById("break-badge-count");
       if (!container || !badge) return;
-      container.innerHTML = "";
 
-      var seen = {};
-      var combined = [];
+      var seen = {}, combined = [];
       (S.roster || []).forEach(function(d) {
-        if (d.inBreak) {
-          var k = String(d.daId).toUpperCase();
-          if (!seen[k]) { seen[k] = true; combined.push({ daId: d.daId, daName: d.daName, dsp: d.dsp, range: d.breakRange || "On Break", action: !!d.actionBreak, startTime: "" }); }
-        }
+        var k = String(d.daId).toUpperCase();
+        if (d.inBreak && !seen[k]) { seen[k] = true; combined.push({ daId: d.daId, daName: d.daName, dsp: d.dsp, range: d.breakRange || "On Break", action: !!d.actionBreak, startTime: "" }); }
       });
       (S.breaksActive || []).forEach(function(b) {
         var k = String(b.daId).toUpperCase();
         if (!seen[k]) { seen[k] = true; combined.push({ daId: b.daId, daName: b.daName, dsp: "", range: "On Break", action: true, startTime: b.startTime }); }
       });
-
       badge.textContent = combined.length + " DAs";
+      setNavBadge("nb-breaks", combined.length);
 
-      if (combined.length === 0) {
-        container.innerHTML = '<div style="padding:14px; text-align:center; color:var(--text-dim); font-size:13px;">No DAs currently on break.</div>';
-      } else {
-        combined.forEach(function(da) {
-          var row = document.createElement("div");
-          row.className = "da-row";
-          var meta = da.action
-            ? ("Marked on break" + (da.startTime ? " at " + da.startTime : "") + (da.dsp ? " &bull; " + da.dsp : ""))
-            : ("DSP: " + (da.dsp || "DSP") + " &bull; Scheduled");
-          var endBtn = da.action
-            ? '<button class="btn btn-green" style="padding:5px 10px; font-size:11px;" onclick="endBreakAction(\'' + da.daId + '\')">End Break ➔ Queue</button>'
-            : '<span class="time-badge tag-break">Break: ' + escapeHtml(da.range) + '</span>';
-          row.innerHTML =
-            '<div class="da-details">' +
-              '<div class="da-title-line"><span>' + escapeHtml(da.daName) + '</span><span style="font-size:11px; color:var(--text-dim);">(' + da.daId + ')</span></div>' +
-              '<div class="da-meta-line">' + meta + '</div>' +
-            '</div>' +
-            '<div style="display:flex; align-items:center; gap:6px;">' + endBtn + '</div>';
-          container.appendChild(row);
-        });
-      }
+      container.innerHTML = combined.map(function(da) {
+        var meta = da.action
+          ? ("Sent on break" + (da.startTime ? " at <b>" + esc(da.startTime) + "</b>" : "") + (da.dsp ? " · " + esc(da.dsp) : ""))
+          : (esc(da.dsp || "DSP") + " · Scheduled break");
+        var right = da.action
+          ? actBtn("end-break", idAttr(da.daId), "End Break → Queue", "btn-green")
+          : '<span class="time-badge tag-break">' + esc(da.range) + '</span>';
+        return rowHtml({ tone: "warn", name: da.daName, id: da.daId, meta: meta, right: right });
+      }).join("") || emptyHtml("☕", "No DAs on break right now.");
 
       var retContainer = document.getElementById("breakret-da-list");
       var retBadge = document.getElementById("breakret-badge-count");
       if (!retContainer || !retBadge) return;
-      var retList = (S.waitingBatches && S.waitingBatches[BREAK_RETURN_BATCH]) ? S.waitingBatches[BREAK_RETURN_BATCH].filter(function(d){return !d.inBreak;}) : [];
+      var retList = ((S.waitingBatches || {})[BREAK_RETURN_BATCH] || []).filter(function(d) { return !d.inBreak; });
       retBadge.textContent = retList.length;
-      retContainer.innerHTML = "";
-      if (retList.length === 0) {
-        retContainer.innerHTML = '<div style="padding:14px; text-align:center; color:var(--text-dim); font-size:13px;">No DAs returning from break yet.</div>';
-      } else {
-        retList.forEach(function(da, idx) {
-          var row = document.createElement("div");
-          row.className = "da-row";
-          row.innerHTML =
-            '<div class="da-details">' +
-              '<div class="da-title-line"><span style="color:var(--green); font-weight:900;">#' + (idx + 1) + '</span> <span>' + escapeHtml(da.daName) + '</span><span style="font-size:11px; color:var(--text-dim);">(' + da.daId + ')</span></div>' +
-              '<div class="da-meta-line">Returned at: <b>' + (da.waitTime || "--:--") + '</b> &bull; Priority queue</div>' +
-            '</div>' +
-            '<div><button class="btn btn-green" style="padding:6px 10px; font-size:11px;" onclick="sendSingleDaAction(\'' + da.daId + '\')">Send to Rush Q</button></div>';
-          retContainer.appendChild(row);
-        });
-      }
+      retContainer.innerHTML = retList.map(function(da, idx) {
+        return rowHtml({ tone: "ok", pos: idx + 1, name: da.daName, id: da.daId,
+                         meta: 'Returned <b>' + esc(da.waitTime || "--:--") + '</b> · Priority queue',
+                         right: actBtn("send-one", idAttr(da.daId), "Send to Rush Q", "btn-green") });
+      }).join("") || emptyHtml("✅", "Nobody is waiting to return from break.");
     }
 
     function renderViolatorsTab() {
       var container = document.getElementById("violators-da-list");
       var badge = document.getElementById("violator-badge-count");
       if (!container || !badge) return;
+      var keep = checkedSet(container, ".violator-checkbox");
       var list = S.violators || [];
       badge.textContent = list.length;
-      var allBtn = document.getElementById("btn-remove-all-violators");
-      if (allBtn) allBtn.style.display = (list.length > 0) ? "inline-flex" : "none";
-      var selBtn = document.getElementById("btn-remove-selected-violators");
-      if (selBtn) selBtn.style.display = (list.length > 0) ? "inline-flex" : "none";
+      setNavBadge("nb-violators", list.length);
+      var has = list.length > 0;
+      document.getElementById("btn-remove-all-violators").style.display = has ? "inline-flex" : "none";
+      document.getElementById("btn-remove-selected-violators").style.display = has ? "inline-flex" : "none";
       var selAll = document.getElementById("violator-select-all");
-      if (selAll) { selAll.checked = false; selAll.style.display = (list.length > 0) ? "inline-block" : "none"; }
-      container.innerHTML = "";
-      if (list.length === 0) {
-        container.innerHTML = '<div style="padding:14px; text-align:center; color:var(--text-dim); font-size:13px;">No active violators. ✅</div>';
-        return;
-      }
-      list.forEach(function(v) {
-        var row = document.createElement("div");
-        // 2026-11-19: on narrow/mobile screens the previous single rigid flex row
-        // forced the long status pill ("Receive Timeout (no Received In scan)") to
-        // claim its full natural width (flex:0 0 auto, never shrinking), leaving the
-        // name/details column almost no space -- which is what made the DA name
-        // disappear and the meta line ("Logged 10:41 - Exceeded by 3m") wrap one
-        // word per line. Switched this row to wrap onto two lines on narrow
-        // viewports: top line = checkbox + name/ID, bottom line = status pill +
-        // Remove button, each given the FULL row width so nothing gets squeezed.
-        // Desktop/wide screens are unaffected (row still fits on one line there).
-        row.className = "da-row violator-row";
-        var exceeded = (v.exceededBy !== "" && v.exceededBy !== undefined && v.exceededBy !== null && v.exceededBy !== "N/A") ? (" &bull; Exceeded by " + v.exceededBy + "m") : "";
-        row.innerHTML =
-          '<input type="checkbox" class="da-checkbox violator-checkbox" data-daid="' + v.daId + '">' +
-          '<div class="da-details">' +
-            '<div class="da-title-line" style="white-space:normal; overflow:visible;">' +
-              '<span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; flex:1 1 auto;">' + escapeHtml(v.daName || v.daId) + '</span>' +
-              '<span style="font-size:11px; color:var(--text-dim); flex:0 0 auto; white-space:nowrap;">(' + v.daId + ')</span>' +
-            '</div>' +
-            '<div class="da-meta-line">Logged ' + (v.timeLogged || "--:--") + exceeded + '</div>' +
-          '</div>' +
-          '<div class="violator-row-actions">' +
-            '<span class="time-badge tag-violator">' + escapeHtml(v.status || "Violation") + '</span>' +
-            '<button class="btn btn-card" style="padding:5px 10px; font-size:11px; color:var(--red); white-space:nowrap;" onclick="removeViolatorAction(\'' + v.daId + '\')">Remove</button>' +
-          '</div>';
-        container.appendChild(row);
-      });
+      if (selAll) { selAll.style.display = has ? "inline-block" : "none"; if (!has) selAll.checked = false; }
+
+      container.innerHTML = list.map(function(v) {
+        var exceeded = (v.exceededBy !== "" && v.exceededBy != null && v.exceededBy !== "N/A") ? " · Exceeded by <b>" + esc(v.exceededBy) + "m</b>" : "";
+        var check = '<input type="checkbox" class="da-checkbox violator-checkbox" data-daid="' + esc(v.daId) + '"' + (keep["|" + v.daId] ? " checked" : "") + '>';
+        return rowHtml({
+          cls: "violator-row", check: check, tone: "bad", name: v.daName || v.daId, id: v.daId,
+          meta: "Logged <b>" + esc(v.timeLogged || "--:--") + "</b>" + exceeded,
+          right: '<span class="time-badge tag-violator" title="' + esc(v.status || "") + '">' + esc(String(v.status || "Violation").replace(/\s*\(.*\)\s*$/, "")) + '</span>' +
+                 actBtn("remove-violator", idAttr(v.daId), "Remove", "btn-card btn-text-red")
+        });
+      }).join("") || emptyHtml("✅", "No active violators.");
     }
 
     // Keep a just-removed violator out of every incoming roster sync until the server
@@ -2567,57 +1872,33 @@ function postOnce(action, payload, clientId) {
     }
 
     function renderReceiveTab() {
-      var sentContainer = document.getElementById("awaiting-da-list");
-      var sentBadge = document.getElementById("awaiting-badge-count");
       var sent = S.sentList || [];
-      sentBadge.textContent = sent.length;
-      sentContainer.innerHTML = "";
-
+      document.getElementById("awaiting-badge-count").textContent = sent.length;
+      setNavBadge("nb-receive", sent.length);
       var waBtn = document.getElementById("btn-whatsapp-notify");
-      if (waBtn) waBtn.style.display = (sent.length > 0) ? "inline-flex" : "none";
+      if (waBtn) waBtn.style.display = sent.length ? "inline-flex" : "none";
 
-      if (sent.length === 0) {
-        sentContainer.innerHTML = '<div style="padding:14px; text-align:center; color:var(--text-dim); font-size:13px;">No dispatched DAs in transit.</div>';
-      } else {
-        sent.forEach(function(s) {
-          var row = document.createElement("div");
-          row.className = "da-row";
-          row.innerHTML =
-            '<div class="da-details">' +
-              '<div class="da-title-line"><span class="batch-badge">' + s.batchName + '</span> <span>' + escapeHtml(s.daName) + '</span><span style="font-size:11px; color:var(--text-dim);">(' + s.daId + ')</span></div>' +
-              '<div class="da-meta-line">Sent: ' + s.sentTime + ' &bull; YM: ' + (s.ymName || "YM") + '</div>' +
-            '</div>' +
-            '<div style="display:flex; align-items:center; gap:6px;">' +
-              '<span class="time-badge receive-countdown" data-sent="' + (s.sentTime || "") + '" data-daid="' + s.daId + '">--:--</span>' +
-              '<button class="btn btn-green" style="padding:6px 10px; font-size:11px;" onclick="doReceiveScanAction(\'' + s.daId + '\')">&check; Receive</button>' +
-            '</div>';
-          sentContainer.appendChild(row);
+      document.getElementById("awaiting-da-list").innerHTML = sent.map(function(s) {
+        return rowHtml({
+          tone: "info", name: s.daName, id: s.daId, avatar: batchNoOf(s.batchName),
+          meta: esc(s.batchName) + " · Sent <b>" + esc(s.sentTime) + "</b> · " + esc(s.ymName || "YM"),
+          right: '<span class="time-badge receive-countdown" data-sent="' + esc(s.sentTime || "") + '">--:--</span>' +
+                 actBtn("receive", idAttr(s.daId), "&check; Receive", "btn-green")
         });
-      }
+      }).join("") || emptyHtml("🚚", "No dispatched DAs in transit.");
 
-      var recContainer = document.getElementById("received-da-list");
-      var recBadge = document.getElementById("received-badge-count");
       var rec = S.receivedList || [];
-      recBadge.textContent = rec.length;
-      recContainer.innerHTML = "";
-
-      if (rec.length === 0) {
-        recContainer.innerHTML = '<div style="padding:14px; text-align:center; color:var(--text-dim); font-size:13px;">No DAs inside warehouse yard.</div>';
-      } else {
-        rec.forEach(function(r) {
-          var row = document.createElement("div");
-          row.className = "da-row";
-          row.innerHTML =
-            '<div class="da-details">' +
-              '<div class="da-title-line"><span class="batch-badge">' + r.batchName + '</span> <span>' + escapeHtml(r.daName) + '</span><span style="font-size:11px; color:var(--text-dim);">(' + r.daId + ')</span></div>' +
-              '<div class="da-meta-line">Scan IN: ' + r.rushInTime + '</div>' +
-            '</div>' +
-            '<div><span class="time-badge" style="color:var(--green); border-color:var(--green);">Inside Yard</span></div>';
-          recContainer.appendChild(row);
+      document.getElementById("received-badge-count").textContent = rec.length;
+      document.getElementById("received-da-list").innerHTML = rec.map(function(r) {
+        return rowHtml({
+          tone: "ok", name: r.daName, id: r.daId, avatar: batchNoOf(r.batchName),
+          meta: esc(r.batchName) + " · Scan IN <b>" + esc(r.rushInTime) + "</b>",
+          right: '<span class="time-badge tag-ok">Inside Yard</span>'
         });
-      }
+      }).join("") || emptyHtml("🏭", "No DAs inside the yard.");
       tickReceiveCountdowns();
     }
+    function batchNoOf(name) { return "B" + ((String(name || "").match(/(\d+)/) || [])[1] || "?"); }
 
     function tickReceiveCountdowns() {
       var limitMin = (S.settings && S.settings.entryViolationMin) ? S.settings.entryViolationMin : 15;
@@ -2631,16 +1912,9 @@ function postOnce(action, payload, clientId) {
         var elapsed = nowMin - sentMin;
         if (elapsed < 0) elapsed += 24 * 60;
         var remaining = limitMin - elapsed;
-        if (remaining <= 0) {
-          chip.textContent = "OVERDUE";
-          chip.style.color = "var(--red)";
-          chip.style.borderColor = "var(--red)";
-        } else {
-          chip.textContent = remaining + "m left";
-          if (remaining <= 2) { chip.style.color = "var(--red)"; chip.style.borderColor = "var(--red)"; }
-          else if (remaining <= 5) { chip.style.color = "var(--yellow)"; chip.style.borderColor = "var(--yellow)"; }
-          else { chip.style.color = "var(--green)"; chip.style.borderColor = "var(--green)"; }
-        }
+        var tone = remaining <= 2 ? "tag-bad" : (remaining <= 5 ? "tag-warn" : "tag-ok");
+        chip.textContent = remaining <= 0 ? "OVERDUE" : (remaining + "m left");
+        chip.className = "time-badge receive-countdown " + tone;
       }
     }
 
@@ -2833,8 +2107,8 @@ function postOnce(action, payload, clientId) {
     }
 
     function toggleSelectAllBatch(bName, checked) {
-      document.querySelectorAll('.da-checkbox[data-batch="' + bName + '"]').forEach(function(cb) {
-        cb.checked = checked;
+      document.querySelectorAll('.da-checkbox[data-daid][data-batch="' + CSS.escape(bName) + '"]').forEach(function(cb) {
+        if (!cb.disabled) cb.checked = checked; // DAs on break can't be selected
       });
     }
 
@@ -2848,7 +2122,7 @@ function postOnce(action, payload, clientId) {
 
     function sendSelectedInBatch(bName) {
       initAudio();
-      var boxes = document.querySelectorAll('.da-checkbox[data-batch="' + bName + '"]:checked');
+      var boxes = document.querySelectorAll('.da-checkbox[data-daid][data-batch="' + CSS.escape(bName) + '"]:checked');
       var daIds = [];
       boxes.forEach(function(cb) { daIds.push(cb.getAttribute("data-daid")); });
       if (daIds.length === 0) {
@@ -3162,7 +2436,7 @@ function postOnce(action, payload, clientId) {
         matches.forEach(function(m) {
           var div = document.createElement("div");
           div.className = "dropdown-item";
-          div.innerHTML = '<span><b>' + escapeHtml(m.daName) + '</b> (' + m.daId + ')</span><span style="color:var(--text-dim);">' + (m.status || m.dsp || "") + '</span>';
+          div.innerHTML = '<span><b>' + escapeHtml(m.daName) + '</b> <span class="dd-meta">' + escapeHtml(m.daId) + '</span></span><span class="dd-meta">' + escapeHtml(m.status || m.dsp || "") + '</span>';
           div.onclick = function() {
             dropdownEl.style.display = "none";
             onSelect(m);
@@ -3221,7 +2495,7 @@ function postOnce(action, payload, clientId) {
 
     function saveSettingsAction() {
       var pin = document.getElementById("cfg-admin-pin").value.trim();
-      if (!pin) { alert("Please enter Admin PIN to save settings."); return; }
+      if (!pin && S.authRole !== "admin") { showBanner("Enter the Admin PIN to save settings.", "warning", 6); return; }
 
       var newYm = document.getElementById("cfg-ym-name").value.trim() || "YM";
       var newApi = document.getElementById("cfg-api-url").value.trim() || DEFAULT_API;
@@ -3233,6 +2507,7 @@ function postOnce(action, payload, clientId) {
       S.ymName = newYm; S.api = newApi; S.sheetUrl = newSheet;
 
       var payload = {
+        pin: pin,
         sheetUrl: newSheet,
         apiUrl: newApi,
         batchSize: parseInt(document.getElementById("cfg-batch-size").value, 10),
@@ -3244,9 +2519,10 @@ function postOnce(action, payload, clientId) {
       };
 
       sendReq("saveSettings", payload, function(err, res) {
-        if (!err && res.success) {
+        if (!err && res && res.success) {
+          document.getElementById("cfg-admin-pin").value = "";
           showBanner("Settings saved globally across all devices", "success", 8);
-          pollRoster();
+          pollRoster(true);
         } else {
           showBanner((res && res.error) || "Failed to save settings", "danger", 20);
         }
@@ -3293,18 +2569,77 @@ function postOnce(action, payload, clientId) {
       if (stopBtn)  stopBtn.style.display  = active ? "" : "none";
       if (card) card.classList.toggle("scanner-wrap-active", active);
       if (chip) chip.classList.toggle("live", active);
-      if (chipTxt) chipTxt.textContent = active ? "Fast Scanning Active — Hold QR steady" : "Camera Off";
+      if (chipTxt) chipTxt.textContent = active ? "Live — hold QR steady" : "Camera Off";
     }
+
+    // The QR library (375 KB) is downloaded on the first "Start Scanner" tap — and
+    // pre-fetched in idle time after start-up — instead of blocking the first paint.
+    // Pinned to the same version the app has always used.
+    var QR_LIB_URL = "https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js";
+    var _qrLibPromise = null;
+    function loadQrLib() {
+      if (window.Html5Qrcode) return Promise.resolve();
+      if (_qrLibPromise) return _qrLibPromise;
+      _qrLibPromise = new Promise(function(resolve, reject) {
+        var s = document.createElement("script");
+        s.src = QR_LIB_URL; s.async = true;
+        s.onload = resolve;
+        s.onerror = function() { _qrLibPromise = null; reject(new Error("QR library failed to load")); };
+        document.head.appendChild(s);
+      });
+      return _qrLibPromise;
+    }
+
+    /** Builds the three scanner panels (Attendance / Waiting / Receive) from one template. */
+    var SCANNER_PANELS = {
+      attend:  { title: "📷 Attendance Scanner", placeholder: "Scan or search DA…", btnId: "btn-attend-checkin", btnText: "Check In", btnClass: "btn", dd: "attend-search-results", input: "attend-inp" },
+      waiting: { title: "📷 Waiting Scanner", placeholder: "Scan or search DA…", btnId: "btn-waiting-enqueue", btnText: "+ Add to Batch", btnClass: "btn btn-green", dd: "waiting-search-results", input: "waiting-inp" },
+      receive: { title: "📷 Received-In Scanner", placeholder: "Scan or search DA…", btnId: "btn-receive-scanin", btnText: "Received In", btnClass: "btn btn-green", dd: "receive-search-results", input: "receive-inp" }
+    };
+    function buildScannerPanels() {
+      var qrIcon = '<svg viewBox="0 0 24 24"><path d="M9.5 6.5v3h-3v-3h3M11 5H5v6h6V5zm-1.5 9.5v3h-3v-3h3M11 13H5v6h6v-6zm6.5-6.5v3h-3v-3h3M19 5h-6v6h6V5zm-6 8h1.5v1.5H13V13zm1.5 1.5H16V16h-1.5v-1.5zM16 13h1.5v1.5H16V13zm-3 3h1.5v1.5H13V16zm1.5 1.5H16V19h-1.5v-1.5zM16 16h1.5v1.5H16V16zm1.5-1.5H19V16h-1.5v-1.5zm0 3H19V19h-1.5v-1.5z"/></svg>';
+      document.querySelectorAll(".scanner-card[data-scanner]").forEach(function(card) {
+        var k = card.getAttribute("data-scanner");
+        var p = SCANNER_PANELS[k];
+        var tabId = "tab-" + k;
+        card.innerHTML =
+          '<div class="scanner-head"><div class="card-title">' + p.title + '</div>' +
+            '<div class="scan-status-chip" id="scanchip-' + k + '"><span class="dot"></span><span id="scantext-' + k + '">Camera Off</span></div></div>' +
+          '<div class="scanner-viewport-wrap">' +
+            '<div id="qr-reader-' + k + '"></div>' +
+            '<div class="scanner-idle" id="idle-' + k + '">' + qrIcon +
+              '<div class="idle-title">Scanner is off</div><div class="idle-sub">Tap “Start Scanner” to turn on the camera</div></div>' +
+            '<div class="laser-line"></div><div class="corner-bracket cb-tl"></div><div class="corner-bracket cb-tr"></div>' +
+            '<div class="corner-bracket cb-bl"></div><div class="corner-bracket cb-br"></div>' +
+          '</div>' +
+          '<div class="scanner-controls">' +
+            '<button type="button" class="btn btn-green" id="btn-start-' + k + '" onclick="startScanner(\'' + tabId + '\')">▶ Start Scanner</button>' +
+            '<button type="button" class="btn btn-ghost" id="btn-stop-' + k + '" onclick="stopScanner(\'' + tabId + '\')" style="display:none;">■ Stop</button>' +
+          '</div>' +
+          '<div class="scanner-input-bar">' +
+            '<input type="text" id="' + p.input + '" class="text-input" placeholder="' + p.placeholder + '" autocomplete="off">' +
+            '<button type="button" class="' + p.btnClass + '" id="' + p.btnId + '">' + p.btnText + '</button>' +
+            '<div class="search-results-dropdown" id="' + p.dd + '"></div>' +
+          '</div>';
+      });
+    }
+    buildScannerPanels();
 
     function startScanner(tabId) {
       initAudio();
-      if (typeof Html5Qrcode === "undefined") {
-        showBanner("Camera library not loaded. Use the text/search box to enter DA ID.", "warning", 8);
-        return;
-      }
       var target = SCANNER_MAP[tabId];
-      if (!target) return;
-      if (S.scannerActive[tabId]) return;
+      if (!target || S.scannerActive[tabId]) return;
+      var chipTxt = document.getElementById("scantext-" + target.key);
+      if (!window.Html5Qrcode && chipTxt) chipTxt.textContent = "Loading camera…";
+      loadQrLib().then(function() { startScannerNow(tabId); }).catch(function() {
+        if (chipTxt) chipTxt.textContent = "Camera Off";
+        showBanner("The camera library couldn't load. Check the connection, or type the DA ID in the box.", "warning", 8);
+      });
+    }
+
+    function startScannerNow(tabId) {
+      var target = SCANNER_MAP[tabId];
+      if (!target || S.scannerActive[tabId]) return;
 
       if (!S.scanners[tabId]) {
         S.scanners[tabId] = new Html5Qrcode(target.id, {
@@ -3384,59 +2719,74 @@ function postOnce(action, payload, clientId) {
       if (el && map[tabId]) el.textContent = map[tabId];
     }
 
-    function escapeHtml(str) {
-      if (!str) return "";
-      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    /** One delegated listener for every button inside the lists (see rowHtml/actBtn). */
+    function bindListActions() {
+      var root = document.getElementById("app-root");
+      root.addEventListener("click", function(e) {
+        var el = e.target.closest("[data-act]");
+        if (!el || el.disabled || el.type === "checkbox") return;
+        var id = el.getAttribute("data-id");
+        var batch = el.getAttribute("data-batch");
+        switch (el.getAttribute("data-act")) {
+          case "wave": S.selectedWave = id; renderAttendanceTab(); break;
+          case "pick-absent":
+            var da = (S.roster || []).find(function(d) { return d.daId === id; });
+            selectAbsentForReplacement(id, da ? da.daName : id);
+            break;
+          case "send-one": sendSingleDaAction(id); break;
+          case "remove-waiting": removeDaAction(id); break;
+          case "send-batch": sendBatchAction(batch); break;
+          case "send-selected": sendSelectedInBatch(batch); break;
+          case "end-break": endBreakAction(id); break;
+          case "remove-violator": removeViolatorAction(id); break;
+          case "receive": doReceiveScanAction(id); break;
+          case "user-toggle": adminToggleUserActiveAction(id, el.getAttribute("data-next") === "1"); break;
+          case "user-reset": adminResetUserPasswordAction(id); break;
+          case "user-delete": adminDeleteUserAction(id); break;
+        }
+      });
+      root.addEventListener("change", function(e) {
+        var t = e.target;
+        if (t.getAttribute("data-act") === "toggle-batch") toggleSelectAllBatch(t.getAttribute("data-batch"), t.checked);
+        if (t.id === "violator-select-all") toggleSelectAllViolators(t.checked);
+      });
+    }
+
+    function hideSplash() {
+      var splash = document.getElementById("splash-screen");
+      if (!splash) return;
+      splash.classList.add("hide");
+      setTimeout(function() { if (splash.parentNode) splash.remove(); }, 420);
     }
 
     function bootApp() {
-      bindLiveSearch(
-        document.getElementById("attend-inp"),
-        document.getElementById("attend-search-results"),
-        function() { return S.roster; },
-        function(item) { handleAttendanceCheckIn(item.daId); }
-      );
+      if (S.booted) { // signed in again after an expired session: just resume
+        flushOutbox();
+        pollRoster(true);
+        return;
+      }
+      S.booted = true;
 
-      bindLiveSearch(
-        document.getElementById("waiting-inp"),
-        document.getElementById("waiting-search-results"),
-        function() { return S.roster; },
-        function(item) { handleWaitingEnqueue(item.daId); }
-      );
-
-      bindLiveSearch(
-        document.getElementById("receive-inp"),
-        document.getElementById("receive-search-results"),
-        function() { return S.sentList.length > 0 ? S.sentList : S.roster; },
-        function(item) { doReceiveScanAction(item.daId); }
-      );
-
-      bindLiveSearch(
-        document.getElementById("break-inp"),
-        document.getElementById("break-search-results"),
-        function() { return S.roster; },
-        function(item) { startBreakAction(item.daId); }
-      );
-
-      bindLiveSearch(
-        document.getElementById("rep-absent-inp"),
-        document.getElementById("rep-absent-dropdown"),
+      bindLiveSearch(document.getElementById("attend-inp"), document.getElementById("attend-search-results"),
+        function() { return S.roster; }, function(item) { handleAttendanceCheckIn(item.daId); });
+      bindLiveSearch(document.getElementById("waiting-inp"), document.getElementById("waiting-search-results"),
+        function() { return S.roster; }, function(item) { handleWaitingEnqueue(item.daId); });
+      bindLiveSearch(document.getElementById("receive-inp"), document.getElementById("receive-search-results"),
+        function() { return S.sentList.length > 0 ? S.sentList : S.roster; }, function(item) { doReceiveScanAction(item.daId); });
+      bindLiveSearch(document.getElementById("break-inp"), document.getElementById("break-search-results"),
+        function() { return S.roster; }, function(item) { startBreakAction(item.daId); });
+      bindLiveSearch(document.getElementById("rep-absent-inp"), document.getElementById("rep-absent-dropdown"),
         function() { return (S.roster || []).filter(function(d) { return d.status === "Absent" || !d.scanTime; }); },
         function(item) {
           S.selectedAbsentDa = { daId: item.daId, daName: item.daName };
           document.getElementById("rep-absent-inp").value = item.daName + " (" + item.daId + ")";
-        }
-      );
-
-      bindLiveSearch(
-        document.getElementById("rep-new-inp"),
-        document.getElementById("rep-new-dropdown"),
+        });
+      bindLiveSearch(document.getElementById("rep-new-inp"), document.getElementById("rep-new-dropdown"),
         function() { return (S.rushData && S.rushData.length > 0) ? S.rushData : S.roster; },
         function(item) {
           S.selectedReplacementDa = { daId: item.daId, daName: item.daName };
           document.getElementById("rep-new-inp").value = item.daName + " (" + item.daId + ")";
-        }
-      );
+        });
 
       document.getElementById("btn-attend-checkin").onclick = function() { handleAttendanceCheckIn(); };
       document.getElementById("btn-waiting-enqueue").onclick = function() { handleWaitingEnqueue(); };
@@ -3445,70 +2795,78 @@ function postOnce(action, payload, clientId) {
       document.getElementById("btn-assign-rep-inline").onclick = executeInlineReplacement;
       document.getElementById("btn-save-settings").onclick = saveSettingsAction;
       document.getElementById("btn-reset-day").onclick = resetDayAction;
-      var soundBtn = document.getElementById("cfg-sound-toggle");
-      if (soundBtn) soundBtn.onclick = toggleSound;
-      var installBtn = document.getElementById("install-btn");
-      if (installBtn) installBtn.onclick = triggerInstall;
-
-      document.getElementById("attend-inp").addEventListener("keydown", function(e) { if (e.key === "Enter") handleAttendanceCheckIn(); });
-      document.getElementById("waiting-inp").addEventListener("keydown", function(e) { if (e.key === "Enter") handleWaitingEnqueue(); });
-      document.getElementById("receive-inp").addEventListener("keydown", function(e) { if (e.key === "Enter") doReceiveScanAction(); });
-      document.getElementById("break-inp").addEventListener("keydown", function(e) { if (e.key === "Enter") startBreakAction(); });
-
+      document.getElementById("cfg-sound-toggle").onclick = toggleSound;
+      document.getElementById("btn-remove-all-violators").onclick = removeAllViolatorsAction;
+      document.getElementById("btn-remove-selected-violators").onclick = removeSelectedViolatorsAction;
+      document.getElementById("install-btn").onclick = function() { DUD3.install.open(); };
+      [["attend-inp", handleAttendanceCheckIn], ["waiting-inp", handleWaitingEnqueue],
+       ["receive-inp", doReceiveScanAction], ["break-inp", startBreakAction]].forEach(function(pair) {
+        document.getElementById(pair[0]).addEventListener("keydown", function(e) { if (e.key === "Enter") pair[1](); });
+      });
       document.querySelectorAll(".nav-item").forEach(function(btn) {
         btn.addEventListener("click", function() { switchTab(btn.getAttribute("data-tab")); });
       });
+      bindListActions();
 
       fillSettingsInputs();
-      try { var fe = document.getElementById("ver-fe"); if (fe) fe.textContent = "FE " + FRONTEND_VERSION; } catch(e){}
+      document.getElementById("ver-fe").textContent = "FE " + FRONTEND_VERSION;
       updateOutboxBadge(loadOutbox().length);
-      // STALE-WHILE-REVALIDATE: paint instantly from the last cached snapshot, then
-      // let the first network sync revalidate in the background (no 10-30s blank wait).
-      var _painted = hydrateFromSnapshot();
-      if (_painted) { fillSettingsInputs(true); }
+      // Paint instantly from the last saved snapshot; the first sync then refreshes it.
+      if (hydrateFromSnapshot()) fillSettingsInputs(true);
       flushOutbox();
-      pollRoster();
+      pollRoster(true);
 
       setInterval(flushOutbox, 8000);
       setInterval(tickReceiveCountdowns, 1000);
-
       updateHeaderSubtitle(S.activeTab || "tab-attend");
+      hideSplash();
 
-      setTimeout(function() {
-        var splash = document.getElementById("splash-screen");
-        if (splash) {
-          splash.style.opacity = "0";
-          splash.style.visibility = "hidden";
-          setTimeout(function() { splash.remove(); }, 350);
-        }
-      }, 350);
+      // Fetch the camera library in idle time so "Start Scanner" is instant later.
+      (window.requestIdleCallback || function(f) { setTimeout(f, 2500); })(function() { loadQrLib().catch(function() {}); });
+
+      DUD3.install.init({
+        id: "rushpro", appName: "Rush PRO", icon: "./rushpro-icon-192.png", buttons: ["install-btn"], auto: true, delayMs: 3000,
+        nativeText: "Install Rush PRO for a full-screen app that opens instantly from your home screen or taskbar.",
+        onInstalled: function() { showBanner("✅ Rush PRO installed — open it from your home screen.", "success", 6); }
+      });
     }
 
-    /* ===================== AUTH GATE (2026-11-18) =====================
-     * On load: if a stored session token exists, verify it with the server before
-     * showing the app (so an expired/cleared session correctly falls back to login).
-     * Only after a verified session does bootApp() run — nothing below this point
-     * touches scanning/sync/roster logic; it only decides WHEN bootApp() is called. */
+    /* ===================== AUTH GATE =====================
+     * A saved session opens the app straight away (no waiting on the server);
+     * the session is checked in the background, and any request that comes back
+     * "session expired" brings up the login screen. Queued scans are kept and
+     * sync after signing in again. */
     function showLoginScreen(errorMsg) {
-      var splash = document.getElementById("splash-screen");
-      if (splash) { splash.style.opacity = "0"; splash.style.visibility = "hidden"; setTimeout(function(){ splash.remove(); }, 350); }
+      hideSplash();
       document.getElementById("app-root").style.display = "none";
-      var ls = document.getElementById("login-screen");
-      ls.style.display = "flex";
+      document.getElementById("login-screen").style.display = "flex";
       var errEl = document.getElementById("login-error");
-      if (errorMsg) { errEl.textContent = errorMsg; errEl.style.display = "block"; }
-      else { errEl.style.display = "none"; }
+      errEl.textContent = errorMsg || "";
+      errEl.style.display = errorMsg ? "block" : "none";
+      setTimeout(function() { var u = document.getElementById("login-username"); if (u && !u.value) u.focus(); }, 50);
+    }
+
+    function onAuthExpired() {
+      if (S.authExpired) return;
+      S.authExpired = true;
+      if (S.pollTimer) clearTimeout(S.pollTimer);
+      Object.keys(SCANNER_MAP).forEach(function(tid) { if (S.scannerActive[tid]) stopScanner(tid); });
+      S.authToken = "";
+      SAFE_STORE.removeItem("dud3_auth_token");
+      var pending = loadOutbox().length;
+      showLoginScreen("Your session expired. Please sign in again." + (pending ? " " + pending + " pending scan(s) are kept and will sync after you sign in." : ""));
     }
 
     function applySessionToUi() {
       var chip = document.getElementById("user-chip-name");
-      if (chip) chip.textContent = (S.authDisplayName || S.authUsername || "") + (S.authRole === "admin" ? " (Admin)" : "");
+      if (chip) chip.textContent = (S.authDisplayName || S.authUsername || "") + (S.authRole === "admin" ? " · Admin" : "");
       var adminPanel = document.getElementById("admin-user-mgmt");
       if (adminPanel) adminPanel.style.display = (S.authRole === "admin") ? "flex" : "none";
       if (S.authRole === "admin") adminLoadUsers();
     }
 
     function enterApp() {
+      S.authExpired = false;
       document.getElementById("login-screen").style.display = "none";
       document.getElementById("app-root").style.display = "flex";
       applySessionToUi();
@@ -3553,14 +2911,14 @@ function togglePwVisibility(inputId, btnEl) {
       });
     }
 
-/* ===================== Admin: Manage User Accounts (2026-11-18) ===================== */
+    /* ===================== Admin: user accounts ===================== */
     function adminLoadUsers() {
       var listEl = document.getElementById("admin-user-list");
       if (!listEl) return;
-      listEl.innerHTML = '<div style="font-size:11px; color:var(--text-dim); text-align:center; padding:8px;">Loading users\u2026</div>';
+      listEl.innerHTML = '<div class="empty">Loading users…</div>';
       sendReq("adminListUsers", {}, function(err, res) {
         if (err || !res || !res.success) {
-          listEl.innerHTML = '<div style="font-size:11px; color:var(--red); text-align:center; padding:8px;">' + escapeHtml((res && res.error) || "Could not load users.") + '</div>';
+          listEl.innerHTML = '<div class="empty" style="color:var(--red)">' + escapeHtml((res && res.error) || "Could not load users.") + '</div>';
           return;
         }
         renderAdminUserList(res.users || []);
@@ -3570,28 +2928,21 @@ function togglePwVisibility(inputId, btnEl) {
     function renderAdminUserList(users) {
       var listEl = document.getElementById("admin-user-list");
       if (!listEl) return;
-      listEl.innerHTML = "";
-      if (users.length === 0) {
-        listEl.innerHTML = '<div style="font-size:11px; color:var(--text-dim); text-align:center; padding:8px;">No users yet.</div>';
-        return;
-      }
-      users.forEach(function(u) {
-        var row = document.createElement("div");
-        row.style.cssText = "display:flex; align-items:center; justify-content:space-between; gap:8px; background:rgba(16,21,36,0.6); border:1px solid var(--border); border-radius:10px; padding:9px 11px;";
-        var roleTag = u.role === "admin" ? '<span style="font-size:9px; font-weight:800; color:var(--brand-2); border:1px solid var(--brand-2); border-radius:6px; padding:1px 6px; margin-left:6px;">ADMIN</span>' : "";
-        var statusTag = u.active ? "" : '<span style="font-size:9px; font-weight:800; color:var(--red); border:1px solid var(--red); border-radius:6px; padding:1px 6px; margin-left:6px;">DISABLED</span>';
-        row.innerHTML =
+      listEl.innerHTML = users.map(function(u) {
+        var who = ' data-id="' + escapeHtml(u.username) + '"';
+        return '<div class="user-row">' +
           '<div style="min-width:0;">' +
-            '<div style="font-size:13px; font-weight:800; color:var(--text);">' + escapeHtml(u.displayName || u.username) + roleTag + statusTag + '</div>' +
-            '<div style="font-size:10.5px; color:var(--text-dim); margin-top:2px;">@' + escapeHtml(u.username) + '</div>' +
+            '<div class="u-name">' + escapeHtml(u.displayName || u.username) +
+              (u.role === "admin" ? '<span class="pill-tag" style="color:var(--brand-2)">ADMIN</span>' : "") +
+              (u.active ? "" : '<span class="pill-tag" style="color:var(--red)">DISABLED</span>') + '</div>' +
+            '<div class="u-handle">@' + escapeHtml(u.username) + '</div>' +
           '</div>' +
-          '<div style="display:flex; gap:5px; flex-shrink:0;">' +
-            '<button class="btn btn-card" style="padding:5px 8px; font-size:10px;" onclick="adminToggleUserActiveAction(\'' + escapeHtml(u.username) + '\', ' + (!u.active) + ')">' + (u.active ? "Disable" : "Enable") + '</button>' +
-            '<button class="btn btn-card" style="padding:5px 8px; font-size:10px;" onclick="adminResetUserPasswordAction(\'' + escapeHtml(u.username) + '\')">Reset</button>' +
-            '<button class="btn btn-card" style="padding:5px 8px; font-size:10px; color:var(--red);" onclick="adminDeleteUserAction(\'' + escapeHtml(u.username) + '\')">Delete</button>' +
-          '</div>';
-        listEl.appendChild(row);
-      });
+          '<div class="row-actions">' +
+            '<button type="button" class="btn btn-card btn-xs" data-act="user-toggle"' + who + ' data-next="' + (u.active ? "0" : "1") + '">' + (u.active ? "Disable" : "Enable") + '</button>' +
+            '<button type="button" class="btn btn-card btn-xs" data-act="user-reset"' + who + '>Reset</button>' +
+            '<button type="button" class="btn btn-card btn-xs btn-text-red" data-act="user-delete"' + who + '>Delete</button>' +
+          '</div></div>';
+      }).join("") || '<div class="empty">No users yet.</div>';
     }
 
     function adminCreateUserAction() {
@@ -3690,36 +3041,30 @@ function togglePwVisibility(inputId, btnEl) {
     function doLogoutAction() {
       if (!confirm("Log out of Rush PRO?")) return;
       var token = S.authToken;
-      S.authToken = ""; S.authRole = ""; S.authUsername = ""; S.authDisplayName = "";
-      SAFE_STORE.removeItem("dud3_auth_token");
-      SAFE_STORE.removeItem("dud3_auth_role");
-      SAFE_STORE.removeItem("dud3_auth_username");
-      SAFE_STORE.removeItem("dud3_auth_displayname");
+      ["dud3_auth_token", "dud3_auth_role", "dud3_auth_username", "dud3_auth_displayname"].forEach(function(k) { SAFE_STORE.removeItem(k); });
       if (S.pollTimer) clearTimeout(S.pollTimer);
-      sendReq("authLogout", { token: token }, function(){});
+      // sendBeacon survives the page reload; a normal fetch would be cancelled.
+      try {
+        navigator.sendBeacon(S.api, new Blob([JSON.stringify({ action: "authLogout", payload: { token: token } })], { type: "text/plain" }));
+      } catch (e) {}
       window.location.reload();
     }
 
     document.addEventListener("DOMContentLoaded", function() {
-      var loginBtnPwInput = document.getElementById("login-password");
-      if (loginBtnPwInput) loginBtnPwInput.addEventListener("keydown", function(e){ if (e.key === "Enter") doLoginAction(); });
-      var loginUserInput = document.getElementById("login-username");
-      if (loginUserInput) loginUserInput.addEventListener("keydown", function(e){ if (e.key === "Enter") doLoginAction(); });
-
       if (!S.authToken) { showLoginScreen(); return; }
+      // Open straight away with the saved session; verify it in the background.
+      enterApp();
       sendReq("authCheckSession", { token: S.authToken }, function(err, res) {
         if (!err && res && res.success) {
           S.authRole = res.role; S.authUsername = res.username; S.authDisplayName = res.displayName;
           SAFE_STORE.setItem("dud3_auth_role", res.role);
           SAFE_STORE.setItem("dud3_auth_displayname", res.displayName || res.username);
-          enterApp();
-        } else {
-          S.authToken = ""; SAFE_STORE.removeItem("dud3_auth_token");
-          showLoginScreen("Your session expired. Please sign in again.");
-        }
+          applySessionToUi();
+        } else if (res && res.authError) {
+          onAuthExpired();
+        } // network error: stay in the app; the sync will report OFFLINE and retry
       });
     });
   </script>
-
-
-</body></html>
+</body>
+</html>
