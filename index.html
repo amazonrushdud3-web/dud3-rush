@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>DUD3 Rush PRO — Yard Dispatch</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0A0E1A">
+  <meta name="theme-color" content="#0B0F19">
   <meta name="color-scheme" content="dark">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -16,418 +16,380 @@
   <link rel="apple-touch-icon" href="./rushpro-icon-192.png">
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://script.googleusercontent.com">
-  <link rel="stylesheet" href="./assets/base.css?v=3">
-  <script src="./assets/core.js?v=3"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="./assets/base.css?v=4">
+  <script src="./assets/core.js?v=4"></script>
   <style>
-    /* ===================== LAYOUT ===================== */
-    body { height: 100dvh; overflow: hidden; user-select: none; }
+    /* ============================================================
+     * Rush PRO — calm, flat layout. One accent colour; status colours
+     * (green / amber / red / sky) are used only where they carry meaning.
+     * ============================================================ */
+    body { height: 100dvh; overflow: hidden; user-select: none; background: var(--bg); }
     input, textarea, select { user-select: text; }
     .hide { display: none !important; }
-
     #app-root { display: none; flex-direction: column; height: 100dvh; overflow: hidden; }
 
+    /* ---------- Top bar ---------- */
     header.topbar {
-      background: rgba(12,16,28,0.88);
-      backdrop-filter: var(--glass); -webkit-backdrop-filter: var(--glass);
-      border-bottom: 1px solid var(--border-soft);
-      padding: calc(var(--safe-top) + 10px) 16px 10px;
-      display: flex; align-items: center; justify-content: space-between; gap: 10px;
-      flex-shrink: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-shrink: 0; z-index: 100;
+      padding: calc(var(--safe-top) + 12px) 20px 12px; background: var(--bg); border-bottom: 1px solid var(--line);
     }
-    .brand-wrap { display: flex; align-items: center; gap: 11px; min-width: 0; }
+    .brand-wrap { display: flex; align-items: center; gap: 12px; min-width: 0; }
     .brand-logo {
-      width: 38px; height: 38px; border-radius: 11px; flex: 0 0 auto; display: grid; place-items: center;
-      background: var(--brand-grad); color: #06080F; font-weight: 900; font-size: 14px; letter-spacing: .5px;
-      box-shadow: 0 6px 18px var(--brand-glow), inset 0 1px 1px rgba(255,255,255,0.35);
+      width: 36px; height: 36px; border-radius: 10px; flex: 0 0 auto; display: grid; place-items: center;
+      background: var(--accent); color: #fff; font-weight: 700; font-size: 13px;
     }
-    .brand-title { font-size: 16px; font-weight: 900; letter-spacing: .3px; line-height: 1.1; white-space: nowrap; }
-    .brand-title span { background: var(--brand-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
-    .brand-sub { font-size: 9.5px; color: var(--text-dim); font-weight: 800; letter-spacing: 1.3px; margin-top: 2px; white-space: nowrap; }
-
+    .brand-title { font-size: 16px; font-weight: 600; line-height: 1.15; white-space: nowrap; }
+    .brand-sub { font-size: 12px; color: var(--muted); font-weight: 400; white-space: nowrap; }
     .top-status { display: flex; align-items: center; gap: 8px; min-width: 0; }
     .chip {
-      display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 11px; border-radius: 999px;
-      font-size: 11px; font-weight: 800; white-space: nowrap; border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
+      display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 12px; border-radius: 10px;
+      font-size: 13px; font-weight: 500; white-space: nowrap; border: 1px solid var(--line); background: var(--surface); color: var(--text);
     }
-    .sync-badge { background: var(--green-soft); color: var(--green); border-color: rgba(52,224,161,0.30); }
-    .sync-badge.syncing { background: var(--yellow-soft); color: var(--yellow); border-color: rgba(255,203,91,0.30); }
-    .sync-badge.off { background: var(--red-soft); color: var(--red); border-color: rgba(255,92,122,0.35); }
-    .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 8px currentColor; }
-    .clock-display { font-size: 13px; font-variant-numeric: tabular-nums; }
+    .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+    .sync-badge.syncing .sync-dot { background: var(--amber); }
+    .sync-badge.off .sync-dot { background: var(--red); }
+    .sync-badge.off { color: var(--red); }
+    .clock-display { font-variant-numeric: tabular-nums; font-weight: 600; }
     .icon-btn {
-      width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface-2);
-      color: var(--brand-2); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; flex: 0 0 auto;
+      width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface);
+      color: var(--muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; flex: 0 0 auto;
     }
-    .icon-btn:hover { background: var(--card-hi); }
-    .icon-btn svg { width: 15px; height: 15px; fill: currentColor; }
+    .icon-btn:hover { color: var(--text); background: var(--surface-2); }
+    .icon-btn svg { width: 16px; height: 16px; fill: currentColor; }
     .force-sync-btn.spinning svg { animation: spin .7s linear; }
-    .install-btn { display: none; color: var(--brand-2); border-color: rgba(124,108,255,0.5); background: rgba(124,108,255,0.12); cursor: pointer; }
+    .install-btn { display: none; cursor: pointer; color: var(--accent-text); }
     .install-btn.show { display: inline-flex; }
-    .install-btn svg { width: 14px; height: 14px; fill: currentColor; }
-    .user-chip { gap: 8px; padding-right: 4px; }
+    .install-btn svg { width: 15px; height: 15px; fill: currentColor; }
+    .user-chip { padding-right: 5px; }
     .user-chip .btn-logout {
-      height: 22px; padding: 0 9px; border-radius: 999px; border: none; background: var(--card-hi); color: var(--text-dim);
-      font-size: 10px; font-weight: 800; cursor: pointer;
+      height: 26px; padding: 0 10px; border-radius: 7px; border: none; background: var(--surface-2); color: var(--muted);
+      font-size: 12px; font-weight: 500; cursor: pointer;
     }
     .user-chip .btn-logout:hover { color: var(--red); }
-    #ver-chip { font-size: 9px; font-weight: 800; color: var(--text-dim); line-height: 1.25; text-align: right; }
 
     #pending-holder { display: flex; justify-content: center; position: relative; z-index: 90; }
     #pending-badge {
-      display: none; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; color: #1A1200;
-      background: var(--yellow); padding: 4px 14px; border-radius: 0 0 12px 12px;
+      display: none; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #1A1200;
+      background: var(--amber); padding: 4px 14px; border-radius: 0 0 10px 10px;
     }
 
-    main {
-      flex: 1; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain;
-      padding: 14px 14px calc(var(--safe-bottom) + 84px);
-    }
-    .tab-content { display: none; flex-direction: column; gap: 14px; }
-    .tab-content.active { display: flex; animation: fadeInUp .25s ease; }
-    @keyframes fadeInUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-    .col-side, .col-main { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+    main { flex: 1; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; padding: 20px 16px calc(var(--safe-bottom) + 88px); }
+    .tab-content { display: none; flex-direction: column; gap: 16px; }
+    .tab-content.active { display: flex; }
+    .col-side, .col-main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+    .page-title { font-size: 20px; font-weight: 600; }
+    .page-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
 
-    /* ===================== CARDS ===================== */
-    .card, .scanner-card, .batch-card, .replacement-box, .metric-box {
-      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-      box-shadow: var(--shadow-soft);
+    /* ---------- Panels ---------- */
+    .card, .scanner-card, .batch-card {
+      background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
     }
-    .card { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-    .card-title { font-size: 14px; font-weight: 900; display: flex; align-items: center; gap: 8px; }
-    .card-sub { font-size: 11.5px; color: var(--text-dim); font-weight: 600; line-height: 1.4; }
-    .section-label { font-size: 10px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: .7px; }
+    .card { padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+    .card-title { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .card-sub { font-size: 13px; color: var(--muted); line-height: 1.5; }
+    .section-label { font-size: 12px; font-weight: 500; color: var(--muted); }
 
-    /* ===================== SCANNER ===================== */
-    .scanner-card { padding: 14px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-    .scanner-head { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    /* ---------- Scanner panel (camera hidden until started) ---------- */
+    .scanner-card { padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+    .scanner-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .scanner-viewport-wrap {
-      position: relative; width: 100%; max-width: 320px; aspect-ratio: 1 / 1;
-      background: #05070D; border-radius: 16px; overflow: hidden; border: 1.5px solid rgba(124,108,255,0.32);
+      display: none; position: relative; width: 100%; aspect-ratio: 1 / 1; max-width: 340px; margin: 0 auto;
+      background: #000; border-radius: 12px; overflow: hidden;
     }
+    .scanner-viewport-wrap.scanner-wrap-active { display: block; }
     .scanner-viewport-wrap > div[id^="qr-reader-"] { width: 100% !important; height: 100% !important; }
     .scanner-viewport-wrap video { object-fit: cover !important; width: 100% !important; height: 100% !important; }
-    .scanner-idle {
-      position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 9px; z-index: 12; color: var(--text-dim); text-align: center; padding: 16px;
-      background: radial-gradient(150px 150px at 50% 42%, rgba(124,108,255,0.12), transparent 70%), #05070D;
-    }
-    .scanner-idle svg { width: 48px; height: 48px; fill: url(#iconGrad); }
-    .scanner-idle .idle-title { font-size: 13px; font-weight: 800; color: var(--text); }
-    .scanner-idle .idle-sub { font-size: 11px; font-weight: 600; }
-    .scanner-wrap-active .scanner-idle { display: none; }
-    .laser-line, .corner-bracket { display: none; }
-    .scanner-wrap-active .laser-line, .scanner-wrap-active .corner-bracket { display: block; }
-    .laser-line {
-      position: absolute; left: 0; width: 100%; height: 3px; z-index: 10; pointer-events: none;
-      background: linear-gradient(90deg, transparent, #7C6CFF, #22D3EE, transparent); box-shadow: 0 0 14px #7C6CFF;
-      animation: scanLaser 1.6s infinite ease-in-out;
-    }
-    @keyframes scanLaser { 0%,100% { top: 6%; opacity: .25; } 50% { top: 92%; opacity: 1; } }
-    .corner-bracket { position: absolute; width: 22px; height: 22px; border-color: var(--brand-2); border-style: solid; pointer-events: none; z-index: 9; }
-    .cb-tl { top: 10px; left: 10px; border-width: 3px 0 0 3px; border-radius: 6px 0 0 0; }
-    .cb-tr { top: 10px; right: 10px; border-width: 3px 3px 0 0; border-radius: 0 6px 0 0; }
-    .cb-bl { bottom: 10px; left: 10px; border-width: 0 0 3px 3px; border-radius: 0 0 0 6px; }
-    .cb-br { bottom: 10px; right: 10px; border-width: 0 3px 3px 0; border-radius: 0 0 6px 0; }
-    .scanner-controls { display: flex; gap: 9px; width: 100%; max-width: 320px; }
+    .scanner-idle, .laser-line { display: none; }
+    .corner-bracket { position: absolute; width: 26px; height: 26px; border-color: #fff; border-style: solid; pointer-events: none; z-index: 9; opacity: .85; }
+    .cb-tl { top: 14px; left: 14px; border-width: 3px 0 0 3px; border-radius: 8px 0 0 0; }
+    .cb-tr { top: 14px; right: 14px; border-width: 3px 3px 0 0; border-radius: 0 8px 0 0; }
+    .cb-bl { bottom: 14px; left: 14px; border-width: 0 0 3px 3px; border-radius: 0 0 0 8px; }
+    .cb-br { bottom: 14px; right: 14px; border-width: 0 3px 3px 0; border-radius: 0 0 8px 0; }
+    .scanner-controls { display: flex; gap: 8px; }
     .scanner-controls .btn { flex: 1; }
-    .scan-status-chip {
-      display: inline-flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 700; color: var(--text-dim);
-      padding: 5px 12px; border-radius: 999px; background: var(--surface-3); border: 1px solid var(--border);
-    }
-    .scan-status-chip .dot { width: 7px; height: 7px; border-radius: 50%; background: #55697E; }
-    .scan-status-chip.live { color: var(--green); border-color: rgba(52,224,161,.35); background: var(--green-soft); }
-    .scan-status-chip.live .dot { background: var(--green); box-shadow: 0 0 10px var(--green); animation: pulseDot 1.1s infinite; }
+    .scan-status-chip { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 500; color: var(--muted); }
+    .scan-status-chip .dot { width: 8px; height: 8px; border-radius: 50%; background: #4B5568; }
+    .scan-status-chip.live { color: var(--green); }
+    .scan-status-chip.live .dot { background: var(--green); animation: pulseDot 1.2s infinite; }
     @keyframes pulseDot { 50% { opacity: .35; } }
-    .scanner-input-bar { width: 100%; display: flex; gap: 9px; position: relative; }
+    .scanner-input-bar { width: 100%; display: flex; gap: 8px; position: relative; }
 
-    /* ===================== CONTROLS ===================== */
+    /* ---------- Controls ---------- */
     .text-input {
-      flex: 1; min-width: 0; background: var(--surface-3); border: 1px solid var(--border); border-radius: var(--radius-sm);
-      padding: 11px 13px; color: #fff; font-size: 14px; outline: none; min-height: 44px; width: 100%;
+      flex: 1; min-width: 0; width: 100%; min-height: 44px; padding: 10px 14px; border-radius: 10px; outline: none;
+      background: var(--bg); border: 1px solid var(--line-strong); color: var(--text); font-size: 14px;
       transition: border-color .15s, box-shadow .15s;
     }
-    .text-input::placeholder { color: var(--text-dim); }
-    .text-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(124,108,255,0.25); }
-    select.text-input { appearance: none; cursor: pointer; }
-    .field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
-    .field label, .metric-lbl { font-size: 10px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: .6px; }
-    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+    .text-input::placeholder { color: var(--faint); }
+    .text-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    select.text-input { cursor: pointer; }
+    .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+    .field label, .metric-lbl { font-size: 12px; font-weight: 500; color: var(--muted); }
+    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
     .btn {
-      background: var(--brand-grad); color: #06080F; font-weight: 800; font-size: 13px;
-      border: none; border-radius: var(--radius-sm); padding: 11px 16px; min-height: 44px; cursor: pointer;
-      display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap;
-      transition: transform .12s ease, filter .12s ease, background .12s ease;
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px; white-space: nowrap;
+      min-height: 44px; padding: 0 18px; border-radius: 10px; border: 1px solid transparent; cursor: pointer;
+      background: var(--accent); color: #fff; font-size: 14px; font-weight: 500;
+      transition: background .15s, border-color .15s, opacity .15s;
     }
-    .btn:hover { filter: brightness(1.08); }
-    .btn:active { transform: translateY(1px) scale(0.98); }
-    .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
-    .btn-green { background: linear-gradient(135deg, #34E0A1, #14B98A); color: #032015; }
-    .btn-amber { background: linear-gradient(135deg, #FFCB5B, #F59E0B); color: #201400; }
-    .btn-danger { background: linear-gradient(135deg, #FF5C7A, #E0344F); color: #fff; }
-    .btn-card { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
-    .btn-card:hover { background: var(--card-hi); filter: none; }
-    .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
-    .btn-sm { min-height: 32px; padding: 6px 12px; font-size: 12px; border-radius: 10px; }
-    .btn-xs { min-height: 28px; padding: 4px 10px; font-size: 11px; border-radius: 9px; }
+    .btn:hover { background: var(--accent-hover); }
+    .btn:active { transform: translateY(1px); }
+    .btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+    .btn svg { width: 16px; height: 16px; fill: currentColor; }
+    .btn-green { background: var(--green); color: #052E16; }
+    .btn-green:hover { background: #2FD06B; }
+    .btn-amber { background: var(--amber); color: #2A1A00; }
+    .btn-amber:hover { background: #F7AA2A; }
+    .btn-danger { background: var(--red); color: #fff; }
+    .btn-danger:hover { background: #F25B5B; }
+    .btn-card, .btn-ghost { background: transparent; color: var(--text); border-color: var(--line-strong); }
+    .btn-card:hover, .btn-ghost:hover { background: var(--surface-2); }
+    .btn-sm { min-height: 34px; padding: 0 12px; font-size: 13px; border-radius: 8px; }
+    .btn-xs { min-height: 30px; padding: 0 11px; font-size: 12.5px; border-radius: 8px; }
     .btn-text-red { color: var(--red); }
     .btn-whatsapp { color: #25D366; }
+    .btn-icon { width: 30px; padding: 0; }
 
     .search-results-dropdown {
-      position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 150; display: none;
-      background: var(--card-solid); border: 1px solid var(--brand); border-radius: 12px; max-height: 260px; overflow-y: auto;
-      box-shadow: 0 16px 34px rgba(0,0,0,0.7);
+      position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 150; display: none;
+      background: var(--surface-2); border: 1px solid var(--line-strong); border-radius: 10px; max-height: 280px; overflow-y: auto;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.55);
     }
     .dropdown-item {
-      padding: 10px 13px; border-bottom: 1px solid var(--border-soft); cursor: pointer; font-size: 13px;
-      display: flex; justify-content: space-between; align-items: center; gap: 10px;
+      padding: 10px 14px; cursor: pointer; font-size: 13.5px; display: flex; justify-content: space-between; align-items: center; gap: 10px;
+      border-bottom: 1px solid var(--line);
     }
     .dropdown-item:last-child { border-bottom: none; }
-    .dropdown-item:hover, .dropdown-item:active { background: rgba(124,108,255,0.14); }
-    .dropdown-item .dd-meta { color: var(--text-dim); font-size: 11.5px; white-space: nowrap; }
+    .dropdown-item:hover, .dropdown-item:active { background: var(--accent-soft); }
+    .dropdown-item b { font-weight: 500; }
+    .dropdown-item .dd-meta { color: var(--muted); font-size: 12px; white-space: nowrap; }
 
-    /* ===================== METRICS / WAVES ===================== */
-    .metric-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    /* ---------- Stats ---------- */
+    .metric-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
     .metric-row.cols-3 { grid-template-columns: repeat(3, 1fr); }
-    .metric-box { padding: 13px 10px 12px; text-align: center; position: relative; overflow: hidden; }
-    .metric-box::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--accent, var(--brand-grad)); opacity: .9; }
-    .metric-val { font-size: 24px; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -0.5px; line-height: 1.1; }
-    .metric-lbl { margin-top: 4px; display: block; }
-    .wave-bar { display: flex; align-items: center; gap: 7px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+    .metric-box { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+    .metric-lbl { display: block; }
+    .metric-val { font-size: 28px; font-weight: 600; line-height: 1.2; margin-top: 4px; font-variant-numeric: tabular-nums; }
+    .v-green { color: var(--green); } .v-amber { color: var(--amber); } .v-red { color: var(--red); } .v-sky { color: var(--sky); }
+
+    /* ---------- Wave filter ---------- */
+    .wave-bar { display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: none; }
     .wave-bar::-webkit-scrollbar { display: none; }
     .wave-pill {
-      padding: 7px 14px; border-radius: 999px; font-size: 12px; font-weight: 800; white-space: nowrap; cursor: pointer;
-      background: var(--surface); border: 1px solid var(--border); color: var(--text-dim);
+      height: 34px; padding: 0 14px; border-radius: 9px; font-size: 13px; font-weight: 500; white-space: nowrap; cursor: pointer;
+      background: transparent; border: 1px solid var(--line); color: var(--muted); display: inline-flex; align-items: center; gap: 7px;
     }
-    .wave-pill.active { background: var(--brand-grad); color: #06080F; border-color: transparent; }
+    .wave-pill:hover { color: var(--text); }
+    .wave-pill.active { background: var(--accent-soft); border-color: var(--accent); color: var(--text); }
+    .wave-pill .now-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
 
-    .replacement-box { padding: 14px; display: flex; flex-direction: column; gap: 10px; border-color: rgba(124,108,255,0.28);
-      background: linear-gradient(160deg, rgba(36,30,66,0.55), var(--surface) 60%); }
-    .rep-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+    .rep-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .rep-grid > div { position: relative; }
 
-    /* ===================== LISTS ===================== */
+    /* ---------- Lists ---------- */
     .batch-card { overflow: hidden; }
-    .batch-card.break-return { border-color: rgba(52,224,161,0.35); }
-    .batch-card.break-return .batch-header { background: linear-gradient(90deg, rgba(18,80,58,0.5), rgba(16,36,30,0.3)); }
     .batch-header {
-      background: var(--surface-2); padding: 11px 14px; display: flex; justify-content: space-between; align-items: center;
-      border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 8px;
+      display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;
+      padding: 14px 18px; border-bottom: 1px solid var(--line);
     }
-    .batch-title { font-size: 14px; font-weight: 900; display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .batch-title { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 10px; min-width: 0; }
     .batch-badge {
-      background: var(--brand-grad); color: #06080F; font-size: 11px; font-weight: 900; padding: 3px 9px; border-radius: 999px; white-space: nowrap;
+      font-size: 12px; font-weight: 500; padding: 2px 9px; border-radius: 999px; white-space: nowrap;
+      background: var(--surface-2); color: var(--muted); border: 1px solid var(--line);
     }
-    .badge-green { background: var(--green); color: #032015; }
-    .badge-red { background: var(--red); color: #fff; }
-    .badge-yellow { background: var(--yellow); color: #201400; }
-    .batch-actions, .row-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    .badge-green { color: var(--green); background: var(--green-soft); border-color: transparent; }
+    .badge-red { color: var(--red); background: var(--red-soft); border-color: transparent; }
+    .badge-yellow { color: var(--amber); background: var(--amber-soft); border-color: transparent; }
+    .batch-actions, .row-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; flex: 0 0 auto; }
+    .batch-card.break-return .batch-title::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+
     .da-list { display: flex; flex-direction: column; }
     .da-row {
-      display: flex; align-items: center; padding: 10px 14px; gap: 11px; font-size: 13px; min-width: 0;
-      border-bottom: 1px solid var(--border-soft);
+      display: flex; align-items: center; gap: 12px; min-width: 0; padding: 12px 18px; border-bottom: 1px solid var(--line);
     }
-    .da-row:hover { background: rgba(255,255,255,0.025); }
     .da-row:last-child { border-bottom: none; }
-    .da-checkbox { width: 18px; height: 18px; accent-color: var(--brand); cursor: pointer; flex: 0 0 auto; }
-    .avatar {
-      width: 34px; height: 34px; border-radius: 50%; flex: 0 0 auto; display: grid; place-items: center;
-      font-size: 12px; font-weight: 900; color: #06080F; background: var(--av, #5B6B8C);
-    }
-    .avatar.ok { --av: linear-gradient(135deg, #34E0A1, #14B98A); }
-    .avatar.warn { --av: linear-gradient(135deg, #FFCB5B, #F59E0B); }
-    .avatar.bad { --av: linear-gradient(135deg, #FF5C7A, #E0344F); color: #fff; }
-    .avatar.info { --av: var(--brand-grad); }
-    .avatar.idle { --av: #3A4663; color: var(--text); }
+    .da-row:hover { background: var(--surface-hover); }
+    .da-checkbox { width: 17px; height: 17px; accent-color: var(--accent); cursor: pointer; flex: 0 0 auto; }
+    .pos { width: 26px; flex: 0 0 auto; font-size: 13px; font-weight: 600; color: var(--faint); font-variant-numeric: tabular-nums; }
     .da-details { flex: 1; min-width: 0; }
-    .da-title-line { font-weight: 800; display: flex; align-items: center; gap: 6px; min-width: 0; }
-    .da-title-line .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-    .da-title-line .id { font-size: 11px; color: var(--text-dim); font-weight: 600; white-space: nowrap; }
-    .da-title-line .pos { color: var(--orange); font-weight: 900; }
-    .da-meta-line { font-size: 11.5px; color: var(--text-dim); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .da-meta-line b { color: var(--text); font-weight: 700; }
-    .time-badge {
-      font-size: 11px; font-weight: 800; padding: 4px 8px; border-radius: 8px; white-space: nowrap;
-      background: var(--surface-2); border: 1px solid var(--border); color: #CBD5E1; font-variant-numeric: tabular-nums;
+    .da-name { font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .da-meta-line {
+      font-size: 12.5px; color: var(--muted); margin-top: 2px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-width: 0;
     }
-    .tag-ok { color: var(--green); border-color: rgba(52,224,161,.45); background: var(--green-soft); }
-    .tag-warn, .tag-break { color: var(--yellow); border-color: rgba(255,203,91,.45); background: var(--yellow-soft); }
-    .tag-bad, .tag-sla, .tag-violator { color: var(--red); border-color: rgba(255,92,122,.45); background: var(--red-soft); }
-    .tag-info { color: var(--brand-2); border-color: rgba(34,211,238,.4); background: rgba(34,211,238,.1); }
-    .empty { padding: 22px 14px; text-align: center; color: var(--text-dim); font-size: 13px; }
-    .empty .em { font-size: 22px; display: block; margin-bottom: 6px; }
+    .da-meta-line .sep { color: var(--faint); }
+    .da-meta-line .mono { font-size: 11.5px; letter-spacing: .2px; color: var(--faint); }
+    .da-meta-line b { color: var(--text); font-weight: 500; }
+    .time-badge {
+      display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; padding: 4px 10px; border-radius: 8px;
+      white-space: nowrap; background: var(--surface-2); color: var(--muted); font-variant-numeric: tabular-nums;
+    }
+    .time-badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .tag-ok { color: var(--green); background: var(--green-soft); }
+    .tag-warn, .tag-break { color: var(--amber); background: var(--amber-soft); }
+    .tag-bad, .tag-sla, .tag-violator { color: var(--red); background: var(--red-soft); }
+    .tag-info { color: var(--sky); background: var(--sky-soft); }
+    .tag-idle { color: var(--muted); }
+    .mini-tag { font-size: 11.5px; font-weight: 500; padding: 1px 8px; border-radius: 6px; color: var(--amber); background: var(--amber-soft); }
+    .empty { padding: 28px 18px; text-align: center; color: var(--muted); font-size: 13.5px; }
 
     .violator-row { flex-wrap: wrap; }
-    .violator-banner {
-      background: linear-gradient(135deg, #E0344F, #B21F3F); color: #fff; border-radius: var(--radius); padding: 14px 16px;
-      font-weight: 800; font-size: 13px; display: flex; gap: 11px; align-items: center; border: 1px solid #FF6B86;
+    .notice {
+      display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 12px; font-size: 13.5px; line-height: 1.5;
+      background: var(--red-soft); color: #FCA5A5; border: 1px solid rgba(239,68,68,0.25);
     }
-    .violator-banner svg { width: 22px; height: 22px; fill: #fff; flex-shrink: 0; }
+    .notice svg { width: 20px; height: 20px; fill: currentColor; flex-shrink: 0; margin-top: 1px; }
 
-    #waiting-batches-container { display: flex; flex-direction: column; gap: 12px; }
+    #waiting-batches-container { display: flex; flex-direction: column; gap: 16px; }
 
-    /* ===================== ADMIN ===================== */
+    /* ---------- Admin ---------- */
     .user-row {
-      display: flex; align-items: center; justify-content: space-between; gap: 8px;
-      background: var(--surface-3); border: 1px solid var(--border); border-radius: 12px; padding: 9px 11px;
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px;
     }
-    .user-row .u-name { font-size: 13px; font-weight: 800; }
-    .user-row .u-handle { font-size: 10.5px; color: var(--text-dim); margin-top: 2px; }
-    .pill-tag { font-size: 9px; font-weight: 900; border: 1px solid currentColor; border-radius: 6px; padding: 1px 6px; margin-left: 6px; }
+    .user-row .u-name { font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+    .user-row .u-handle { font-size: 12px; color: var(--muted); margin-top: 1px; }
+    .pill-tag { font-size: 11px; font-weight: 500; padding: 1px 8px; border-radius: 6px; background: var(--surface-2); }
     .pw-field-wrap { position: relative; }
-    .pw-eye-btn { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-dim); cursor: pointer; padding: 4px; }
+    .pw-eye-btn { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--muted); cursor: pointer; padding: 4px; }
     .pw-eye-btn svg { width: 18px; height: 18px; fill: currentColor; }
+    .version-line { font-size: 12px; color: var(--faint); display: flex; gap: 14px; }
+    details summary { cursor: pointer; font-size: 13px; font-weight: 500; color: var(--muted); }
 
-    /* ===================== LOGIN ===================== */
-    #login-screen {
-      display: none; position: fixed; inset: 0; z-index: 9000; padding: 20px; align-items: center; justify-content: center;
-      background: radial-gradient(900px 500px at 50% 0%, rgba(124,108,255,0.16), transparent 60%), var(--bg);
-    }
+    /* ---------- Login ---------- */
+    #login-screen { display: none; position: fixed; inset: 0; z-index: 9000; padding: 20px; align-items: center; justify-content: center; background: var(--bg); }
     .login-card {
-      width: 100%; max-width: 380px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 22px;
-      padding: 28px 24px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 12px;
+      width: 100%; max-width: 380px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+      padding: 32px 28px; display: flex; flex-direction: column; gap: 14px;
     }
-    .login-brand { text-align: center; margin-bottom: 6px; }
-    .login-brand .brand-logo { margin: 0 auto 12px; width: 52px; height: 52px; font-size: 18px; border-radius: 15px; }
-    .login-brand .t { font-size: 21px; font-weight: 900; letter-spacing: 1px; }
-    .login-brand .t span { background: var(--brand-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
-    .login-brand .s { font-size: 11px; color: var(--text-dim); font-weight: 800; letter-spacing: 1.5px; margin-top: 4px; }
+    .login-brand { text-align: center; margin-bottom: 8px; }
+    .login-brand .brand-logo { margin: 0 auto 14px; width: 48px; height: 48px; font-size: 16px; border-radius: 13px; }
+    .login-brand .t { font-size: 22px; font-weight: 600; }
+    .login-brand .s { font-size: 13px; color: var(--muted); margin-top: 2px; }
     #login-error {
-      display: none; background: var(--red-soft); border: 1px solid rgba(255,92,122,0.4); color: var(--red);
-      font-size: 12px; font-weight: 700; padding: 10px 12px; border-radius: 10px; text-align: center;
+      display: none; background: var(--red-soft); color: #FCA5A5; font-size: 13px; padding: 10px 12px; border-radius: 10px; text-align: center;
     }
-    .login-foot { font-size: 11px; color: var(--text-dim); text-align: center; }
-    .link-btn { background: none; border: none; color: var(--brand-2); font-size: 11.5px; font-weight: 700; cursor: pointer; padding: 0; }
+    .login-foot { font-size: 12px; color: var(--muted); text-align: center; }
+    .link-btn { background: none; border: none; color: var(--accent-text); font-size: 13px; font-weight: 500; cursor: pointer; padding: 0; }
 
-    /* ===================== NAV ===================== */
+    /* ---------- Navigation ---------- */
     nav {
       position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
       height: calc(var(--safe-bottom) + 64px); padding-bottom: var(--safe-bottom);
-      background: rgba(12,16,28,0.94); backdrop-filter: var(--glass); -webkit-backdrop-filter: var(--glass);
-      border-top: 1px solid var(--border-soft); display: grid; grid-template-columns: repeat(6, 1fr);
+      background: var(--bg); border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(6, 1fr);
     }
     .nav-item {
-      min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
-      color: var(--text-dim); cursor: pointer; font-size: 10.5px; font-weight: 800; border: none; background: transparent; position: relative;
+      min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; position: relative;
+      color: var(--faint); cursor: pointer; font-size: 11px; font-weight: 500; border: none; background: transparent;
     }
     .nav-item svg { width: 22px; height: 22px; fill: currentColor; }
-    .nav-item.active { color: var(--brand-2); }
-    .nav-item.active::before {
-      content: ""; position: absolute; top: 7px; width: 44px; height: 30px; border-radius: 12px; background: rgba(124,108,255,0.16); z-index: -1;
-    }
+    .nav-item:hover { color: var(--muted); }
+    .nav-item.active { color: var(--text); }
+    .nav-item.active svg { fill: var(--accent-text); }
     .nav-badge {
-      position: absolute; top: 5px; left: calc(50% + 6px); min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px;
-      background: var(--brand); color: #fff; font-size: 10px; font-weight: 900; display: none; align-items: center; justify-content: center;
-      font-variant-numeric: tabular-nums; box-shadow: 0 0 0 2px #0C101C;
+      position: absolute; top: 6px; left: calc(50% + 7px); min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px;
+      background: var(--accent); color: #fff; font-size: 10.5px; font-weight: 600; display: none;
+      align-items: center; justify-content: center; font-variant-numeric: tabular-nums;
     }
     .nav-badge.show { display: inline-flex; }
     .nav-badge.red { background: var(--red); }
-    .nav-badge.green { background: #14B98A; }
 
-    /* ===================== SCAN CARDS (notifications) ===================== */
+    /* ---------- Toast cards (scan results) ---------- */
     #banner-holder { position: relative; z-index: 95; }
     #break-card-holder {
-      position: fixed; top: calc(var(--safe-top) + 10px); left: 12px; right: 12px; z-index: 9500; pointer-events: none;
+      position: fixed; top: calc(var(--safe-top) + 12px); left: 12px; right: 12px; z-index: 9500; pointer-events: none;
       display: flex; flex-direction: column; align-items: center;
     }
     .scan-card {
-      position: relative; pointer-events: auto; width: 100%; max-width: 560px;
-      display: flex; align-items: center; gap: 13px; padding: 14px 44px 18px 16px; border-radius: 18px; margin-bottom: 10px;
-      box-shadow: 0 14px 34px rgba(0,0,0,0.42); animation: breakCardIn .28s cubic-bezier(.2,.9,.3,1.3); overflow: hidden;
+      position: relative; pointer-events: auto; width: 100%; max-width: 520px; display: flex; align-items: center; gap: 14px;
+      padding: 14px 46px 16px 16px; border-radius: 14px; margin-bottom: 10px; background: var(--surface-2);
+      border: 1px solid var(--line-strong); box-shadow: 0 18px 44px rgba(0,0,0,0.5); animation: cardIn .22s ease-out; overflow: hidden;
     }
-    @keyframes breakCardIn { from { transform: translateY(-14px) scale(.97); opacity: 0; } to { transform: none; opacity: 1; } }
-    .scan-card::before { content: ""; position: absolute; right: -18px; top: -22px; width: 90px; height: 90px; border-radius: 50%; background: rgba(255,255,255,0.14); pointer-events: none; }
-    .scan-card-icon { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.28); display: flex; align-items: center; justify-content: center; font-size: 19px; }
+    .scan-card::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--tone, var(--accent)); }
+    @keyframes cardIn { from { transform: translateY(-10px); opacity: 0; } to { transform: none; opacity: 1; } }
+    .scan-card-icon {
+      flex: 0 0 auto; width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+      font-size: 18px; background: var(--tone-soft, var(--accent-soft));
+    }
     .scan-card-body { flex: 1; min-width: 0; }
-    .scan-card-title { font-size: 14px; font-weight: 900; line-height: 1.3; }
-    .scan-card-sub { font-size: 11.5px; font-weight: 700; opacity: .88; margin-top: 2px; }
+    .scan-card-title { font-size: 14px; font-weight: 600; line-height: 1.35; color: var(--text); }
+    .scan-card-sub { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
     .scan-card-close {
-      position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,0.3);
-      display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; font-weight: 900; line-height: 1;
+      position: absolute; top: 10px; right: 10px; width: 26px; height: 26px; border-radius: 8px; display: flex; align-items: center;
+      justify-content: center; cursor: pointer; font-size: 16px; color: var(--muted);
     }
-    .scan-card-dismiss-btn { position: absolute; top: 8px; right: 8px; border: none; border-radius: 999px; background: rgba(255,255,255,0.32); color: inherit; font-size: 11px; font-weight: 800; padding: 5px 10px; cursor: pointer; }
-    .scan-card-countdown { position: absolute; bottom: 6px; right: 11px; font-size: 10px; font-weight: 800; opacity: .75; font-variant-numeric: tabular-nums; }
-    .scan-card.theme-break      { background: linear-gradient(120deg, #78C8D2, #FFBE8C); color: #05261A; }
-    .scan-card.theme-notsent    { background: linear-gradient(120deg, #4A5E7A, #BEC4CE); color: #F3F5F8; }
-    .scan-card.theme-overdue    { background: linear-gradient(120deg, #E65050, #FFBE96); color: #2A0808; }
-    .scan-card.theme-present    { background: linear-gradient(120deg, #28AA6E, #AAE6C8); color: #04240F; }
-    .scan-card.theme-late       { background: linear-gradient(120deg, #E1A528, #FFE6A0); color: #2B1E02; }
-    .scan-card.theme-notoffyard { background: linear-gradient(120deg, #B45A0A, #E68C28); color: #FFF4E8; }
-    .scan-card.theme-duplicate  { background: linear-gradient(120deg, #5A6478, #96A0AF); color: #F5F7FA; }
-    .scan-card.theme-violator   { background: linear-gradient(120deg, #C81E28, #EB5A46); color: #FFF1EE; }
+    .scan-card-close:hover { background: var(--surface); color: var(--text); }
+    .scan-card-dismiss-btn { position: absolute; top: 10px; right: 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: transparent; color: var(--text); font-size: 12px; font-weight: 500; padding: 4px 10px; cursor: pointer; }
+    .scan-card-countdown { position: absolute; bottom: 8px; right: 12px; font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; }
+    .scan-card.theme-present    { --tone: var(--green); --tone-soft: var(--green-soft); }
+    .scan-card.theme-late       { --tone: var(--amber); --tone-soft: var(--amber-soft); }
+    .scan-card.theme-break      { --tone: var(--amber); --tone-soft: var(--amber-soft); }
+    .scan-card.theme-overdue    { --tone: var(--red); --tone-soft: var(--red-soft); }
+    .scan-card.theme-violator   { --tone: var(--red); --tone-soft: var(--red-soft); }
+    .scan-card.theme-notoffyard { --tone: #F97316; --tone-soft: rgba(249,115,22,0.15); }
+    .scan-card.theme-notsent    { --tone: var(--sky); --tone-soft: var(--sky-soft); }
+    .scan-card.theme-duplicate  { --tone: var(--muted); --tone-soft: var(--surface); }
 
-    /* ===================== RESPONSIVE ===================== */
+    /* ---------- Responsive ---------- */
     @media (max-width: 560px) {
-      header.topbar { padding-left: 12px; padding-right: 12px; }
-      .brand-sub { display: none; }
-      #ver-chip, .user-chip .u-label, .install-btn .lbl { display: none; }
-      .chip { padding: 0 9px; }
+      header.topbar { padding-left: 14px; padding-right: 14px; }
+      .brand-sub, .user-chip .u-label, .install-btn .lbl, .sync-badge .lbl { display: none; }
+      .chip { padding: 0 10px; }
       .metric-row { grid-template-columns: repeat(2, 1fr); }
       .metric-row.cols-3 { grid-template-columns: repeat(3, 1fr); }
+      .metric-val { font-size: 24px; }
       .rep-grid, .field-grid { grid-template-columns: 1fr; }
       .text-input { font-size: 16px; } /* stops iOS zooming into inputs */
+      .da-row { padding: 12px 14px; }
+      .batch-header { padding: 12px 14px; }
       .violator-row .row-actions { flex: 1 1 100%; justify-content: flex-end; }
+      .da-meta-line .mono { flex: 1 1 100%; }          /* phones: ID on its own line */
+      .da-meta-line .mono + .sep { display: none; }
     }
-    @media (max-width: 380px) {
-      .user-chip { display: none; }
-    }
-    @media (max-width: 759px) {
-      /* Phones: while the camera is off the scanner is a short strip, so the lists
-         are visible without scrolling. It turns square when the camera starts. */
-      .scanner-viewport-wrap:not(.scanner-wrap-active) { aspect-ratio: auto; height: 104px; max-width: none; }
-      .scanner-viewport-wrap:not(.scanner-wrap-active) .scanner-idle { flex-direction: row; gap: 12px; }
-      .scanner-viewport-wrap:not(.scanner-wrap-active) .scanner-idle svg { width: 34px; height: 34px; }
-      .scanner-viewport-wrap:not(.scanner-wrap-active) .idle-sub { display: none; }
-      .scanner-controls { max-width: none; }
-    }
+    @media (max-width: 380px) { .user-chip { display: none; } }
     @media (min-width: 760px) {
-      main { padding: 18px 22px calc(var(--safe-bottom) + 90px); }
-      .tab-grid.active { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 18px; align-items: start; }
+      main { padding: 24px 28px 96px; }
+      .tab-content { max-width: 1480px; width: 100%; margin: 0 auto; }
+      .tab-grid.active { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 24px; align-items: start; }
       .tab-grid > .col-side { position: sticky; top: 0; }
-      .tab-wide.active { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
-      .tab-content { max-width: 1440px; width: 100%; margin: 0 auto; }
+      .tab-wide.active { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: start; }
     }
     @media (min-width: 1024px) {
-      /* Desktop: the bottom bar becomes a left rail */
-      #app-root { padding-left: 92px; }
+      #app-root { padding-left: 88px; }
       nav {
-        top: 0; right: auto; width: 92px; height: auto; padding: calc(var(--safe-top) + 72px) 8px 16px;
-        grid-template-columns: 1fr; grid-auto-rows: 70px; align-content: start; gap: 6px;
-        border-top: none; border-right: 1px solid var(--border-soft);
+        top: 0; right: auto; width: 88px; height: auto; padding: calc(var(--safe-top) + 74px) 10px 16px;
+        grid-template-columns: 1fr; grid-auto-rows: 66px; align-content: start; gap: 4px;
+        border-top: none; border-right: 1px solid var(--line);
       }
-      .nav-item { border-radius: 14px; font-size: 11px; }
-      .nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
-      .nav-item.active { background: rgba(124,108,255,0.14); }
-      .nav-item.active::before { display: none; }
-      .nav-badge { top: 8px; left: calc(50% + 8px); box-shadow: 0 0 0 2px #0C101C; }
-      main { padding-bottom: 28px; }
-      #waiting-batches-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(440px, 1fr)); align-items: start; }
-      .tab-grid.active { grid-template-columns: 380px minmax(0, 1fr); gap: 22px; }
+      .nav-item { border-radius: 12px; }
+      .nav-item:hover { background: var(--surface); }
+      .nav-item.active { background: var(--surface); }
+      .nav-badge { top: 7px; left: calc(50% + 7px); }
+      main { padding-bottom: 32px; }
     }
-    @media (min-width: 1600px) {
-      .tab-grid.active { grid-template-columns: 420px minmax(0, 1fr); }
-      .metric-val { font-size: 28px; }
-    }
-    @media (max-height: 560px) and (max-width: 760px) {
-      .scanner-viewport-wrap, .scanner-controls { max-width: 190px; }
+    @media (min-width: 1280px) {
+      /* Wide screens: list rows flow in two columns inside each card (order kept left→right). */
+      .da-list.two-col { display: grid; grid-template-columns: 1fr 1fr; }
+      .da-list.two-col .da-row { border-bottom: 1px solid var(--line); }
+      .da-list.two-col .da-row:nth-child(odd) { border-right: 1px solid var(--line); }
+      .da-list.two-col .da-row:last-child:nth-child(odd) { border-bottom: none; }
+      .da-list.two-col .da-row:nth-last-child(2):nth-child(odd) { border-bottom: none; }
     }
     @media (display-mode: standalone) { body { overscroll-behavior: none; } }
   </style>
 </head>
 <body>
-  <!-- shared SVG gradient for the scanner idle icon -->
-  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
-    <linearGradient id="iconGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7C6CFF"/><stop offset="1" stop-color="#22D3EE"/></linearGradient>
-  </defs></svg>
-
   <div id="splash-screen" class="splash">
     <div class="splash-grid"></div>
     <div class="splash-core">
       <div class="splash-ring r1"></div><div class="splash-ring r2"></div><div class="splash-sweep"></div>
       <div class="splash-cube"><svg viewBox="0 0 24 24" fill="#06080F"><path d="M21 16.5l-9 5.2-9-5.2V7.5l9-5.2 9 5.2v9zM12 4.2L5.5 8 12 11.8 18.5 8 12 4.2zM4.5 9.7v5.6l6.5 3.8v-5.6L4.5 9.7zm15 0l-6.5 3.8v5.6l6.5-3.8V9.7z"/></svg></div>
     </div>
-    <div class="splash-text">RUSH&nbsp;PRO&nbsp;DUD3</div>
-    <div class="splash-sub">INSTANT DISPATCH ENGINE</div>
+    <div class="splash-text">RUSH&nbsp;PRO</div>
+    <div class="splash-sub">DUD3 YARD DISPATCH</div>
   </div>
 
   <!-- ===== LOGIN ===== -->
@@ -435,24 +397,24 @@
     <form class="login-card" onsubmit="doLoginAction(); return false;">
       <div class="login-brand">
         <div class="brand-logo">D3</div>
-        <div class="t">RUSH <span>PRO</span></div>
-        <div class="s">SIGN IN TO CONTINUE</div>
+        <div class="t">Rush PRO</div>
+        <div class="s">Sign in to continue</div>
       </div>
       <div id="login-error"></div>
       <div class="field">
         <label for="login-username">Username</label>
-        <input type="text" id="login-username" class="text-input" autocomplete="username" placeholder="Enter your username" autocapitalize="off">
+        <input type="text" id="login-username" class="text-input" autocomplete="username" placeholder="Your username" autocapitalize="off">
       </div>
       <div class="field">
         <label for="login-password">Password</label>
         <div class="pw-field-wrap">
-          <input type="password" id="login-password" class="text-input" autocomplete="current-password" placeholder="Enter your password">
+          <input type="password" id="login-password" class="text-input" autocomplete="current-password" placeholder="Your password">
           <button type="button" class="pw-eye-btn" onclick="togglePwVisibility('login-password', this)" title="Show / hide password"><svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></button>
         </div>
       </div>
       <div style="text-align:right;"><button type="button" class="link-btn" onclick="showForgotPasswordPrompt()">Forgot password?</button></div>
-      <button type="submit" class="btn btn-green" id="btn-do-login">Sign In</button>
-      <div class="login-foot">Accounts are created and managed by your Admin.</div>
+      <button type="submit" class="btn" id="btn-do-login">Sign in</button>
+      <div class="login-foot">Accounts are created by your Admin.</div>
     </form>
   </div>
 
@@ -461,23 +423,22 @@
       <div class="brand-wrap">
         <div class="brand-logo">D3</div>
         <div>
-          <div class="brand-title">RUSH <span>PRO</span></div>
-          <div class="brand-sub" id="header-tab-sub">OFF-YARD ATTENDANCE</div>
+          <div class="brand-title">Rush PRO</div>
+          <div class="brand-sub" id="header-tab-sub">Attendance</div>
         </div>
       </div>
       <div class="top-status">
         <button class="chip install-btn" id="install-btn" title="Install app">
           <svg viewBox="0 0 24 24"><path d="M12 3v10.59l3.3-3.3 1.4 1.42L12 17.4l-4.7-4.7 1.4-1.4 3.3 3.29V3h2zM5 19h14v2H5z"/></svg><span class="lbl">Install</span>
         </button>
-        <div class="chip sync-badge" id="sync-status" title="Live sync status"><span class="sync-dot"></span><span id="sync-text">LIVE</span></div>
+        <div class="chip sync-badge" id="sync-status" title="Live sync"><span class="sync-dot"></span><span class="lbl" id="sync-text">Live</span></div>
+        <div class="chip clock-display" id="dubai-clock" title="Dubai time">--:--</div>
         <button id="btn-force-sync" class="icon-btn force-sync-btn" onclick="forceSyncAllDevices()" title="Force sync all devices">
           <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.95 7.95 0 0012 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
         </button>
-        <div class="chip clock-display" id="dubai-clock" title="Dubai time">--:--</div>
-        <div id="ver-chip" title="Frontend / backend versions"><div id="ver-fe">FE --</div><div id="ver-be">BE --</div></div>
-        <div class="chip user-chip" title="Logged in as">
+        <div class="chip user-chip" title="Signed in as">
           <span class="u-label" id="user-chip-name">--</span>
-          <button id="btn-logout" class="btn-logout" onclick="doLogoutAction()" title="Log out">Logout</button>
+          <button id="btn-logout" class="btn-logout" onclick="doLogoutAction()" title="Log out">Log out</button>
         </div>
       </div>
     </header>
@@ -491,36 +452,37 @@
       <section class="tab-content tab-grid active" id="tab-attend">
         <div class="col-side">
           <div class="scanner-card" data-scanner="attend"></div>
-          <div class="replacement-box">
-            <div class="card-title" style="color:var(--brand-2);">🔁 Quick Replacement</div>
-            <div class="card-sub">Pick an absent DA, then the replacement from RushData.</div>
+          <div class="card">
+            <div>
+              <div class="card-title">Replace an absent DA</div>
+              <div class="card-sub">Choose the absent DA, then the replacement from RushData.</div>
+            </div>
             <div class="rep-grid">
               <div>
-                <input type="text" id="rep-absent-inp" class="text-input" placeholder="1. Absent DA…" autocomplete="off">
+                <input type="text" id="rep-absent-inp" class="text-input" placeholder="Absent DA" autocomplete="off">
                 <div class="search-results-dropdown" id="rep-absent-dropdown"></div>
               </div>
               <div>
-                <input type="text" id="rep-new-inp" class="text-input" placeholder="2. Replacement…" autocomplete="off">
+                <input type="text" id="rep-new-inp" class="text-input" placeholder="Replacement" autocomplete="off">
                 <div class="search-results-dropdown" id="rep-new-dropdown"></div>
               </div>
             </div>
-            <button class="btn btn-green" id="btn-assign-rep-inline">Assign Replacement &amp; Queue</button>
+            <button class="btn btn-card" id="btn-assign-rep-inline">Assign &amp; add to batch</button>
           </div>
         </div>
         <div class="col-main">
-          <div class="wave-bar" id="wave-pill-bar"></div>
           <div class="metric-row">
-            <div class="metric-box" style="--accent:var(--green)"><div class="metric-val" id="cnt-present" style="color:var(--green)">0</div><span class="metric-lbl">Present</span></div>
-            <div class="metric-box" style="--accent:var(--yellow)"><div class="metric-val" id="cnt-late" style="color:var(--yellow)">0</div><span class="metric-lbl">Late</span></div>
-            <div class="metric-box" style="--accent:var(--red)"><div class="metric-val" id="cnt-absent" style="color:var(--red)">0</div><span class="metric-lbl">Absent</span></div>
-            <div class="metric-box"><div class="metric-val" id="cnt-total">0</div><span class="metric-lbl">Wave Total</span></div>
+            <div class="metric-box"><span class="metric-lbl">Present</span><div class="metric-val v-green" id="cnt-present">0</div></div>
+            <div class="metric-box"><span class="metric-lbl">Late</span><div class="metric-val v-amber" id="cnt-late">0</div></div>
+            <div class="metric-box"><span class="metric-lbl">Absent</span><div class="metric-val v-red" id="cnt-absent">0</div></div>
+            <div class="metric-box"><span class="metric-lbl">In this wave</span><div class="metric-val" id="cnt-total">0</div></div>
           </div>
           <div class="batch-card">
             <div class="batch-header">
-              <div class="batch-title"><span id="current-wave-label">🌊 Current Running Wave</span></div>
-              <span class="batch-badge" id="roster-badge-date">--</span>
+              <div class="batch-title"><span id="current-wave-label">Current wave</span><span class="batch-badge" id="roster-badge-date">--</span></div>
             </div>
-            <div class="da-list" id="attend-roster-list"><div class="empty">Loading active wave…</div></div>
+            <div style="padding:12px 18px 0;"><div class="wave-bar" id="wave-pill-bar"></div></div>
+            <div class="da-list two-col" id="attend-roster-list" style="margin-top:8px; border-top:1px solid var(--line);"><div class="empty">Loading…</div></div>
           </div>
         </div>
       </section>
@@ -529,13 +491,13 @@
       <section class="tab-content tab-grid" id="tab-waiting">
         <div class="col-side">
           <div class="scanner-card" data-scanner="waiting"></div>
+          <div class="metric-row cols-3" style="grid-template-columns:1fr 1fr 1fr;">
+            <div class="metric-box"><span class="metric-lbl">Waiting</span><div class="metric-val v-sky" id="wait-total-das">0</div></div>
+            <div class="metric-box"><span class="metric-lbl">Batches</span><div class="metric-val" id="wait-active-batches">0</div></div>
+            <div class="metric-box"><span class="metric-lbl">Batch size</span><div class="metric-val" id="wait-batch-cap">25</div></div>
+          </div>
         </div>
         <div class="col-main">
-          <div class="metric-row cols-3">
-            <div class="metric-box"><div class="metric-val" id="wait-total-das" style="color:var(--brand-2)">0</div><span class="metric-lbl">Waiting DAs</span></div>
-            <div class="metric-box"><div class="metric-val" id="wait-active-batches">0</div><span class="metric-lbl">Active Batches</span></div>
-            <div class="metric-box"><div class="metric-val" id="wait-batch-cap">25</div><span class="metric-lbl">Batch Cap</span></div>
-          </div>
           <div id="waiting-batches-container"></div>
         </div>
       </section>
@@ -544,11 +506,13 @@
       <section class="tab-content tab-grid" id="tab-breaks">
         <div class="col-side">
           <div class="card">
-            <div class="card-title" style="color:var(--yellow);">☕ Break Control</div>
-            <div class="card-sub">Sending a DA on break removes them from their waiting batch. When the break ends they go to the top of the queue.</div>
+            <div>
+              <div class="card-title">Send a DA on break</div>
+              <div class="card-sub">They leave their waiting batch. When the break ends they go to the top of the queue.</div>
+            </div>
             <div class="scanner-input-bar">
               <input type="text" id="break-inp" class="text-input" placeholder="Scan or search DA…" autocomplete="off">
-              <button class="btn btn-amber" id="btn-start-break">Send on Break</button>
+              <button class="btn btn-amber" id="btn-start-break">Start break</button>
               <div class="search-results-dropdown" id="break-search-results"></div>
             </div>
           </div>
@@ -556,40 +520,38 @@
         <div class="col-main">
           <div class="batch-card">
             <div class="batch-header">
-              <div class="batch-title">☕ Currently on Break</div>
-              <span class="batch-badge badge-yellow" id="break-badge-count">0 DAs</span>
+              <div class="batch-title">On break <span class="batch-badge badge-yellow" id="break-badge-count">0</span></div>
             </div>
-            <div class="da-list" id="breaks-da-list"></div>
+            <div class="da-list two-col" id="breaks-da-list"></div>
           </div>
           <div class="batch-card break-return">
             <div class="batch-header">
-              <div class="batch-title">🔄 Back from Break — Ready to Dispatch</div>
-              <span class="batch-badge badge-green" id="breakret-badge-count">0</span>
+              <div class="batch-title">Back from break — ready to send <span class="batch-badge badge-green" id="breakret-badge-count">0</span></div>
             </div>
-            <div class="da-list" id="breakret-da-list"></div>
+            <div class="da-list two-col" id="breakret-da-list"></div>
           </div>
         </div>
       </section>
 
       <!-- ================= VIOLATORS ================= -->
       <section class="tab-content" id="tab-violators">
-        <div class="violator-banner">
+        <div class="notice">
           <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
-          <span>Violators must go back to the OFF-YARD. Receive In is blocked for every DA listed here — scanning them at Waiting clears them.</span>
+          <span>These DAs missed the Received-In time limit. Send them back to the off-yard — Receive In is blocked until they scan at Waiting again.</span>
         </div>
         <div class="batch-card">
           <div class="batch-header">
             <div class="batch-title">
               <input type="checkbox" class="da-checkbox" id="violator-select-all" title="Select all">
-              <span>🚫 Active Violators</span>
+              <span>Violators</span>
               <span class="batch-badge badge-red" id="violator-badge-count">0</span>
             </div>
             <div class="batch-actions">
-              <button id="btn-remove-selected-violators" class="btn btn-card btn-sm btn-text-red" style="display:none;">Remove Selected</button>
-              <button id="btn-remove-all-violators" class="btn btn-danger btn-sm" style="display:none;">Remove All</button>
+              <button id="btn-remove-selected-violators" class="btn btn-card btn-sm" style="display:none;">Remove selected</button>
+              <button id="btn-remove-all-violators" class="btn btn-danger btn-sm" style="display:none;">Remove all</button>
             </div>
           </div>
-          <div class="da-list" id="violators-da-list"></div>
+          <div class="da-list two-col" id="violators-da-list"></div>
         </div>
       </section>
 
@@ -601,20 +563,19 @@
         <div class="col-main">
           <div class="batch-card">
             <div class="batch-header">
-              <div class="batch-title">⏱️ Awaiting Received In <span class="batch-badge" id="awaiting-badge-count">0</span></div>
+              <div class="batch-title">On the way <span class="batch-badge" id="awaiting-badge-count">0</span></div>
               <button id="btn-whatsapp-notify" class="btn btn-card btn-sm btn-whatsapp" style="display:none;" onclick="requestNextBatchViaWhatsApp()" title="Ask OFFYARD for the next batch on WhatsApp">
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0012.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.19 8.19 0 012.41 5.83c0 4.55-3.7 8.25-8.24 8.25-1.48 0-2.93-.4-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 01-1.26-4.39c0-4.55 3.7-8.25 8.25-8.25z"/></svg>
-                Request Batch
+                <svg viewBox="0 0 24 24"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0012.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.19 8.19 0 012.41 5.83c0 4.55-3.7 8.25-8.24 8.25-1.48 0-2.93-.4-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 01-1.26-4.39c0-4.55 3.7-8.25 8.25-8.25z"/></svg>
+                Request batch
               </button>
             </div>
             <div class="da-list" id="awaiting-da-list"></div>
           </div>
           <div class="batch-card">
             <div class="batch-header">
-              <div class="batch-title">✅ Received In</div>
-              <span class="batch-badge badge-green" id="received-badge-count">0</span>
+              <div class="batch-title">Received in <span class="batch-badge badge-green" id="received-badge-count">0</span></div>
             </div>
-            <div class="da-list" id="received-da-list"></div>
+            <div class="da-list two-col" id="received-da-list"></div>
           </div>
         </div>
       </section>
@@ -622,46 +583,47 @@
       <!-- ================= ADMIN ================= -->
       <section class="tab-content tab-wide" id="tab-admin">
         <div class="card">
-          <div class="card-title">⚙️ Dispatch Settings</div>
-          <div class="field"><label for="cfg-ym-name">Yard Marshal name (this device)</label><input type="text" id="cfg-ym-name" class="text-input"></div>
+          <div class="card-title">Dispatch settings</div>
+          <div class="field"><label for="cfg-ym-name">Yard marshal name (this device)</label><input type="text" id="cfg-ym-name" class="text-input"></div>
           <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
             <span class="metric-lbl">Scan sounds &amp; vibration</span>
-            <button id="cfg-sound-toggle" class="btn btn-card btn-sm" type="button" style="min-width:90px;">🔊 On</button>
+            <button id="cfg-sound-toggle" class="btn btn-card btn-sm" type="button" style="min-width:90px;">On</button>
           </div>
           <div class="field-grid">
-            <div class="field"><label for="cfg-batch-size">Batch size (DAs)</label><input type="number" id="cfg-batch-size" class="text-input" value="25"></div>
-            <div class="field"><label for="cfg-entry-violation">Receive violation (min)</label><input type="number" id="cfg-entry-violation" class="text-input" value="15"></div>
-            <div class="field"><label for="cfg-auto-ofd">Auto-OFD timer (min)</label><input type="number" id="cfg-auto-ofd" class="text-input" value="30"></div>
-            <div class="field"><label for="cfg-prewave">Pre-wave block (min)</label><input type="number" id="cfg-prewave" class="text-input" value="30"></div>
-            <div class="field"><label for="cfg-grace">Wave grace period (min)</label><input type="number" id="cfg-grace" class="text-input" value="10"></div>
+            <div class="field"><label for="cfg-batch-size">Batch size</label><input type="number" id="cfg-batch-size" class="text-input" value="25"></div>
+            <div class="field"><label for="cfg-entry-violation">Receive limit (min)</label><input type="number" id="cfg-entry-violation" class="text-input" value="15"></div>
+            <div class="field"><label for="cfg-auto-ofd">Auto-OFD after (min)</label><input type="number" id="cfg-auto-ofd" class="text-input" value="30"></div>
+            <div class="field"><label for="cfg-prewave">Check-in opens before wave (min)</label><input type="number" id="cfg-prewave" class="text-input" value="30"></div>
+            <div class="field"><label for="cfg-grace">Late after wave (min)</label><input type="number" id="cfg-grace" class="text-input" value="10"></div>
             <div class="field"><label for="cfg-rush-timeout">Receive timeout (min)</label><input type="number" id="cfg-rush-timeout" class="text-input" value="15"></div>
           </div>
           <details>
-            <summary class="metric-lbl" style="cursor:pointer; padding:4px 0;">Advanced: backend &amp; sheet</summary>
-            <div style="display:flex; flex-direction:column; gap:11px; margin-top:10px;">
+            <summary>Advanced: backend &amp; sheet</summary>
+            <div style="display:flex; flex-direction:column; gap:14px; margin-top:12px;">
               <div class="field"><label for="cfg-api-url">Apps Script web app URL</label><input type="text" id="cfg-api-url" class="text-input"></div>
-              <div class="field"><label for="cfg-sheet-url">Active Google Sheet URL (monthly switch)</label><input type="text" id="cfg-sheet-url" class="text-input"></div>
+              <div class="field"><label for="cfg-sheet-url">Google Sheet URL (monthly switch)</label><input type="text" id="cfg-sheet-url" class="text-input"></div>
             </div>
           </details>
-          <div class="field"><label for="cfg-admin-pin">Admin PIN (needed to save unless you are an admin)</label><input type="password" id="cfg-admin-pin" class="text-input" placeholder="••••" autocomplete="off"></div>
-          <div style="display:flex; gap:9px;">
-            <button class="btn btn-green" id="btn-save-settings" style="flex:1;">Save Settings</button>
-            <button class="btn btn-danger" id="btn-reset-day">Reset Day</button>
+          <div class="field"><label for="cfg-admin-pin">Admin PIN (not needed if you're an admin)</label><input type="password" id="cfg-admin-pin" class="text-input" placeholder="••••" autocomplete="off"></div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn" id="btn-save-settings" style="flex:1;">Save settings</button>
+            <button class="btn btn-card btn-text-red" id="btn-reset-day">Reset day</button>
           </div>
+          <div class="version-line"><span id="ver-fe">FE --</span><span id="ver-be">BE --</span></div>
         </div>
 
         <div class="card" id="admin-user-mgmt" style="display:none;">
-          <div class="card-title">🔒 User Accounts</div>
-          <div class="card" style="background:var(--surface-3); box-shadow:none; padding:12px;">
-            <span class="section-label">Create new user</span>
-            <input type="text" id="new-user-username" class="text-input" placeholder="Username (min 3 characters)" autocapitalize="off">
+          <div class="card-title">User accounts</div>
+          <div style="display:flex; flex-direction:column; gap:10px; padding:14px; border:1px solid var(--line); border-radius:12px;">
+            <span class="section-label">New user</span>
+            <input type="text" id="new-user-username" class="text-input" placeholder="Username (3+ characters)" autocapitalize="off">
             <div class="pw-field-wrap">
-              <input type="password" id="new-user-password" class="text-input" placeholder="Password (min 4 characters)">
+              <input type="password" id="new-user-password" class="text-input" placeholder="Password (4+ characters)">
               <button type="button" class="pw-eye-btn" onclick="togglePwVisibility('new-user-password', this)" title="Show / hide password"><svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></button>
             </div>
             <input type="text" id="new-user-displayname" class="text-input" placeholder="Display name (optional)">
             <select id="new-user-role" class="text-input"><option value="user" selected>Regular user</option><option value="admin">Admin</option></select>
-            <button class="btn btn-green" onclick="adminCreateUserAction()">Create User</button>
+            <button class="btn" onclick="adminCreateUserAction()">Create user</button>
           </div>
           <span class="section-label">Existing users</span>
           <div id="admin-user-list" style="display:flex; flex-direction:column; gap:8px;"></div>
@@ -672,7 +634,7 @@
     <nav aria-label="Sections">
       <button class="nav-item active" data-tab="tab-attend">
         <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
-        <span>Attend</span>
+        <span>Attendance</span>
       </button>
       <button class="nav-item" data-tab="tab-waiting">
         <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/></svg>
@@ -1238,15 +1200,22 @@
     var SYNC_ERROR_BACKOFF_MS = 3000;
     var RUSHDATA_REFRESH_MS = 5 * 60 * 1000;
 
+    // Steady "Live" indicator: it only turns amber when a sync is genuinely slow
+    // (> 2.5 s), instead of flickering on every 1-second tick.
+    var _slowSyncTimer = null;
     function setSyncBadge(state) {
       var badge = document.getElementById("sync-status");
       var txt = document.getElementById("sync-text");
       if (!badge || !txt) return;
-      badge.classList.toggle("syncing", state === "sync");
+      if (state === "sync") {
+        if (!_slowSyncTimer) _slowSyncTimer = setTimeout(function() { badge.classList.add("syncing"); txt.textContent = "Syncing"; }, 2500);
+        return;
+      }
+      clearTimeout(_slowSyncTimer); _slowSyncTimer = null;
+      badge.classList.remove("syncing");
       badge.classList.toggle("off", state === "off");
-      txt.textContent = state === "off" ? "OFFLINE" : (state === "sync" ? "SYNC" : "LIVE");
+      txt.textContent = state === "off" ? "Offline" : "Live";
     }
-
     function scheduleNextSync(delayMs) {
       if (S.pollTimer) clearTimeout(S.pollTimer);
       if (S.authExpired) return;
@@ -1518,15 +1487,10 @@
     }
 
     /* ===================== RENDERING =====================
-     * Each list is built as one HTML string (fast). Buttons carry data-act /
-     * data-id / data-batch attributes and are handled by ONE delegated listener
-     * (bindListActions) — safe for names like O'Neil and for "DA's from Break",
-     * which used to break the inline onclick="...('...')" handlers. */
+     * Each list is built as one HTML string. Buttons carry data-act / data-id /
+     * data-batch and are handled by ONE delegated listener (bindListActions) —
+     * safe for names like O'Neil and for the "DA's from Break" batch. */
     function esc(s) { return escapeHtml(s == null ? "" : String(s)); }
-    function initials(name) {
-      var parts = String(name || "").replace(/[^A-Za-z0-9 ]/g, " ").trim().split(/\s+/);
-      return ((parts[0] || "?").charAt(0) + (parts.length > 1 ? parts[parts.length - 1].charAt(0) : "")).toUpperCase();
-    }
     function toneOf(status) {
       if (status === "Present" || status === "Replacement Present") return "ok";
       if (status === "Late Arrival") return "warn";
@@ -1538,19 +1502,20 @@
     }
     function idAttr(id) { return ' data-id="' + esc(id) + '"'; }
     function batchAttr(b) { return ' data-batch="' + esc(b) + '"'; }
-    function emptyHtml(icon, text) { return '<div class="empty"><span class="em">' + icon + '</span>' + text + '</div>'; }
-    /**
-     * One list row. o = { check, tone, avatar, pos, name, id, tags, meta, right, cls }
-     */
+    function emptyHtml(text) { return '<div class="empty">' + text + '</div>'; }
+    function sep() { return '<span class="sep">·</span>'; }
+    function idMeta(id) { return '<span class="mono">' + esc(id) + '</span>'; }
+    function breakUntil(range) {
+      var end = String(range || "").split("-")[1];
+      return end ? "Break till " + end.trim() : "On break";
+    }
+    /** One list row. o = { check, pos, name, meta (html), right (html), cls } */
     function rowHtml(o) {
       return '<div class="da-row' + (o.cls ? " " + o.cls : "") + '">' +
         (o.check || "") +
-        '<div class="avatar ' + (o.tone || "idle") + '">' + esc(o.avatar || initials(o.name)) + '</div>' +
-        '<div class="da-details">' +
-          '<div class="da-title-line">' + (o.pos ? '<span class="pos">#' + o.pos + '</span>' : "") +
-            '<span class="nm">' + esc(o.name) + '</span><span class="id">' + esc(o.id) + '</span>' + (o.tags || "") + '</div>' +
-          (o.meta ? '<div class="da-meta-line">' + o.meta + '</div>' : "") +
-        '</div>' +
+        (o.pos ? '<span class="pos">' + o.pos + '</span>' : "") +
+        '<div class="da-details"><div class="da-name">' + esc(o.name) + '</div>' +
+          (o.meta ? '<div class="da-meta-line">' + o.meta + '</div>' : "") + '</div>' +
         (o.right ? '<div class="row-actions">' + o.right + '</div>' : "") +
       '</div>';
     }
@@ -1587,9 +1552,9 @@
       var activeWave = S.selectedWave || autoWave;
       document.getElementById("wave-pill-bar").innerHTML = waves.map(function(w) {
         return '<button type="button" class="wave-pill' + (w === activeWave ? " active" : "") + '" data-act="wave" data-id="' + esc(w) + '">' +
-          (w === autoWave ? "⚡ Now · " : "Wave ") + esc(w) + '</button>';
+          (w === autoWave ? '<span class="now-dot"></span>' : "") + esc(w) + '</button>';
       }).join("");
-      document.getElementById("current-wave-label").textContent = activeWave ? ("🌊 Wave " + activeWave) : "🌊 Current Running Wave";
+      document.getElementById("current-wave-label").textContent = activeWave ? ("Wave " + activeWave) : "Current wave";
 
       var waveRoster = activeWave ? list.filter(function(d) { return d.wave === activeWave; }) : list;
       var pCnt = 0, lCnt = 0, aCnt = 0;
@@ -1597,14 +1562,13 @@
         var st = da.status || "";
         var tone = toneOf(st);
         if (tone === "ok") pCnt++; else if (tone === "warn") lCnt++; else if (tone === "bad") aCnt++;
-        var label = st || "Not in yet";
-        var meta = 'Wave <b>' + esc(da.wave || "--:--") + '</b> · ' + esc(da.dsp || "DSP") +
-                   (da.batchName ? ' · <b style="color:var(--orange)">' + esc(da.batchName) + '</b>' : "");
+        var label = st === "Replacement Present" ? "Replacement" : (st === "Late Arrival" ? "Late" : (st || "Not in yet"));
+        var meta = idMeta(da.daId) + sep() + esc(da.dsp || "DSP") + (da.batchName ? sep() + "<b>" + esc(da.batchName) + "</b>" : "");
         var right = '<span class="time-badge tag-' + tone + '">' + esc(label) + (da.scanTime ? " " + esc(da.scanTime) : "") + '</span>' +
-                    (st === "Absent" ? actBtn("pick-absent", idAttr(da.daId), "🔁 Replace") : "");
-        return rowHtml({ tone: tone, name: da.daName, id: da.daId, meta: meta, right: right });
+                    (st === "Absent" ? actBtn("pick-absent", idAttr(da.daId), "Replace") : "");
+        return rowHtml({ name: da.daName, meta: meta, right: right });
       }).join("");
-      document.getElementById("attend-roster-list").innerHTML = html || emptyHtml("🗓️", "No DAs scheduled in this wave.");
+      document.getElementById("attend-roster-list").innerHTML = html || emptyHtml("No DAs scheduled in this wave.");
 
       document.getElementById("cnt-present").textContent = pCnt;
       document.getElementById("cnt-late").textContent = lCnt;
@@ -1624,30 +1588,32 @@
         if (!daArr.length) return "";
         total += daArr.length; active++;
         var isBreak = bName === BREAK_RETURN_BATCH;
+        var onBreakCount = daArr.filter(function(d) { return d.inBreak; }).length;
         var rows = daArr.map(function(da, idx) {
           var onBreak = !!da.inBreak;
           var ticked = keep[bName + "|" + da.daId];
           var check = '<input type="checkbox" class="da-checkbox"' + batchAttr(bName) + ' data-daid="' + esc(da.daId) + '"' +
                       (onBreak ? " disabled" : "") + (ticked && !onBreak ? " checked" : "") + '>';
-          var tags = onBreak ? '<span class="time-badge tag-break">On Break' + (da.breakRange ? " " + esc(da.breakRange) : "") + '</span>' : "";
+          var meta = idMeta(da.daId) + sep() + "Queued <b>" + esc(da.waitTime || "--:--") + "</b>" +
+                     (onBreak ? ' <span class="mini-tag">' + esc(breakUntil(da.breakRange)) + '</span>' : "");
           var right = actBtn("send-one", idAttr(da.daId), "Send", "btn-card", onBreak) +
-                      actBtn("remove-waiting", idAttr(da.daId), "&times;", "btn-card btn-text-red");
-          return rowHtml({ check: check, tone: isBreak ? "ok" : "info", pos: idx + 1, name: da.daName, id: da.daId, tags: tags,
-                           meta: 'Queued <b>' + esc(da.waitTime || "--:--") + '</b>', right: right });
+                      actBtn("remove-waiting", idAttr(da.daId), "&times;", "btn-card btn-icon", false);
+          return rowHtml({ check: check, pos: idx + 1, name: da.daName, meta: meta, right: right });
         }).join("");
         return '<div class="batch-card' + (isBreak ? " break-return" : "") + '">' +
           '<div class="batch-header">' +
             '<div class="batch-title"><input type="checkbox" class="da-checkbox" data-act="toggle-batch"' + batchAttr(bName) + ' title="Select all">' +
-              '<span>' + (isBreak ? "🔄 " : "📦 ") + esc(bName) + '</span>' +
-              '<span class="batch-badge' + (isBreak ? " badge-green" : "") + '">' + daArr.length + (isBreak ? "" : " / " + cap) + '</span></div>' +
+              '<span>' + esc(bName) + '</span>' +
+              '<span class="batch-badge">' + daArr.length + (isBreak ? "" : " / " + cap) + '</span>' +
+              (onBreakCount ? '<span class="batch-badge badge-yellow">' + onBreakCount + ' on break</span>' : "") + '</div>' +
             '<div class="batch-actions">' +
-              actBtn("send-selected", batchAttr(bName), "Send Selected", "btn-card btn-sm") +
-              actBtn("send-batch", batchAttr(bName), "Send All", "btn-green btn-sm") +
+              actBtn("send-selected", batchAttr(bName), "Send selected", "btn-card btn-sm") +
+              actBtn("send-batch", batchAttr(bName), "Send all", "btn-green btn-sm") +
             '</div>' +
-          '</div><div class="da-list">' + rows + '</div></div>';
+          '</div><div class="da-list two-col">' + rows + '</div></div>';
       }).join("");
 
-      container.innerHTML = html || '<div class="batch-card">' + emptyHtml("📭", "No DAs waiting. Check DAs in on Attendance, or scan here to queue them into the active batch.") + '</div>';
+      container.innerHTML = html || '<div class="batch-card">' + emptyHtml("Nobody is waiting. Check DAs in on Attendance, or scan one here to add them to the current batch.") + '</div>';
       document.getElementById("wait-total-das").textContent = total;
       document.getElementById("wait-active-batches").textContent = active;
       setNavBadge("nb-waiting", total);
@@ -1661,24 +1627,24 @@
       var seen = {}, combined = [];
       (S.roster || []).forEach(function(d) {
         var k = String(d.daId).toUpperCase();
-        if (d.inBreak && !seen[k]) { seen[k] = true; combined.push({ daId: d.daId, daName: d.daName, dsp: d.dsp, range: d.breakRange || "On Break", action: !!d.actionBreak, startTime: "" }); }
+        if (d.inBreak && !seen[k]) { seen[k] = true; combined.push({ daId: d.daId, daName: d.daName, dsp: d.dsp, range: d.breakRange || "", action: !!d.actionBreak, startTime: "" }); }
       });
       (S.breaksActive || []).forEach(function(b) {
         var k = String(b.daId).toUpperCase();
-        if (!seen[k]) { seen[k] = true; combined.push({ daId: b.daId, daName: b.daName, dsp: "", range: "On Break", action: true, startTime: b.startTime }); }
+        if (!seen[k]) { seen[k] = true; combined.push({ daId: b.daId, daName: b.daName, dsp: "", range: "", action: true, startTime: b.startTime }); }
       });
-      badge.textContent = combined.length + " DAs";
+      badge.textContent = combined.length;
       setNavBadge("nb-breaks", combined.length);
 
       container.innerHTML = combined.map(function(da) {
-        var meta = da.action
-          ? ("Sent on break" + (da.startTime ? " at <b>" + esc(da.startTime) + "</b>" : "") + (da.dsp ? " · " + esc(da.dsp) : ""))
-          : (esc(da.dsp || "DSP") + " · Scheduled break");
+        var meta = idMeta(da.daId) + sep() + (da.action
+          ? "Started " + (da.startTime ? "<b>" + esc(da.startTime) + "</b>" : "manually")
+          : "Scheduled <b>" + esc(da.range) + "</b>");
         var right = da.action
-          ? actBtn("end-break", idAttr(da.daId), "End Break → Queue", "btn-green")
-          : '<span class="time-badge tag-break">' + esc(da.range) + '</span>';
-        return rowHtml({ tone: "warn", name: da.daName, id: da.daId, meta: meta, right: right });
-      }).join("") || emptyHtml("☕", "No DAs on break right now.");
+          ? actBtn("end-break", idAttr(da.daId), "End break", "btn-card")
+          : '<span class="time-badge tag-warn">' + esc(breakUntil(da.range)) + '</span>';
+        return rowHtml({ name: da.daName, meta: meta, right: right });
+      }).join("") || emptyHtml("No one is on break.");
 
       var retContainer = document.getElementById("breakret-da-list");
       var retBadge = document.getElementById("breakret-badge-count");
@@ -1686,10 +1652,9 @@
       var retList = ((S.waitingBatches || {})[BREAK_RETURN_BATCH] || []).filter(function(d) { return !d.inBreak; });
       retBadge.textContent = retList.length;
       retContainer.innerHTML = retList.map(function(da, idx) {
-        return rowHtml({ tone: "ok", pos: idx + 1, name: da.daName, id: da.daId,
-                         meta: 'Returned <b>' + esc(da.waitTime || "--:--") + '</b> · Priority queue',
-                         right: actBtn("send-one", idAttr(da.daId), "Send to Rush Q", "btn-green") });
-      }).join("") || emptyHtml("✅", "Nobody is waiting to return from break.");
+        return rowHtml({ pos: idx + 1, name: da.daName, meta: idMeta(da.daId) + sep() + "Back at <b>" + esc(da.waitTime || "--:--") + "</b>",
+                         right: actBtn("send-one", idAttr(da.daId), "Send", "btn-green") });
+      }).join("") || emptyHtml("Nobody is waiting to return from break.");
     }
 
     function renderViolatorsTab() {
@@ -1707,15 +1672,14 @@
       if (selAll) { selAll.style.display = has ? "inline-block" : "none"; if (!has) selAll.checked = false; }
 
       container.innerHTML = list.map(function(v) {
-        var exceeded = (v.exceededBy !== "" && v.exceededBy != null && v.exceededBy !== "N/A") ? " · Exceeded by <b>" + esc(v.exceededBy) + "m</b>" : "";
+        var over = (v.exceededBy !== "" && v.exceededBy != null && v.exceededBy !== "N/A") ? sep() + "Over by <b>" + esc(v.exceededBy) + " min</b>" : "";
         var check = '<input type="checkbox" class="da-checkbox violator-checkbox" data-daid="' + esc(v.daId) + '"' + (keep["|" + v.daId] ? " checked" : "") + '>';
         return rowHtml({
-          cls: "violator-row", check: check, tone: "bad", name: v.daName || v.daId, id: v.daId,
-          meta: "Logged <b>" + esc(v.timeLogged || "--:--") + "</b>" + exceeded,
-          right: '<span class="time-badge tag-violator" title="' + esc(v.status || "") + '">' + esc(String(v.status || "Violation").replace(/\s*\(.*\)\s*$/, "")) + '</span>' +
-                 actBtn("remove-violator", idAttr(v.daId), "Remove", "btn-card btn-text-red")
+          cls: "violator-row", check: check, name: v.daName || v.daId,
+          meta: idMeta(v.daId) + sep() + "Since <b>" + esc(v.timeLogged || "--:--") + "</b>" + over,
+          right: actBtn("remove-violator", idAttr(v.daId), "Remove", "btn-card btn-text-red")
         });
-      }).join("") || emptyHtml("✅", "No active violators.");
+      }).join("") || emptyHtml("No violators. All good.");
     }
 
     // Keep a just-removed violator out of every incoming roster sync until the server
@@ -1880,25 +1844,23 @@
 
       document.getElementById("awaiting-da-list").innerHTML = sent.map(function(s) {
         return rowHtml({
-          tone: "info", name: s.daName, id: s.daId, avatar: batchNoOf(s.batchName),
-          meta: esc(s.batchName) + " · Sent <b>" + esc(s.sentTime) + "</b> · " + esc(s.ymName || "YM"),
-          right: '<span class="time-badge receive-countdown" data-sent="' + esc(s.sentTime || "") + '">--:--</span>' +
-                 actBtn("receive", idAttr(s.daId), "&check; Receive", "btn-green")
+          name: s.daName,
+          meta: idMeta(s.daId) + sep() + esc(s.batchName) + sep() + "Sent <b>" + esc(s.sentTime) + "</b>",
+          right: '<span class="time-badge receive-countdown" data-sent="' + esc(s.sentTime || "") + '">--</span>' +
+                 actBtn("receive", idAttr(s.daId), "Receive", "btn-green")
         });
-      }).join("") || emptyHtml("🚚", "No dispatched DAs in transit.");
+      }).join("") || emptyHtml("No DAs on the way.");
 
       var rec = S.receivedList || [];
       document.getElementById("received-badge-count").textContent = rec.length;
       document.getElementById("received-da-list").innerHTML = rec.map(function(r) {
         return rowHtml({
-          tone: "ok", name: r.daName, id: r.daId, avatar: batchNoOf(r.batchName),
-          meta: esc(r.batchName) + " · Scan IN <b>" + esc(r.rushInTime) + "</b>",
-          right: '<span class="time-badge tag-ok">Inside Yard</span>'
+          name: r.daName,
+          meta: idMeta(r.daId) + sep() + esc(r.batchName) + sep() + "In at <b>" + esc(r.rushInTime) + "</b>"
         });
-      }).join("") || emptyHtml("🏭", "No DAs inside the yard.");
+      }).join("") || emptyHtml("No one received yet.");
       tickReceiveCountdowns();
     }
-    function batchNoOf(name) { return "B" + ((String(name || "").match(/(\d+)/) || [])[1] || "?"); }
 
     function tickReceiveCountdowns() {
       var limitMin = (S.settings && S.settings.entryViolationMin) ? S.settings.entryViolationMin : 15;
@@ -1913,7 +1875,7 @@
         if (elapsed < 0) elapsed += 24 * 60;
         var remaining = limitMin - elapsed;
         var tone = remaining <= 2 ? "tag-bad" : (remaining <= 5 ? "tag-warn" : "tag-ok");
-        chip.textContent = remaining <= 0 ? "OVERDUE" : (remaining + "m left");
+        chip.textContent = remaining <= 0 ? "Overdue" : (remaining + " min left");
         chip.className = "time-badge receive-countdown " + tone;
       }
     }
@@ -2482,8 +2444,8 @@
     function updateSoundToggleUi() {
       var btn = document.getElementById("cfg-sound-toggle");
       if (!btn) return;
-      btn.textContent = S.soundEnabled ? "🔊 On" : "🔇 Off";
-      btn.style.color = S.soundEnabled ? "var(--green)" : "var(--text-dim)";
+      btn.textContent = S.soundEnabled ? "On" : "Off";
+      btn.style.color = S.soundEnabled ? "var(--green)" : "var(--muted)";
     }
 
     function toggleSound() {
@@ -2569,7 +2531,7 @@
       if (stopBtn)  stopBtn.style.display  = active ? "" : "none";
       if (card) card.classList.toggle("scanner-wrap-active", active);
       if (chip) chip.classList.toggle("live", active);
-      if (chipTxt) chipTxt.textContent = active ? "Live — hold QR steady" : "Camera Off";
+      if (chipTxt) chipTxt.textContent = active ? "Camera on — hold the QR steady" : "Camera off";
     }
 
     // The QR library (375 KB) is downloaded on the first "Start Scanner" tap — and
@@ -2592,47 +2554,46 @@
 
     /** Builds the three scanner panels (Attendance / Waiting / Receive) from one template. */
     var SCANNER_PANELS = {
-      attend:  { title: "📷 Attendance Scanner", placeholder: "Scan or search DA…", btnId: "btn-attend-checkin", btnText: "Check In", btnClass: "btn", dd: "attend-search-results", input: "attend-inp" },
-      waiting: { title: "📷 Waiting Scanner", placeholder: "Scan or search DA…", btnId: "btn-waiting-enqueue", btnText: "+ Add to Batch", btnClass: "btn btn-green", dd: "waiting-search-results", input: "waiting-inp" },
-      receive: { title: "📷 Received-In Scanner", placeholder: "Scan or search DA…", btnId: "btn-receive-scanin", btnText: "Received In", btnClass: "btn btn-green", dd: "receive-search-results", input: "receive-inp" }
+      attend:  { title: "Check in",        sub: "Scan the DA's QR or search by name / ID.", btnId: "btn-attend-checkin",  btnText: "Check in",     btnClass: "btn",           dd: "attend-search-results",  input: "attend-inp" },
+      waiting: { title: "Add to waiting",  sub: "Returning DAs join the current batch.",     btnId: "btn-waiting-enqueue", btnText: "Add",          btnClass: "btn",           dd: "waiting-search-results", input: "waiting-inp" },
+      receive: { title: "Received in",     sub: "Scan DAs arriving at the receiving point.", btnId: "btn-receive-scanin",  btnText: "Receive",      btnClass: "btn btn-green", dd: "receive-search-results", input: "receive-inp" }
     };
     function buildScannerPanels() {
-      var qrIcon = '<svg viewBox="0 0 24 24"><path d="M9.5 6.5v3h-3v-3h3M11 5H5v6h6V5zm-1.5 9.5v3h-3v-3h3M11 13H5v6h6v-6zm6.5-6.5v3h-3v-3h3M19 5h-6v6h6V5zm-6 8h1.5v1.5H13V13zm1.5 1.5H16V16h-1.5v-1.5zM16 13h1.5v1.5H16V13zm-3 3h1.5v1.5H13V16zm1.5 1.5H16V19h-1.5v-1.5zM16 16h1.5v1.5H16V16zm1.5-1.5H19V16h-1.5v-1.5zm0 3H19V19h-1.5v-1.5z"/></svg>';
+      var camIcon = '<svg viewBox="0 0 24 24"><path d="M9.4 4l-1.8 2H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V8a2 2 0 00-2-2h-3.6l-1.8-2H9.4zM12 17a4.5 4.5 0 110-9 4.5 4.5 0 010 9zm0-2a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/></svg>';
       document.querySelectorAll(".scanner-card[data-scanner]").forEach(function(card) {
         var k = card.getAttribute("data-scanner");
         var p = SCANNER_PANELS[k];
         var tabId = "tab-" + k;
         card.innerHTML =
-          '<div class="scanner-head"><div class="card-title">' + p.title + '</div>' +
-            '<div class="scan-status-chip" id="scanchip-' + k + '"><span class="dot"></span><span id="scantext-' + k + '">Camera Off</span></div></div>' +
+          '<div class="scanner-head"><div><div class="card-title">' + p.title + '</div><div class="card-sub">' + p.sub + '</div></div></div>' +
+          '<div class="scanner-input-bar">' +
+            '<input type="text" id="' + p.input + '" class="text-input" placeholder="Scan or search DA…" autocomplete="off">' +
+            '<button type="button" class="' + p.btnClass + '" id="' + p.btnId + '">' + p.btnText + '</button>' +
+            '<div class="search-results-dropdown" id="' + p.dd + '"></div>' +
+          '</div>' +
           '<div class="scanner-viewport-wrap">' +
             '<div id="qr-reader-' + k + '"></div>' +
-            '<div class="scanner-idle" id="idle-' + k + '">' + qrIcon +
-              '<div class="idle-title">Scanner is off</div><div class="idle-sub">Tap “Start Scanner” to turn on the camera</div></div>' +
-            '<div class="laser-line"></div><div class="corner-bracket cb-tl"></div><div class="corner-bracket cb-tr"></div>' +
+            '<div class="corner-bracket cb-tl"></div><div class="corner-bracket cb-tr"></div>' +
             '<div class="corner-bracket cb-bl"></div><div class="corner-bracket cb-br"></div>' +
           '</div>' +
           '<div class="scanner-controls">' +
-            '<button type="button" class="btn btn-green" id="btn-start-' + k + '" onclick="startScanner(\'' + tabId + '\')">▶ Start Scanner</button>' +
-            '<button type="button" class="btn btn-ghost" id="btn-stop-' + k + '" onclick="stopScanner(\'' + tabId + '\')" style="display:none;">■ Stop</button>' +
+            '<button type="button" class="btn btn-card" id="btn-start-' + k + '" onclick="startScanner(\'' + tabId + '\')">' + camIcon + 'Use camera</button>' +
+            '<button type="button" class="btn btn-card" id="btn-stop-' + k + '" onclick="stopScanner(\'' + tabId + '\')" style="display:none;">Stop camera</button>' +
           '</div>' +
-          '<div class="scanner-input-bar">' +
-            '<input type="text" id="' + p.input + '" class="text-input" placeholder="' + p.placeholder + '" autocomplete="off">' +
-            '<button type="button" class="' + p.btnClass + '" id="' + p.btnId + '">' + p.btnText + '</button>' +
-            '<div class="search-results-dropdown" id="' + p.dd + '"></div>' +
-          '</div>';
+          '<div class="scan-status-chip" id="scanchip-' + k + '"><span class="dot"></span><span id="scantext-' + k + '">Camera off</span></div>';
       });
     }
     buildScannerPanels();
+
 
     function startScanner(tabId) {
       initAudio();
       var target = SCANNER_MAP[tabId];
       if (!target || S.scannerActive[tabId]) return;
       var chipTxt = document.getElementById("scantext-" + target.key);
-      if (!window.Html5Qrcode && chipTxt) chipTxt.textContent = "Loading camera…";
+      if (!window.Html5Qrcode && chipTxt) chipTxt.textContent = "Starting camera…";
       loadQrLib().then(function() { startScannerNow(tabId); }).catch(function() {
-        if (chipTxt) chipTxt.textContent = "Camera Off";
+        if (chipTxt) chipTxt.textContent = "Camera off";
         showBanner("The camera library couldn't load. Check the connection, or type the DA ID in the box.", "warning", 8);
       });
     }
@@ -2708,12 +2669,12 @@
 
     function updateHeaderSubtitle(tabId) {
       var map = {
-        "tab-attend": "OFF-YARD ATTENDANCE",
-        "tab-waiting": "WAITING & BATCHES",
-        "tab-breaks": "BREAK MANAGEMENT",
-        "tab-violators": "VIOLATION CONTROL",
-        "tab-receive": "RECEIVE — RECEIVED IN",
-        "tab-admin": "GLOBAL CONFIG"
+        "tab-attend": "Attendance",
+        "tab-waiting": "Waiting & batches",
+        "tab-breaks": "Breaks",
+        "tab-violators": "Violators",
+        "tab-receive": "Receive",
+        "tab-admin": "Settings"
       };
       var el = document.getElementById("header-tab-sub");
       if (el && map[tabId]) el.textContent = map[tabId];
