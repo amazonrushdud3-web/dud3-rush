@@ -1,17 +1,22 @@
 {
-id: "./driver.html?app=dud3driverhub"
-name: "DUD3 Driver Hub"
-short_name: "Driver Hub"
-description: "DUD3 Rush PRO Driver Hub — live batch, waiting and receive status for drivers."
-start_url: "./driver.html?app=dud3driverhub"
-scope: "./"
-display: "standalone"
-orientation: "portrait"
-background_color: "#0A0E1A"
-theme_color: "#0A0E1A"
-icons: [
-0: {...}
-1: {...}
-2: {...}
-]
+  "id": "./driver.html?app=dud3driverhub",
+  "name": "DUD3 Driver Hub",
+  "short_name": "Driver Hub",
+  "description": "DUD3 Rush PRO Driver Hub — live batch, waiting and receive status for drivers.",
+  "start_url": "./driver.html?app=dud3driverhub",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0A0E1A",
+  "theme_color": "#0A0E1A",
+  "categories": ["productivity", "business"],
+  "prefer_related_applications": false,
+  "related_applications": [
+    { "platform": "webapp", "url": "https://amazonrushdud3-web.github.io/dud3-rush/manifest.webmanifest" }
+  ],
+  "icons": [
+    { "src": "./driverhub-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./driverhub-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./driverhub-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
 }

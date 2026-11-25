@@ -18,6 +18,12 @@
 self.addEventListener("install", function(e) { self.skipWaiting(); });
 self.addEventListener("activate", function(e) { e.waitUntil(self.clients.claim()); });
 
+// 2026-11-25: pass-through fetch listener. It never calls respondWith(), so every
+// request goes straight to the network exactly as before (no caching, nothing that can
+// hang). It exists only because some Android browsers (Samsung Internet, older Chrome)
+// refuse to offer "Install app" unless the service worker has a fetch handler.
+self.addEventListener("fetch", function(event) { /* network as normal */ });
+
 self.addEventListener("message", function(event) {
   var d = (event && event.data) || {};
   if (d.type !== "DUD3_NOTIFY") return;
@@ -41,7 +47,8 @@ self.addEventListener("notificationclick", function(event) {
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function(list) {
       for (var i = 0; i < list.length; i++) { if (list[i].focus) return list[i].focus(); }
-      if (self.clients.openWindow) return self.clients.openWindow("./");
+      // Open the Driver Hub (not "./", which is the Yard Marshal app).
+      if (self.clients.openWindow) return self.clients.openWindow("./driver.html");
     })
   );
 });

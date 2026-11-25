@@ -11,7 +11,7 @@
   <style>
     :root { --bg:#0A0E1A; --card:rgba(23,29,48,0.72); --card-solid:#141A2B; --brand:#7C6CFF; --brand-2:#22D3EE; --brand-3:#EC4899;
       --brand-grad:linear-gradient(135deg,#7C6CFF,#22D3EE); --green:#34E0A1; --red:#FF5C7A; --purple:#BB86FC; --yellow:#FFCB5B;
-      --blue:#42A5FF; --text:#EEF2FB; --muted:#93A1BF; --border:rgba(124,140,180,0.18); --glass:blur(18px) saturate(140%); }
+      --blue:#42A5FF; --orange:#FF9F45; --text:#EEF2FB; --muted:#93A1BF; --border:rgba(124,140,180,0.18); --glass:blur(18px) saturate(140%); }
     * { box-sizing:border-box; margin:0; padding:0; font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; -webkit-tap-highlight-color:transparent; }
     html, body { height:100%; }
     body { background:
@@ -68,6 +68,25 @@
       box-shadow:0 8px 20px rgba(124,108,255,0.35); transition:transform .12s, filter .12s; }
     .install-bar:active { transform:translateY(1px) scale(0.99); }
     .install-bar.hide { display:none; }
+
+    /* 2026-11-25: auto-appearing install sheet (browsers require ONE tap to install;
+       this sheet pops up by itself so that tap is the only thing the driver does). */
+    #install-sheet { position:fixed; inset:0; z-index:9000; display:none; align-items:flex-end; justify-content:center;
+      background:rgba(4,6,12,0.72); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); }
+    #install-sheet.show { display:flex; }
+    .is-panel { width:100%; max-width:480px; background:#141A2B; border:1px solid var(--border); border-bottom:none;
+      border-radius:22px 22px 0 0; padding:20px 18px calc(18px + env(safe-area-inset-bottom)); text-align:center;
+      animation:isUp .28s ease-out; }
+    @keyframes isUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
+    .is-icon { width:72px; height:72px; border-radius:18px; margin:0 auto 10px; display:block; }
+    .is-title { font-size:19px; font-weight:900; margin-bottom:4px; }
+    .is-sub { font-size:13px; color:var(--muted); margin-bottom:14px; line-height:1.45; }
+    .is-steps { text-align:left; font-size:14px; line-height:1.5; background:rgba(124,108,255,0.10); border:1px solid var(--border);
+      border-radius:12px; padding:10px 12px; margin-bottom:14px; }
+    .is-steps ol { padding-left:20px; }
+    .is-steps li { margin:4px 0; }
+    .is-steps b { color:var(--brand-2); }
+    .is-later { background:none; border:none; color:var(--muted); font-size:13px; font-weight:700; margin-top:10px; padding:8px; cursor:pointer; }
     .refresh-fab.spin svg { animation:spin 0.6s linear; }
 
     #toast-msg { position:fixed; top:10px; left:50%; transform:translateX(-50%) translateY(-220%); width:calc(100% - 20px); max-width:420px;
@@ -170,6 +189,17 @@
   <div class="drv-sub">DUD3 · LIVE STATUS</div>
 </div>
 
+<div id="install-sheet" role="dialog" aria-modal="true" aria-labelledby="is-title">
+  <div class="is-panel">
+    <img class="is-icon" src="./driverhub-icon-192.png" alt="">
+    <div class="is-title" id="is-title">Install Driver Hub</div>
+    <div class="is-sub" id="is-sub">Add the app to your home screen for faster opening and alerts.</div>
+    <div class="is-steps" id="is-steps" style="display:none;"></div>
+    <button class="btn" id="is-action" onclick="installSheetAction()">Install App</button>
+    <button class="is-later" onclick="dismissInstallSheet()">Not now</button>
+  </div>
+</div>
+
 <div id="toast-msg"><span id="toast-txt" style="flex:1 1 auto;"></span><button class="toast-close-x" style="background:none;border:none;color:inherit;font-weight:bold;font-size:18px;cursor:pointer;line-height:1;" onclick="document.getElementById('toast-msg').className=''">✕</button></div>
 
 <header>
@@ -257,7 +287,7 @@
   </div>
 
   <p class="footnote">
-    Auto-refreshes every 10s · <a href="javascript:void(0)" onclick="fetchData(currentDaId)" style="color:var(--brand-2);font-weight:bold;">Refresh Now</a>
+    Auto-refreshes every few seconds · <a href="javascript:void(0)" onclick="fetchData(currentDaId)" style="color:var(--brand-2);font-weight:bold;">Refresh Now</a>
   </p>
 </div>
 <script>
@@ -274,68 +304,193 @@ var SAFE_STORE = (function () {
   };
 })();
 
-// 2026-11-19: Install prompt wiring (same pattern as the main Rush PRO app). Chrome
-// only fires beforeinstallprompt once it decides the page meets its own installability
-// heuristics (a valid manifest, like the one linked above, is required; a service
-// worker often helps but is not strictly required in every Chrome version). A
-// separate service worker (driver-sw.js) was tried here for background
-// notifications but caused the Driver Hub to hang/get stuck for the user in
-// production, so it was REMOVED on 2026-11-19 -- the Install button below works
-// from the manifest alone and no longer depends on any service worker.
+/* ===================== INSTALL FLOW (2026-11-25) =====================
+ * Browsers do NOT allow a website to install itself silently -- Chrome, Samsung
+ * Internet and Safari all require the person to tap once. So the closest thing to
+ * "automatic" is: the moment the page opens, an install sheet slides up by itself
+ * and the driver only has to tap ONE button.
+ *
+ *  - Android Chrome / Edge / Samsung: real one-tap native install (beforeinstallprompt).
+ *  - iPhone / iPad: Apple has no install API at all, so the sheet shows the exact
+ *    Share -> "Add to Home Screen" steps.
+ *  - Opened inside WhatsApp / Telegram / Facebook / Instagram (in-app browsers can't
+ *    install anything): the sheet offers "Open in Chrome" (Android) or Safari steps (iOS).
+ *  - Already installed / opened from the home-screen icon: nothing is shown.
+ *  - "Not now" hides the sheet for 12 hours; the header Install button always works.
+ * ==================================================================== */
 var _deferredInstallPrompt = null;
+var INSTALL_SNOOZE_MS = 12 * 60 * 60 * 1000;
+var _installSheetMode = "";   // "native" | "ios" | "inapp-android" | "inapp-ios" | "manual"
+var _installAutoShown = false;
 
-// Detect "already running as an installed app" so the button can hide itself instead
-// of offering to install something that's already installed.
+var _UA = navigator.userAgent || "";
+var IS_IOS = /iphone|ipad|ipod/i.test(_UA) || (/Macintosh/.test(_UA) && navigator.maxTouchPoints > 1);
+var IS_IN_APP = /; wv\)|FBAN|FBAV|FB_IAB|Instagram|Line\/|Snapchat|Telegram|WhatsApp|MicroMessenger/i.test(_UA);
+
 function isRunningAsInstalledApp() {
   try {
-    if (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) return true;
+    if (window.matchMedia && (window.matchMedia("(display-mode: standalone)").matches ||
+        window.matchMedia("(display-mode: fullscreen)").matches)) return true;
     if (window.navigator && window.navigator.standalone) return true; // iOS Home Screen
   } catch (e) {}
   return false;
 }
 
+function hideInstallUi() {
+  var b = document.getElementById("btn-install-app");
+  if (b) b.classList.add("hide");
+  closeInstallSheet();
+}
+
 window.addEventListener("beforeinstallprompt", function(e) {
   e.preventDefault();
   _deferredInstallPrompt = e;
+  // The native prompt just became available: pop the sheet up straight away
+  // (unless snoozed), upgrading any "manual steps" sheet already on screen.
+  if (!IS_IN_APP && !isInstallSnoozed()) showInstallSheet("native");
 });
 window.addEventListener("appinstalled", function() {
   _deferredInstallPrompt = null;
-  var b = document.getElementById("btn-install-app");
-  if (b) b.classList.add("hide");
+  SAFE_STORE.setItem("dud3_drv_installed", "1");
+  hideInstallUi();
+  showToast("✅ Driver Hub installed — open it from your home screen.", "success");
 });
 
-// 2026-11-19 FIX: the button is now ALWAYS visible (see CSS) instead of waiting for
-// Chrome's silent engagement heuristics to decide whether beforeinstallprompt ever
-// fires. Tapping it:
-//  - Uses the REAL native one-tap install prompt if Chrome/Edge/Brave has already
-//    made it available (_deferredInstallPrompt is set) -- true one-click install.
-//  - Otherwise gives the exact manual step for the platform (iOS Share-sheet steps,
-//    or Chrome's "Add to Home screen" menu item) so install is always reachable even
-//    before Chrome's own prompt becomes available.
+function isInstallSnoozed() {
+  var t = Number(SAFE_STORE.getItem("dud3_install_snooze") || 0);
+  return t > 0 && (Date.now() - t) < INSTALL_SNOOZE_MS;
+}
+
+// Opens this same page in Chrome from an Android in-app browser.
+function androidChromeIntentUrl() {
+  var loc = window.location;
+  return "intent://" + loc.host + loc.pathname + loc.search +
+         "#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=" +
+         encodeURIComponent(loc.href) + ";end";
+}
+
+function showInstallSheet(mode) {
+  if (isRunningAsInstalledApp()) return;
+  _installSheetMode = mode;
+  var sub = document.getElementById("is-sub");
+  var steps = document.getElementById("is-steps");
+  var act = document.getElementById("is-action");
+  steps.style.display = "none";
+  steps.innerHTML = "";
+  if (mode === "native") {
+    sub.textContent = "One tap adds Driver Hub to your home screen — it opens instantly like a normal app and keeps your alerts working.";
+    act.textContent = "⬇️  Install App";
+  } else if (mode === "inapp-android") {
+    sub.textContent = "This page is open inside another app (WhatsApp / Telegram), which can't install apps. Open it in Chrome to install.";
+    act.textContent = "Open in Chrome";
+  } else if (mode === "inapp-ios") {
+    sub.textContent = "This page is open inside another app, which can't install apps. Open it in Safari first:";
+    steps.innerHTML = "<ol><li>Tap the <b>⋯</b> or <b>Share</b> button in this app.</li><li>Choose <b>Open in Safari</b> (or Open in Browser).</li><li>In Safari, this screen will show the next steps.</li></ol>";
+    steps.style.display = "block";
+    act.textContent = "Got it";
+  } else if (mode === "ios") {
+    sub.textContent = "iPhone needs 3 quick taps to add Driver Hub to your home screen:";
+    steps.innerHTML = "<ol><li>Tap the <b>Share</b> button (square with an arrow) at the bottom of Safari.</li><li>Scroll down and tap <b>Add to Home Screen</b>.</li><li>Tap <b>Add</b> (top right).</li></ol>";
+    steps.style.display = "block";
+    act.textContent = "Got it";
+  } else {
+    sub.textContent = "Add Driver Hub to your home screen:";
+    steps.innerHTML = "<ol><li>Tap the browser menu <b>⋮</b> (3 dots, top right).</li><li>Tap <b>Install app</b> or <b>Add to Home screen</b>.</li><li>Tap <b>Install</b> to confirm.</li></ol>";
+    steps.style.display = "block";
+    act.textContent = "Got it";
+  }
+  document.getElementById("install-sheet").classList.add("show");
+}
+
+function closeInstallSheet() {
+  var s = document.getElementById("install-sheet");
+  if (s) s.classList.remove("show");
+}
+
+function dismissInstallSheet() {
+  SAFE_STORE.setItem("dud3_install_snooze", String(Date.now()));
+  closeInstallSheet();
+}
+
+function installSheetAction() {
+  if (_installSheetMode === "native" && _deferredInstallPrompt) {
+    var p = _deferredInstallPrompt;
+    _deferredInstallPrompt = null; // a prompt event can only be used once
+    closeInstallSheet();
+    p.prompt();
+    p.userChoice.then(function(choice) {
+      if (choice && choice.outcome === "dismissed") SAFE_STORE.setItem("dud3_install_snooze", String(Date.now()));
+    }).catch(function(){});
+    return;
+  }
+  if (_installSheetMode === "inapp-android") {
+    window.location.href = androidChromeIntentUrl();
+    return;
+  }
+  closeInstallSheet();
+}
+
+function pickInstallMode() {
+  if (IS_IN_APP) return IS_IOS ? "inapp-ios" : "inapp-android";
+  if (_deferredInstallPrompt) return "native";
+  if (IS_IOS) return "ios";
+  return "manual";
+}
+
+// Header "Install App" button: always works, ignores the snooze.
 function triggerDriverInstall() {
   if (isRunningAsInstalledApp()) {
-    alert("Driver Hub is already installed on this device.");
-    var b = document.getElementById("btn-install-app");
-    if (b) b.classList.add("hide");
+    showToast("Driver Hub is already installed on this device.", "info");
+    hideInstallUi();
     return;
   }
-  if (_deferredInstallPrompt) {
-    _deferredInstallPrompt.prompt();
-    _deferredInstallPrompt.userChoice.finally(function() {
-      _deferredInstallPrompt = null;
-    });
-    return;
-  }
-  var ua = navigator.userAgent || "";
-  var isIOS = /iphone|ipad|ipod/i.test(ua);
-  var isAndroid = /android/i.test(ua);
-  if (isIOS) {
-    alert("To install Driver Hub on iPhone/iPad:\n\n1. Tap the Share icon (square with an arrow) in Safari's toolbar.\n2. Scroll down and tap \"Add to Home Screen\".\n3. Tap \"Add\" in the top right.");
-  } else if (isAndroid) {
-    alert("To install Driver Hub on Android:\n\n1. Tap the \u22ee menu (3 dots) in Chrome's toolbar.\n2. Tap \"Add to Home screen\" or \"Install app\".\n3. Confirm by tapping \"Install\" / \"Add\".\n\n(Chrome may also offer this automatically after you have used the app a couple of times.)");
-  } else {
-    alert("To install Driver Hub: open your browser's menu and look for \"Install app\" or \"Add to Home screen\".");
-  }
+  showInstallSheet(pickInstallMode());
+}
+
+// Called once on page load (after the splash animation).
+function autoOfferInstall() {
+  if (isRunningAsInstalledApp()) { hideInstallUi(); return; }
+  if (_installAutoShown || isInstallSnoozed()) return;
+  _installAutoShown = true;
+
+  var mode = pickInstallMode();
+  if (mode !== "manual") { showInstallSheet(mode); return; }
+
+  // Android Chrome sometimes fires beforeinstallprompt a few seconds after load.
+  // Wait for it; if it never comes, check whether the app is already installed
+  // (Chrome stays silent in that case) before showing the manual menu steps.
+  setTimeout(function() {
+    if (_deferredInstallPrompt || isInstallSnoozed()) return;
+    if (SAFE_STORE.getItem("dud3_drv_installed") === "1") return;
+    var showManual = function() { if (!_deferredInstallPrompt) showInstallSheet("manual"); };
+    if (navigator.getInstalledRelatedApps) {
+      navigator.getInstalledRelatedApps().then(function(apps) {
+        if (apps && apps.length) { SAFE_STORE.setItem("dud3_drv_installed", "1"); return; }
+        showManual();
+      }).catch(showManual);
+    } else {
+      showManual();
+    }
+  }, 4000);
+}
+
+// Register the minimal service worker on page load (not only after alerts are
+// enabled). It has no caching or background loops -- see driver-sw.js -- and some
+// Android browsers (e.g. Samsung Internet, older Chrome) require one before they
+// will offer to install the app.
+function registerDriverSWEarly() {
+  try {
+    if (!("serviceWorker" in navigator)) return;
+    // Remove any OLD registration that covered the whole site ("/dud3-rush/"), which
+    // also controlled the Yard Marshal app (index.html). The new one is scoped to the
+    // Driver Hub page only.
+    if (navigator.serviceWorker.getRegistrations) {
+      navigator.serviceWorker.getRegistrations().then(function(regs) {
+        regs.forEach(function(r) { if (/\/$/.test(r.scope)) r.unregister(); });
+      }).catch(function(){});
+    }
+    registerDriverSW();
+  } catch (e) {}
 }
 
 let currentDaId = "";
@@ -462,10 +617,10 @@ window.onload = function() {
   // why the Install button never appeared. Register it immediately on page load
   // instead, independent of login state, so installability is established as early
   // as possible.
-  if (isRunningAsInstalledApp()) {
-    var ib = document.getElementById("btn-install-app");
-    if (ib) ib.classList.add("hide");
-  }
+  if (isRunningAsInstalledApp()) hideInstallUi();
+  registerDriverSWEarly();
+  // Pop the install sheet up by itself once the opening animation has faded out.
+  setTimeout(autoOfferInstall, 1700);
   var savedId = SAFE_STORE.getItem("dud3_driver_id");
   if (savedId) { currentDaId = savedId; document.getElementById("da-id-input").value = savedId; login(); }
   document.addEventListener("click", function(e){
@@ -478,7 +633,7 @@ window.onload = function() {
   // tick -- this is what makes "coming back to the app" feel instant, same idea as
   // the main Rush PRO app's visibilitychange handler.
   document.addEventListener("visibilitychange", function() {
-    if (!document.hidden && currentDaId) { fetchData(currentDaId); }
+    if (!document.hidden && currentDaId) { fetchData(currentDaId, true); }
   });
 };
 
@@ -498,7 +653,7 @@ function login() {
   // 2026-11-19: sped up from 10s -> 3s. getDaStatus is a lightweight single-DA lookup
   // (not a full roster rebuild), so polling faster here is safe and makes the Driver
   // Hub feel as responsive as the main Rush PRO app's 1s sync.
-  refreshInterval = setInterval(function(){ fetchData(daId); }, 3000);
+  refreshInterval = setInterval(function(){ fetchData(daId, true); }, 3000);
 }
 
 function logout() {
@@ -527,9 +682,18 @@ function fetchWithTimeout(url, options, timeoutMs) {
   return fetch(url, opts).finally(function(){ if (timer) clearTimeout(timer); });
 }
 
-function fetchData(daId) {
+// 2026-11-25: background polls (every 3s) are SILENT -- no loader flash, no blocking
+// alert() popups when the signal drops (those used to repeat every 3 seconds). Only a
+// manual refresh / first login shows errors as an alert. Also skips a poll while the
+// previous request is still in flight, so slow networks don't pile up requests.
+var _fetchInFlight = false;
+var _silentFailCount = 0;
+function fetchData(daId, silent) {
   if (!daId) return;
-  document.getElementById("loader").style.display = "block";
+  if (silent && _fetchInFlight) return;
+  _fetchInFlight = true;
+  _lastFetchSilent = !!silent;
+  if (!silent) document.getElementById("loader").style.display = "block";
 
   var payload = { action: 'getDaStatus', daId: daId, sheetUrl: SHEET_URL, dayTab: getTodayTab() };
 
@@ -550,17 +714,33 @@ function fetchData(daId) {
       .then(function(res){ return res.json(); })
       .then(function(res){ handleStatusResponse(res); })
       .catch(function(err){
+        _fetchInFlight = false;
         document.getElementById("loader").style.display = "none";
-        alert("Could not reach the server. Check your connection and try again.");
+        reportFetchProblem("Could not reach the server. Check your connection and try again.");
       });
   });
 }
 
+var _lastFetchSilent = false;
+function reportFetchProblem(msg) {
+  if (!_lastFetchSilent) { alert(msg); return; }
+  // Silent poll: one toast after a few consecutive failures, not a popup every 3s.
+  _silentFailCount++;
+  if (_silentFailCount === 3) showToast("⚠️ Connection weak — retrying… Your status will update when the signal returns.", "warn");
+}
+
 function handleStatusResponse(res) {
+  _fetchInFlight = false;
   document.getElementById("loader").style.display = "none";
-  if (!res || !res.success) { return alert("Error: " + ((res && (res.error || (res.errors && res.errors[0]))) || "Request failed")); }
+  if (!res || !res.success) { return reportFetchProblem("Error: " + ((res && (res.error || (res.errors && res.errors[0]))) || "Request failed")); }
   var data = adaptResponse(res);
-  if (!data.found) { logout(); return alert("DA ID not found in today's roster."); }
+  if (!data.found) {
+    // Don't log a driver out because of one odd poll result -- only on an explicit check.
+    if (_lastFetchSilent) return;
+    logout(); return alert("DA ID not found in today's roster.");
+  }
+  if (_silentFailCount >= 3) showToast("✅ Back online.", "success");
+  _silentFailCount = 0;
   updateDashboard(data);
 }
 
@@ -857,7 +1037,7 @@ var _driverSW = null;
 function registerDriverSW() {
   try {
     if (!("serviceWorker" in navigator)) return;
-    navigator.serviceWorker.register("./driver-sw.js").then(function(reg) {
+    navigator.serviceWorker.register("./driver-sw.js", { scope: "./driver.html" }).then(function(reg) {
       _driverSW = reg;
     }).catch(function() { _driverSW = null; });
   } catch (e) { _driverSW = null; }
@@ -865,18 +1045,6 @@ function registerDriverSW() {
 
 // Back-compat alias (kept so any existing call sites still work).
 function ensureNotifyPermission() { refreshNotifyButton(); }
-
-// 2026-11-19: Service-worker-based background notifications REMOVED. The user
-// deployed driver-sw.js to GitHub Pages and reported the app got stuck/hanging for
-// a long time until they deleted that file -- deleting it immediately fixed it.
-// Rather than re-attempt a service worker (which is clearly causing a real problem
-// in this deployment, likely the registration call or a periodicsync permission
-// query hanging/blocking), notifications now rely ONLY on the in-page notifier
-// (fireDriverNotification / maybeNotifyReceiveDeadline / maybeNotifyStatusChange
-// below), which works reliably whenever the Driver Hub tab itself is open. This
-// does not cover the app being fully closed/backgrounded for long periods -- see
-// the honest limitations note further down.
-
 
 function vibrateDevice(pattern) {
   try { if (navigator.vibrate) navigator.vibrate(pattern || [160, 80, 160]); } catch (e) {}
