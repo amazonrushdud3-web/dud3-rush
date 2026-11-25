@@ -970,6 +970,7 @@ function maybeNotifyReceiveDeadline(data, remainingSec) {
 }
 
 var _lastNotifiedSentTime = null;
+var _lastNotifiedPresentBatch = null;
 
 function maybeNotifyStatusChange(data) {
   ensureNotifyPermission();
@@ -997,8 +998,23 @@ function maybeNotifyStatusChange(data) {
     );
   }
 
+  // 2026-11-25: Marked Present + assigned batch. Attendance = Present/Late with an
+  // assigned batch while still Waiting -> alert once when the driver first becomes
+  // Present (status transitions into Waiting from a non-queued state).
+  var attRaw = String(data.attendanceStatus || "");
+  if ((attRaw === "Present" || attRaw === "Late") && st === "Waiting"
+      && _lastNotifiedPresentBatch !== data.batchName) {
+    _lastNotifiedPresentBatch = data.batchName || "";
+    var presentBatchNo = (String(data.batchName || "").match(/(\d+)/) || [])[1] || (data.batchName || "--");
+    fireDriverNotification(
+      (attRaw === "Late" ? "✅ Marked Present (Late Arrival)" : "✅ Marked Present"),
+      "You are added to Batch no " + presentBatchNo + " and now in the waiting list. Please wait for your batch to be sent.",
+      "success"
+    );
+  }
+
   if (st === "Violator" && _lastKnownStatus !== "Violator") {
-    fireDriverNotification("🚫 Moved to Violator", "You were not received within the configured time limit. Please see the Yard Marshal.", "danger");
+    fireDriverNotification("🚫 Added to Violator", "Go back and scan at Waiting to resolve waiting.", "danger");
   }
   _lastKnownStatus = st;
 }
