@@ -1067,7 +1067,7 @@
     var OUTBOX_KEY = "dud3_outbox_v1";
     // Bump on every Index.html change. Shown in the header (FE) next to the backend (BE)
     // version so you can confirm after deploying that the live app runs the latest code.
-    var FRONTEND_VERSION = "v2026.11.26-v2";
+    var FRONTEND_VERSION = "v2026.11.26-v3";
 
     function loadOutbox() {
       try { return JSON.parse(SAFE_STORE.getItem(OUTBOX_KEY) || "[]") || []; }
@@ -1637,6 +1637,7 @@
               '<span class="batch-badge">' + daArr.length + (isBreak ? "" : " / " + cap) + '</span>' +
               (onBreakCount ? '<span class="batch-badge badge-yellow">' + onBreakCount + ' on break</span>' : "") + '</div>' +
             '<div class="batch-actions">' +
+              actBtn("notify-waiting-batch", batchAttr(bName), "🔔 Notify DA's", "btn-amber btn-sm") +
               actBtn("send-selected", batchAttr(bName), "Send selected", "btn-card btn-sm") +
               actBtn("send-batch", batchAttr(bName), "Send all", "btn-green btn-sm") +
             '</div>' +
@@ -1943,6 +1944,25 @@
         } else {
           playBeep("error");
           showBanner((res && res.error) || "Could not send DA alert.", "danger", 10);
+        }
+      });
+    }
+
+    function notifyWaitingBatchAction(bName) {
+      initAudio();
+      var daItems = (S.waitingBatches[bName] || []).filter(function(d) { return !d.inBreak; });
+      if (daItems.length === 0) {
+        showBanner("No active waiting DAs in " + bName + " to notify.", "warning", 5);
+        return;
+      }
+      var daIds = daItems.map(function(d) { return d.daId; });
+      sendReq("notifyWaitingBatch", { batchName: bName, daIds: daIds }, function(err, res) {
+        if (!err && res && res.success) {
+          playBeep("action");
+          showBanner("🔔 " + (res.message || ("Notified " + daIds.length + " waiting DA(s) in " + bName + ".")), "success", 6);
+        } else {
+          playBeep("error");
+          showBanner((res && res.error) || "Could not send waiting batch alert.", "danger", 10);
         }
       });
     }
@@ -2837,6 +2857,7 @@
           case "remove-waiting": removeDaAction(id); break;
           case "send-batch": sendBatchAction(batch); break;
           case "send-selected": sendSelectedInBatch(batch); break;
+          case "notify-waiting-batch": notifyWaitingBatchAction(batch); break;
           case "end-break": endBreakAction(id); break;
           case "remove-violator": removeViolatorAction(id); break;
           case "notify-one": notifySentDAsAction(id); break;
@@ -3172,4 +3193,3 @@ function togglePwVisibility(inputId, btnEl) {
   </script>
 </body>
 </html>
-Finalizing code files for download
