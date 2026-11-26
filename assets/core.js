@@ -4,7 +4,7 @@
  *   SAFE_STORE     localStorage that falls back to memory (private mode / blocked storage)
  *   fetchWithTimeout, escapeHtml, DUD3.api(action, payload, opts)
  *   DUD3.install   install-the-app sheet (auto pops up; one tap on Android,
- *                  Share-sheet steps on iPhone, "Open in Chrome" for WhatsApp/Telegram)
+ *                  Share-sheet steps on iPhone, "Open in Chrome" inside chat apps)
  * ========================================================================= */
 (function (w) {
   "use strict";
@@ -73,6 +73,7 @@
   /* ---------- install ---------- */
   var UA = navigator.userAgent || "";
   var IS_IOS = /iphone|ipad|ipod/i.test(UA) || (/Macintosh/.test(UA) && navigator.maxTouchPoints > 1);
+  // In-app browsers of chat / social apps cannot install web apps.
   var IS_IN_APP = /; wv\)|FBAN|FBAV|FB_IAB|Instagram|Line\/|Snapchat|Telegram|WhatsApp|MicroMessenger/i.test(UA);
   var SNOOZE_MS = 12 * 60 * 60 * 1000;
 
@@ -134,7 +135,7 @@
         sub.textContent = cfg.nativeText || ("One tap adds " + name + " to your home screen — it opens instantly like a normal app.");
         act.textContent = "⬇️  Install App";
       } else if (m === "inapp-android") {
-        sub.textContent = "This page is open inside another app (WhatsApp / Telegram), which can't install apps. Open it in Chrome to install.";
+        sub.textContent = "This page is open inside another app (like WhatsApp), which can't install apps. Open it in Chrome to install.";
         act.textContent = "Open in Chrome";
       } else if (m === "inapp-ios") {
         sub.textContent = "This page is open inside another app, which can't install apps. Open it in Safari first:";
