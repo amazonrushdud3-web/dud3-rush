@@ -1,3 +1,8 @@
+
+
+
+HTML icon
+index_updated
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -597,13 +602,29 @@
             <div class="field"><label for="cfg-grace">Late after wave (min)</label><input type="number" id="cfg-grace" class="text-input" value="10"></div>
             <div class="field"><label for="cfg-rush-timeout">Receive timeout (min)</label><input type="number" id="cfg-rush-timeout" class="text-input" value="15"></div>
           </div>
-          <details>
-            <summary>Advanced: backend &amp; sheet</summary>
-            <div style="display:flex; flex-direction:column; gap:14px; margin-top:12px;">
-              <div class="field"><label for="cfg-api-url">Apps Script web app URL</label><input type="text" id="cfg-api-url" class="text-input"></div>
-              <div class="field"><label for="cfg-sheet-url">Google Sheet URL (monthly switch)</label><input type="text" id="cfg-sheet-url" class="text-input"></div>
+          <div id="admin-sheet-api-bar" style="display:none; flex-direction:column; gap:12px; padding:14px; border:1px solid var(--line); border-radius:12px; background:var(--bg);">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+              <span class="section-label" style="color:var(--text); font-weight:600;">Monthly Sheet &amp; API (Admin Only)</span>
+              <span class="chip" id="live-sheet-chip" style="height:26px; font-size:11.5px; padding:0 10px;">
+                <span class="sync-dot"></span>
+                <span id="live-sheet-name">Connecting…</span>
+              </span>
             </div>
-          </details>
+            <div class="field">
+              <label for="cfg-sheet-url">Monthly Google Sheet URL (instant live switch)</label>
+              <div style="display:flex; gap:8px;">
+                <input type="text" id="cfg-sheet-url" class="text-input" placeholder="https://docs.google.com/spreadsheets/d/...">
+                <button type="button" class="btn btn-green btn-sm" id="btn-instant-sheet-update" onclick="instantUpdateSheetAction()">Update Sheet</button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="cfg-api-url">Apps Script Web App API URL</label>
+              <div style="display:flex; gap:8px;">
+                <input type="text" id="cfg-api-url" class="text-input" placeholder="https://script.google.com/macros/s/.../exec">
+                <button type="button" class="btn btn-card btn-sm" id="btn-instant-api-update" onclick="instantUpdateApiAction()">Update API</button>
+              </div>
+            </div>
+          </div>
           <div class="field"><label for="cfg-admin-pin">Admin PIN (not needed if you're an admin)</label><input type="password" id="cfg-admin-pin" class="text-input" placeholder="••••" autocomplete="off"></div>
           <div style="display:flex; gap:8px;">
             <button class="btn" id="btn-save-settings" style="flex:1;">Save settings</button>
@@ -1046,7 +1067,7 @@
     var OUTBOX_KEY = "dud3_outbox_v1";
     // Bump on every Index.html change. Shown in the header (FE) next to the backend (BE)
     // version so you can confirm after deploying that the live app runs the latest code.
-    var FRONTEND_VERSION = "v2026.11.25-v3";
+    var FRONTEND_VERSION = "v2026.11.26-v1";
 
     function loadOutbox() {
       try { return JSON.parse(SAFE_STORE.getItem(OUTBOX_KEY) || "[]") || []; }
@@ -1422,6 +1443,15 @@
         // server values on EVERY sync so all devices always show the same global settings.
         // fromSync=true keeps device-local identity fields (YM/API/Sheet) untouched.
         try { fillSettingsInputs(true); } catch (eFS) {}
+      }
+      if (d.activeSheetName) {
+        var lsn = document.getElementById("live-sheet-name");
+        if (lsn) lsn.textContent = d.activeSheetName + (d.targetTab ? " · " + d.targetTab : "");
+      }
+      if (d.activeSheetUrl) {
+        S.sheetUrl = d.activeSheetUrl;
+        SAFE_STORE.setItem("dud3_sheet", d.activeSheetUrl);
+        setFieldValue("cfg-sheet-url", d.activeSheetUrl);
       }
       if (d.nextBatchName) S.serverNextBatchName = d.nextBatchName;
       if (d.roster) S.roster = d.roster;
@@ -2460,18 +2490,11 @@
       if (!pin && S.authRole !== "admin") { showBanner("Enter the Admin PIN to save settings.", "warning", 6); return; }
 
       var newYm = document.getElementById("cfg-ym-name").value.trim() || "YM";
-      var newApi = document.getElementById("cfg-api-url").value.trim() || DEFAULT_API;
-      var newSheet = document.getElementById("cfg-sheet-url").value.trim() || DEFAULT_SHEET;
-
       SAFE_STORE.setItem("dud3_ym", newYm);
-      SAFE_STORE.setItem("dud3_api", newApi);
-      SAFE_STORE.setItem("dud3_sheet", newSheet);
-      S.ymName = newYm; S.api = newApi; S.sheetUrl = newSheet;
+      S.ymName = newYm;
 
       var payload = {
         pin: pin,
-        sheetUrl: newSheet,
-        apiUrl: newApi,
         batchSize: parseInt(document.getElementById("cfg-batch-size").value, 10),
         rushTimeoutMin: parseInt(document.getElementById("cfg-rush-timeout").value, 10),
         autoOfdMin: parseInt(document.getElementById("cfg-auto-ofd").value, 10),
@@ -2479,6 +2502,16 @@
         waveGraceMin: parseInt(document.getElementById("cfg-grace").value, 10),
         entryViolationMin: parseInt(document.getElementById("cfg-entry-violation").value, 10)
       };
+
+      if (S.authRole === "admin") {
+        var newApi = document.getElementById("cfg-api-url").value.trim() || DEFAULT_API;
+        var newSheet = document.getElementById("cfg-sheet-url").value.trim() || DEFAULT_SHEET;
+        SAFE_STORE.setItem("dud3_api", newApi);
+        SAFE_STORE.setItem("dud3_sheet", newSheet);
+        S.api = newApi; S.sheetUrl = newSheet;
+        payload.sheetUrl = newSheet;
+        payload.apiUrl = newApi;
+      }
 
       sendReq("saveSettings", payload, function(err, res) {
         if (!err && res && res.success) {
@@ -2488,6 +2521,75 @@
         } else {
           showBanner((res && res.error) || "Failed to save settings", "danger", 20);
         }
+      });
+    }
+
+    function instantUpdateSheetAction() {
+      if (S.authRole !== "admin") {
+        showBanner("Admin login required to switch the monthly sheet.", "danger", 8);
+        return;
+      }
+      var inp = document.getElementById("cfg-sheet-url");
+      var newUrl = (inp ? inp.value : "").trim();
+      if (!newUrl || newUrl.indexOf("docs.google.com/spreadsheets/d/") === -1) {
+        showBanner("Paste a valid Google Sheets URL first.", "warning", 6);
+        return;
+      }
+      var btn = document.getElementById("btn-instant-sheet-update");
+      if (btn) { btn.disabled = true; btn.textContent = "Switching…"; }
+
+      sendReq("adminUpdateSheet", { newSheetUrl: newUrl }, function(err, res) {
+        if (btn) { btn.disabled = false; btn.textContent = "Update Sheet"; }
+        if (!err && res && res.success) {
+          S.sheetUrl = res.sheetUrl;
+          SAFE_STORE.setItem("dud3_sheet", res.sheetUrl);
+          try { SAFE_STORE.removeItem("dud3_snap_v1"); } catch (e) {}
+          S.lastRosterSig = "";
+          S.highestBatchNum = 0;
+          S.batchAssignedTotals = {};
+          S.rushFetchedAt = 0;
+          playBeep("success");
+          showBanner("✅ " + (res.message || "Monthly sheet updated live."), "success", 8);
+          pollRoster(true);
+        } else {
+          playBeep("error");
+          showBanner((res && res.error) || "Could not switch sheet — current sheet kept active.", "danger", 15);
+        }
+      });
+    }
+
+    function instantUpdateApiAction() {
+      if (S.authRole !== "admin") {
+        showBanner("Admin login required to update the API URL.", "danger", 8);
+        return;
+      }
+      var inp = document.getElementById("cfg-api-url");
+      var newApi = (inp ? inp.value : "").trim();
+      if (!newApi || newApi.indexOf("https://") !== 0) {
+        showBanner("Paste a valid https:// Apps Script Web App URL.", "warning", 6);
+        return;
+      }
+      var btn = document.getElementById("btn-instant-api-update");
+      if (btn) { btn.disabled = true; btn.textContent = "Testing…"; }
+
+      // Verify the new API responds to ping BEFORE switching (prevents crashing the app)
+      DUD3.api("ping", {}, { apiUrl: newApi }).then(function(res) {
+        if (btn) { btn.disabled = false; btn.textContent = "Update API"; }
+        if (res && res.success) {
+          S.api = newApi;
+          SAFE_STORE.setItem("dud3_api", newApi);
+          S.lastRosterSig = "";
+          playBeep("success");
+          showBanner("✅ API connected (" + (res.backendVersion || "online") + "). Switched live.", "success", 8);
+          pollRoster(true);
+        } else {
+          playBeep("error");
+          showBanner("New API URL did not respond validly. Current API kept active.", "danger", 12);
+        }
+      }).catch(function() {
+        if (btn) { btn.disabled = false; btn.textContent = "Update API"; }
+        playBeep("error");
+        showBanner("Could not reach that API URL. Current API kept active.", "danger", 12);
       });
     }
 
@@ -2821,9 +2923,12 @@
     function applySessionToUi() {
       var chip = document.getElementById("user-chip-name");
       if (chip) chip.textContent = (S.authDisplayName || S.authUsername || "") + (S.authRole === "admin" ? " · Admin" : "");
+      var isAdmin = (S.authRole === "admin");
       var adminPanel = document.getElementById("admin-user-mgmt");
-      if (adminPanel) adminPanel.style.display = (S.authRole === "admin") ? "flex" : "none";
-      if (S.authRole === "admin") adminLoadUsers();
+      if (adminPanel) adminPanel.style.display = isAdmin ? "flex" : "none";
+      var adminSheetBar = document.getElementById("admin-sheet-api-bar");
+      if (adminSheetBar) adminSheetBar.style.display = isAdmin ? "flex" : "none";
+      if (isAdmin) adminLoadUsers();
     }
 
     function enterApp() {
@@ -3029,3 +3134,4 @@ function togglePwVisibility(inputId, btnEl) {
   </script>
 </body>
 </html>
+Refactoring script files for seamless code integration
