@@ -1,5 +1,5 @@
 /* ============================================================================
- * DUD3 Driver Hub — Notification & Web Push Service Worker (driver-sw.js)
+ * DUD3 Driver Hub — Notification & Web Push Service Worker v2026.11.26-3 (driver-sw.js)
  * Lightweight, non-blocking: no background polling loops, no cache hijacking.
  * Handles:
  *   - Web Push events (background / minimized / closed where platform supports)
@@ -34,6 +34,7 @@ self.addEventListener("push", function(event) {
     tag: tag,
     renotify: true,
     requireInteraction: true,
+    silent: false,
     vibrate: [250, 100, 250, 100, 300],
     timestamp: data.timestamp || Date.now(),
     data: {
@@ -64,6 +65,7 @@ self.addEventListener("message", function(event) {
       tag: msg.tag || ("dud3-batch-" + (msg.daId || "alert")),
       renotify: true,
       requireInteraction: true,
+    silent: false,
       vibrate: [250, 100, 250, 100, 300],
       timestamp: Date.now(),
       data: { url: "./driver.html", daId: msg.daId || "" },
