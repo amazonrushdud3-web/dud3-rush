@@ -85,6 +85,20 @@
     .dab-actions { display: flex; gap: 8px; }
     .dab-ack-btn { flex: 1; padding: 11px 14px; border-radius: 10px; border: none; background: var(--red); color: #fff; font-size: 13.5px; font-weight: 600; cursor: pointer; }
     .dab-ack-btn:active { transform: scale(.98); }
+    .perm-gate-overlay {
+      position: fixed; inset: 0; z-index: 12000; background: rgba(11,15,25,0.96);
+      display: none; align-items: center; justify-content: center; padding: 20px;
+    }
+    .perm-gate-overlay.show { display: flex; }
+    .perm-gate-card {
+      width: 100%; max-width: 390px; background: var(--surface); border: 1.5px solid var(--amber);
+      border-radius: 16px; padding: 24px 20px; text-align: center; display: flex; flex-direction: column; gap: 12px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.65);
+    }
+    .perm-gate-icon { font-size: 36px; line-height: 1; }
+    .perm-gate-title { font-size: 18px; font-weight: 700; color: var(--text); }
+    .perm-gate-msg { font-size: 13px; color: var(--muted); line-height: 1.55; }
+    .perm-gate-steps { font-size: 12px; color: var(--amber); background: var(--surface-3); border-radius: 10px; padding: 10px 12px; text-align: left; line-height: 1.5; display: none; }
 
     .identity-card { text-align: center; }
     .qr-thumb-wrap { background: #fff; border-radius: 12px; padding: 10px; display: inline-flex; margin: 0 auto; }
@@ -175,6 +189,24 @@
 </div>
 
 <div id="toast-msg" role="status" aria-live="polite"><span id="toast-txt" style="flex:1 1 auto;"></span><button class="toast-close-x" onclick="document.getElementById('toast-msg').className=''" aria-label="Close">✕</button></div>
+
+<div id="notify-perm-gate" class="perm-gate-overlay" role="dialog" aria-modal="true" aria-labelledby="perm-gate-title">
+  <div class="perm-gate-card">
+    <div class="perm-gate-icon">🔔</div>
+    <div class="perm-gate-title" id="perm-gate-title">Notification Permission Required</div>
+    <div class="perm-gate-msg" id="perm-gate-msg">
+      Notifications are required to use Driver Hub so you receive upcoming batch alerts and station arrival countdowns even when the screen is off.
+    </div>
+    <div class="perm-gate-steps" id="perm-gate-steps">
+      Notifications are currently blocked in your browser/app settings.<br>
+      1. Tap the lock/settings icon in your browser bar (or Android App Info → Notifications).<br>
+      2. Enable <b>Notifications</b> and <b>Sound</b> for Driver Hub.<br>
+      3. Tap <b>Check Permission Again</b> below.
+    </div>
+    <button type="button" class="btn" id="btn-gate-enable" onclick="requestMandatoryNotifyPermission()">Enable Notifications</button>
+    <button type="button" class="btn btn-outline" id="btn-gate-recheck" onclick="enforceNotificationGate()" style="margin-top:0; display:none;">Check Permission Again</button>
+  </div>
+</div>
 
 <header>
   <div class="brand-row">
@@ -393,6 +425,7 @@ window.onload = function() {
     nativeText: "One tap adds Driver Hub to your home screen — it opens instantly like a normal app and keeps your alerts working.",
     onInstalled: function() { showToast("✅ Driver Hub installed — open it from your home screen.", "success"); }
   });
+  enforceNotificationGate();
   var savedId = SAFE_STORE.getItem("dud3_driver_id");
   if (savedId) { currentDaId = savedId; document.getElementById("da-id-input").value = savedId; login(); }
   document.addEventListener("click", function(e){
@@ -402,7 +435,11 @@ window.onload = function() {
   });
   // Refresh the moment the driver comes back to the app (phone unlocked / app reopened).
   document.addEventListener("visibilitychange", function() {
-    if (!document.hidden && currentDaId) { fetchData(currentDaId, true); }
+    if (!document.hidden) {
+      enforceNotificationGate();
+      if (_driverSW && _driverSW.update) { try { _driverSW.update(); } catch (e) {} }
+      if (currentDaId) fetchData(currentDaId, true);
+    }
   });
 };
 
@@ -411,6 +448,7 @@ window.onload = function() {
 var POLL_VISIBLE_MS = 3000, POLL_HIDDEN_MS = 15000;
 var _lastPollAt = 0;
 function login() {
+  if (!enforceNotificationGate()) return;
   var daId = "";
   if (selectedDriver) { daId = String(selectedDriver.daId).trim().toUpperCase(); }
   else { daId = document.getElementById("da-id-input").value.trim().toUpperCase(); }
@@ -769,13 +807,63 @@ function requestNotifyPermission() {
   } catch (e) {}
 }
 
+var _swReloaded = false;
 function registerDriverSW() {
   try {
     if (!("serviceWorker" in navigator)) return;
-    navigator.serviceWorker.register("./driver-sw.js", { scope: "./" }).then(function(reg) {
+    navigator.serviceWorker.register("./driver-sw.js?v=2026.11.26-3", { scope: "./" }).then(function(reg) {
       _driverSW = reg;
+      try { reg.update(); } catch (eU) {}
     }).catch(function() { _driverSW = null; });
+    navigator.serviceWorker.addEventListener("controllerchange", function() {
+      if (_swReloaded) return;
+      _swReloaded = true;
+      window.location.reload();
+    });
   } catch (e) { _driverSW = null; }
+}
+
+function enforceNotificationGate() {
+  var gate = document.getElementById("notify-perm-gate");
+  if (!gate) return true;
+  if (!("Notification" in window)) return true; // Platform without Notification API (e.g. non-PWA iOS tab)
+  var perm = Notification.permission;
+  if (perm === "granted") {
+    gate.classList.remove("show");
+    refreshNotifyButton();
+    return true;
+  }
+  gate.classList.add("show");
+  var steps = document.getElementById("perm-gate-steps");
+  var btnEnable = document.getElementById("btn-gate-enable");
+  var btnRecheck = document.getElementById("btn-gate-recheck");
+  if (perm === "denied") {
+    if (steps) steps.style.display = "block";
+    if (btnEnable) btnEnable.style.display = "none";
+    if (btnRecheck) btnRecheck.style.display = "block";
+  } else {
+    if (steps) steps.style.display = "none";
+    if (btnEnable) btnEnable.style.display = "block";
+    if (btnRecheck) btnRecheck.style.display = "none";
+  }
+  return false;
+}
+
+function requestMandatoryNotifyPermission() {
+  try {
+    if (!("Notification" in window)) { enforceNotificationGate(); return; }
+    Notification.requestPermission().then(function(perm) {
+      if (perm === "granted") {
+        enforceNotificationGate();
+        showToast("✅ Notifications enabled for Driver Hub.", "success");
+        vibrateDevice([120]);
+        registerDriverSW();
+        if (currentDaId) fetchData(currentDaId, false);
+      } else {
+        enforceNotificationGate();
+      }
+    });
+  } catch (e) { enforceNotificationGate(); }
 }
 
 function urlBase64ToUint8Array(base64String) {
@@ -851,7 +939,8 @@ function startLoudAlertLoop(notif) {
   var timeEl = document.getElementById("dab-time");
   if (banner) {
     var bNo = (String((notif && notif.batchName) || "").match(/(\d+)/) || [])[1] || ((notif && notif.batchName) || "--");
-    if (titleEl) titleEl.textContent = "🚨 Batch " + bNo + " Sent — Head to Station";
+    var isWaitingAlert = notif && notif.source === "WaitingBatchNotify";
+    if (titleEl) titleEl.textContent = isWaitingAlert ? ("🔔 Upcoming " + (notif.batchName || ("Batch " + bNo)) + " Ready") : ("🚨 Batch " + bNo + " Sent — Head to Station");
     if (timeEl) timeEl.textContent = "Sent " + ((notif && notif.sentTime) || "--:--");
     if (bodyEl) bodyEl.textContent = (notif && notif.message) || ("Proceed to the station for IN scan within " + ((notif && notif.limitMin) || 15) + " min.");
     banner.classList.add("show");
@@ -978,10 +1067,26 @@ function maybeNotifyStatusChange(data) {
   if (data.daId && data.vapidPublicKey) ensurePushSubscription(data.daId, data.vapidPublicKey);
   var st = String(data.status || "");
 
-  // Stop & remove active batch alert/notification immediately when batch is completed, cancelled, or moved to Waiting
-  if (st !== "Sent to OP") {
+  // Stop & remove active batch alert/notification when batch is completed/cancelled (unless WAITING has an active upcoming-batch alert)
+  var hasWaitingAlert = (st === "Waiting" && data.activeNotification && data.activeNotification.status === "ACTIVE" && data.activeNotification.source === "WaitingBatchNotify");
+  if (st !== "Sent to OP" && !hasWaitingAlert) {
     stopLoudAlertLoop(false);
     clearSwNotifications();
+  }
+
+  // Upcoming Waiting Batch alert: instruct DA to go off-yard and wait for their turn
+  if (hasWaitingAlert && !_ackedNotifIds[data.activeNotification.notifId]) {
+    var wNotif = data.activeNotification;
+    var isNewW = (_activeAlertNotifId !== wNotif.notifId);
+    startLoudAlertLoop(wNotif);
+    if (isNewW) {
+      fireDriverNotification(
+        "🔔 Upcoming " + (wNotif.batchName || data.batchName || "Batch") + " Ready",
+        wNotif.message || ("Upcoming " + (wNotif.batchName || "Batch") + " is ready! Please go off-yard and wait for your turn."),
+        "warn",
+        "dud3-waiting-" + data.daId
+      );
+    }
   }
 
   // Synchronized driver-specific alert from backend (triggered by Rush Pro Waiting Send or Notify DA's button)
