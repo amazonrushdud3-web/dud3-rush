@@ -1,54 +1,106 @@
 /* ============================================================================
- * DUD3 Driver Hub - MINIMAL notification Service Worker (2026-11-24)
- *
- * Deliberately minimal. The PREVIOUS service worker hung the app because it ran
- * its OWN background fetch loops + Periodic Background Sync. This one does NONE of
- * that. It has exactly three jobs:
- *   1) install/activate immediately (so notifications can persist when the page is
- *      backgrounded / the screen is locked / the driver is in another app),
- *   2) show a notification when the PAGE posts it a message (the page still decides
- *      WHEN to notify, during its normal 3s status poll -- the SW only renders it so
- *      it survives being backgrounded, unlike page-context new Notification()),
- *   3) focus/open the Hub when the driver taps the notification.
- *
- * No caching. No fetch interception. No background polling. No periodic sync.
- * Nothing here can block, loop, or hang the app.
- * ========================================================================= */
+ * DUD3 Driver Hub — Notification & Web Push Service Worker (driver-sw.js)
+ * Lightweight, non-blocking: no background polling loops, no cache hijacking.
+ * Handles:
+ *   - Web Push events (background / minimized / closed where platform supports)
+ *   - Driver Hub icon, batch/driver payload, timestamp, Acknowledge/Open actions
+ *   - Notification click & synchronized dismissal
+ * ============================================================================ */
 
-self.addEventListener("install", function(e) { self.skipWaiting(); });
-self.addEventListener("activate", function(e) { e.waitUntil(self.clients.claim()); });
+self.addEventListener("install", function(event) {
+  self.skipWaiting();
+});
 
-// 2026-11-25: pass-through fetch listener. It never calls respondWith(), so every
-// request goes straight to the network exactly as before (no caching, nothing that can
-// hang). It exists only because some Android browsers (Samsung Internet, older Chrome)
-// refuse to offer "Install app" unless the service worker has a fetch handler.
-self.addEventListener("fetch", function(event) { /* network as normal */ });
+self.addEventListener("activate", function(event) {
+  event.waitUntil(self.clients.claim());
+});
+
+self.addEventListener("push", function(event) {
+  var data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch (e) {
+    data = { title: "DUD3 Driver Hub", body: event.data ? event.data.text() : "New batch update." };
+  }
+
+  var title = data.title || "🚨 Batch Sent — DUD3 Driver Hub";
+  var body = data.body || "Your batch has been dispatched. Proceed to the station for IN scan.";
+  var tag = data.tag || ("dud3-batch-" + (data.daId || "alert"));
+
+  var options = {
+    body: body,
+    icon: "./driverhub-icon-192.png",
+    badge: "./driverhub-icon-192.png",
+    tag: tag,
+    renotify: true,
+    requireInteraction: true,
+    vibrate: [250, 100, 250, 100, 300],
+    timestamp: data.timestamp || Date.now(),
+    data: {
+      url: "./driver.html",
+      daId: data.daId || "",
+      notifId: data.notifId || "",
+      batchName: data.batchName || "",
+      sentTime: data.sentTime || ""
+    },
+    actions: [
+      { action: "ack", title: "Acknowledge" },
+      { action: "open", title: "Open Driver Hub" }
+    ]
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
 
 self.addEventListener("message", function(event) {
-  var d = (event && event.data) || {};
-  if (d.type !== "DUD3_NOTIFY") return;
-  var title = d.title || "DUD3 Driver Hub";
-  var body = d.body || "";
-  var tag = d.tag || ("dud3-" + Date.now());
-  event.waitUntil(
-    self.registration.showNotification(title, {
-      body: body,
-      tag: tag,
+  var msg = event && event.data;
+  if (!msg) return;
+
+  if (msg.type === "DUD3_NOTIFY") {
+    var opts = {
+      body: msg.body || "",
+      icon: "./driverhub-icon-192.png",
+      badge: "./driverhub-icon-192.png",
+      tag: msg.tag || ("dud3-batch-" + (msg.daId || "alert")),
       renotify: true,
       requireInteraction: true,
-      vibrate: [200, 100, 200, 100, 200],
-      silent: false
-    })
-  );
+      vibrate: [250, 100, 250, 100, 300],
+      timestamp: Date.now(),
+      data: { url: "./driver.html", daId: msg.daId || "" },
+      actions: [
+        { action: "ack", title: "Acknowledge" },
+        { action: "open", title: "Open Driver Hub" }
+      ]
+    };
+    event.waitUntil(self.registration.showNotification(msg.title || "DUD3 Driver Hub", opts));
+  } else if (msg.type === "DUD3_CLEAR_NOTIFY") {
+    event.waitUntil(
+      self.registration.getNotifications().then(function(list) {
+        list.forEach(function(n) { n.close(); });
+      })
+    );
+  }
 });
 
 self.addEventListener("notificationclick", function(event) {
   event.notification.close();
+  var action = event.action || "open";
+  var targetUrl = (event.notification.data && event.notification.data.url) || "./driver.html";
+
   event.waitUntil(
-    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function(list) {
-      for (var i = 0; i < list.length; i++) { if (list[i].focus) return list[i].focus(); }
-      // Open the Driver Hub (not "./", which is the Yard Marshal app).
-      if (self.clients.openWindow) return self.clients.openWindow("./driver.html");
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function(clients) {
+      if (action === "ack") {
+        clients.forEach(function(client) {
+          try { client.postMessage({ type: "DUD3_ACK_FROM_SW" }); } catch (e) {}
+        });
+        return;
+      }
+      for (var i = 0; i < clients.length; i++) {
+        if (clients[i].url.indexOf("driver") !== -1 && "focus" in clients[i]) {
+          return clients[i].focus();
+        }
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(targetUrl);
     })
   );
 });
