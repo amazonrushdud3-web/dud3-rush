@@ -73,7 +73,18 @@
     .btn:active { transform: translateY(1px) scale(.98); }
     .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 9px; margin-top: 10px; font-size: 12px; box-shadow: none; }
     .btn-alert { margin-bottom: 8px; background: var(--amber); color: #2A1A00; display: none; }
-    .btn-telegram { margin-bottom: 8px; background: #229ED9; color: #fff; }
+    .driver-alert-banner {
+      display: none; flex-direction: column; gap: 10px; padding: 14px; border-radius: 14px; margin-bottom: 10px;
+      background: rgba(239,68,68,0.16); border: 1.5px solid var(--red); color: var(--text);
+      box-shadow: 0 10px 28px rgba(239,68,68,0.28); animation: alertPulse 1.4s ease-in-out infinite;
+    }
+    .driver-alert-banner.show { display: flex; }
+    @keyframes alertPulse { 0%, 100% { border-color: var(--red); } 50% { border-color: var(--amber); } }
+    .dab-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-weight: 700; font-size: 14px; color: #FCA5A5; }
+    .dab-meta { font-size: 12.5px; color: var(--text); line-height: 1.45; }
+    .dab-actions { display: flex; gap: 8px; }
+    .dab-ack-btn { flex: 1; padding: 11px 14px; border-radius: 10px; border: none; background: var(--red); color: #fff; font-size: 13.5px; font-weight: 600; cursor: pointer; }
+    .dab-ack-btn:active { transform: scale(.98); }
 
     .identity-card { text-align: center; }
     .qr-thumb-wrap { background: #fff; border-radius: 12px; padding: 10px; display: inline-flex; margin: 0 auto; }
@@ -204,8 +215,14 @@
   </div>
 
   <div class="dash-col dash-left">
-  <button id="btn-enable-notify" class="btn btn-alert" onclick="requestNotifyPermission()">🔔 Tap to Enable Alerts</button>
-  <button id="btn-link-telegram" class="btn btn-telegram" onclick="linkTelegramAction()">✈️ Get Loud Alerts on Telegram</button>
+  <div id="driver-alert-banner" class="driver-alert-banner" role="alert" aria-live="assertive">
+    <div class="dab-head"><span id="dab-title">🚨 Batch Sent — Proceed to Station</span><span id="dab-time">--:--</span></div>
+    <div class="dab-meta" id="dab-body">Your batch has been dispatched.</div>
+    <div class="dab-actions">
+      <button type="button" class="dab-ack-btn" id="btn-ack-alert" onclick="acknowledgeBatchAlert()">Acknowledge &amp; Stop Alert</button>
+    </div>
+  </div>
+  <button id="btn-enable-notify" class="btn btn-alert" onclick="requestNotifyPermission()">🔔 Tap to Enable Push Alerts</button>
 
   <div class="card identity-card">
     <div class="qr-thumb-wrap" id="qr-box"></div>
@@ -416,6 +433,8 @@ function logout() {
   SAFE_STORE.removeItem("dud3_driver_id");
   if (refreshInterval) clearInterval(refreshInterval);
   if (countdownInterval) clearInterval(countdownInterval);
+  stopLoudAlertLoop();
+  clearSwNotifications();
   currentDaId = ""; selectedDriver = null;
   document.getElementById("dashboard").classList.remove("show");
   document.getElementById("login-sec").style.display = "block";
@@ -529,7 +548,10 @@ function adaptResponse(res) {
     // (rushTimeoutMin exists in Settings but is not enforced anywhere server-side.)
     receiveLimitMin: settings.entryViolationMin || 15,
     autoOfd: settings.autoOfdMin || 30,
-    turnCount: res.turnCount || 0
+    turnCount: res.turnCount || 0,
+    violatorExceededMin: res.violatorExceededMin || 0,
+    activeNotification: res.activeNotification || null,
+    vapidPublicKey: res.vapidPublicKey || ""
   };
 }
 
@@ -556,6 +578,13 @@ function formatHMS(totalSec) {
   var m = Math.floor((totalSec % 3600) / 60);
   var s = totalSec % 60;
   return ("0" + h).slice(-2) + ":" + ("0" + m).slice(-2) + ":" + ("0" + s).slice(-2);
+}
+
+function formatMS(totalSec) {
+  totalSec = Math.max(0, Math.floor(totalSec));
+  var m = Math.floor(totalSec / 60);
+  var s = totalSec % 60;
+  return ("0" + m).slice(-2) + ":" + ("0" + s).slice(-2);
 }
 
 function updateDashboard(data) {
@@ -641,8 +670,13 @@ function setupTimers(data) {
     timerDisplay.style.color = "var(--red)";
     var violRef = sentRef !== null ? sentRef : startRef;
     var tickViol = function() {
-      if (violRef === null) { timerDisplay.textContent = "--:--:--"; return; }
-      timerDisplay.textContent = formatHMS(Math.max(0, dubaiNowSec() - violRef));
+      if (violRef === null) {
+        timerDisplay.textContent = "Exceeded: " + (data.violatorExceededMin || 0) + " min";
+        return;
+      }
+      var elSec = Math.max(0, dubaiNowSec() - violRef);
+      var elMin = Math.floor(elSec / 60);
+      timerDisplay.textContent = "Exceeded: " + elMin + " min";
     };
     tickViol();
     countdownInterval = setInterval(tickViol, 1000);
@@ -662,14 +696,16 @@ function setupTimers(data) {
   else if (st === "Sent to OP" && sentRef !== null) {
     var deadlineSec = sentRef + ((Number(data.receiveLimitMin) || 15) * 60);
     timerBox.style.display = "block";
-    timerLabel.textContent = "🚨 Proceed to Receiving — Time Remaining";
+    timerLabel.textContent = "🚨 Time Remaining for Station IN Scan";
     var tickSent = function() {
       var rem = deadlineSec - dubaiNowSec();
       maybeNotifyReceiveDeadline(data, rem);
-      if (rem <= 0) { timerDisplay.style.color = "var(--red)"; timerDisplay.textContent = "TIME EXPIRED"; }
-      else {
+      if (rem <= 0) {
+        timerDisplay.style.color = "var(--red)";
+        timerDisplay.textContent = "00:00 — TIME LIMIT REACHED";
+      } else {
         timerDisplay.style.color = (rem <= 300) ? "var(--red)" : "var(--green)";
-        timerDisplay.textContent = formatHMS(rem);
+        timerDisplay.textContent = formatMS(rem);
       }
     };
     tickSent();
@@ -689,15 +725,18 @@ function setupTimers(data) {
   }
 }
 
-/* ===================== Spec 9: Driver Notifications ===================== */
+/* ===================== Unified Driver Hub Notifications & Push ===================== */
 var _notifiedFiveMin = {};
 var _notifiedExpired = {};
 var _lastKnownStatus = null;
+var _lastNotifiedSentTime = null;
+var _lastNotifiedPresentBatch = null;
+var _activeAlertNotifId = "";
+var _ackedNotifIds = {};
+var _alertLoopTimer = null;
+var _pushSubscribedKey = "";
+var _driverSW = null;
 
-// Mobile browsers block Notification.requestPermission() unless it is called directly
-// inside a user-initiated tap (a silent background call is usually a no-op / denied).
-// So instead of asking silently, show a one-tap "Enable Alerts" button whenever
-// permission is not already granted, and let the driver explicitly turn it on.
 function refreshNotifyButton() {
   var btn = document.getElementById("btn-enable-notify");
   if (!btn) return;
@@ -706,30 +745,9 @@ function refreshNotifyButton() {
       btn.style.display = "block";
     } else {
       btn.style.display = "none";
-      // 2026-11-24: permission already granted on a returning visit -> make sure the
-      // background-notification SW is registered so locked-screen alerts work without
-      // the driver having to tap "Enable Alerts" again. Safe/no-op if already done.
-      if (typeof registerDriverSW === "function" && !_driverSW) registerDriverSW();
+      if (!_driverSW) registerDriverSW();
     }
   } catch (e) { btn.style.display = "none"; }
-}
-
-// 2026-11-24: one-tap Telegram linking. Opens the bot with a deep-link that
-// pre-fills "/start <DA ID>", so when the driver taps Start, the backend webhook
-// (handleTelegramUpdate) instantly links their Telegram chat to their DA ID and they
-// start receiving loud "batch sent" alerts -- which work even when the phone is
-// locked or they're in another app (Telegram is a native app). TELEGRAM_BOT_USERNAME
-// must match the bot you created (@DUD3_YARD_BOT).
-var TELEGRAM_BOT_USERNAME = "DUD3_YARD_BOT";
-function linkTelegramAction() {
-  var daId = (currentDaId || "").trim();
-  if (!daId) {
-    showToast("Please log in first, then tap Get Loud Alerts.", "warn");
-    return;
-  }
-  var url = "https://t.me/" + TELEGRAM_BOT_USERNAME + "?start=" + encodeURIComponent(daId);
-  showToast("Opening Telegram -- tap START to link, then set a loud tone for the chat.", "info");
-  try { window.open(url, "_blank"); } catch (e) { location.href = url; }
 }
 
 function requestNotifyPermission() {
@@ -741,7 +759,7 @@ function requestNotifyPermission() {
     Notification.requestPermission().then(function(perm) {
       refreshNotifyButton();
       if (perm === "granted") {
-        showToast("\u2705 Alerts enabled \u2014 you will be notified even when the screen is locked or you're in another app.", "success");
+        showToast("✅ Push alerts enabled for Driver Hub.", "success");
         vibrateDevice([100]);
         registerDriverSW();
       } else {
@@ -751,40 +769,63 @@ function requestNotifyPermission() {
   } catch (e) {}
 }
 
-
-// 2026-11-24: register the MINIMAL notification service worker (driver-sw.js).
-// Wrapped in try/catch + guarded so it can NEVER block or hang the app -- the old
-// SW that hung the Hub ran background fetch loops + periodic sync; this one does
-// none of that. _driverSW holds the active registration so fireDriverNotification()
-// can route through it to show notifications that survive the page being
-// backgrounded / the screen locked / the driver being in another app.
-var _driverSW = null;
 function registerDriverSW() {
   try {
     if (!("serviceWorker" in navigator)) return;
-    navigator.serviceWorker.register("./driver-sw.js", { scope: "./driver.html" }).then(function(reg) {
+    navigator.serviceWorker.register("./driver-sw.js", { scope: "./" }).then(function(reg) {
       _driverSW = reg;
     }).catch(function() { _driverSW = null; });
   } catch (e) { _driverSW = null; }
 }
 
-// Back-compat alias (kept so any existing call sites still work).
+function urlBase64ToUint8Array(base64String) {
+  var padding = "=".repeat((4 - base64String.length % 4) % 4);
+  var base64 = (base64String + padding).replace(/\-/g, "+").replace(/_/g, "/");
+  var rawData = window.atob(base64);
+  var outputArray = new Uint8Array(rawData.length);
+  for (var i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
+
+// Deduplicated Web Push subscription — subscribes once per DA + VAPID key
+function ensurePushSubscription(daId, vapidPublicKey) {
+  if (!daId || !vapidPublicKey) return;
+  var subKey = daId.toUpperCase() + "|" + vapidPublicKey;
+  if (_pushSubscribedKey === subKey) return;
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+  if (!("Notification" in window) || Notification.permission !== "granted") return;
+
+  _pushSubscribedKey = subKey;
+  navigator.serviceWorker.ready.then(function(reg) {
+    return reg.pushManager.getSubscription().then(function(existing) {
+      if (existing) return existing;
+      return reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+      });
+    });
+  }).then(function(sub) {
+    if (!sub) return;
+    var json = sub.toJSON ? sub.toJSON() : sub;
+    DUD3.api("savePushSubscription", { daId: daId, subscription: json }).catch(function() {});
+  }).catch(function() {
+    _pushSubscribedKey = "";
+  });
+}
+
 function ensureNotifyPermission() { refreshNotifyButton(); }
 
 function vibrateDevice(pattern) {
-  try { if (navigator.vibrate) navigator.vibrate(pattern || [160, 80, 160]); } catch (e) {}
+  try { if (navigator.vibrate) navigator.vibrate(pattern || [220, 90, 220, 90, 260]); } catch (e) {}
 }
 
-// 2026-11-24: distinctive "Driver Hub" ring -- a recognizable ascending 3-note
-// chime (G5 -> C6 -> E6) played twice, instead of a single flat beep, so the
-// batch-sent alert is unmistakable. Louder and longer than the old tone.
+// Loud, unmistakable Driver Hub alarm chime
 function playAlertTone() {
   try {
     var ctx = new (window.AudioContext || window.webkitAudioContext)();
     var now = ctx.currentTime;
-    // two passes of the 3-note motif
-    var notes = [784, 1047, 1319, 784, 1047, 1319];
-    var step = 0.16;
+    var notes = [880, 1175, 1568, 880, 1175, 1568];
+    var step = 0.15;
     for (var i = 0; i < notes.length; i++) {
       var osc = ctx.createOscillator();
       var gain = ctx.createGain();
@@ -792,7 +833,7 @@ function playAlertTone() {
       osc.frequency.value = notes[i];
       var t0 = now + i * step;
       gain.gain.setValueAtTime(0.0001, t0);
-      gain.gain.exponentialRampToValueAtTime(0.35, t0 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.45, t0 + 0.02);
       gain.gain.exponentialRampToValueAtTime(0.0001, t0 + step);
       osc.connect(gain); gain.connect(ctx.destination);
       osc.start(t0); osc.stop(t0 + step + 0.02);
@@ -800,50 +841,120 @@ function playAlertTone() {
   } catch (e) {}
 }
 
+function startLoudAlertLoop(notif) {
+  var id = (notif && notif.notifId) ? notif.notifId : ((notif && notif.sentTime) || "active");
+  if (_ackedNotifIds[id]) return;
+
+  var banner = document.getElementById("driver-alert-banner");
+  var titleEl = document.getElementById("dab-title");
+  var bodyEl = document.getElementById("dab-body");
+  var timeEl = document.getElementById("dab-time");
+  if (banner) {
+    var bNo = (String((notif && notif.batchName) || "").match(/(\d+)/) || [])[1] || ((notif && notif.batchName) || "--");
+    if (titleEl) titleEl.textContent = "🚨 Batch " + bNo + " Sent — Head to Station";
+    if (timeEl) timeEl.textContent = "Sent " + ((notif && notif.sentTime) || "--:--");
+    if (bodyEl) bodyEl.textContent = (notif && notif.message) || ("Proceed to the station for IN scan within " + ((notif && notif.limitMin) || 15) + " min.");
+    banner.classList.add("show");
+  }
+
+  if (_activeAlertNotifId === id && _alertLoopTimer) return;
+  stopLoudAlertLoop(true);
+  _activeAlertNotifId = id;
+  playAlertTone();
+  vibrateDevice([250, 100, 250, 100, 300]);
+  _alertLoopTimer = setInterval(function() {
+    if (document.hidden) return;
+    playAlertTone();
+    vibrateDevice([250, 100, 250]);
+  }, 4500);
+}
+
+function stopLoudAlertLoop(keepBanner) {
+  if (_alertLoopTimer) { clearInterval(_alertLoopTimer); _alertLoopTimer = null; }
+  _activeAlertNotifId = "";
+  if (!keepBanner) {
+    var banner = document.getElementById("driver-alert-banner");
+    if (banner) banner.classList.remove("show");
+  }
+}
+
+function clearSwNotifications() {
+  try {
+    if (_driverSW && _driverSW.active) {
+      _driverSW.active.postMessage({ type: "DUD3_CLEAR_NOTIFY" });
+    } else if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+      navigator.serviceWorker.ready.then(function(reg) {
+        if (reg.active) reg.active.postMessage({ type: "DUD3_CLEAR_NOTIFY" });
+      }).catch(function() {});
+    }
+  } catch (e) {}
+}
+
+function acknowledgeBatchAlert() {
+  var id = _activeAlertNotifId;
+  if (id) _ackedNotifIds[id] = true;
+  stopLoudAlertLoop(false);
+  clearSwNotifications();
+  showToast("✅ Alert acknowledged. Head to the receiving point.", "success");
+  if (currentDaId) {
+    DUD3.api("ackDriverNotification", { daId: currentDaId, notifId: id || "" }).catch(function() {});
+  }
+}
+
+// Listen for Acknowledge actions tapped directly on the Service Worker notification
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.addEventListener("message", function(ev) {
+    if (ev && ev.data && ev.data.type === "DUD3_ACK_FROM_SW") {
+      acknowledgeBatchAlert();
+    }
+  });
+}
+
+window.addEventListener("pagehide", function() { stopLoudAlertLoop(true); });
+
 function showToast(msg, type) {
   var t = document.getElementById("toast-msg");
   var tx = document.getElementById("toast-txt");
   if (!t || !tx) return;
   tx.textContent = msg;
-  // colorful per-type banner: t-sent / t-success / t-warn / t-danger / t-info
   t.className = "show t-" + (type || "info");
   if (t._hideTimer) clearTimeout(t._hideTimer);
   t._hideTimer = setTimeout(function(){ t.className = ""; }, 7000);
 }
 
-function fireDriverNotification(title, body, toastType) {
+function fireDriverNotification(title, body, toastType, extraTag) {
   showToast(title + " — " + body, toastType || "sent");
   vibrateDevice();
   playAlertTone();
   try {
     if ("Notification" in window && Notification.permission === "granted") {
-      // 2026-11-24: prefer the SERVICE WORKER's showNotification() -- a page-context
-      // new Notification() is suppressed by browsers when the tab is backgrounded /
-      // the screen is locked, whereas a SW notification persists in those cases
-      // (which is the whole point of this feature). Fall back to page-context
-      // Notification only if the SW isn't active (e.g. permission granted but SW not
-      // yet registered, or an unsupported browser).
-      var tag = "dud3-driver-" + Date.now();
+      var tag = extraTag || ("dud3-driver-" + (currentDaId || "batch"));
+      var opts = {
+        body: body,
+        icon: "./driverhub-icon-192.png",
+        badge: "./driverhub-icon-192.png",
+        tag: tag,
+        renotify: true,
+        requireInteraction: true,
+        vibrate: [250, 100, 250, 100, 300],
+        timestamp: Date.now()
+      };
       if (_driverSW && _driverSW.active) {
-        _driverSW.active.postMessage({ type: "DUD3_NOTIFY", title: title, body: body, tag: tag });
+        _driverSW.active.postMessage({ type: "DUD3_NOTIFY", title: title, body: body, tag: tag, daId: currentDaId });
       } else if (navigator.serviceWorker && navigator.serviceWorker.ready) {
         navigator.serviceWorker.ready.then(function(reg) {
-          try { reg.showNotification(title, { body: body, tag: tag, renotify: true, requireInteraction: true, vibrate: [200,100,200,100,200] }); }
-          catch (e) { try { new Notification(title, { body: body, tag: tag }); } catch (e2) {} }
+          try { reg.showNotification(title, opts); }
+          catch (e) { try { new Notification(title, opts); } catch (e2) {} }
         }).catch(function() {
-          try { new Notification(title, { body: body, tag: tag }); } catch (e) {}
+          try { new Notification(title, opts); } catch (e) {}
         });
       } else {
-        new Notification(title, { body: body, tag: tag });
+        new Notification(title, opts);
       }
     }
   } catch (e) {}
 }
 
-// 2026-11-19: repeat the receiving reminder roughly every 5 MINUTES for as long as
-// the timer is running (not just once at the 5-min-left mark), mirroring the same
-// cadence the service worker uses in the background. _notifiedFiveMin now stores a
-// per-send-event timestamp of the last reminder instead of a one-shot boolean.
 function maybeNotifyReceiveDeadline(data, remainingSec) {
   var key = data.daId + "_" + (data.sentTime || "");
   var REMIND_EVERY_MS = 5 * 60 * 1000;
@@ -852,31 +963,30 @@ function maybeNotifyReceiveDeadline(data, remainingSec) {
     if (Date.now() - lastAt >= REMIND_EVERY_MS) {
       _notifiedFiveMin[key] = Date.now();
       var remMin = Math.max(1, Math.round(remainingSec / 60));
-      fireDriverNotification("⏰ Receiving Reminder", "You have about " + remMin + " more minute(s) to complete receiving, or you will be moved to Violator.", "warn");
+      fireDriverNotification("⏰ Station Arrival Reminder", "Time remaining: " + formatMS(remainingSec) + " (" + remMin + " min) to complete IN scan.", "warn", "dud3-countdown-" + data.daId);
     }
   } else if (remainingSec <= 0) {
     if (!_notifiedExpired[key]) {
       _notifiedExpired[key] = true;
-      fireDriverNotification("⚠️ Receiving Time Expired", "Your receiving window has expired. Your status will move to Violator.", "danger");
+      fireDriverNotification("⚠️ Time Limit Reached", "Your station arrival time limit has been reached. Status will move to Violator.", "danger", "dud3-countdown-" + data.daId);
     }
   }
 }
 
-var _lastNotifiedSentTime = null;
-var _lastNotifiedPresentBatch = null;
-
 function maybeNotifyStatusChange(data) {
   ensureNotifyPermission();
+  if (data.daId && data.vapidPublicKey) ensurePushSubscription(data.daId, data.vapidPublicKey);
   var st = String(data.status || "");
 
-  // Spec #1: "Batch Sent from Waiting" -- notify + remind the moment the batch is
-  // actually sent (status flips to "Sent to OP" with a NEW sentTime), matching the
-  // same event the service worker's background check fires on.
-  if (st === "Sent to OP" && data.sentTime && data.sentTime !== _lastNotifiedSentTime) {
-    _lastNotifiedSentTime = data.sentTime;
-    // 2026-11-24: exact requested wording -- "Your Batch no -- is Sent You have -- Min
-    // remaining to enter". Batch number parsed from batchName (e.g. "Batch 3" -> 3);
-    // remaining minutes = configured receive limit minus minutes elapsed since sent.
+  // Stop & remove active batch alert/notification immediately when batch is completed, cancelled, or moved to Waiting
+  if (st !== "Sent to OP") {
+    stopLoudAlertLoop(false);
+    clearSwNotifications();
+  }
+
+  // Synchronized driver-specific alert from backend (triggered by Rush Pro Waiting Send or Notify DA's button)
+  if (st === "Sent to OP") {
+    var srvNotif = data.activeNotification;
     var batchNo = (String(data.batchName || "").match(/(\d+)/) || [])[1] || (data.batchName || "--");
     var limitMin = Number(data.receiveLimitMin) || 15;
     var sentSec = hhmmToSec(data.sentTime);
@@ -885,32 +995,55 @@ function maybeNotifyStatusChange(data) {
       var elapsedMin = Math.floor((dubaiNowSec() - sentSec) / 60);
       remMin = Math.max(0, limitMin - elapsedMin);
     }
-    fireDriverNotification(
-      "🚚 Your Batch no " + batchNo + " is Sent",
-      "You have " + remMin + " Min remaining to enter. Head to the receiving point now."
-    );
+
+    if (srvNotif && srvNotif.status === "ACTIVE" && !_ackedNotifIds[srvNotif.notifId]) {
+      var isNewAlert = (_activeAlertNotifId !== srvNotif.notifId);
+      startLoudAlertLoop(srvNotif);
+      if (isNewAlert) {
+        fireDriverNotification(
+          "🚨 Batch " + batchNo + " Sent",
+          "Sent at " + (srvNotif.sentTime || data.sentTime || "--:--") + " · " + remMin + " min remaining to reach station for IN scan.",
+          "sent",
+          "dud3-batch-" + data.daId
+        );
+      }
+    } else if (!srvNotif && data.sentTime && data.sentTime !== _lastNotifiedSentTime) {
+      // Fallback if batch was sent before Driver_Notifications row existed
+      _lastNotifiedSentTime = data.sentTime;
+      var fallbackNotif = {
+        notifId: "sent_" + data.sentTime,
+        batchName: data.batchName,
+        sentTime: data.sentTime,
+        limitMin: limitMin,
+        message: "Batch " + batchNo + " sent at " + data.sentTime + ". You have " + remMin + " min remaining to reach the station."
+      };
+      startLoudAlertLoop(fallbackNotif);
+      fireDriverNotification(
+        "🚨 Batch " + batchNo + " Sent",
+        fallbackNotif.message,
+        "sent",
+        "dud3-batch-" + data.daId
+      );
+    }
+    if (data.sentTime) _lastNotifiedSentTime = data.sentTime;
   }
 
-  // 2026-11-25: Marked Present + assigned batch. Attendance = Present/Late with an
-  // assigned batch while still Waiting -> alert once when the driver first becomes
-  // Present (status transitions into Waiting from a non-queued state).
   var attRaw = String(data.attendanceStatus || "");
   if ((attRaw === "Present" || attRaw === "Late") && st === "Waiting"
       && _lastNotifiedPresentBatch !== data.batchName) {
     _lastNotifiedPresentBatch = data.batchName || "";
-    // Opening the app while already waiting is not news: only alert on a real change
-    // seen while the Hub is open (it used to ring + vibrate on every app open).
     if (_lastKnownStatus === null) { _lastKnownStatus = st; return; }
     var presentBatchNo = (String(data.batchName || "").match(/(\d+)/) || [])[1] || (data.batchName || "--");
     fireDriverNotification(
       (attRaw === "Late" ? "✅ Marked Present (Late Arrival)" : "✅ Marked Present"),
-      "You are added to Batch no " + presentBatchNo + " and now in the waiting list. Please wait for your batch to be sent.",
-      "success"
+      "Added to Batch " + presentBatchNo + " in the waiting list. Wait for your batch to be sent.",
+      "success",
+      "dud3-present-" + data.daId
     );
   }
 
   if (st === "Violator" && _lastKnownStatus !== "Violator") {
-    fireDriverNotification("🚫 Added to Violator", "Go back and scan at Waiting to resolve waiting.", "danger");
+    fireDriverNotification("🚫 Added to Violator", "Receive time limit exceeded. Return and scan at Waiting to resolve.", "danger", "dud3-violator-" + data.daId);
   }
   _lastKnownStatus = st;
 }
