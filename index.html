@@ -564,10 +564,15 @@
           <div class="batch-card">
             <div class="batch-header">
               <div class="batch-title">On the way <span class="batch-badge" id="awaiting-badge-count">0</span></div>
-              <button id="btn-whatsapp-notify" class="btn btn-card btn-sm btn-whatsapp" style="display:none;" onclick="requestNextBatchViaWhatsApp()" title="Ask OFFYARD for the next batch on WhatsApp">
-                <svg viewBox="0 0 24 24"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0012.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.19 8.19 0 012.41 5.83c0 4.55-3.7 8.25-8.24 8.25-1.48 0-2.93-.4-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 01-1.26-4.39c0-4.55 3.7-8.25 8.25-8.25z"/></svg>
-                Request batch
-              </button>
+              <div class="batch-actions">
+                <button id="btn-notify-das" class="btn btn-amber btn-sm" style="display:none;" onclick="notifySentDAsAction()" title="Send loud alert to active Sent DAs on Driver Hub">
+                  🔔 Notify DA's
+                </button>
+                <button id="btn-whatsapp-notify" class="btn btn-card btn-sm btn-whatsapp" style="display:none;" onclick="requestNextBatchViaWhatsApp()" title="Ask OFFYARD for the next batch on WhatsApp">
+                  <svg viewBox="0 0 24 24"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0012.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.19 8.19 0 012.41 5.83c0 4.55-3.7 8.25-8.24 8.25-1.48 0-2.93-.4-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 01-1.26-4.39c0-4.55 3.7-8.25 8.25-8.25z"/></svg>
+                  Request batch
+                </button>
+              </div>
             </div>
             <div class="da-list" id="awaiting-da-list"></div>
           </div>
@@ -1062,7 +1067,7 @@
     var OUTBOX_KEY = "dud3_outbox_v1";
     // Bump on every Index.html change. Shown in the header (FE) next to the backend (BE)
     // version so you can confirm after deploying that the live app runs the latest code.
-    var FRONTEND_VERSION = "v2026.11.26-v1";
+    var FRONTEND_VERSION = "v2026.11.26-v2";
 
     function loadOutbox() {
       try { return JSON.parse(SAFE_STORE.getItem(OUTBOX_KEY) || "[]") || []; }
@@ -1697,11 +1702,14 @@
       if (selAll) { selAll.style.display = has ? "inline-block" : "none"; if (!has) selAll.checked = false; }
 
       container.innerHTML = list.map(function(v) {
-        var over = (v.exceededBy !== "" && v.exceededBy != null && v.exceededBy !== "N/A") ? sep() + "Over by <b>" + esc(v.exceededBy) + " min</b>" : "";
+        var sentRef = v.sentTime || "";
+        var liveMins = sentRef ? hhmmElapsedMins(sentRef) : -1;
+        var displayMins = (liveMins >= 0) ? liveMins : (v.exceededBy !== "" && v.exceededBy != null && v.exceededBy !== "N/A" ? Number(v.exceededBy) : 0);
+        var over = sep() + 'Exceeded: <b class="violator-elapsed" data-sent="' + esc(sentRef) + '" data-fallback="' + esc(displayMins) + '">' + esc(displayMins) + ' min</b>';
         var check = '<input type="checkbox" class="da-checkbox violator-checkbox" data-daid="' + esc(v.daId) + '"' + (keep["|" + v.daId] ? " checked" : "") + '>';
         return rowHtml({
           cls: "violator-row", check: check, name: v.daName || v.daId,
-          meta: idMeta(v.daId) + sep() + "Since <b>" + esc(v.timeLogged || "--:--") + "</b>" + over,
+          meta: idMeta(v.daId) + (sentRef ? sep() + "Sent <b>" + esc(sentRef) + "</b>" : sep() + "Since <b>" + esc(v.timeLogged || "--:--") + "</b>") + over,
           right: actBtn("remove-violator", idAttr(v.daId), "Remove", "btn-card btn-text-red")
         });
       }).join("") || emptyHtml("No violators. All good.");
@@ -1866,12 +1874,15 @@
       setNavBadge("nb-receive", sent.length);
       var waBtn = document.getElementById("btn-whatsapp-notify");
       if (waBtn) waBtn.style.display = sent.length ? "inline-flex" : "none";
+      var notifyBtn = document.getElementById("btn-notify-das");
+      if (notifyBtn) notifyBtn.style.display = sent.length ? "inline-flex" : "none";
 
       document.getElementById("awaiting-da-list").innerHTML = sent.map(function(s) {
         return rowHtml({
           name: s.daName,
           meta: idMeta(s.daId) + sep() + esc(s.batchName) + sep() + "Sent <b>" + esc(s.sentTime) + "</b>",
           right: '<span class="time-badge receive-countdown" data-sent="' + esc(s.sentTime || "") + '">--</span>' +
+                 actBtn("notify-one", idAttr(s.daId), "🔔", "btn-card btn-icon") +
                  actBtn("receive", idAttr(s.daId), "Receive", "btn-green")
         });
       }).join("") || emptyHtml("No DAs on the way.");
@@ -1903,6 +1914,37 @@
         chip.textContent = remaining <= 0 ? "Overdue" : (remaining + " min left");
         chip.className = "time-badge receive-countdown " + tone;
       }
+      // Also update Violators elapsed time dynamically from original sentTime (single shared timer)
+      var vEls = document.querySelectorAll(".violator-elapsed");
+      for (var v = 0; v < vEls.length; v++) {
+        var vSent = vEls[v].getAttribute("data-sent");
+        if (!vSent) continue;
+        var elMin = hhmmElapsedMins(vSent);
+        if (elMin >= 0) vEls[v].textContent = elMin + " min";
+      }
+    }
+
+    function notifySentDAsAction(singleDaId) {
+      initAudio();
+      var targetIds = singleDaId
+        ? [singleDaId]
+        : (S.sentList || []).map(function(s) { return s.daId; });
+      if (!targetIds.length) {
+        showBanner("No active Sent DAs to notify.", "warning", 5);
+        return;
+      }
+      var btn = document.getElementById("btn-notify-das");
+      if (!singleDaId && btn) { btn.disabled = true; btn.textContent = "Notifying…"; }
+      sendReq("notifyDAs", { daIds: targetIds, source: singleDaId ? "RushScanSingle" : "NotifyDAsBtn" }, function(err, res) {
+        if (!singleDaId && btn) { btn.disabled = false; btn.textContent = "🔔 Notify DA's"; }
+        if (!err && res && res.success) {
+          playBeep("action");
+          showBanner("🔔 " + (res.message || ("Notified " + targetIds.length + " DA(s).")), "success", 6);
+        } else {
+          playBeep("error");
+          showBanner((res && res.error) || "Could not send DA alert.", "danger", 10);
+        }
+      });
     }
 
     function handleAttendanceCheckIn(queryId) {
@@ -2797,6 +2839,7 @@
           case "send-selected": sendSelectedInBatch(batch); break;
           case "end-break": endBreakAction(id); break;
           case "remove-violator": removeViolatorAction(id); break;
+          case "notify-one": notifySentDAsAction(id); break;
           case "receive": doReceiveScanAction(id); break;
           case "user-toggle": adminToggleUserActiveAction(id, el.getAttribute("data-next") === "1"); break;
           case "user-reset": adminResetUserPasswordAction(id); break;
@@ -3129,4 +3172,4 @@ function togglePwVisibility(inputId, btnEl) {
   </script>
 </body>
 </html>
-Refactoring script files for seamless code integration
+Finalizing code files for download
