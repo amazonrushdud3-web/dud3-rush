@@ -193,9 +193,9 @@
 <div id="notify-perm-gate" class="perm-gate-overlay" role="dialog" aria-modal="true" aria-labelledby="perm-gate-title">
   <div class="perm-gate-card">
     <div class="perm-gate-icon">🔔</div>
-    <div class="perm-gate-title" id="perm-gate-title">Notification Permission Required</div>
+    <div class="perm-gate-title" id="perm-gate-title">Turn on notifications</div>
     <div class="perm-gate-msg" id="perm-gate-msg">
-      Notifications are required to use Driver Hub so you receive upcoming batch alerts and station arrival countdowns even when the screen is off.
+      Notifications let Driver Hub alert you about upcoming batches and station arrival countdowns even when the screen is off.
     </div>
     <div class="perm-gate-steps" id="perm-gate-steps">
       Notifications are currently blocked in your browser/app settings.<br>
@@ -204,7 +204,8 @@
       3. Tap <b>Check Permission Again</b> below.
     </div>
     <button type="button" class="btn" id="btn-gate-enable" onclick="requestMandatoryNotifyPermission()">Enable Notifications</button>
-    <button type="button" class="btn btn-outline" id="btn-gate-recheck" onclick="enforceNotificationGate()" style="margin-top:0; display:none;">Check Permission Again</button>
+    <button type="button" class="btn btn-outline" id="btn-gate-recheck" onclick="recheckNotifyPermission()" style="margin-top:0; display:none;">Check Permission Again</button>
+    <button type="button" class="btn btn-outline" id="btn-gate-skip" onclick="skipNotifyGate()" style="margin-top:0;">Continue without notifications</button>
   </div>
 </div>
 
@@ -426,6 +427,7 @@ window.onload = function() {
     onInstalled: function() { showToast("✅ Driver Hub installed — open it from your home screen.", "success"); }
   });
   enforceNotificationGate();
+  watchNotifyPermission();
   var savedId = SAFE_STORE.getItem("dud3_driver_id");
   if (savedId) { currentDaId = savedId; document.getElementById("da-id-input").value = savedId; login(); }
   document.addEventListener("click", function(e){
@@ -436,7 +438,7 @@ window.onload = function() {
   // Refresh the moment the driver comes back to the app (phone unlocked / app reopened).
   document.addEventListener("visibilitychange", function() {
     if (!document.hidden) {
-      enforceNotificationGate();
+      recheckNotifyPermission();
       if (_driverSW && _driverSW.update) { try { _driverSW.update(); } catch (e) {} }
       if (currentDaId) fetchData(currentDaId, true);
     }
@@ -828,7 +830,8 @@ function enforceNotificationGate() {
   if (!gate) return true;
   if (!("Notification" in window)) return true; // Platform without Notification API (e.g. non-PWA iOS tab)
   var perm = Notification.permission;
-  if (perm === "granted") {
+  // Granted, or the DA chose to carry on without alerts: the on-screen banner and sound still work.
+  if (perm === "granted" || SAFE_STORE.getItem("dud3_notify_skip") === "1") {
     gate.classList.remove("show");
     refreshNotifyButton();
     return true;
@@ -838,7 +841,7 @@ function enforceNotificationGate() {
   var btnEnable = document.getElementById("btn-gate-enable");
   var btnRecheck = document.getElementById("btn-gate-recheck");
   if (perm === "denied") {
-    if (steps) steps.style.display = "block";
+    if (steps) { steps.innerHTML = blockedNotifySteps(); steps.style.display = "block"; }
     if (btnEnable) btnEnable.style.display = "none";
     if (btnRecheck) btnRecheck.style.display = "block";
   } else {
@@ -849,15 +852,69 @@ function enforceNotificationGate() {
   return false;
 }
 
+function isInstalledHub() {
+  try {
+    return window.matchMedia("(display-mode: standalone)").matches ||
+      window.matchMedia("(display-mode: fullscreen)").matches || navigator.standalone === true;
+  } catch (e) { return false; }
+}
+
+// Once notifications are denied, a web page can't ask again; only the phone's settings can undo it.
+// Where that setting lives depends on how Driver Hub was opened, so the steps are picked to match.
+function blockedNotifySteps() {
+  var ua = navigator.userAgent || "";
+  var ios = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  if (ios) {
+    return "Notifications are blocked for Driver Hub.<br>" +
+      "1. Open iPhone <b>Settings → Notifications → Driver Hub</b>.<br>" +
+      "2. Turn on <b>Allow Notifications</b> and <b>Sounds</b>.<br>" +
+      "3. Come back here. This screen closes by itself.";
+  }
+  if (isInstalledHub()) {
+    return "Notifications are blocked for the Driver Hub app. Chrome can't change this, because the setting belongs to the app.<br>" +
+      "1. Close Driver Hub. Press and hold the <b>Driver Hub</b> icon on your home screen, then tap <b>App info</b> (ⓘ).<br>" +
+      "2. Tap <b>Notifications</b> and turn on <b>Allow notifications</b>.<br>" +
+      "3. Open Driver Hub again.";
+  }
+  return "Notifications are blocked. Check both places:<br>" +
+    "1. Phone <b>Settings → Apps → Chrome → Notifications</b>: turn on <b>Allow notifications</b>. If this is off, Chrome blocks every site automatically.<br>" +
+    "2. In Chrome tap <b>⋮ → Settings → Site settings → Notifications</b>, find this site and set it to <b>Allow</b>. If it can't be changed and says it is controlled by <b>Driver Hub</b>, change it in the Driver Hub app instead: press and hold its icon → App info → Notifications.<br>" +
+    "3. Come back here. This screen closes by itself.";
+}
+
+// Re-checks when the DA returns from settings, and logs back in if they were signed in.
+function recheckNotifyPermission() {
+  if (enforceNotificationGate()) {
+    registerDriverSW();
+    if (currentDaId && !refreshInterval) login();
+  }
+}
+
+// Closes the notification screen for good on this phone. The "Tap to Enable Push Alerts" button stays on the dashboard.
+function skipNotifyGate() {
+  SAFE_STORE.setItem("dud3_notify_skip", "1");
+  enforceNotificationGate();
+  showToast("Notifications are off. Keep Driver Hub open to see batch alerts on screen.", "warn");
+  if (currentDaId && !refreshInterval) login();
+}
+
+function watchNotifyPermission() {
+  try {
+    if (!navigator.permissions || !navigator.permissions.query) return;
+    navigator.permissions.query({ name: "notifications" }).then(function(status) {
+      status.onchange = recheckNotifyPermission;
+    }).catch(function() {});
+  } catch (e) {}
+}
+
 function requestMandatoryNotifyPermission() {
   try {
     if (!("Notification" in window)) { enforceNotificationGate(); return; }
     Notification.requestPermission().then(function(perm) {
       if (perm === "granted") {
-        enforceNotificationGate();
         showToast("✅ Notifications enabled for Driver Hub.", "success");
         vibrateDevice([120]);
-        registerDriverSW();
+        recheckNotifyPermission();
         if (currentDaId) fetchData(currentDaId, false);
       } else {
         enforceNotificationGate();
